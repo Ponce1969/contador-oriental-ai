@@ -1,0 +1,35 @@
+[project]
+name = "smart-shopping-list"
+version = "0.1.0"
+description = "Proyecto control de gastos con fleting y arquitectura MVC"
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+    "flet",
+    "fleting",
+    "sqlalchemy",
+    "pydantic",
+    "result",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "ty",
+]
+
+[tool.ty]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "PYI"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

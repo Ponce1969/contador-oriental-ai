@@ -1,0 +1,17 @@
+{
+  "app": {
+    "name": "Smart-Shopping"
+  },
+  "menu": {
+    "home": "Home",
+    "settings": "Configs",
+    "help": "Help"
+  },
+  "home": {
+    "title": "Wellcome to Smart-Shopping"
+  },
+  "settings": {
+    "title": "Configs",
+    "language": "Language"
+  }
+}

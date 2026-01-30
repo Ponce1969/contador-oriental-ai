@@ -1,0 +1,306 @@
+2026-01-28 23:35:31,266 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\smart-shopping\assets
+2026-01-28 23:35:31,272 | INFO | flet | Starting up TCP server on localhost:56345
+2026-01-28 23:35:31,288 | INFO | flet | Flet app has started...
+2026-01-28 23:35:31,293 | INFO | flet | App URL: tcp://localhost:56345
+2026-01-28 23:35:31,293 | INFO | flet_desktop | Starting Flet View app...
+2026-01-28 23:35:31,295 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-28 23:35:31,295 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-28 23:35:32,314 | INFO | flet | App session started
+2026-01-28 23:35:32,328 | INFO | App | Base de datos inicializada
+2026-01-28 23:35:32,351 | INFO | Router | Navigating to: /
+2026-01-28 23:35:32,369 | INFO | App | Aplicação iniciada com sucesso
+2026-01-28 23:43:33,880 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-28 23:43:33,882 | INFO | flet | Starting up TCP server on localhost:50113
+2026-01-28 23:43:33,895 | INFO | flet | Flet app has started...
+2026-01-28 23:43:33,900 | INFO | flet | App URL: tcp://localhost:50113
+2026-01-28 23:43:33,900 | INFO | flet_desktop | Starting Flet View app...
+2026-01-28 23:43:33,903 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-28 23:43:33,904 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-28 23:43:34,536 | INFO | flet | App session started
+2026-01-28 23:43:34,545 | INFO | App | Base de datos inicializada
+2026-01-28 23:43:34,560 | INFO | Router | Navigating to: /
+2026-01-28 23:43:34,582 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 00:00:52,774 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 00:00:52,776 | INFO | flet | Starting up TCP server on localhost:49367
+2026-01-29 00:00:52,789 | INFO | flet | Flet app has started...
+2026-01-29 00:00:52,794 | INFO | flet | App URL: tcp://localhost:49367
+2026-01-29 00:00:52,794 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 00:00:52,797 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 00:00:52,797 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 00:00:53,401 | INFO | flet | App session started
+2026-01-29 00:00:53,410 | INFO | App | Base de datos inicializada
+2026-01-29 00:00:53,424 | INFO | Router | Navigating to: /
+2026-01-29 00:00:53,441 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 00:04:47,401 | INFO | Router | Navigating to: /settings
+2026-01-29 00:05:02,867 | INFO | Router | Navigating to: /
+2026-01-29 21:23:38,485 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 21:23:38,485 | INFO | flet | Starting up TCP server on localhost:63072
+2026-01-29 21:23:38,497 | INFO | flet | Flet app has started...
+2026-01-29 21:23:38,503 | INFO | flet | App URL: tcp://localhost:63072
+2026-01-29 21:23:38,503 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 21:23:38,506 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:23:38,506 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:23:40,684 | INFO | flet | App session started
+2026-01-29 21:23:40,688 | INFO | App | Base de datos inicializada
+2026-01-29 21:23:40,732 | INFO | Router | Navigating to: /
+2026-01-29 21:23:40,752 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 21:23:47,032 | INFO | Router | Navigating to: /expenses
+2026-01-29 21:23:47,984 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 66, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 49, in __init__
+    self.categoria_dropdown = ft.Dropdown(
+                              ^^^^^^^^^^^^
+TypeError: Dropdown.__init__() got an unexpected keyword argument 'on_change'
+2026-01-29 21:25:55,262 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 21:25:55,267 | INFO | flet | Starting up TCP server on localhost:58179
+2026-01-29 21:25:55,278 | INFO | flet | Flet app has started...
+2026-01-29 21:25:55,283 | INFO | flet | App URL: tcp://localhost:58179
+2026-01-29 21:25:55,283 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 21:25:55,283 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:25:55,283 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:25:55,755 | INFO | flet | App session started
+2026-01-29 21:25:55,764 | INFO | App | Base de datos inicializada
+2026-01-29 21:25:55,777 | INFO | Router | Navigating to: /
+2026-01-29 21:25:55,793 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 21:25:59,607 | INFO | Router | Navigating to: /expenses
+2026-01-29 21:25:59,792 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 66, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 153, in render
+    border=ft.border.all(1, ft.colors.OUTLINE),
+                            ^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\__init__.py", line 1159, in __getattr__
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+AttributeError: module 'flet' has no attribute 'colors'. Did you mean: 'Colors'?
+2026-01-29 21:39:43,040 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 21:39:43,043 | INFO | flet | Starting up TCP server on localhost:59274
+2026-01-29 21:39:43,057 | INFO | flet | Flet app has started...
+2026-01-29 21:39:43,062 | INFO | flet | App URL: tcp://localhost:59274
+2026-01-29 21:39:43,062 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 21:39:43,064 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:39:43,064 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:39:43,736 | INFO | flet | App session started
+2026-01-29 21:39:43,746 | INFO | App | Base de datos inicializada
+2026-01-29 21:39:43,763 | INFO | Router | Navigating to: /
+2026-01-29 21:39:43,778 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 21:39:53,902 | INFO | Router | Navigating to: /expenses
+2026-01-29 21:39:54,135 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: expenses
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 66, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 184, in render
+    self._render_expenses()
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 294, in _render_expenses
+    expenses = self.controller.list_expenses()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\controllers\expense_controller.py", line 51, in list_expenses
+    return service.list_expenses()
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\services\expense_service.py", line 44, in list_expenses
+    expenses = self._repo.get_all()
+               ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\repositories\expense_repository.py", line 38, in get_all
+    rows = self._session.query(ExpenseTable).all()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2704, in all
+    return self._iter().all()  # type: ignore
+           ^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: expenses
+[SQL: SELECT expenses.id AS expenses_id, expenses.monto AS expenses_monto, expenses.fecha AS expenses_fecha, expenses.descripcion AS expenses_descripcion, expenses.categoria AS expenses_categoria, expenses.subcategoria AS expenses_subcategoria, expenses.metodo_pago AS expenses_metodo_pago, expenses.es_recurrente AS expenses_es_recurrente, expenses.frecuencia AS expenses_frecuencia, expenses.notas AS expenses_notas, expenses.name AS expenses_name, expenses.price AS expenses_price, expenses.category AS expenses_category, expenses.purchased AS expenses_purchased, expenses.purchase_date AS expenses_purchase_date 
+FROM expenses]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-01-29 21:42:11,412 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 21:42:11,415 | INFO | flet | Starting up TCP server on localhost:51166
+2026-01-29 21:42:11,430 | INFO | flet | Flet app has started...
+2026-01-29 21:42:11,437 | INFO | flet | App URL: tcp://localhost:51166
+2026-01-29 21:42:11,437 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 21:42:11,440 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:42:11,441 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:42:12,015 | INFO | flet | App session started
+2026-01-29 21:42:12,047 | INFO | App | Base de datos inicializada
+2026-01-29 21:42:12,060 | INFO | Router | Navigating to: /
+2026-01-29 21:42:12,080 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 21:42:15,467 | INFO | Router | Navigating to: /expenses
+2026-01-29 21:56:02,293 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\messaging\session.py", line 194, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\controls\base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 280, in _on_add_expense
+    self._render_expenses()
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 307, in _render_expenses
+    name=ft.icons.ATTACH_MONEY,
+         ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'flet.controls.material.icons' has no attribute 'ATTACH_MONEY'
+2026-01-29 21:59:55,360 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 21:59:55,362 | INFO | flet | Starting up TCP server on localhost:49974
+2026-01-29 21:59:55,374 | INFO | flet | Flet app has started...
+2026-01-29 21:59:55,380 | INFO | flet | App URL: tcp://localhost:49974
+2026-01-29 21:59:55,380 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 21:59:55,381 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:59:55,381 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 21:59:55,766 | INFO | flet | App session started
+2026-01-29 21:59:55,786 | INFO | App | Base de datos inicializada
+2026-01-29 21:59:55,801 | INFO | Router | Navigating to: /
+2026-01-29 21:59:55,824 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 21:59:59,916 | INFO | Router | Navigating to: /expenses
+2026-01-29 22:00:00,116 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 66, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 184, in render
+    self._render_expenses()
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 307, in _render_expenses
+    name=ft.icons.ATTACH_MONEY_OUTLINED,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'flet.controls.material.icons' has no attribute 'ATTACH_MONEY_OUTLINED'
+2026-01-29 22:01:50,137 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 22:01:50,140 | INFO | flet | Starting up TCP server on localhost:54684
+2026-01-29 22:01:50,147 | INFO | flet | Flet app has started...
+2026-01-29 22:01:50,152 | INFO | flet | App URL: tcp://localhost:54684
+2026-01-29 22:01:50,152 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 22:01:50,153 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:01:50,153 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:01:50,512 | INFO | flet | App session started
+2026-01-29 22:01:50,524 | INFO | App | Base de datos inicializada
+2026-01-29 22:01:50,540 | INFO | Router | Navigating to: /
+2026-01-29 22:01:50,554 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 22:01:53,672 | INFO | Router | Navigating to: /expenses
+2026-01-29 22:01:53,828 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 66, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 184, in render
+    self._render_expenses()
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 307, in _render_expenses
+    name=ft.icons.PAYMENTS_OUTLINED,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'flet.controls.material.icons' has no attribute 'PAYMENTS_OUTLINED'
+2026-01-29 22:02:42,131 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 22:02:42,133 | INFO | flet | Starting up TCP server on localhost:58466
+2026-01-29 22:02:42,139 | INFO | flet | Flet app has started...
+2026-01-29 22:02:42,143 | INFO | flet | App URL: tcp://localhost:58466
+2026-01-29 22:02:42,144 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 22:02:42,145 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:02:42,145 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:02:42,447 | INFO | flet | App session started
+2026-01-29 22:02:42,456 | INFO | App | Base de datos inicializada
+2026-01-29 22:02:42,467 | INFO | Router | Navigating to: /
+2026-01-29 22:02:42,482 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 22:02:44,819 | INFO | Router | Navigating to: /expenses
+2026-01-29 22:02:44,950 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 66, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 184, in render
+    self._render_expenses()
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 307, in _render_expenses
+    name=ft.icons.SHOPPING_CART,
+         ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'flet.controls.material.icons' has no attribute 'SHOPPING_CART'
+2026-01-29 22:05:02,238 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 22:05:02,243 | INFO | flet | Starting up TCP server on localhost:64422
+2026-01-29 22:05:02,250 | INFO | flet | Flet app has started...
+2026-01-29 22:05:02,254 | INFO | flet | App URL: tcp://localhost:64422
+2026-01-29 22:05:02,254 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 22:05:02,255 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:05:02,255 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:05:02,520 | INFO | flet | App session started
+2026-01-29 22:05:02,529 | INFO | App | Base de datos inicializada
+2026-01-29 22:05:02,541 | INFO | Router | Navigating to: /
+2026-01-29 22:05:02,560 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 22:05:05,422 | INFO | Router | Navigating to: /expenses
+2026-01-29 22:05:05,564 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 66, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 184, in render
+    self._render_expenses()
+  File "C:\Users\cerra\codigo\flet\views\pages\expenses_view.py", line 306, in _render_expenses
+    ft.Icon(
+TypeError: Icon.__init__() got an unexpected keyword argument 'name'
+2026-01-29 22:06:28,737 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-29 22:06:28,737 | INFO | flet | Starting up TCP server on localhost:58458
+2026-01-29 22:06:28,747 | INFO | flet | Flet app has started...
+2026-01-29 22:06:28,751 | INFO | flet | App URL: tcp://localhost:58458
+2026-01-29 22:06:28,752 | INFO | flet_desktop | Starting Flet View app...
+2026-01-29 22:06:28,753 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:06:28,753 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-29 22:06:29,039 | INFO | flet | App session started
+2026-01-29 22:06:29,051 | INFO | App | Base de datos inicializada
+2026-01-29 22:06:29,063 | INFO | Router | Navigating to: /
+2026-01-29 22:06:29,079 | INFO | App | Aplicação iniciada com sucesso
+2026-01-29 22:06:31,660 | INFO | Router | Navigating to: /expenses
