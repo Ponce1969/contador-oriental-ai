@@ -622,3 +622,84 @@ Traceback (most recent call last):
     return page.session.contains_key(SessionManager.SESSION_KEY_USER_ID)
            ^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'Session' object has no attribute 'contains_key'
+2026-01-31 16:48:47,149 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:48:47,151 | INFO | flet | Starting up TCP server on localhost:53000
+2026-01-31 16:48:47,160 | INFO | flet | Flet app has started...
+2026-01-31 16:48:47,169 | INFO | flet | App URL: tcp://localhost:53000
+2026-01-31 16:48:47,170 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:48:47,175 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:48:47,175 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:48:47,489 | INFO | flet | App session started
+2026-01-31 16:48:47,505 | INFO | App | Base de datos inicializada
+2026-01-31 16:48:47,632 | ERROR | ErrorHandler | Global error caught
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\main.py", line 73, in main
+    if SessionManager.is_logged_in(page):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\core\session.py", line 31, in is_logged_in
+    user_id = page.session.get(SessionManager.SESSION_KEY_USER_ID)
+              ^^^^^^^^^^^^^^^^
+AttributeError: 'Session' object has no attribute 'get'
+2026-01-31 16:50:03,912 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:50:03,914 | INFO | flet | Starting up TCP server on localhost:63185
+2026-01-31 16:50:03,930 | INFO | flet | Flet app has started...
+2026-01-31 16:50:03,937 | INFO | flet | App URL: tcp://localhost:63185
+2026-01-31 16:50:03,937 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:50:03,939 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:50:03,941 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:50:04,392 | INFO | flet | App session started
+2026-01-31 16:50:04,410 | INFO | App | Base de datos inicializada
+2026-01-31 16:50:04,565 | ERROR | ErrorHandler | Global error caught
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\main.py", line 73, in main
+    if SessionManager.is_logged_in(page):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\core\session.py", line 31, in is_logged_in
+    return SessionManager.SESSION_KEY_USER_ID in page.session
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: argument of type 'Session' is not iterable
+2026-01-31 16:50:37,159 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:50:37,164 | INFO | flet | Starting up TCP server on localhost:51119
+2026-01-31 16:50:37,188 | INFO | flet | Flet app has started...
+2026-01-31 16:50:37,195 | INFO | flet | App URL: tcp://localhost:51119
+2026-01-31 16:50:37,196 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:50:37,197 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:50:37,197 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:50:37,562 | INFO | flet | App session started
+2026-01-31 16:50:37,585 | INFO | App | Base de datos inicializada
+2026-01-31 16:50:37,733 | INFO | Router | Navigating to: /login
+2026-01-31 16:50:37,787 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 97, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: LoginView.__init__() takes 2 positional arguments but 3 were given
+2026-01-31 16:50:37,790 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 16:51:03,764 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:51:03,766 | INFO | flet | Starting up TCP server on localhost:51168
+2026-01-31 16:51:03,777 | INFO | flet | Flet app has started...
+2026-01-31 16:51:03,782 | INFO | flet | App URL: tcp://localhost:51168
+2026-01-31 16:51:03,785 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:51:03,787 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:51:03,789 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:51:04,119 | INFO | flet | App session started
+2026-01-31 16:51:04,138 | INFO | App | Base de datos inicializada
+2026-01-31 16:51:04,287 | INFO | Router | Navigating to: /login
+2026-01-31 16:51:04,317 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\core\router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\configs\routes.py", line 97, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\views\pages\login_view.py", line 44, in __init__
+    self.login_button = ft.ElevatedButton(
+                        ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\utils\deprecated.py", line 60, in new_init
+    orig_init(self, *args, **kwargs)
+TypeError: Button.__init__() got an unexpected keyword argument 'text'
+2026-01-31 16:51:04,320 | INFO | App | Aplicação iniciada com sucesso

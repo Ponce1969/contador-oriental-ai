@@ -16,9 +16,9 @@ class SessionManager:
     @staticmethod
     def login(page: ft.Page, user: User) -> None:
         """Iniciar sesión de usuario"""
-        page.session.set(SessionManager.SESSION_KEY_USER_ID, user.id)
-        page.session.set(SessionManager.SESSION_KEY_FAMILIA_ID, user.familia_id)
-        page.session.set(SessionManager.SESSION_KEY_USERNAME, user.username)
+        page.session[SessionManager.SESSION_KEY_USER_ID] = user.id
+        page.session[SessionManager.SESSION_KEY_FAMILIA_ID] = user.familia_id
+        page.session[SessionManager.SESSION_KEY_USERNAME] = user.username
     
     @staticmethod
     def logout(page: ft.Page) -> None:
@@ -28,8 +28,10 @@ class SessionManager:
     @staticmethod
     def is_logged_in(page: ft.Page) -> bool:
         """Verificar si hay sesión activa"""
-        user_id = page.session.get(SessionManager.SESSION_KEY_USER_ID)
-        return user_id is not None
+        try:
+            return page.session.get(SessionManager.SESSION_KEY_USER_ID) is not None
+        except (AttributeError, KeyError):
+            return False
     
     @staticmethod
     def get_user_id(page: ft.Page) -> int | None:

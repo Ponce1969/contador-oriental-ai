@@ -11,8 +11,9 @@ from models.errors import AppError
 class LoginView:
     """Vista de login"""
     
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, router=None):
         self.page = page
+        self.router = router
         self.auth_controller = AuthController(page)
         
         # Inputs
@@ -41,8 +42,14 @@ class LoginView:
         
         # Botón de login
         self.login_button = ft.ElevatedButton(
-            text="Iniciar Sesión",
-            icon=ft.Icons.LOGIN,
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.LOGIN),
+                    ft.Text("Iniciar Sesión")
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=10
+            ),
             on_click=self._on_login,
             width=300
         )
