@@ -703,3 +703,72 @@ Traceback (most recent call last):
     orig_init(self, *args, **kwargs)
 TypeError: Button.__init__() got an unexpected keyword argument 'text'
 2026-01-31 16:51:04,320 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 16:51:30,484 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:51:30,486 | INFO | flet | Starting up TCP server on localhost:51215
+2026-01-31 16:51:30,502 | INFO | flet | Flet app has started...
+2026-01-31 16:51:30,510 | INFO | flet | App URL: tcp://localhost:51215
+2026-01-31 16:51:30,511 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:51:30,512 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:51:30,514 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:51:30,849 | INFO | flet | App session started
+2026-01-31 16:51:30,868 | INFO | App | Base de datos inicializada
+2026-01-31 16:51:31,006 | INFO | Router | Navigating to: /login
+2026-01-31 16:51:31,039 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 16:54:35,844 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\messaging\session.py", line 194, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\controls\base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "C:\Users\cerra\codigo\flet\views\pages\login_view.py", line 182, in _on_login
+    SessionManager.login(self.page, user)
+  File "C:\Users\cerra\codigo\flet\core\session.py", line 19, in login
+    page.session[SessionManager.SESSION_KEY_USER_ID] = user.id
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'Session' object does not support item assignment
+2026-01-31 16:56:09,600 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:56:09,602 | INFO | flet | Starting up TCP server on localhost:64958
+2026-01-31 16:56:09,617 | INFO | flet | Flet app has started...
+2026-01-31 16:56:09,623 | INFO | flet | App URL: tcp://localhost:64958
+2026-01-31 16:56:09,624 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:56:09,625 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:56:09,625 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:56:10,018 | INFO | flet | App session started
+2026-01-31 16:56:10,048 | INFO | App | Base de datos inicializada
+2026-01-31 16:56:10,313 | INFO | Router | Navigating to: /login
+2026-01-31 16:56:10,361 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 16:56:25,608 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\messaging\session.py", line 194, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\controls\base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "C:\Users\cerra\codigo\flet\views\pages\login_view.py", line 182, in _on_login
+    SessionManager.login(self.page, user)
+  File "C:\Users\cerra\codigo\flet\core\session.py", line 19, in login
+    page.session[SessionManager.SESSION_KEY_USER_ID] = user.id
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'Session' object does not support item assignment
+2026-01-31 16:57:01,805 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:57:01,807 | INFO | flet | Starting up TCP server on localhost:54059
+2026-01-31 16:57:01,820 | INFO | flet | Flet app has started...
+2026-01-31 16:57:01,827 | INFO | flet | App URL: tcp://localhost:54059
+2026-01-31 16:57:01,827 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:57:01,831 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:57:01,831 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:57:02,137 | INFO | flet | App session started
+2026-01-31 16:57:02,153 | INFO | App | Base de datos inicializada
+2026-01-31 16:57:02,274 | INFO | Router | Navigating to: /login
+2026-01-31 16:57:02,304 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 16:57:30,340 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\messaging\session.py", line 194, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\controls\base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "C:\Users\cerra\codigo\flet\views\pages\login_view.py", line 182, in _on_login
+    SessionManager.login(self.page, user)
+  File "C:\Users\cerra\codigo\flet\core\session.py", line 19, in login
+    page.session[SessionManager.SESSION_KEY_USER_ID] = user.id
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'Session' object does not support item assignment

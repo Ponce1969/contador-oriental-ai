@@ -16,37 +16,37 @@ class SessionManager:
     @staticmethod
     def login(page: ft.Page, user: User) -> None:
         """Iniciar sesión de usuario"""
-        page.session[SessionManager.SESSION_KEY_USER_ID] = user.id
-        page.session[SessionManager.SESSION_KEY_FAMILIA_ID] = user.familia_id
-        page.session[SessionManager.SESSION_KEY_USERNAME] = user.username
+        page.client_storage.set(SessionManager.SESSION_KEY_USER_ID, user.id)
+        page.client_storage.set(SessionManager.SESSION_KEY_FAMILIA_ID, user.familia_id)
+        page.client_storage.set(SessionManager.SESSION_KEY_USERNAME, user.username)
     
     @staticmethod
     def logout(page: ft.Page) -> None:
         """Cerrar sesión"""
-        page.session.clear()
+        page.client_storage.remove(SessionManager.SESSION_KEY_USER_ID)
+        page.client_storage.remove(SessionManager.SESSION_KEY_FAMILIA_ID)
+        page.client_storage.remove(SessionManager.SESSION_KEY_USERNAME)
     
     @staticmethod
     def is_logged_in(page: ft.Page) -> bool:
         """Verificar si hay sesión activa"""
-        try:
-            return page.session.get(SessionManager.SESSION_KEY_USER_ID) is not None
-        except (AttributeError, KeyError):
-            return False
+        user_id = page.client_storage.get(SessionManager.SESSION_KEY_USER_ID)
+        return user_id is not None
     
     @staticmethod
     def get_user_id(page: ft.Page) -> int | None:
         """Obtener ID del usuario actual"""
-        return page.session.get(SessionManager.SESSION_KEY_USER_ID)
+        return page.client_storage.get(SessionManager.SESSION_KEY_USER_ID)
     
     @staticmethod
     def get_familia_id(page: ft.Page) -> int | None:
         """Obtener ID de la familia del usuario actual"""
-        return page.session.get(SessionManager.SESSION_KEY_FAMILIA_ID)
+        return page.client_storage.get(SessionManager.SESSION_KEY_FAMILIA_ID)
     
     @staticmethod
     def get_username(page: ft.Page) -> str | None:
         """Obtener username del usuario actual"""
-        return page.session.get(SessionManager.SESSION_KEY_USERNAME)
+        return page.client_storage.get(SessionManager.SESSION_KEY_USERNAME)
     
     @staticmethod
     def require_login(page: ft.Page) -> bool:
