@@ -96,7 +96,7 @@ class DashboardView:
                                             ft.Text(
                                                 value="Balance del mes",
                                                 size=16,
-                                                color=ft.Colors.GREY_700
+                                                color=ft.Colors.BLUE_GREY_700
                                             ),
                                             ft.Text(
                                                 value=f"${balance_fmt}",
@@ -123,9 +123,14 @@ class DashboardView:
                         spacing=10
                     ),
                     padding=30,
-                    bgcolor=ft.Colors.BLUE_GREY_50,
+                    bgcolor=ft.Colors.LIGHT_BLUE_50,
                     border_radius=15,
-                    margin=ft.margin.only(bottom=20)
+                    margin=ft.margin.only(bottom=20),
+                    shadow=ft.BoxShadow(
+                        spread_radius=1,
+                        blur_radius=8,
+                        color=ft.Colors.BLUE_GREY_100,
+                    )
                 ),
                 
                 # Tarjetas de Ingresos y Gastos
@@ -139,13 +144,14 @@ class DashboardView:
                                         controls=[
                                             ft.Icon(
                                                 ft.Icons.ACCOUNT_BALANCE_WALLET,
-                                                color=ft.Colors.GREEN,
+                                                color=ft.Colors.TEAL_600,
                                                 size=30
                                             ),
                                             ft.Text(
                                                 value="Ingresos",
                                                 size=18,
-                                                weight=ft.FontWeight.BOLD
+                                                weight=ft.FontWeight.BOLD,
+                                                color=ft.Colors.TEAL_900
                                             ),
                                         ],
                                         spacing=10
@@ -154,27 +160,32 @@ class DashboardView:
                                         value=f"${ingresos_fmt}",
                                         size=28,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.GREEN
+                                        color=ft.Colors.GREEN_600
                                     ),
                                     ft.ProgressBar(
                                         value=porcentaje_ingresos,
-                                        color=ft.Colors.GREEN,
-                                        bgcolor=ft.Colors.GREEN_100,
+                                        color=ft.Colors.TEAL_400,
+                                        bgcolor=ft.Colors.TEAL_100,
                                         height=10
                                     ),
                                     ft.Text(
                                         value=f"{porcentaje_ingresos * 100:.1f}% del total",
                                         size=12,
-                                        color=ft.Colors.GREY_700
+                                        color=ft.Colors.TEAL_700
                                     ),
                                 ],
                                 spacing=10,
                                 horizontal_alignment=ft.CrossAxisAlignment.START
                             ),
                             padding=20,
-                            bgcolor=ft.Colors.GREEN_50,
+                            bgcolor=ft.Colors.CYAN_50,
                             border_radius=10,
-                            expand=True
+                            expand=True,
+                            shadow=ft.BoxShadow(
+                                spread_radius=1,
+                                blur_radius=6,
+                                color=ft.Colors.TEAL_100,
+                            )
                         ),
                         
                         # Tarjeta de Gastos
@@ -185,13 +196,14 @@ class DashboardView:
                                         controls=[
                                             ft.Icon(
                                                 ft.Icons.MONEY_OFF,
-                                                color=ft.Colors.RED,
+                                                color=ft.Colors.ORANGE_600,
                                                 size=30
                                             ),
                                             ft.Text(
                                                 value="Gastos",
                                                 size=18,
-                                                weight=ft.FontWeight.BOLD
+                                                weight=ft.FontWeight.BOLD,
+                                                color=ft.Colors.ORANGE_900
                                             ),
                                         ],
                                         spacing=10
@@ -200,27 +212,32 @@ class DashboardView:
                                         value=f"${gastos_fmt}",
                                         size=28,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.RED
+                                        color=ft.Colors.DEEP_ORANGE_600
                                     ),
                                     ft.ProgressBar(
                                         value=porcentaje_gastos,
-                                        color=ft.Colors.RED,
-                                        bgcolor=ft.Colors.RED_100,
+                                        color=ft.Colors.ORANGE_400,
+                                        bgcolor=ft.Colors.ORANGE_100,
                                         height=10
                                     ),
                                     ft.Text(
                                         value=f"{porcentaje_gastos * 100:.1f}% del total",
                                         size=12,
-                                        color=ft.Colors.GREY_700
+                                        color=ft.Colors.ORANGE_700
                                     ),
                                 ],
                                 spacing=10,
                                 horizontal_alignment=ft.CrossAxisAlignment.START
                             ),
                             padding=20,
-                            bgcolor=ft.Colors.RED_50,
+                            bgcolor=ft.Colors.ORANGE_50,
                             border_radius=10,
-                            expand=True
+                            expand=True,
+                            shadow=ft.BoxShadow(
+                                spread_radius=1,
+                                blur_radius=6,
+                                color=ft.Colors.ORANGE_100,
+                            )
                         ),
                     ],
                     spacing=20
@@ -245,7 +262,7 @@ class DashboardView:
                                         value="💰 Ingresos por categoría",
                                         size=16,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.GREEN
+                                        color=ft.Colors.TEAL_700
                                     ),
                                     ft.Divider(),
                                     self._render_income_summary()
@@ -254,7 +271,8 @@ class DashboardView:
                                 scroll=ft.ScrollMode.AUTO
                             ),
                             padding=15,
-                            border=ft.border.all(1, ft.Colors.GREEN),
+                            bgcolor=ft.Colors.CYAN_50,
+                            border=ft.border.all(2, ft.Colors.TEAL_200),
                             border_radius=10,
                             expand=True,
                             height=300
@@ -268,7 +286,7 @@ class DashboardView:
                                         value="💸 Gastos por categoría",
                                         size=16,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.RED
+                                        color=ft.Colors.ORANGE_700
                                     ),
                                     ft.Divider(),
                                     self._render_expense_summary()
@@ -277,7 +295,8 @@ class DashboardView:
                                 scroll=ft.ScrollMode.AUTO
                             ),
                             padding=15,
-                            border=ft.border.all(1, ft.Colors.RED),
+                            bgcolor=ft.Colors.ORANGE_50,
+                            border=ft.border.all(2, ft.Colors.ORANGE_200),
                             border_radius=10,
                             expand=True,
                             height=300

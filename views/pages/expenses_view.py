@@ -117,7 +117,12 @@ class ExpensesView:
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            ft.Text(value="📝 Registrar nuevo gasto", size=20),
+                            ft.Text(
+                                value="� Registrar gasto",
+                                size=20,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.ORANGE_700
+                            ),
                             ft.Row(
                                 controls=[
                                     self.descripcion_input,
@@ -150,8 +155,14 @@ class ExpensesView:
                         spacing=15
                     ),
                     padding=20,
-                    border=ft.border.all(1, ft.Colors.OUTLINE),
-                    border_radius=10
+                    bgcolor=ft.Colors.ORANGE_50,
+                    border=ft.border.all(2, ft.Colors.ORANGE_200),
+                    border_radius=10,
+                    shadow=ft.BoxShadow(
+                        spread_radius=1,
+                        blur_radius=6,
+                        color=ft.Colors.ORANGE_100,
+                    )
                 ),
                 
                 ft.Divider(),
@@ -166,8 +177,14 @@ class ExpensesView:
                         spacing=10
                     ),
                     padding=20,
-                    border=ft.border.all(1, ft.Colors.OUTLINE),
-                    border_radius=10
+                    bgcolor=ft.Colors.ORANGE_50,
+                    border=ft.border.all(2, ft.Colors.ORANGE_200),
+                    border_radius=10,
+                    shadow=ft.BoxShadow(
+                        spread_radius=1,
+                        blur_radius=6,
+                        color=ft.Colors.ORANGE_100,
+                    )
                 ),
                 
                 ft.Divider(),

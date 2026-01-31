@@ -72,7 +72,9 @@ class FamilyMembersView:
                         controls=[
                             ft.Text(
                                 value="👥 Agregar miembro de la familia" if not self.editing_member_id else "✏️ Editar miembro de la familia",
-                                size=20
+                                size=20,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.PURPLE_700
                             ),
                             ft.Row(
                                 controls=[
@@ -100,8 +102,14 @@ class FamilyMembersView:
                         spacing=15
                     ),
                     padding=20,
-                    border=ft.border.all(1, ft.Colors.OUTLINE),
-                    border_radius=10
+                    bgcolor=ft.Colors.PURPLE_50,
+                    border=ft.border.all(2, ft.Colors.PURPLE_200),
+                    border_radius=10,
+                    shadow=ft.BoxShadow(
+                        spread_radius=1,
+                        blur_radius=6,
+                        color=ft.Colors.PURPLE_100,
+                    )
                 ),
                 
                 ft.Divider(),
@@ -207,18 +215,20 @@ class FamilyMembersView:
                             controls=[
                                 ft.Icon(
                                     ft.Icons.PERSON,
-                                    color=ft.Colors.BLUE
+                                    color=ft.Colors.PURPLE_600,
+                                    size=30
                                 ),
                                 ft.Column(
                                     controls=[
                                         ft.Text(
                                             value=member.nombre,
-                                            weight=ft.FontWeight.BOLD
+                                            weight=ft.FontWeight.BOLD,
+                                            color=ft.Colors.PURPLE_900
                                         ),
                                         ft.Text(
                                             value=f"{member.tipo_ingreso.value}{sueldo_text}",
                                             size=12,
-                                            color=ft.Colors.GREY_700
+                                            color=ft.Colors.PURPLE_700
                                         ),
                                     ],
                                     spacing=2,
@@ -227,14 +237,21 @@ class FamilyMembersView:
                                 ft.IconButton(
                                     icon=ft.Icons.EDIT,
                                     tooltip="Editar",
+                                    icon_color=ft.Colors.DEEP_PURPLE_400,
                                     on_click=lambda e, m=member: self._on_edit_member(m)
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.START
                         ),
-                        padding=10,
-                        border=ft.border.all(1, ft.Colors.OUTLINE),
-                        border_radius=5
+                        padding=15,
+                        bgcolor=ft.Colors.PURPLE_50,
+                        border=ft.border.all(2, ft.Colors.PURPLE_200),
+                        border_radius=10,
+                        shadow=ft.BoxShadow(
+                            spread_radius=1,
+                            blur_radius=4,
+                            color=ft.Colors.PURPLE_100,
+                        )
                     )
                 )
         

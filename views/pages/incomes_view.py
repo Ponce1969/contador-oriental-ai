@@ -113,7 +113,9 @@ class IncomesView:
                         controls=[
                             ft.Text(
                                 value="💰 Registrar ingreso" if not self.editing_income_id else "✏️ Editar ingreso",
-                                size=20
+                                size=20,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.TEAL_700
                             ),
                             ft.Row(
                                 controls=[
@@ -150,8 +152,14 @@ class IncomesView:
                         spacing=15
                     ),
                     padding=20,
-                    border=ft.border.all(1, ft.Colors.OUTLINE),
-                    border_radius=10
+                    bgcolor=ft.Colors.CYAN_50,
+                    border=ft.border.all(2, ft.Colors.TEAL_200),
+                    border_radius=10,
+                    shadow=ft.BoxShadow(
+                        spread_radius=1,
+                        blur_radius=6,
+                        color=ft.Colors.TEAL_100,
+                    )
                 ),
                 
                 ft.Divider(),
@@ -305,18 +313,20 @@ class IncomesView:
                             controls=[
                                 ft.Icon(
                                     ft.Icons.ACCOUNT_BALANCE_WALLET,
-                                    color=ft.Colors.GREEN
+                                    color=ft.Colors.TEAL_600,
+                                    size=30
                                 ),
                                 ft.Column(
                                     controls=[
                                         ft.Text(
                                             value=f"{member_name} - {income.descripcion}",
-                                            weight=ft.FontWeight.BOLD
+                                            weight=ft.FontWeight.BOLD,
+                                            color=ft.Colors.TEAL_900
                                         ),
                                         ft.Text(
                                             value=f"{income.categoria.value} • ${monto_formateado} • {income.fecha}{recurrente_text}",
                                             size=12,
-                                            color=ft.Colors.GREY_700
+                                            color=ft.Colors.TEAL_700
                                         ),
                                     ],
                                     spacing=2,
@@ -325,20 +335,27 @@ class IncomesView:
                                 ft.IconButton(
                                     icon=ft.Icons.EDIT,
                                     tooltip="Editar",
+                                    icon_color=ft.Colors.TEAL_400,
                                     on_click=lambda e, inc=income: self._on_edit_income(inc)
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE,
                                     tooltip="Eliminar",
-                                    icon_color=ft.Colors.RED,
+                                    icon_color=ft.Colors.RED_400,
                                     on_click=lambda e, inc=income: self._on_delete_income(inc)
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.START
                         ),
-                        padding=10,
-                        border=ft.border.all(1, ft.Colors.OUTLINE),
-                        border_radius=5
+                        padding=15,
+                        bgcolor=ft.Colors.CYAN_50,
+                        border=ft.border.all(2, ft.Colors.TEAL_200),
+                        border_radius=10,
+                        shadow=ft.BoxShadow(
+                            spread_radius=1,
+                            blur_radius=4,
+                            color=ft.Colors.TEAL_100,
+                        )
                     )
                 )
         
