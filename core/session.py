@@ -28,7 +28,8 @@ class SessionManager:
     @staticmethod
     def is_logged_in(page: ft.Page) -> bool:
         """Verificar si hay sesión activa"""
-        return page.session.contains_key(SessionManager.SESSION_KEY_USER_ID)
+        user_id = page.session.get(SessionManager.SESSION_KEY_USER_ID)
+        return user_id is not None
     
     @staticmethod
     def get_user_id(page: ft.Page) -> int | None:

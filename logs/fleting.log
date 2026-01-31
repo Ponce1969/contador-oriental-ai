@@ -604,3 +604,21 @@ AttributeError: 'super' object has no attribute '__getattr__'. Did you mean: '__
 2026-01-31 15:36:57,368 | INFO | App | Base de datos inicializada
 2026-01-31 15:36:57,377 | INFO | Router | Navigating to: /
 2026-01-31 15:36:57,521 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 16:46:52,943 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:46:52,946 | INFO | flet | Starting up TCP server on localhost:62176
+2026-01-31 16:46:52,963 | INFO | flet | Flet app has started...
+2026-01-31 16:46:54,032 | INFO | flet | App URL: tcp://localhost:62176
+2026-01-31 16:46:54,032 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:46:54,034 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:46:54,035 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:46:56,214 | INFO | flet | App session started
+2026-01-31 16:46:56,244 | INFO | App | Base de datos inicializada
+2026-01-31 16:46:56,695 | ERROR | ErrorHandler | Global error caught
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\main.py", line 73, in main
+    if SessionManager.is_logged_in(page):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\core\session.py", line 31, in is_logged_in
+    return page.session.contains_key(SessionManager.SESSION_KEY_USER_ID)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Session' object has no attribute 'contains_key'

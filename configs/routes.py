@@ -5,6 +5,14 @@ import flet as ft
 
 ROUTES = [
     {
+        "path": "/login",
+        "view": "views.pages.login_view.LoginView",
+        "label": "🔐 Login",
+        "icon": ft.Icons.LOGIN,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
+    {
         "path": "/",
         "view": "views.pages.dashboard_view.DashboardView",
         "label": "📊 Dashboard",

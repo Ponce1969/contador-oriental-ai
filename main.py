@@ -65,12 +65,18 @@ def main(page: ft.Page):
         I18n.load("pt")
 
         from core.router import Router
+        from core.session import SessionManager
+        
         router = Router(page)
         
-        # Mostrar banner de bienvenida
-        page.banner.open = True
-        
-        router.navigate("/")
+        # Verificar si hay sesión activa
+        if SessionManager.is_logged_in(page):
+            # Usuario logueado - mostrar banner y dashboard
+            page.banner.open = True
+            router.navigate("/")
+        else:
+            # No hay sesión - ir a login
+            router.navigate("/login")
 
         logger.info("Aplicação iniciada com sucesso")
         
