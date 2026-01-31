@@ -772,3 +772,21 @@ Traceback (most recent call last):
     page.session[SessionManager.SESSION_KEY_USER_ID] = user.id
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 TypeError: 'Session' object does not support item assignment
+2026-01-31 16:59:33,529 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 16:59:33,531 | INFO | flet | Starting up TCP server on localhost:57132
+2026-01-31 16:59:33,541 | INFO | flet | Flet app has started...
+2026-01-31 16:59:33,548 | INFO | flet | App URL: tcp://localhost:57132
+2026-01-31 16:59:33,548 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 16:59:33,548 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:59:33,548 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 16:59:33,839 | INFO | flet | App session started
+2026-01-31 16:59:33,853 | INFO | App | Base de datos inicializada
+2026-01-31 16:59:33,977 | ERROR | ErrorHandler | Global error caught
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\main.py", line 73, in main
+    if SessionManager.is_logged_in(page):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\core\session.py", line 33, in is_logged_in
+    user_id = page.client_storage.get(SessionManager.SESSION_KEY_USER_ID)
+              ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'client_storage'

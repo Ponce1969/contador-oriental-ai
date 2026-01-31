@@ -5,6 +5,9 @@ import flet as ft
 
 from models.user_model import User
 
+# Diccionario global para almacenar sesiones por session_id
+_sessions = {}
+
 
 class SessionManager:
     """Gestor de sesión de usuario"""
@@ -14,39 +17,51 @@ class SessionManager:
     SESSION_KEY_USERNAME = "username"
     
     @staticmethod
+    def _get_session_data(page: ft.Page) -> dict:
+        """Obtener o crear datos de sesión para esta página"""
+        session_id = page.session.id
+        if session_id not in _sessions:
+            _sessions[session_id] = {}
+        return _sessions[session_id]
+    
+    @staticmethod
     def login(page: ft.Page, user: User) -> None:
         """Iniciar sesión de usuario"""
-        page.client_storage.set(SessionManager.SESSION_KEY_USER_ID, user.id)
-        page.client_storage.set(SessionManager.SESSION_KEY_FAMILIA_ID, user.familia_id)
-        page.client_storage.set(SessionManager.SESSION_KEY_USERNAME, user.username)
+        session_data = SessionManager._get_session_data(page)
+        session_data[SessionManager.SESSION_KEY_USER_ID] = user.id
+        session_data[SessionManager.SESSION_KEY_FAMILIA_ID] = user.familia_id
+        session_data[SessionManager.SESSION_KEY_USERNAME] = user.username
     
     @staticmethod
     def logout(page: ft.Page) -> None:
         """Cerrar sesión"""
-        page.client_storage.remove(SessionManager.SESSION_KEY_USER_ID)
-        page.client_storage.remove(SessionManager.SESSION_KEY_FAMILIA_ID)
-        page.client_storage.remove(SessionManager.SESSION_KEY_USERNAME)
+        session_id = page.session.id
+        if session_id in _sessions:
+            del _sessions[session_id]
     
     @staticmethod
     def is_logged_in(page: ft.Page) -> bool:
         """Verificar si hay sesión activa"""
-        user_id = page.client_storage.get(SessionManager.SESSION_KEY_USER_ID)
-        return user_id is not None
+        session_data = SessionManager._get_session_data(page)
+        return SessionManager.SESSION_KEY_USER_ID in session_data
     
     @staticmethod
     def get_user_id(page: ft.Page) -> int | None:
         """Obtener ID del usuario actual"""
-        return page.client_storage.get(SessionManager.SESSION_KEY_USER_ID)
+        session_data = SessionManager._get_session_data(page)
+        return session_data.get(SessionManager.SESSION_KEY_USER_ID)
     
     @staticmethod
     def get_familia_id(page: ft.Page) -> int | None:
         """Obtener ID de la familia del usuario actual"""
-        return page.client_storage.get(SessionManager.SESSION_KEY_FAMILIA_ID)
+        session_data = SessionManager._get_session_data(page)
+        return session_data.get(SessionManager.SESSION_KEY_FAMILIA_ID)
     
     @staticmethod
     def get_username(page: ft.Page) -> str | None:
         """Obtener username del usuario actual"""
-        return page.client_storage.get(SessionManager.SESSION_KEY_USERNAME)
+        session_data = SessionManager._get_session_data(page)
+        return session_data.get(SessionManager.SESSION_KEY_USERNAME)
     
     @staticmethod
     def require_login(page: ft.Page) -> bool:
