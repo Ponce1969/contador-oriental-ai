@@ -9,13 +9,16 @@ logger = get_logger("App")
 
 def main(page: ft.Page):
     try:
-        page.title = "Smart-Shopping"
+        page.title = "Auditor Familiar"
         page.window.width = 1000
         page.window.height = 700
         page.window.resizable = True
         page.theme_mode = ft.ThemeMode.LIGHT
         page.padding = 0
         page.spacing = 0
+        
+        # Configurar icono personalizado de la aplicación (formato ICO para Windows)
+        page.window_icon = "assets/icon-gastos.ico"
 
         # Inicializar base de datos
         create_tables()
@@ -64,5 +67,8 @@ def main(page: ft.Page):
     except Exception as e:
         GlobalErrorHandler.handle(page, e)
 
-ft.app(target=main)
+ft.app(
+    target=main,
+    assets_dir="assets"
+)
 
