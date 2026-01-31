@@ -38,6 +38,6 @@ def get_db_session() -> Generator[Session, None, None]:
 def create_tables() -> None:
     """Crear todas las tablas de la base de datos."""
     from database.base import Base
-    from database.tables import ExpenseTable  # noqa: F401
+    from database.tables import ExpenseTable, FamilyMemberTable, IncomeTable  # noqa: F401
     
     Base.metadata.create_all(bind=engine)

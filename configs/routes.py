@@ -5,10 +5,42 @@ import flet as ft
 
 ROUTES = [
     {
+        "path": "/",
+        "view": "views.pages.dashboard_view.DashboardView",
+        "label": "📊 Dashboard",
+        "icon": ft.Icons.DASHBOARD,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+    {
+        "path": "/home",
+        "view": "views.pages.home_view.HomeView",
+        "label": "🏠 Inicio",
+        "icon": ft.Icons.HOME,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
+    {
+        "path": "/family",
+        "view": "views.pages.family_members_view.FamilyMembersView",
+        "label": "� Familia",
+        "icon": ft.Icons.PEOPLE,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+    {
+        "path": "/incomes",
+        "view": "views.pages.incomes_view.IncomesView",
+        "label": "💰 Ingresos",
+        "icon": ft.Icons.ACCOUNT_BALANCE_WALLET,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+    {
         "path": "/expenses",
         "view": "views.pages.expenses_view.ExpensesView",
         "label": "💸 Gastos",
-        "icon": ft.Icons.ATTACH_MONEY,
+        "icon": ft.Icons.MONEY_OFF,
         "show_in_top": True,
         "show_in_bottom": True,
     },
@@ -19,15 +51,6 @@ ROUTES = [
         "icon": ft.Icons.SHOPPING_CART,
         "show_in_top": False,
         "show_in_bottom": False,
-    },
-
-    {
-        "path": "/",
-        "view": "views.pages.home_view.HomeView",
-        "label": "menu.home",
-        "icon": ft.Icons.HOME,
-        "show_in_top": True,
-        "show_in_bottom": True,
     },
     {
         "path": "/settings",

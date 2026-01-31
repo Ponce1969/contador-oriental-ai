@@ -1,8 +1,8 @@
-# 🛒 Smart Shopping List
+# � Auditor Familiar de Gastos e Ingresos
 
-Aplicación de escritorio construida con **Python 3.12**, **Flet**, **Fleting** y **arquitectura MVC**, pensada como una base sólida y escalable para evolucionar hacia un **auditor personal/familiar de gastos mensuales**.
+Aplicación de escritorio construida con **Python 3.12**, **Flet**, **Fleting** y **arquitectura MVC** para gestión completa de finanzas familiares.
 
-Este proyecto no es un ejemplo trivial: está diseñado siguiendo **buenas prácticas profesionales**, con tipado estricto, separación de responsabilidades y manejo explícito de errores mediante `Result[T, E]`.
+Sistema profesional de seguimiento de ingresos y gastos con balance automático, diseñado siguiendo **buenas prácticas profesionales**, con tipado estricto, separación de responsabilidades y manejo explícito de errores mediante `Result[T, E]`.
 
 **🚀 Basado en Fleting Framework** - Micro framework MVC para Flet con routing automático, layouts consistentes y CLI productiva.
 
@@ -10,18 +10,17 @@ Este proyecto no es un ejemplo trivial: está diseñado siguiendo **buenas prác
 
 ## 🎯 Objetivo del proyecto
 
-El objetivo inicial es construir una **lista de compras persistente**, que permita:
+Sistema completo de gestión financiera familiar que permite:
 
-* Registrar productos comprados día a día
-* Guardarlos en una base de datos
-* Consultarlos posteriormente
+### **Funcionalidades Implementadas** ✅
 
-A partir de esta base, la aplicación podrá evolucionar hacia:
-
-* Totales de gasto mensual
-* Comparación de precios por producto
-* Detección de hábitos de consumo
-* Auditoría completa de gastos (comida, vehículo, servicios, etc.)
+* **👥 Gestión de Familia**: Registrar miembros con tipos de ingreso (Sueldo fijo, Jornalero, Mixto, Sin ingresos)
+* **💰 Gestión de Ingresos**: Registrar ingresos diarios (jornaleros) o mensuales (sueldos fijos) con 9 categorías
+* **💸 Gestión de Gastos**: Registrar gastos familiares con categorías, subcategorías y métodos de pago
+* **📊 Dashboard**: Balance automático mensual (Ingresos - Gastos) con indicadores visuales
+* **✏️ Edición completa**: Editar y eliminar todos los registros
+* **🇺🇾 Formato uruguayo**: Montos con separador de miles ($50.000)
+* **📈 Resúmenes**: Análisis por categorías con barras de progreso y porcentajes
 
 ---
 
@@ -78,33 +77,44 @@ La aplicación se divide en capas claras:
 ## 📂 Estructura del proyecto
 
 ```text
-├── main.py                 # Punto de entrada de la aplicación (Fleting)
-├── models/                 # Modelos de dominio (Pydantic)
-│   ├── shopping_model.py
-│   └── errors.py
-├── views/                  # Vistas Flet (UI)
+├── main.py                           # Punto de entrada (Fleting)
+├── models/                           # Modelos de dominio (Pydantic)
+│   ├── expense_model.py              # Modelo de gastos
+│   ├── income_model.py               # Modelo de ingresos
+│   ├── family_member_model.py        # Modelo de miembros
+│   ├── categories.py                 # Categorías y enums
+│   └── errors.py                     # Errores de dominio
+├── views/                            # Vistas Flet (UI)
 │   └── pages/
-│       ├── shopping_view.py
-│       ├── home_view.py
-│       └── settings_view.py
-├── controllers/            # Controladores MVC
-│   └── shopping_controller.py
-├── services/               # Lógica de negocio
-│   └── shopping_service.py
-├── repositories/           # Persistencia
-│   ├── shopping_repository.py
-│   └── mappers.py
-├── database/               # Infraestructura de base de datos
-│   ├── engine.py
+│       ├── dashboard_view.py         # Dashboard principal
+│       ├── family_members_view.py    # Gestión de familia
+│       ├── incomes_view.py           # Gestión de ingresos
+│       ├── expenses_view.py          # Gestión de gastos
+│       ├── home_view.py              # Página de inicio
+│       └── settings_view.py          # Configuraciones
+├── controllers/                      # Controladores MVC
+│   ├── expense_controller.py
+│   ├── income_controller.py
+│   └── family_member_controller.py
+├── services/                         # Lógica de negocio
+│   ├── expense_service.py
+│   ├── income_service.py
+│   └── family_member_service.py
+├── repositories/                     # Persistencia
+│   ├── expense_repository.py
+│   ├── income_repository.py
+│   ├── family_member_repository.py
+│   └── mappers.py                    # Mappers ORM ↔ Dominio
+├── database/                         # Infraestructura BD
 │   ├── base.py
-│   └── tables.py
-├── core/                   # Núcleo de Fleting
+│   └── tables.py                     # Tablas SQLAlchemy
+├── core/                             # Núcleo de Fleting
 │   ├── sqlalchemy_session.py
-│   └── database.py
-├── configs/                # Configuraciones
-│   ├── routes.py
+│   └── router.py
+├── configs/                          # Configuraciones
+│   ├── routes.py                     # Rutas de la app
 │   └── app_config.py
-└── flet_types/             # Tipos correctos para Flet
+└── flet_types/                       # Tipos correctos Flet
     └── flet_types.py
 ```
 
@@ -154,32 +164,92 @@ Esto permite:
 
 ---
 
-## 🛣️ Roadmap de evolución
+## � Instalación y Uso
 
-### Fase 1 (actual)
+### **Requisitos previos**
 
-* Lista de compras persistente
-* Crear y listar ítems
+* Python 3.12+
+* uv (gestor de paquetes)
 
-### Fase 2
+### **Instalación**
 
-* Marcar productos como comprados
-* Eliminar productos
+```bash
+# Clonar el repositorio
+git clone <tu-repo-url>
+cd flet
 
-### Fase 3
+# Instalar dependencias con uv
+uv sync
 
-* Totales diarios y mensuales
-* Agrupación por categorías
+# Ejecutar la aplicación
+uv run python main.py
+```
 
-### Fase 4
+### **Comandos CLI de Fleting**
 
-* Comparación histórica de precios
-* Detección de consumo excesivo
+Fleting incluye una CLI productiva para generar código:
 
-### Fase 5
+```bash
+# Ver ayuda general
+fleting -h
 
-* Gastos no relacionados a compras
-* Auditor mensual completo
+# Crear una nueva vista
+fleting create view nombre_vista
+
+# Crear un nuevo controlador
+fleting create controller nombre_controller
+
+# Crear un nuevo modelo
+fleting create model nombre_model
+
+# Ver todas las rutas registradas
+fleting routes
+
+# Generar scaffold completo (modelo + vista + controller)
+fleting scaffold nombre_entidad
+```
+
+### **Flujo de uso de la aplicación**
+
+1. **Registra tu familia** en 👥 Familia
+   - Agrega miembros con su tipo de ingreso
+   - Para sueldos fijos, indica el monto mensual
+
+2. **Registra ingresos** en 💰 Ingresos
+   - Jornaleros: registra cada día trabajado
+   - Sueldos fijos: registra cuando cobras
+   - Extras: bonos, freelance, etc.
+
+3. **Registra gastos** en 💸 Gastos
+   - Selecciona categoría y subcategoría
+   - Indica método de pago
+   - Marca si es recurrente
+
+4. **Consulta el balance** en 📊 Dashboard
+   - Ve el balance del mes actual
+   - Analiza ingresos vs gastos
+   - Identifica categorías con mayor gasto
+
+---
+
+## 🛣️ Roadmap de mejoras futuras
+
+### **Funcionalidades pendientes** 🔮
+
+* **📅 Selector de mes/año**: Ver balance de meses anteriores
+* **📊 Gráficos avanzados**: Gráficos de línea, torta, evolución mensual
+* **🔔 Alertas**: Notificaciones cuando gastos superan presupuesto
+* **💾 Exportar datos**: Exportar a Excel/CSV para análisis externo
+* **🎯 Presupuestos**: Definir presupuestos por categoría
+* **📱 Versión móvil**: Adaptar para Android/iOS con Flet
+* **👨‍👩‍👧‍👦 Multi-usuario**: Login y datos por familia
+* **🔄 Sincronización**: Sync entre dispositivos (cloud)
+* **📈 Proyecciones**: Predicción de gastos futuros con IA
+* **🏦 Integración bancaria**: Importar movimientos automáticamente
+* **📸 Recibos**: Adjuntar fotos de tickets/facturas
+* **🔍 Búsqueda avanzada**: Filtros por fecha, monto, categoría
+* **📊 Comparativas**: Comparar meses/años anteriores
+* **💡 Recomendaciones**: Sugerencias de ahorro basadas en patrones
 
 ---
 
@@ -210,10 +280,44 @@ Esto permite:
 
 ## ✅ Estado actual
 
-✔ ✅ **Migración a Fleting completada**
-✔ ✅ **Base de datos conectada y funcional**
+✔ ✅ **Sistema completo de gestión familiar implementado**
+✔ ✅ **Módulo de Familia con edición**
+✔ ✅ **Módulo de Ingresos con 9 categorías**
+✔ ✅ **Módulo de Gastos con categorías y subcategorías**
+✔ ✅ **Dashboard con balance automático mensual**
+✔ ✅ **Formato uruguayo con separador de miles**
 ✔ ✅ **Arquitectura MVC con tipado estricto**
-✔ ✅ **Routing automático funcionando**
-✔ ✅ **Vista de shopping operativa**
+✔ ✅ **Base de datos SQLite con SQLAlchemy 2.0**
 
-**🎯 Proyecto listo para escalar con Fleting!**
+**🎯 Sistema funcional listo para producción!**
+
+---
+
+## 🤝 Contribuir
+
+Si quieres contribuir al proyecto:
+
+1. Fork el repositorio
+2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Implementa tu feature siguiendo la arquitectura MVC
+4. Asegúrate de mantener el tipado estricto
+5. Haz commit de tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
+6. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+7. Abre un Pull Request
+
+**Ideas para contribuir**: Revisa el [Roadmap de mejoras futuras](#-roadmap-de-mejoras-futuras) para ver funcionalidades pendientes.
+
+---
+
+## 📝 Licencia
+
+Este proyecto está bajo licencia MIT - ver archivo LICENSE para más detalles.
+
+---
+
+## 🙏 Agradecimientos
+
+* **Fleting Framework** - [alexyucra/Fleting](https://github.com/alexyucra/Fleting)
+* **Flet** - Framework UI multiplataforma
+* **SQLAlchemy** - ORM moderno para Python
+* **Pydantic** - Validación de datos con tipado

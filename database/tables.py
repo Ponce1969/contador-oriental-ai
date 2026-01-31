@@ -2,10 +2,65 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import Boolean, Date, Float, String, Text
+from sqlalchemy import Boolean, Date, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.base import Base
+
+
+class FamilyMemberTable(Base):
+    """
+    Tabla de miembros de la familia
+    """
+    __tablename__ = "family_members"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    # Datos básicos
+    nombre: Mapped[str] = mapped_column(String(100), nullable=False)
+    
+    # Tipo de ingreso
+    tipo_ingreso: Mapped[str] = mapped_column(String(50), nullable=False)
+    
+    # Sueldo mensual fijo (si aplica)
+    sueldo_mensual: Mapped[float | None] = mapped_column(Float, nullable=True)
+    
+    # Estado
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    
+    # Notas
+    notas: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class IncomeTable(Base):
+    """
+    Tabla de ingresos familiares
+    """
+    __tablename__ = "incomes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    # Relación con miembro de la familia
+    family_member_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("family_members.id"),
+        nullable=False
+    )
+    
+    # Datos básicos del ingreso
+    monto: Mapped[float] = mapped_column(Float, nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    descripcion: Mapped[str] = mapped_column(String(200), nullable=False)
+    
+    # Categorización
+    categoria: Mapped[str] = mapped_column(String(50), nullable=False)
+    
+    # Recurrencia
+    es_recurrente: Mapped[bool] = mapped_column(Boolean, default=False)
+    frecuencia: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    
+    # Información adicional
+    notas: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class ExpenseTable(Base):
