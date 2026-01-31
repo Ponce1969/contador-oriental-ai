@@ -10,6 +10,7 @@ import flet as ft
 from result import Err, Ok
 
 from controllers.expense_controller import ExpenseController
+from core.session import SessionManager
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.categories import (
     ExpenseCategory,
@@ -28,6 +29,11 @@ class ExpensesView:
     def __init__(self, page, router):
         self.page = page
         self.router = router
+        
+        # Verificar login
+        if not SessionManager.is_logged_in(page):
+            router.navigate("/login")
+            return
         
         # Controller con gestión automática de sesión
         self.controller = ExpenseController()

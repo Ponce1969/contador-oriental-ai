@@ -790,3 +790,18 @@ Traceback (most recent call last):
     user_id = page.client_storage.get(SessionManager.SESSION_KEY_USER_ID)
               ^^^^^^^^^^^^^^^^^^^
 AttributeError: 'Page' object has no attribute 'client_storage'
+2026-01-31 17:01:49,851 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 17:01:49,858 | INFO | flet | Starting up TCP server on localhost:56578
+2026-01-31 17:01:49,879 | INFO | flet | Flet app has started...
+2026-01-31 17:01:49,886 | INFO | flet | App URL: tcp://localhost:56578
+2026-01-31 17:01:49,887 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 17:01:49,889 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:01:49,889 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:01:50,159 | INFO | flet | App session started
+2026-01-31 17:01:50,174 | INFO | App | Base de datos inicializada
+2026-01-31 17:01:50,306 | INFO | Router | Navigating to: /login
+2026-01-31 17:01:50,331 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 17:02:06,105 | INFO | Router | Navigating to: /
+2026-01-31 17:02:39,912 | INFO | Router | Navigating to: /family
+2026-01-31 17:02:45,303 | INFO | Router | Navigating to: /incomes
+2026-01-31 17:02:46,717 | INFO | Router | Navigating to: /expenses

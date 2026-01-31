@@ -11,6 +11,7 @@ from result import Err, Ok
 
 from controllers.family_member_controller import FamilyMemberController
 from controllers.income_controller import IncomeController
+from core.session import SessionManager
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
 from models.income_model import Income, IncomeCategory, RecurrenceFrequency
@@ -23,6 +24,11 @@ class IncomesView:
     def __init__(self, page, router):
         self.page = page
         self.router = router
+        
+        # Verificar login
+        if not SessionManager.is_logged_in(page):
+            router.navigate("/login")
+            return
         
         # Controllers
         self.income_controller = IncomeController()

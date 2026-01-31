@@ -10,6 +10,7 @@ import flet as ft
 
 from controllers.expense_controller import ExpenseController
 from controllers.income_controller import IncomeController
+from core.session import SessionManager
 from views.layouts.main_layout import MainLayout
 
 
@@ -19,6 +20,11 @@ class DashboardView:
     def __init__(self, page, router):
         self.page = page
         self.router = router
+        
+        # Verificar login
+        if not SessionManager.is_logged_in(page):
+            router.navigate("/login")
+            return
         
         # Controllers
         self.income_controller = IncomeController()

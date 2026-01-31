@@ -3,6 +3,7 @@ import flet as ft
 
 from configs.routes import ROUTES
 from core.i18n import I18n
+from core.session import SessionManager
 from core.state import AppState
 
 
@@ -56,16 +57,44 @@ class MainLayout(ft.Column):
                     on_click=lambda e, p=r["path"]: self.router.navigate(p),
                 )
             )
+        
+        # Agregar separador y logout
+        items.append(ft.Divider())
+        items.append(
+            ft.PopupMenuItem(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.LOGOUT, color=ft.Colors.RED_400),
+                        ft.Text("Cerrar Sesión", color=ft.Colors.RED_400),
+                    ],
+                    spacing=10,
+                ),
+                on_click=self._on_logout,
+            )
+        )
+        
+        # Obtener nombre de usuario
+        username = SessionManager.get_username(self._page) or "Usuario"
 
         return ft.AppBar(
             title=ft.Text(I18n.t("app.name")),
             actions=[
+                ft.Text(
+                    f"👤 {username}",
+                    size=14,
+                    color=ft.Colors.WHITE70
+                ),
                 ft.PopupMenuButton(
                     icon=ft.Icons.MENU,
                     items=items,
                 )
             ],
         )
+    
+    def _on_logout(self, e):
+        """Cerrar sesión y redirigir al login"""
+        SessionManager.logout(self._page)
+        self.router.navigate("/login")
 
     # ---------- BOTTOM BAR ----------
     def _bottom_bar(self):
