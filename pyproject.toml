@@ -11,6 +11,9 @@ dependencies = [
     "sqlalchemy",
     "pydantic",
     "result",
+    "argon2-cffi",
+    "psycopg2-binary",
+    "pillow",
 ]
 
 [dependency-groups]
