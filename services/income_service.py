@@ -4,10 +4,11 @@ Servicio de lógica de negocio para ingresos familiares
 
 from __future__ import annotations
 
+from result import Err, Result
+
 from models.errors import DatabaseError, ValidationError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
-from result import Err, Result
 
 
 class IncomeService:
@@ -31,7 +32,11 @@ class IncomeService:
         
         # Validación: debe tener un miembro asociado
         if income.family_member_id <= 0:
-            return Err(ValidationError(message="Debe seleccionar un miembro de la familia"))
+            return Err(
+                ValidationError(
+                    message="Debe seleccionar un miembro de la familia"
+                )
+            )
         
         # Validación: si es recurrente, debe tener frecuencia
         if income.es_recurrente and not income.frecuencia:

@@ -41,7 +41,8 @@ class FamilyMembersView:
             label="Tipo de ingreso",
             width=200,
             options=[
-                ft.dropdown.Option(key=tipo.name, text=tipo.value) for tipo in IncomeType
+                ft.dropdown.Option(key=tipo.name, text=tipo.value)
+                for tipo in IncomeType
             ]
         )
         
@@ -71,7 +72,11 @@ class FamilyMembersView:
                     content=ft.Column(
                         controls=[
                             ft.Text(
-                                value="👥 Agregar miembro de la familia" if not self.editing_member_id else "✏️ Editar miembro de la familia",
+                                value=(
+                                    "👥 Agregar miembro de la familia"
+                                    if not self.editing_member_id
+                                    else "✏️ Editar miembro de la familia"
+                                ),
                                 size=20,
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.PURPLE_700
@@ -88,7 +93,11 @@ class FamilyMembersView:
                             ft.Row(
                                 controls=[
                                     CorrectElevatedButton(
-                                        "💾 Guardar" if not self.editing_member_id else "✅ Actualizar",
+                                        (
+                                            "💾 Guardar"
+                                            if not self.editing_member_id
+                                            else "✅ Actualizar"
+                                        ),
                                         on_click=self._on_save_member
                                     ),
                                     CorrectElevatedButton(
@@ -154,7 +163,9 @@ class FamilyMembersView:
             if selected_tipo in (IncomeType.FIJO, IncomeType.MIXTO):
                 if not self.sueldo_input.value:
                     self._show_error(
-                        AppError(message="El sueldo mensual es obligatorio para este tipo")
+                        AppError(
+                            message="El sueldo mensual es obligatorio para este tipo"
+                        )
                     )
                     return
                 # Limpiar formato: eliminar puntos de separador de miles
@@ -206,7 +217,9 @@ class FamilyMembersView:
                 sueldo_text = ""
                 if member.sueldo_mensual:
                     # Formatear con separador de miles
-                    sueldo_formateado = f"{member.sueldo_mensual:,.0f}".replace(",", ".")
+                    sueldo_formateado = (
+                        f"{member.sueldo_mensual:,.0f}".replace(",", ".")
+                    )
                     sueldo_text = f" • ${sueldo_formateado}/mes"
                 
                 self.members_column.controls.append(
@@ -262,7 +275,9 @@ class FamilyMembersView:
         self.editing_member_id = member.id
         self.nombre_input.value = member.nombre
         self.tipo_ingreso_dropdown.value = member.tipo_ingreso.name
-        self.sueldo_input.value = str(member.sueldo_mensual) if member.sueldo_mensual else ""
+        self.sueldo_input.value = (
+            str(member.sueldo_mensual) if member.sueldo_mensual else ""
+        )
         self.notas_input.value = member.notas if member.notas else ""
         self.page.update()
 

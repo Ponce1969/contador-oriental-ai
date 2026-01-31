@@ -331,7 +331,10 @@ class ExpensesView:
                                             weight="bold"
                                         ),
                                         ft.Text(
-                                            value=f"{expense.categoria.value} • {expense.metodo_pago.value}",
+                                            value=(
+                                            f"{expense.categoria.value} • "
+                                            f"{expense.metodo_pago.value}"
+                                        ),
                                             size=12,
                                             color=ft.Colors.GREY_700
                                         ),

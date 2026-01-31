@@ -15,7 +15,11 @@ class GlobalErrorHandler:
             ft.Container(
                 content=ft.Column(
                     controls=[
-                        ft.Text("⚠️ An error occurred.", size=24, weight=ft.FontWeight.BOLD),
+                        ft.Text(
+                            "⚠️ An error occurred.",
+                            size=24,
+                            weight=ft.FontWeight.BOLD
+                        ),
                         ft.Text("Something went wrong. Please try again."),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,

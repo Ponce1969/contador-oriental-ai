@@ -20,12 +20,22 @@ class Expense(BaseModel):
     
     # Datos básicos del gasto
     monto: float = Field(gt=0, description="Monto del gasto en pesos")
-    fecha: date = Field(default_factory=date.today, description="Fecha del gasto")
-    descripcion: str = Field(min_length=1, max_length=200, description="Descripción del gasto")
+    fecha: date = Field(
+        default_factory=date.today, 
+        description="Fecha del gasto"
+    )
+    descripcion: str = Field(
+        min_length=1, 
+        max_length=200, 
+        description="Descripción del gasto"
+    )
     
     # Categorización
     categoria: ExpenseCategory = Field(description="Categoría principal del gasto")
-    subcategoria: str | None = Field(default=None, description="Subcategoría específica")
+    subcategoria: str | None = Field(
+        default=None, 
+        description="Subcategoría específica"
+    )
     
     # Información de pago
     metodo_pago: PaymentMethod = Field(
@@ -38,9 +48,9 @@ class Expense(BaseModel):
         default=False,
         description="Indica si es un gasto recurrente"
     )
-    frecuencia: RecurrenceFrequency | None = Field(
+    frecuencia_recurrencia: RecurrenceFrequency | None = Field(
         default=None,
-        description="Frecuencia del gasto recurrente"
+        description="Frecuencia de recurrencia"
     )
     
     # Información adicional
@@ -64,4 +74,8 @@ class Expense(BaseModel):
     @property
     def categoria_nombre(self) -> str:
         """Nombre de la categoría sin emoji"""
-        return self.categoria.value.split(" ", 1)[1] if " " in self.categoria.value else self.categoria.value
+        return (
+            self.categoria.value.split(" ", 1)[1]
+            if " " in self.categoria.value
+            else self.categoria.value
+        )

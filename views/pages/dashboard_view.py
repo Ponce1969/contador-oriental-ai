@@ -169,7 +169,10 @@ class DashboardView:
                                         height=10
                                     ),
                                     ft.Text(
-                                        value=f"{porcentaje_ingresos * 100:.1f}% del total",
+                                        value=(
+                                            f"{porcentaje_ingresos * 100:.1f}% "
+                                            f"del total"
+                                        ),
                                         size=12,
                                         color=ft.Colors.TEAL_700
                                     ),
@@ -221,7 +224,9 @@ class DashboardView:
                                         height=10
                                     ),
                                     ft.Text(
-                                        value=f"{porcentaje_gastos * 100:.1f}% del total",
+                                        value=(
+                                            f"{porcentaje_gastos * 100:.1f}% del total"
+                                        ),
                                         size=12,
                                         color=ft.Colors.ORANGE_700
                                     ),

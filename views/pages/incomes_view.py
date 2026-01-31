@@ -57,7 +57,8 @@ class IncomesView:
             label="Categoría",
             width=200,
             options=[
-                ft.dropdown.Option(key=cat.name, text=cat.value) for cat in IncomeCategory
+                ft.dropdown.Option(key=cat.name, text=cat.value)
+                for cat in IncomeCategory
             ]
         )
         
@@ -104,7 +105,11 @@ class IncomesView:
         """Renderizar la vista completa"""
         content = ft.Column(
             controls=[
-                ft.Text(value=self.income_controller.get_title(), size=28, weight="bold"),
+                ft.Text(
+                    value=self.income_controller.get_title(),
+                    size=28,
+                    weight="bold"
+                ),
                 ft.Divider(),
                 
                 # Formulario de registro
@@ -112,7 +117,11 @@ class IncomesView:
                     content=ft.Column(
                         controls=[
                             ft.Text(
-                                value="💰 Registrar ingreso" if not self.editing_income_id else "✏️ Editar ingreso",
+                                value=(
+                                    "💰 Registrar ingreso"
+                                    if not self.editing_income_id
+                                    else "✏️ Editar ingreso"
+                                ),
                                 size=20,
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.TEAL_700
@@ -138,7 +147,11 @@ class IncomesView:
                             ft.Row(
                                 controls=[
                                     CorrectElevatedButton(
-                                        "💾 Guardar" if not self.editing_income_id else "✅ Actualizar",
+                                        (
+                                            "💾 Guardar"
+                                            if not self.editing_income_id
+                                            else "✅ Actualizar"
+                                        ),
                                         on_click=self._on_save_income
                                     ),
                                     CorrectElevatedButton(
@@ -212,7 +225,11 @@ class IncomesView:
             try:
                 fecha = date.fromisoformat(self.fecha_input.value)
             except ValueError:
-                self._show_error(AppError(message="Fecha inválida. Use formato YYYY-MM-DD"))
+                self._show_error(
+                    AppError(
+                        message="Fecha inválida. Use formato YYYY-MM-DD"
+                    )
+                )
                 return
             
             # Parsear monto (limpiar formato: eliminar puntos de separador de miles)
@@ -235,7 +252,12 @@ class IncomesView:
             if self.recurrente_checkbox.value:
                 if not self.frecuencia_dropdown.value:
                     self._show_error(
-                        AppError(message="Debe seleccionar frecuencia para ingresos recurrentes")
+                        AppError(
+                            message=(
+                                "Debe seleccionar frecuencia "
+                                "para ingresos recurrentes"
+                            )
+                        )
                     )
                     return
                 try:
@@ -319,12 +341,18 @@ class IncomesView:
                                 ft.Column(
                                     controls=[
                                         ft.Text(
-                                            value=f"{member_name} - {income.descripcion}",
+                                            value=(
+                                            f"{member_name} - {income.descripcion}"
+                                        ),
                                             weight=ft.FontWeight.BOLD,
                                             color=ft.Colors.TEAL_900
                                         ),
                                         ft.Text(
-                                            value=f"{income.categoria.value} • ${monto_formateado} • {income.fecha}{recurrente_text}",
+                                            value=(
+                                            f"{income.categoria.value} • "
+                                            f"${monto_formateado} • "
+                                            f"{income.fecha}{recurrente_text}"
+                                        ),
                                             size=12,
                                             color=ft.Colors.TEAL_700
                                         ),
@@ -336,13 +364,17 @@ class IncomesView:
                                     icon=ft.Icons.EDIT,
                                     tooltip="Editar",
                                     icon_color=ft.Colors.TEAL_400,
-                                    on_click=lambda e, inc=income: self._on_edit_income(inc)
+                                    on_click=(
+                                        lambda e, inc=income: self._on_edit_income(inc)
+                                    )
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE,
                                     tooltip="Eliminar",
                                     icon_color=ft.Colors.RED_400,
-                                    on_click=lambda e, inc=income: self._on_delete_income(inc)
+                                    on_click=lambda e, inc=income: (
+                                        self._on_delete_income(inc)
+                                    )
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.START
@@ -403,8 +435,17 @@ class IncomesView:
                         controls=[
                             ft.Row(
                                 controls=[
-                                    ft.Text(value=categoria, weight=ft.FontWeight.BOLD, expand=True),
-                                    ft.Text(value=f"${monto_formateado} ({porcentaje:.1f}%)"),
+                                    ft.Text(
+                                        value=categoria,
+                                        weight=ft.FontWeight.BOLD,
+                                        expand=True
+                                    ),
+                                    ft.Text(
+                                        value=(
+                                            f"${monto_formateado} "
+                                            f"({porcentaje:.1f}%)"
+                                        )
+                                    ),
                                 ],
                             ),
                             ft.ProgressBar(

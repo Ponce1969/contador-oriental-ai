@@ -4,10 +4,11 @@ Servicio de lógica de negocio para miembros de la familia
 
 from __future__ import annotations
 
+from result import Err, Result
+
 from models.errors import DatabaseError, ValidationError
 from models.family_member_model import FamilyMember, IncomeType
 from repositories.family_member_repository import FamilyMemberRepository
-from result import Err, Result
 
 
 class FamilyMemberService:
@@ -30,7 +31,10 @@ class FamilyMemberService:
             if member.sueldo_mensual is None or member.sueldo_mensual <= 0:
                 return Err(
                     ValidationError(
-                        message="Debe especificar el sueldo mensual para tipo FIJO o MIXTO"
+                        message=(
+                            "Debe especificar el sueldo mensual "
+                            "para tipo FIJO o MIXTO"
+                        )
                     )
                 )
         
@@ -68,7 +72,10 @@ class FamilyMemberService:
             if member.sueldo_mensual is None or member.sueldo_mensual <= 0:
                 return Err(
                     ValidationError(
-                        message="Debe especificar el sueldo mensual para tipo FIJO o MIXTO"
+                        message=(
+                            "Debe especificar el sueldo mensual "
+                            "para tipo FIJO o MIXTO"
+                        )
                     )
                 )
         

@@ -4,10 +4,11 @@ Servicio de lógica de negocio para gastos familiares
 
 from __future__ import annotations
 
+from result import Err, Result
+
 from models.errors import DatabaseError, ValidationError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
-from result import Err, Result
 
 
 class ExpenseService:

@@ -7,13 +7,14 @@ from __future__ import annotations
 from collections.abc import Generator
 from contextlib import contextmanager
 
+from result import Result
+from sqlalchemy.orm import Session
+
 from core.sqlalchemy_session import get_db_session
 from models.errors import AppError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
-from result import Result
 from services.income_service import IncomeService
-from sqlalchemy.orm import Session
 
 
 class IncomeController:

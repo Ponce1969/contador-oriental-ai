@@ -37,9 +37,15 @@ def main(page: ft.Page):
         page.banner = ft.Banner(
             bgcolor=ft.Colors.BLUE_50,
             leading=ft.Icon(ft.Icons.WAVING_HAND, color=ft.Colors.BLUE, size=40),
-            content=ft.Text(
-                "¡Bienvenido a tu Auditor Familiar! Comienza registrando a tu familia en Familia para empezar a gestionar tus finanzas.",
-                size=14
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.INFO, color=ft.Colors.BLUE_400),
+                    ft.Text(
+                        "¡Bienvenido al Auditor Familiar! "
+                        "Gestiona tus finanzas de forma fácil."
+                    ),
+                ],
+                spacing=10
             ),
             actions=[
                 ft.TextButton("Ir a Familia", on_click=go_to_family),
@@ -47,7 +53,11 @@ def main(page: ft.Page):
             ],
         )
 
-        if page.platform in (ft.PagePlatform.WINDOWS, ft.PagePlatform.LINUX, ft.PagePlatform.MACOS):
+        if page.platform in (
+            ft.PagePlatform.WINDOWS,
+            ft.PagePlatform.LINUX,
+            ft.PagePlatform.MACOS
+        ):
             page.window.width = AppConfig.DEFAULT_SCREEN["width"]
             page.window.height = AppConfig.DEFAULT_SCREEN["height"]
 

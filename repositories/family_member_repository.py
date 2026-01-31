@@ -6,6 +6,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from result import Err, Ok, Result
+from sqlalchemy.orm import Session
+
 from database.tables import FamilyMemberTable
 from models.errors import DatabaseError
 from models.family_member_model import FamilyMember
@@ -13,8 +16,6 @@ from repositories.family_member_mappers import (
     family_member_to_domain,
     family_member_to_table,
 )
-from result import Err, Ok, Result
-from sqlalchemy.orm import Session
 
 
 class FamilyMemberRepository:
@@ -43,7 +44,7 @@ class FamilyMemberRepository:
     def get_active(self) -> Sequence[FamilyMember]:
         """Obtener solo miembros activos"""
         rows = self._session.query(FamilyMemberTable).filter(
-            FamilyMemberTable.activo == True
+            FamilyMemberTable.activo
         ).all()
         return [family_member_to_domain(row) for row in rows]
 

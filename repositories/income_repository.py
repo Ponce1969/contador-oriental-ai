@@ -6,12 +6,13 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from result import Err, Ok, Result
+from sqlalchemy.orm import Session
+
 from database.tables import IncomeTable
 from models.errors import DatabaseError
 from models.income_model import Income
 from repositories.income_mappers import income_to_domain, income_to_table
-from result import Err, Ok, Result
-from sqlalchemy.orm import Session
 
 
 class IncomeRepository:

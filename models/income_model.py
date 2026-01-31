@@ -80,4 +80,8 @@ class Income(BaseModel):
     @property
     def categoria_nombre(self) -> str:
         """Nombre de la categoría sin emoji"""
-        return self.categoria.value.split(" ", 1)[1] if " " in self.categoria.value else self.categoria.value
+        return (
+            self.categoria.value.split(" ", 1)[1]
+            if " " in self.categoria.value
+            else self.categoria.value
+        )
