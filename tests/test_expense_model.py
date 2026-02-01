@@ -64,6 +64,19 @@ class TestExpenseModel:
         nombre = expense.categoria_nombre
         assert nombre == "Almacén"
 
+    def test_expense_categoria_nombre_all_categories(self):
+        """Test categoria_nombre for all categories."""
+        for category in ExpenseCategory:
+            expense = Expense(
+                monto=100.00,
+                fecha=date.today(),
+                descripcion="Test",
+                categoria=category,
+            )
+            # Should return name without emoji
+            assert len(expense.categoria_nombre) > 0
+            assert expense.categoria_nombre in category.value
+
     def test_expense_recurrente(self):
         """Test recurrent expense creation."""
         expense = Expense(

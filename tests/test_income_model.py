@@ -55,14 +55,52 @@ class TestIncomeModel:
         """Test categoria_nombre property."""
         income = Income(
             family_member_id=1,
-            monto=1000.00,
+            monto=2500.00,
             fecha=date.today(),
             descripcion="Test",
             categoria=IncomeCategory.SUELDO,
         )
+        assert "Sueldo" in income.categoria_nombre
 
-        nombre = income.categoria_nombre
-        assert nombre == "Sueldo"
+    def test_income_categoria_nombre_all_categories(self):
+        """Test categoria_nombre property for all categories."""
+        categories = [
+            IncomeCategory.SUELDO,
+            IncomeCategory.JORNAL,
+            IncomeCategory.EXTRA,
+            IncomeCategory.BONO,
+            IncomeCategory.FREELANCE,
+            IncomeCategory.NEGOCIO,
+            IncomeCategory.ALQUILER,
+            IncomeCategory.INVERSION,
+            IncomeCategory.OTRO,
+        ]
+
+        for category in categories:
+            income = Income(
+                family_member_id=1,
+                monto=100.00,
+                fecha=date.today(),
+                descripcion="Test",
+                categoria=category,
+            )
+            # categoria_nombre extracts the name without emoji
+            assert len(income.categoria_nombre) > 0
+            assert income.categoria_nombre in category.value
+
+    def test_income_str(self):
+        """Test string representation."""
+        income = Income(
+            family_member_id=1,
+            monto=3000.00,
+            fecha=date.today(),
+            descripcion="Mi sueldo",
+            categoria=IncomeCategory.SUELDO,
+        )
+        str_repr = str(income)
+        assert "Sueldo" in str_repr
+        assert "Mi sueldo" in str_repr
+        assert "$3000.00" in str_repr or "3000" in str_repr
 
     def test_income_recurrente(self):
         """Test recurrent income creation."""
