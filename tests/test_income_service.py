@@ -19,7 +19,7 @@ class TestIncomeService:
     def service(self, db_session):
         """Create income service with test repository."""
         from repositories.income_repository import IncomeRepository
-        repo = IncomeRepository(db_session)
+        repo = IncomeRepository(db_session, familia_id=1)
         return IncomeService(repo)
 
     def test_create_income_success(self, service, sample_income_data):

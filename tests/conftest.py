@@ -43,6 +43,19 @@ def db_engine(temp_db_path):
             )
         """))
         conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                familia_id INTEGER NOT NULL,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                nombre_completo TEXT,
+                activo BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_login TIMESTAMP,
+                FOREIGN KEY (familia_id) REFERENCES familias (id)
+            )
+        """))
+        conn.execute(text("""
             INSERT INTO familias (id, nombre, email, activo)
             VALUES (1, 'Familia Test', 'test@test.com', 1)
         """))

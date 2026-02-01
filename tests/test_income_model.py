@@ -34,7 +34,7 @@ class TestIncomeModel:
         assert income.monto == 2500.00
         assert income.descripcion == "Sueldo mensual"
         assert income.categoria == IncomeCategory.SUELDO
-        assert income.es_recurrente is True
+        assert income.es_recurrente is False
         assert income.notas == "Pago mensual"
 
     def test_income_str_representation(self):

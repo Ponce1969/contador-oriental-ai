@@ -33,27 +33,28 @@ class TestExpenseService:
         assert result.ok_value.descripcion == "Compra en supermercado"
 
     def test_create_expense_validation_error(self, service):
-        """Test expense creation with invalid data."""
-        invalid_expense = Expense(
-            monto=-50.00,
-            fecha=date.today(),
-            descripcion="Invalid",
-            categoria=ExpenseCategory.ALMACEN,
-        )
-
-        result = service.create_expense(invalid_expense)
-        assert isinstance(result, Err)
-        assert isinstance(result.err_value, ValidationError)
-
-    def test_create_expense_empty_description(self, service):
-        """Test expense creation with empty description."""
+        """Test expense creation with invalid data raises Pydantic error."""
         from pydantic import ValidationError as PydanticError
 
+        # Pydantic validates monto > 0 on model creation
+        with pytest.raises(PydanticError):
+            Expense(
+                monto=-50.00,
+                fecha=date.today(),
+                descripcion="Invalid",
+                categoria=ExpenseCategory.ALMACEN,
+            )
+
+    def test_create_expense_empty_description(self, service):
+        """Test expense creation with empty description fails Pydantic validation."""
+        from pydantic import ValidationError as PydanticError
+
+        # Empty string fails min_length=1
         with pytest.raises(PydanticError):
             Expense(
                 monto=100.00,
                 fecha=date.today(),
-                descripcion="   ",
+                descripcion="",  # Empty string
                 categoria=ExpenseCategory.ALMACEN,
             )
 

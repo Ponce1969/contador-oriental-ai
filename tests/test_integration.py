@@ -23,7 +23,7 @@ class TestIntegrationFlows:
         from services.auth_service import AuthService
 
         # Setup
-        user_repo = UserRepository()
+        user_repo = UserRepository(session=db_session)
         auth_service = AuthService(user_repo)
 
         # Register user
@@ -86,12 +86,13 @@ class TestIntegrationFlows:
         from services.income_service import IncomeService
 
         # Setup
-        repo = IncomeRepository(db_session)
+        repo = IncomeRepository(db_session, familia_id=1)
         service = IncomeService(repo)
 
         # Add incomes
         incomes = [
             Income(
+                familia_id=1,
                 family_member_id=1,
                 monto=2500.00,
                 fecha=date.today(),
@@ -99,6 +100,7 @@ class TestIntegrationFlows:
                 categoria=IncomeCategory.SUELDO,
             ),
             Income(
+                familia_id=1,
                 family_member_id=1,
                 monto=500.00,
                 fecha=date.today(),
@@ -128,12 +130,13 @@ class TestIntegrationFlows:
 
         # Setup services
         expense_repo = ExpenseRepository(db_session, familia_id=1)
-        income_repo = IncomeRepository(db_session)
+        income_repo = IncomeRepository(db_session, familia_id=1)
         expense_service = ExpenseService(expense_repo)
         income_service = IncomeService(income_repo)
 
         # Add income
         income = Income(
+            familia_id=1,
             family_member_id=1,
             monto=3000.00,
             fecha=date.today(),

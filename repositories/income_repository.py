@@ -26,6 +26,9 @@ class IncomeRepository:
         """Agregar un nuevo ingreso"""
         try:
             table_row = income_to_table(income)
+            # Agregar familia_id si está configurado
+            if self._familia_id is not None:
+                table_row.familia_id = self._familia_id
             self._session.add(table_row)
             self._session.flush()
             

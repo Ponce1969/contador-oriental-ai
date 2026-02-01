@@ -26,6 +26,9 @@ class ExpenseRepository:
         """Agregar un nuevo gasto"""
         try:
             table_row = to_table(expense)
+            # Agregar familia_id si está configurado
+            if self._familia_id is not None:
+                table_row.familia_id = self._familia_id
             self._session.add(table_row)
             self._session.flush()
             
