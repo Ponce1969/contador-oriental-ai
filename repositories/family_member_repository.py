@@ -29,9 +29,12 @@ class FamilyMemberRepository:
         """Agregar un nuevo miembro de la familia"""
         try:
             table_row = family_member_to_table(member)
+            # Agregar familia_id si está configurado
+            if self._familia_id is not None:
+                table_row.familia_id = self._familia_id
             self._session.add(table_row)
             self._session.flush()
-            
+
             created = family_member_to_domain(table_row)
             return Ok(created)
         except Exception as e:
