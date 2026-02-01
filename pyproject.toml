@@ -20,6 +20,8 @@ dependencies = [
 dev = [
     "ruff",
     "ty",
+    "pytest",
+    "pytest-cov",
 ]
 
 [tool.ty]
