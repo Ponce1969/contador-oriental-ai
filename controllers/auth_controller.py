@@ -2,10 +2,10 @@
 Controlador de autenticación - Manejo de login y usuarios
 """
 import flet as ft
-from result import Result
+from result import Err, Ok, Result
 
 from models.errors import AppError, DatabaseError, ValidationError
-from models.user_model import UserLogin
+from models.user_model import User, UserLogin
 from repositories.user_repository import UserRepository
 from services.auth_service import AuthService
 
@@ -18,7 +18,7 @@ class AuthController:
         self._user_repo = UserRepository()
         self._auth_service = AuthService(self._user_repo)
     
-    def login(self, username: str, password: str) -> Result:
+    def login(self, username: str, password: str) -> Result[User, AppError]:
         """
         Intentar login de usuario
         Retorna el usuario si es exitoso
@@ -26,7 +26,7 @@ class AuthController:
         try:
             credentials = UserLogin(username=username, password=password)
         except Exception as e:
-            return Result.Err(
+            return Err(
                 AppError(message=f"Datos inválidos: {str(e)}")
             )
         
@@ -35,12 +35,12 @@ class AuthController:
         if result.is_err():
             error = result.err_value
             if isinstance(error, ValidationError):
-                return Result.Err(AppError(message=error.message))
+                return Err(AppError(message=error.message))
             elif isinstance(error, DatabaseError):
-                return Result.Err(
+                return Err(
                     AppError(message="Error de conexión. Intente nuevamente.")
                 )
             else:
-                return Result.Err(AppError(message="Error desconocido"))
+                return Err(AppError(message="Error desconocido"))
         
         return result

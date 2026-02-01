@@ -77,7 +77,7 @@ class ExpenseController:
             service = ExpenseService(repo)
             return service.delete_expense(expense_id)
 
-    def get_total_by_month(self, year: int, month: int) -> Result[float, AppError]:
+    def get_total_by_month(self, year: int, month: int) -> float:
         """Obtener total de gastos de un mes específico"""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)

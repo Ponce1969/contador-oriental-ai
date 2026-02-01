@@ -1,0 +1,1189 @@
+error[invalid-argument-type]: Argument to function `load_view` is incorrect
+  --> configs\routes.py:97:51
+   |
+95 |     for r in ROUTES:
+96 |         def create_view_lambda(path=r["view"]):
+97 |             return lambda page, router: load_view(path)(page, router).render()
+   |                                                   ^^^^ Expected `str`, found `Unknown | str | IconData | bool`
+98 |
+99 |         routes[r["path"]] = create_view_lambda()
+   |
+info: Union elements `IconData` and `bool` are not assignable to `str`
+info: Function defined here
+  --> configs\routes.py:81:5
+   |
+79 | ]
+80 |
+81 | def load_view(view_path: str):
+   |     ^^^^^^^^^ -------------- Parameter declared here
+82 |     module_name, class_name = view_path.rsplit(".", 1)
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[unresolved-attribute]: Object of type `<types.UnionType special-form 'Ok[T] | Err[E]'>` has no attribute `Err`
+  --> controllers\auth_controller.py:29:20
+   |
+27 |             credentials = UserLogin(username=username, password=password)
+28 |         except Exception as e:
+29 |             return Result.Err(
+   |                    ^^^^^^^^^^
+30 |                 AppError(message=f"Datos inv├ílidos: {str(e)}")
+31 |             )
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `err_value` may be missing on object of type `Unknown | Ok[User] | Err[ValidationError | DatabaseError]`
+  --> controllers\auth_controller.py:36:21
+   |
+35 |         if result.is_err():
+36 |             error = result.err_value
+   |                     ^^^^^^^^^^^^^^^^
+37 |             if isinstance(error, ValidationError):
+38 |                 return Result.Err(AppError(message=error.message))
+   |
+info: rule `possibly-missing-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `<types.UnionType special-form 'Ok[T] | Err[E]'>` has no attribute `Err`
+  --> controllers\auth_controller.py:38:24
+   |
+36 |             error = result.err_value
+37 |             if isinstance(error, ValidationError):
+38 |                 return Result.Err(AppError(message=error.message))
+   |                        ^^^^^^^^^^
+39 |             elif isinstance(error, DatabaseError):
+40 |                 return Result.Err(
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `<types.UnionType special-form 'Ok[T] | Err[E]'>` has no attribute `Err`
+  --> controllers\auth_controller.py:40:24
+   |
+38 |                 return Result.Err(AppError(message=error.message))
+39 |             elif isinstance(error, DatabaseError):
+40 |                 return Result.Err(
+   |                        ^^^^^^^^^^
+41 |                     AppError(message="Error de conexi├│n. Intente nuevamente.")
+42 |                 )
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `<types.UnionType special-form 'Ok[T] | Err[E]'>` has no attribute `Err`
+  --> controllers\auth_controller.py:44:24
+   |
+42 |                 )
+43 |             else:
+44 |                 return Result.Err(AppError(message="Error desconocido"))
+   |                        ^^^^^^^^^^
+45 |         
+46 |         return result
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[invalid-return-type]: Return type does not match returned value
+  --> controllers\expense_controller.py:80:60
+   |
+78 |             return service.delete_expense(expense_id)
+79 |
+80 |     def get_total_by_month(self, year: int, month: int) -> Result[float, AppError]:
+   |                                                            ----------------------- Expected `Ok[int | float] | Err[AppError]` because of return type
+81 |         """Obtener total de gastos de un mes espec├¡fico"""
+82 |         with self._get_session() as session:
+83 |             repo = ExpenseRepository(session, self._familia_id)
+84 |             service = ExpenseService(repo)
+85 |             return service.get_total_by_month(year, month)
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Ok[int | float] | Err[AppError]`, found `int | float`
+   |
+info: rule `invalid-return-type` is enabled by default
+
+error[unknown-argument]: Argument `text` does not match any known parameter
+  --> core\app.py:28:21
+   |
+26 |             menu_items.append(
+27 |                 ft.TextButton(
+28 |                     text=label,
+   |                     ^^^^^^^^^^
+29 |                     icon=ft.icons.CIRCLE,
+30 |                     on_click=lambda e, r=f"/{route}": self.router.navigate(r),
+   |
+info: rule `unknown-argument` is enabled by default
+
+error[unresolved-attribute]: Module `flet.controls.material.icons` has no member `CIRCLE`
+  --> core\app.py:29:26
+   |
+27 |                 ft.TextButton(
+28 |                     text=label,
+29 |                     icon=ft.icons.CIRCLE,
+   |                          ^^^^^^^^^^^^^^^
+30 |                     on_click=lambda e, r=f"/{route}": self.router.navigate(r),
+31 |                 )
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `lower` may be missing on object of type `Unknown | str | dict[Unknown | str, Unknown | str] | dict[Unknown | str, Unknown | str | int | dict[Unknown | str, Unknown | str]]`
+  --> core\database.py:18:14
+   |
+16 |         return _connection
+17 |
+18 |     engine = DATABASE.get("ENGINE", "sqlite").lower()
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |
+20 |     if engine == "sqlite":
+   |
+info: rule `possibly-missing-attribute` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `get` may be missing on object of type `Unknown | str | dict[Unknown | str, Unknown | str] | dict[Unknown | str, Unknown | str | int | dict[Unknown | str, Unknown | str]]`
+  --> core\database.py:34:16
+   |
+32 | def _connect_sqlite():
+33 |     cfg = DATABASE.get("SQLITE", {})
+34 |     path_cfg = cfg.get("PATH", "data/fleting.db")
+   |                ^^^^^^^
+35 |
+36 |     db_path = BASE_DIR / Path(path_cfg)
+   |
+info: rule `possibly-missing-attribute` is enabled by default
+
+error[invalid-argument-type]: Argument to function `__new__` is incorrect
+  --> core\database.py:36:31
+   |
+34 |     path_cfg = cfg.get("PATH", "data/fleting.db")
+35 |
+36 |     db_path = BASE_DIR / Path(path_cfg)
+   |                               ^^^^^^^^ Expected `str | PathLike[str]`, found `Unknown | str | int | dict[Unknown | str, Unknown | str]`
+37 |     db_path.parent.mkdir(parents=True, exist_ok=True)
+   |
+info: Union elements `int` and `dict[Unknown | str, Unknown | str]` are not assignable to `str | PathLike[str]`
+info: Function defined here
+   --> stdlib\pathlib\__init__.pyi:308:13
+    |
+307 |     if sys.version_info >= (3, 12):
+308 |         def __new__(cls, *args: StrPath, **kwargs: Unused) -> Self: ...  # pyright: ignore[reportInconsistentConstructor]
+    |             ^^^^^^^      -------------- Parameter declared here
+309 |     else:
+310 |         def __new__(cls, *args: StrPath, **kwargs: Unused) -> Self: ...
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument to bound method `__init__` is incorrect
+  --> core\database.py:36:31
+   |
+34 |     path_cfg = cfg.get("PATH", "data/fleting.db")
+35 |
+36 |     db_path = BASE_DIR / Path(path_cfg)
+   |                               ^^^^^^^^ Expected `str | PathLike[str]`, found `Unknown | str | int | dict[Unknown | str, Unknown | str]`
+37 |     db_path.parent.mkdir(parents=True, exist_ok=True)
+   |
+info: Union elements `int` and `dict[Unknown | str, Unknown | str]` are not assignable to `str | PathLike[str]`
+info: Method defined here
+   --> stdlib\pathlib\__init__.pyi:130:13
+    |
+128 |             """
+129 |
+130 |         def __init__(self, *args: StrPath) -> None: ...  # pyright: ignore[reportInconsistentConstructor]
+    |             ^^^^^^^^       -------------- Parameter declared here
+131 |     else:
+132 |         def __new__(cls, *args: StrPath) -> Self:
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> core\error_handler.py:19:29
+   |
+17 |                     controls=[
+18 |                         ft.Text(
+19 |                             "ÔÜá´©Å An error occurred.",
+   |                             ^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["ÔÜá\u{fe0f} An error occurred."]`
+20 |                             size=24,
+21 |                             weight=ft.FontWeight.BOLD
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> core\error_handler.py:23:33
+   |
+21 |                             weight=ft.FontWeight.BOLD
+22 |                         ),
+23 |                         ft.Text("Something went wrong. Please try again."),
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Something went wrong. Please try again."]`
+24 |                     ],
+25 |                     alignment=ft.MainAxisAlignment.CENTER,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> core\router.py:33:35
+   |
+31 |         except Exception:
+32 |             logger.exception("Error rendering view")
+33 |             self.page.add(ft.Text("Internal application error"))
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Internal application error"]`
+34 |
+35 |         self.page.update()
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[unresolved-attribute]: Unresolved attribute `window_icon` on type `Page`
+  --> main.py:21:9
+   |
+20 |         # Configurar icono personalizado de la aplicaci├│n (formato ICO para Windows)
+21 |         page.window_icon = "assets/icon-gastos.ico"
+   |         ^^^^^^^^^^^^^^^^
+22 |
+23 |         # Inicializar base de datos
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `Page` has no attribute `banner`
+  --> main.py:29:13
+   |
+27 |         # Banner de bienvenida
+28 |         def close_welcome_banner(e):
+29 |             page.banner.open = False
+   |             ^^^^^^^^^^^
+30 |             page.update()
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `Page` has no attribute `banner`
+  --> main.py:33:13
+   |
+32 |         def go_to_family(e):
+33 |             page.banner.open = False
+   |             ^^^^^^^^^^^
+34 |             router.navigate("/family")
+35 |             page.update()
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Unresolved attribute `banner` on type `Page`
+  --> main.py:37:9
+   |
+35 |             page.update()
+36 |
+37 |         page.banner = ft.Banner(
+   |         ^^^^^^^^^^^
+38 |             bgcolor=ft.Colors.BLUE_50,
+39 |             leading=ft.Icon(ft.Icons.WAVING_HAND, color=ft.Colors.BLUE, size=40),
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+  --> main.py:39:21
+   |
+37 |         page.banner = ft.Banner(
+38 |             bgcolor=ft.Colors.BLUE_50,
+39 |             leading=ft.Icon(ft.Icons.WAVING_HAND, color=ft.Colors.BLUE, size=40),
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 |             content=ft.Row(
+41 |                 controls=[
+   |
+info: rule `missing-argument` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+  --> main.py:42:21
+   |
+40 |             content=ft.Row(
+41 |                 controls=[
+42 |                     ft.Icon(ft.Icons.INFO, color=ft.Colors.BLUE_400),
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 |                     ft.Text(
+44 |                         "┬íBienvenido al Auditor Familiar! "
+   |
+info: rule `missing-argument` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> main.py:44:25
+   |
+42 |                       ft.Icon(ft.Icons.INFO, color=ft.Colors.BLUE_400),
+43 |                       ft.Text(
+44 | /                         "┬íBienvenido al Auditor Familiar! "
+45 | |                         "Gestiona tus finanzas de forma f├ícil."
+   | |_______________________________________________________________^ Expected `int | float | None`, found `Literal["┬íBienvenido al Auditor Familiar! Gestiona tus finanzas de forma f├ícil."]`
+46 |                       ),
+47 |                   ],
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> main.py:51:31
+   |
+49 |             ),
+50 |             actions=[
+51 |                 ft.TextButton("Ir a Familia", on_click=go_to_family),
+   |                               ^^^^^^^^^^^^^^ Expected `bool | None`, found `Literal["Ir a Familia"]`
+52 |                 ft.TextButton("Cerrar", on_click=close_welcome_banner),
+53 |             ],
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> main.py:52:31
+   |
+50 |             actions=[
+51 |                 ft.TextButton("Ir a Familia", on_click=go_to_family),
+52 |                 ft.TextButton("Cerrar", on_click=close_welcome_banner),
+   |                               ^^^^^^^^ Expected `bool | None`, found `Literal["Cerrar"]`
+53 |             ],
+54 |         )
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[unresolved-attribute]: Object of type `Page` has no attribute `banner`
+  --> main.py:75:13
+   |
+73 |         if SessionManager.is_logged_in(page):
+74 |             # Usuario logueado - mostrar banner y dashboard
+75 |             page.banner.open = True
+   |             ^^^^^^^^^^^
+76 |             router.navigate("/")
+77 |         else:
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `Expense` has no attribute `frecuencia`
+   --> repositories\expense_repository.py:128:30
+    |
+126 |             row.metodo_pago = expense.metodo_pago.value
+127 |             row.es_recurrente = expense.es_recurrente
+128 |             row.frecuencia = expense.frecuencia.value if expense.frecuencia else None
+    |                              ^^^^^^^^^^^^^^^^^^
+129 |             row.notas = expense.notas
+    |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `Expense` has no attribute `frecuencia`
+   --> repositories\expense_repository.py:128:58
+    |
+126 |             row.metodo_pago = expense.metodo_pago.value
+127 |             row.es_recurrente = expense.es_recurrente
+128 |             row.frecuencia = expense.frecuencia.value if expense.frecuencia else None
+    |                                                          ^^^^^^^^^^^^^^^^^^
+129 |             row.notas = expense.notas
+    |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unknown-argument]: Argument `frecuencia` does not match any known parameter
+  --> repositories\mappers.py:21:9
+   |
+19 |         metodo_pago=PaymentMethod(row.metodo_pago),
+20 |         es_recurrente=row.es_recurrente,
+21 |         frecuencia=RecurrenceFrequency(row.frecuencia) if row.frecuencia else None,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |         notas=row.notas,
+23 |     )
+   |
+info: rule `unknown-argument` is enabled by default
+
+error[unresolved-attribute]: Object of type `Expense` has no attribute `frecuencia`
+  --> repositories\mappers.py:36:20
+   |
+34 |         metodo_pago=expense.metodo_pago.value,
+35 |         es_recurrente=expense.es_recurrente,
+36 |         frecuencia=expense.frecuencia.value if expense.frecuencia else None,
+   |                    ^^^^^^^^^^^^^^^^^^
+37 |         notas=expense.notas,
+38 |     )
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `Expense` has no attribute `frecuencia`
+  --> repositories\mappers.py:36:48
+   |
+34 |         metodo_pago=expense.metodo_pago.value,
+35 |         es_recurrente=expense.es_recurrente,
+36 |         frecuencia=expense.frecuencia.value if expense.frecuencia else None,
+   |                                                ^^^^^^^^^^^^^^^^^^
+37 |         notas=expense.notas,
+38 |     )
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[invalid-argument-type]: Argument to function `to_table` is incorrect
+  --> repositories\shopping_repository.py:20:28
+   |
+18 |     def add(self, item: ShoppingItem) -> Result[ShoppingItem, DatabaseError]:
+19 |         try:
+20 |             row = to_table(item)
+   |                            ^^^^ Expected `Expense`, found `ShoppingItem`
+21 |             self._session.add(row)
+22 |             self._session.commit()
+   |
+info: Function defined here
+  --> repositories\mappers.py:26:5
+   |
+26 | def to_table(expense: Expense) -> ExpenseTable:
+   |     ^^^^^^^^ ---------------- Parameter declared here
+27 |     """Convertir modelo de dominio Expense a tabla de base de datos"""
+28 |     return ExpenseTable(
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-return-type]: Return type does not match returned value
+  --> repositories\shopping_repository.py:24:20
+   |
+22 |             self._session.commit()
+23 |             self._session.refresh(row)
+24 |             return Ok(to_domain(row))
+   |                    ^^^^^^^^^^^^^^^^^^ expected `Ok[ShoppingItem] | Err[DatabaseError]`, found `Ok[Expense]`
+25 |         except Exception as exc:  # encapsulado
+26 |             return Err(DatabaseError(str(exc)))
+   |
+  ::: repositories\shopping_repository.py:18:42
+   |
+16 |         self._session = session
+17 |
+18 |     def add(self, item: ShoppingItem) -> Result[ShoppingItem, DatabaseError]:
+   |                                          ----------------------------------- Expected `Ok[ShoppingItem] | Err[DatabaseError]` because of return type
+19 |         try:
+20 |             row = to_table(item)
+   |
+info: rule `invalid-return-type` is enabled by default
+
+error[invalid-return-type]: Return type does not match returned value
+  --> repositories\shopping_repository.py:28:27
+   |
+26 |             return Err(DatabaseError(str(exc)))
+27 |
+28 |     def list_all(self) -> Result[Sequence[ShoppingItem], DatabaseError]:
+   |                           --------------------------------------------- Expected `Ok[Sequence[ShoppingItem]] | Err[DatabaseError]` because of return type
+29 |         try:
+30 |             rows = self._session.query(ShoppingItemTable).all()
+31 |             return Ok([to_domain(row) for row in rows])
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Ok[Sequence[ShoppingItem]] | Err[DatabaseError]`, found `Ok[list[Unknown | Expense]]`
+32 |         except Exception as exc:
+33 |             return Err(DatabaseError(str(exc)))
+   |
+info: rule `invalid-return-type` is enabled by default
+
+error[not-subscriptable]: Cannot subscript object of type `None` with no `__getitem__` method
+   --> repositories\user_repository.py:116:27
+    |
+114 |                 session.commit()
+115 |                 
+116 |                 user.id = row[0]
+    |                           ^^^^^^
+117 |                 user.created_at = row[1]
+    |
+info: rule `not-subscriptable` is enabled by default
+
+error[not-subscriptable]: Cannot subscript object of type `None` with no `__getitem__` method
+   --> repositories\user_repository.py:117:35
+    |
+116 |                 user.id = row[0]
+117 |                 user.created_at = row[1]
+    |                                   ^^^^^^
+118 |                 
+119 |                 return Ok(user)
+    |
+info: rule `not-subscriptable` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `ok_value` may be missing on object of type `Unknown | Ok[User] | Err[DatabaseError]`
+  --> services\auth_service.py:37:16
+   |
+35 |             return Err(ValidationError(message="Usuario o contrase├▒a incorrectos"))
+36 |         
+37 |         user = result.ok_value
+   |                ^^^^^^^^^^^^^^^
+38 |         
+39 |         # Verificar que el usuario est├® activo
+   |
+info: rule `possibly-missing-attribute` is enabled by default
+
+error[invalid-argument-type]: Argument to bound method `update_last_login` is incorrect
+  --> services\auth_service.py:51:43
+   |
+50 |         # Actualizar ├║ltimo login
+51 |         self._user_repo.update_last_login(user.id)
+   |                                           ^^^^^^^ Expected `int`, found `Unknown | int | None`
+52 |         
+53 |         return Ok(user)
+   |
+info: Element `None` of this union is not assignable to `int`
+info: Method defined here
+   --> repositories\user_repository.py:124:9
+    |
+122 |             return Err(DatabaseError(message=f"Error al crear usuario: {str(e)}"))
+123 |     
+124 |     def update_last_login(self, user_id: int) -> Result[None, DatabaseError]:
+    |         ^^^^^^^^^^^^^^^^^       ------------ Parameter declared here
+125 |         """Actualizar fecha de ├║ltimo login"""
+126 |         try:
+    |
+info: Union variant `bound method UserRepository.update_last_login(user_id: int) -> Ok[None] | Err[DatabaseError]` is incompatible with this call site
+info: Attempted to call union type `Unknown | (bound method UserRepository.update_last_login(user_id: int) -> Ok[None] | Err[DatabaseError])`
+info: rule `invalid-argument-type` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `ok_value` may be missing on object of type `Unknown | Ok[User] | Err[DatabaseError]`
+  --> services\auth_service.py:94:16
+   |
+92 |             return Err(ValidationError(message="Usuario no encontrado"))
+93 |         
+94 |         user = result.ok_value
+   |                ^^^^^^^^^^^^^^^
+95 |         
+96 |         # Verificar contrase├▒a actual
+   |
+info: rule `possibly-missing-attribute` is enabled by default
+
+error[unresolved-attribute]: Object of type `Expense` has no attribute `frecuencia`
+  --> services\expense_service.py:34:42
+   |
+33 |         # Validaci├│n: si es recurrente, debe tener frecuencia
+34 |         if expense.es_recurrente and not expense.frecuencia:
+   |                                          ^^^^^^^^^^^^^^^^^^
+35 |             return Err(
+36 |                 ValidationError(
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+  --> views\layouts\main_layout.py:50:29
+   |
+48 |                     content=ft.Row(
+49 |                         controls=[
+50 |                             ft.Icon(r["icon"]),
+   |                             ^^^^^^^^^^^^^^^^^^
+51 |                             ft.Text(
+52 |                                 I18n.t(r["label"]) if "." in r["label"] else r["label"]
+   |
+info: rule `missing-argument` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\layouts\main_layout.py:50:37
+   |
+48 |                     content=ft.Row(
+49 |                         controls=[
+50 |                             ft.Icon(r["icon"]),
+   |                                     ^^^^^^^^^ Expected `int | float | None`, found `Unknown | str | IconData | bool`
+51 |                             ft.Text(
+52 |                                 I18n.t(r["label"]) if "." in r["label"] else r["label"]
+   |
+info: Element `str` of this union is not assignable to `int | float | None`
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\layouts\main_layout.py:52:33
+   |
+50 |                             ft.Icon(r["icon"]),
+51 |                             ft.Text(
+52 |                                 I18n.t(r["label"]) if "." in r["label"] else r["label"]
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Unknown | str | IconData | bool`
+53 |                             ),
+54 |                         ],
+   |
+info: Element `str` of this union is not assignable to `int | float | None`
+info: rule `invalid-argument-type` is enabled by default
+
+error[unsupported-operator]: Unsupported `in` operation
+  --> views\layouts\main_layout.py:52:55
+   |
+50 |                             ft.Icon(r["icon"]),
+51 |                             ft.Text(
+52 |                                 I18n.t(r["label"]) if "." in r["label"] else r["label"]
+   |                                                       ---^^^^----------
+   |                                                       |      |
+   |                                                       |      Has type `Unknown | str | IconData | bool`
+   |                                                       Has type `Literal["."]`
+53 |                             ),
+54 |                         ],
+   |
+info: Operation fails because operator `in` is not supported between objects of type `Literal["."]` and `IconData`
+info: rule `unsupported-operator` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+  --> views\layouts\main_layout.py:67:25
+   |
+65 |                 content=ft.Row(
+66 |                     controls=[
+67 |                         ft.Icon(ft.Icons.LOGOUT, color=ft.Colors.RED_400),
+   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+68 |                         ft.Text("Cerrar Sesi├│n", color=ft.Colors.RED_400),
+69 |                     ],
+   |
+info: rule `missing-argument` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\layouts\main_layout.py:68:33
+   |
+66 |                     controls=[
+67 |                         ft.Icon(ft.Icons.LOGOUT, color=ft.Colors.RED_400),
+68 |                         ft.Text("Cerrar Sesi├│n", color=ft.Colors.RED_400),
+   |                                 ^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Cerrar Sesi├│n"]`
+69 |                     ],
+70 |                     spacing=10,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\layouts\main_layout.py:83:21
+   |
+81 |             actions=[
+82 |                 ft.Text(
+83 |                     f"­ƒæñ {username}",
+   |                     ^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `str`
+84 |                     size=14,
+85 |                     color=ft.Colors.WHITE70
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[unresolved-attribute]: Class `Colors` has no attribute `WHITE70`
+  --> views\layouts\main_layout.py:85:27
+   |
+83 |                     f"­ƒæñ {username}",
+84 |                     size=14,
+85 |                     color=ft.Colors.WHITE70
+   |                           ^^^^^^^^^^^^^^^^^
+86 |                 ),
+87 |                 ft.PopupMenuButton(
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\layouts\main_layout.py:108:25
+    |
+106 |                 destinations.append(
+107 |                     ft.NavigationBarDestination(
+108 |                         icon=r["icon"],
+    |                         ^^^^^^^^^^^^^^ Expected `IconData | Control`, found `Unknown | str | IconData | bool`
+109 |                         label=I18n.t(r["label"]),
+110 |                     )
+    |
+info: Union elements `str` and `bool` are not assignable to `IconData | Control`
+info: rule `invalid-argument-type` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+   --> views\pages\dashboard_view.py:98:37
+    |
+ 96 |   ÔÇª                     ft.Row(
+ 97 |   ÔÇª                         controls=[
+ 98 | / ÔÇª                             ft.Icon(
+ 99 | | ÔÇª                                 balance_icon,
+100 | | ÔÇª                                 color=balance_color,
+101 | | ÔÇª                                 size=40
+102 | | ÔÇª                             ),
+    | |_______________________________^
+103 |   ÔÇª                             ft.Column(
+104 |   ÔÇª                                 controls=[
+    |
+info: rule `missing-argument` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+   --> views\pages\dashboard_view.py:154:45
+    |
+152 |   ÔÇª                     ft.Row(
+153 |   ÔÇª                         controls=[
+154 | / ÔÇª                             ft.Icon(
+155 | | ÔÇª                                 ft.Icons.ACCOUNT_BALANCE_WALLET,
+156 | | ÔÇª                                 color=ft.Colors.TEAL_600,
+157 | | ÔÇª                                 size=30
+158 | | ÔÇª                             ),
+    | |_______________________________^
+159 |   ÔÇª                             ft.Text(
+160 |   ÔÇª                                 value="Ingresos",
+    |
+info: rule `missing-argument` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+   --> views\pages\dashboard_view.py:209:45
+    |
+207 |   ÔÇª                     ft.Row(
+208 |   ÔÇª                         controls=[
+209 | / ÔÇª                             ft.Icon(
+210 | | ÔÇª                                 ft.Icons.MONEY_OFF,
+211 | | ÔÇª                                 color=ft.Colors.ORANGE_600,
+212 | | ÔÇª                                 size=30
+213 | | ÔÇª                             ),
+    | |_______________________________^
+214 |   ÔÇª                             ft.Text(
+215 |   ÔÇª                                 value="Gastos",
+    |
+info: rule `missing-argument` is enabled by default
+
+error[unresolved-attribute]: Unresolved attribute `on_change` on type `Dropdown`
+  --> views\pages\expenses_view.py:65:9
+   |
+63 |             ]
+64 |         )
+65 |         self.categoria_dropdown.on_change = self._on_category_change
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+66 |         
+67 |         self.subcategoria_dropdown = ft.Dropdown(
+   |
+info: rule `unresolved-attribute` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\expenses_view.py:122:69
+    |
+120 |         content = ft.Column(
+121 |             controls=[
+122 |                 ft.Text(value=self.controller.get_title(), size=28, weight="bold"),
+    |                                                                     ^^^^^^^^^^^^^ Expected `FontWeight | None`, found `Literal["bold"]`
+123 |                 ft.Divider(),
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\expenses_view.py:296:17
+    |
+294 |                 subcategoria=self.subcategoria_dropdown.value,
+295 |                 metodo_pago=selected_metodo,
+296 |                 es_recurrente=self.es_recurrente_checkbox.value,
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `bool`, found `Unknown | bool | None`
+297 |                 frecuencia=selected_freq,
+298 |                 notas=self.notas_input.value if self.notas_input.value else None,
+    |
+info: Element `None` of this union is not assignable to `bool`
+info: rule `invalid-argument-type` is enabled by default
+
+error[unknown-argument]: Argument `frecuencia` does not match any known parameter
+   --> views\pages\expenses_view.py:297:17
+    |
+295 |                 metodo_pago=selected_metodo,
+296 |                 es_recurrente=self.es_recurrente_checkbox.value,
+297 |                 frecuencia=selected_freq,
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^
+298 |                 notas=self.notas_input.value if self.notas_input.value else None,
+299 |             )
+    |
+info: rule `unknown-argument` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+   --> views\pages\expenses_view.py:332:33
+    |
+330 |                           content=ft.Row(
+331 |                               controls=[
+332 | /                                 ft.Icon(
+333 | |                                     ft.Icons.ATTACH_MONEY,
+334 | |                                     color=ft.Colors.GREEN
+335 | |                                 ),
+    | |_________________________________^
+336 |                                   ft.Column(
+337 |                                       controls=[
+    |
+info: rule `missing-argument` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\expenses_view.py:340:45
+    |
+338 | ÔÇª                     ft.Text(
+339 | ÔÇª                         value=expense.descripcion,
+340 | ÔÇª                         weight="bold"
+    |                           ^^^^^^^^^^^^^ Expected `FontWeight | None`, found `Literal["bold"]`
+341 | ÔÇª                     ),
+342 | ÔÇª                     ft.Text(
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\expenses_view.py:357:37
+    |
+355 | ÔÇª                         value=f"${expense.monto:.2f}",
+356 | ÔÇª                         size=18,
+357 | ÔÇª                         weight="bold",
+    |                           ^^^^^^^^^^^^^ Expected `FontWeight | None`, found `Literal["bold"]`
+358 | ÔÇª                         color=ft.Colors.RED_700
+359 | ÔÇª                     ),
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\expenses_view.py:419:48
+    |
+417 |                 ft.Row(
+418 |                     controls=[
+419 |                         ft.Text(value="TOTAL", weight="bold", width=150),
+    |                                                ^^^^^^^^^^^^^ Expected `FontWeight | None`, found `Literal["bold"]`
+420 |                         ft.Text(value="", width=200),
+421 |                         ft.Text(
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\expenses_view.py:423:29
+    |
+421 |                         ft.Text(
+422 |                             value=f"${total:.2f}",
+423 |                             weight="bold",
+    |                             ^^^^^^^^^^^^^ Expected `FontWeight | None`, found `Literal["bold"]`
+424 |                             size=18,
+425 |                             color=ft.Colors.RED_700,
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\family_members_view.py:76:69
+   |
+74 |         content = ft.Column(
+75 |             controls=[
+76 |                 ft.Text(value=self.controller.get_title(), size=28, weight="bold"),
+   |                                                                     ^^^^^^^^^^^^^ Expected `FontWeight | None`, found `Literal["bold"]`
+77 |                 ft.Divider(),
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+   --> views\pages\family_members_view.py:238:33
+    |
+236 |                           content=ft.Row(
+237 |                               controls=[
+238 | /                                 ft.Icon(
+239 | |                                     ft.Icons.PERSON,
+240 | |                                     color=ft.Colors.PURPLE_600,
+241 | |                                     size=30
+242 | |                                 ),
+    | |_________________________________^
+243 |                                   ft.Column(
+244 |                                       controls=[
+    |
+info: rule `missing-argument` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\help_view.py:41:21
+   |
+40 |                 ft.Text(
+41 |                     "Precisa de ajuda com o Fleting?",
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Precisa de ajuda com o Fleting?"]`
+42 |                     size=18,
+43 |                     weight=ft.FontWeight.W_500,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\help_view.py:47:21
+   |
+46 |                   ft.Text(
+47 | /                     "Aqui voc├¬ encontra links ├║teis para documenta├º├úo, "
+48 | |                     "suporte e contribui├º├úo com o projeto.",
+   | |___________________________________________________________^ Expected `int | float | None`, found `Literal["Aqui voc├¬ encontra links ├║teis para documenta├º├úo, suporte e contribui├º├úo com o projeto."]`
+49 |                       color=ft.Colors.GREY_600,
+50 |                   ),
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\help_view.py:55:21
+   |
+54 |                 ft.Button(
+55 |                     "­ƒôÿ Documenta├º├úo Oficial",
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `bool | None`, found `Literal["­ƒôÿ Documenta├º├úo Oficial"]`
+56 |                     icon=ft.Icons.MENU_BOOK,
+57 |                     on_click=self.open_docs,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\help_view.py:61:21
+   |
+60 |                 ft.Button(
+61 |                     "­ƒÉø Reportar um problema",
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `bool | None`, found `Literal["­ƒÉø Reportar um problema"]`
+62 |                     icon=ft.Icons.BUG_REPORT,
+63 |                     on_click=self.open_issues,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\help_view.py:67:21
+   |
+66 |                 ft.Button(
+67 |                     "­ƒÆ¼ Precisa de uma automa├º├úo ou Sistema?",
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `bool | None`, found `Literal["­ƒÆ¼ Precisa de uma automa├º├úo ou Sistema?"]`
+68 |                     icon=ft.Icons.BUG_REPORT,
+69 |                     on_click=self.open_support,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\home_view.py:22:21
+   |
+20 |                     width=96,
+21 |                     height=96,
+22 |                     fit="contain",
+   |                     ^^^^^^^^^^^^^ Expected `BoxFit | None`, found `Literal["contain"]`
+23 |                 ),
+24 |                 ft.Text(
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\home_view.py:25:21
+   |
+23 |                 ),
+24 |                 ft.Text(
+25 |                     "Fleting Framework",
+   |                     ^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Fleting Framework"]`
+26 |                     size=36,
+27 |                     weight=ft.FontWeight.BOLD,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\home_view.py:30:21
+   |
+28 |                 ),
+29 |                 ft.Text(
+30 |                     "Micro Framework MVC for Flet",
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Micro Framework MVC for Flet"]`
+31 |                     size=16,
+32 |                     color=ft.Colors.GREY_600,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\home_view.py:35:21
+   |
+33 |                   ),
+34 |                   ft.Text(
+35 | /                     "Build modern applications with a clear architecture, "
+36 | |                     "Dynamic routing and productive CLI.",
+   | |_________________________________________________________^ Expected `int | float | None`, found `Literal["Build modern applications with a clear architecture, Dynamic routing and productive CLI."]`
+37 |                       size=14,
+38 |                       text_align=ft.TextAlign.CENTER,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[parameter-already-assigned]: Multiple values provided for parameter `width`
+  --> views\pages\home_view.py:39:21
+   |
+37 |                     size=14,
+38 |                     text_align=ft.TextAlign.CENTER,
+39 |                     width=420,
+   |                     ^^^^^^^^^
+40 |                 ),
+   |
+info: rule `parameter-already-assigned` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\home_view.py:47:29
+   |
+45 |                     controls=[
+46 |                         ft.FilledButton(
+47 |                             "Settings",
+   |                             ^^^^^^^^^^ Expected `bool | None`, found `Literal["Settings"]`
+48 |                             icon=ft.Icons.SETTINGS,
+49 |                             on_click=lambda e: self.router.navigate("/settings"),
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\home_view.py:52:29
+   |
+50 |                         ),
+51 |                         ft.OutlinedButton(
+52 |                             "Create new page",
+   |                             ^^^^^^^^^^^^^^^^^ Expected `bool | None`, found `Literal["Create new page"]`
+53 |                             icon=ft.Icons.ADD,
+54 |                         ),
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\incomes_view.py:120:21
+    |
+118 |                     value=self.income_controller.get_title(),
+119 |                     size=28,
+120 |                     weight="bold"
+    |                     ^^^^^^^^^^^^^ Expected `FontWeight | None`, found `Literal["bold"]`
+121 |                 ),
+122 |                 ft.Divider(),
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\incomes_view.py:286:17
+    |
+284 |                 descripcion=self.descripcion_input.value,
+285 |                 categoria=categoria,
+286 |                 es_recurrente=self.recurrente_checkbox.value,
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `bool`, found `Unknown | bool | None`
+287 |                 frecuencia=frecuencia,
+288 |                 notas=self.notas_input.value if self.notas_input.value else None,
+    |
+info: Element `None` of this union is not assignable to `bool`
+info: rule `invalid-argument-type` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+   --> views\pages\incomes_view.py:345:33
+    |
+343 |                           content=ft.Row(
+344 |                               controls=[
+345 | /                                 ft.Icon(
+346 | |                                     ft.Icons.ACCOUNT_BALANCE_WALLET,
+347 | |                                     color=ft.Colors.TEAL_600,
+348 | |                                     size=30
+349 | |                                 ),
+    | |_________________________________^
+350 |                                   ft.Column(
+351 |                                       controls=[
+    |
+info: rule `missing-argument` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+  --> views\pages\login_view.py:47:21
+   |
+45 |             content=ft.Row(
+46 |                 controls=[
+47 |                     ft.Icon(ft.Icons.LOGIN),
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^
+48 |                     ft.Text("Iniciar Sesi├│n")
+49 |                 ],
+   |
+info: rule `missing-argument` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\login_view.py:48:29
+   |
+46 |                 controls=[
+47 |                     ft.Icon(ft.Icons.LOGIN),
+48 |                     ft.Text("Iniciar Sesi├│n")
+   |                             ^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Iniciar Sesi├│n"]`
+49 |                 ],
+50 |                 alignment=ft.MainAxisAlignment.CENTER,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[missing-argument]: No argument provided for required parameter `icon`
+  --> views\pages\login_view.py:66:33
+   |
+64 |                           content=ft.Column(
+65 |                               controls=[
+66 | /                                 ft.Icon(
+67 | |                                     ft.Icons.ACCOUNT_BALANCE_WALLET,
+68 | |                                     size=80,
+69 | |                                     color=ft.Colors.BLUE_600
+70 | |                                 ),
+   | |_________________________________^
+71 |                                   ft.Text(
+72 |                                       "Auditor Familiar",
+   |
+info: rule `missing-argument` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\login_view.py:72:37
+   |
+70 | ÔÇª                     ),
+71 | ÔÇª                     ft.Text(
+72 | ÔÇª                         "Auditor Familiar",
+   |                           ^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Auditor Familiar"]`
+73 | ÔÇª                         size=32,
+74 | ÔÇª                         weight=ft.FontWeight.BOLD,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\login_view.py:78:37
+   |
+76 | ÔÇª                     ),
+77 | ÔÇª                     ft.Text(
+78 | ÔÇª                         "Sistema de Gesti├│n de Finanzas",
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Sistema de Gesti├│n de Finanzas"]`
+79 | ÔÇª                         size=16,
+80 | ÔÇª                         color=ft.Colors.GREY_600
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+  --> views\pages\login_view.py:94:37
+   |
+92 | ÔÇª                     controls=[
+93 | ÔÇª                         ft.Text(
+94 | ÔÇª                             "Iniciar Sesi├│n",
+   |                               ^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Iniciar Sesi├│n"]`
+95 | ÔÇª                             size=24,
+96 | ÔÇª                             weight=ft.FontWeight.BOLD,
+   |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\login_view.py:111:49
+    |
+109 | ÔÇª                     ft.Divider(),
+110 | ÔÇª                     ft.Text(
+111 | ÔÇª                         "Credenciales por defecto:",
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Credenciales por defecto:"]`
+112 | ÔÇª                         size=12,
+113 | ÔÇª                         color=ft.Colors.GREY_600,
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\login_view.py:117:49
+    |
+115 | ÔÇª                     ),
+116 | ÔÇª                     ft.Text(
+117 | ÔÇª                         "Usuario: admin",
+    |                           ^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Usuario: admin"]`
+118 | ÔÇª                         size=12,
+119 | ÔÇª                         color=ft.Colors.GREY_600
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\login_view.py:122:49
+    |
+120 | ÔÇª                     ),
+121 | ÔÇª                     ft.Text(
+122 | ÔÇª                         "Contrase├▒a: admin123",
+    |                           ^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `Literal["Contrase├▒a: admin123"]`
+123 | ÔÇª                         size=12,
+124 | ÔÇª                         color=ft.Colors.GREY_600
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `err_value` may be missing on object of type `Unknown | Ok[Unknown] | Err[Unknown]`
+   --> views\pages\login_view.py:173:21
+    |
+172 |         if result.is_err():
+173 |             error = result.err_value
+    |                     ^^^^^^^^^^^^^^^^
+174 |             if isinstance(error, AppError):
+175 |                 self._show_error(error.message)
+    |
+info: rule `possibly-missing-attribute` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `ok_value` may be missing on object of type `Unknown | Ok[Unknown] | Err[Unknown]`
+   --> views\pages\login_view.py:181:16
+    |
+180 |         # Login exitoso - redirigir al dashboard
+181 |         user = result.ok_value
+    |                ^^^^^^^^^^^^^^^
+182 |         SessionManager.login(self.page, user)
+    |
+info: rule `possibly-missing-attribute` is enabled by default
+
+error[invalid-assignment]: Object of type `SnackBar` is not assignable to attribute `snack_bar` on type `Unknown | Page`
+   --> views\pages\login_view.py:185:9
+    |
+184 |         # Mostrar mensaje de bienvenida
+185 |         self.page.snack_bar = ft.SnackBar(
+    |         ^^^^^^^^^^^^^^^^^^^
+186 |             content=ft.Text(
+187 |                 f"┬íBienvenido, {user.nombre_completo or user.username}!"
+    |
+info: rule `invalid-assignment` is enabled by default
+
+error[invalid-argument-type]: Argument is incorrect
+   --> views\pages\login_view.py:187:17
+    |
+185 |         self.page.snack_bar = ft.SnackBar(
+186 |             content=ft.Text(
+187 |                 f"┬íBienvenido, {user.nombre_completo or user.username}!"
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int | float | None`, found `str`
+188 |             ),
+189 |             bgcolor=ft.Colors.GREEN_400
+    |
+info: rule `invalid-argument-type` is enabled by default
+
+warning[possibly-missing-attribute]: Attribute `snack_bar` may be missing on object of type `Unknown | Page`
+   --> views\pages\login_view.py:191:9
+    |
+189 |             bgcolor=ft.Colors.GREEN_400
+190 |         )
+191 |         self.page.snack_bar.open = True
+    |         ^^^^^^^^^^^^^^^^^^^
+192 |         
+193 |         # Redirigir al dashboard
+    |
+info: rule `possibly-missing-attribute` is enabled by default
+
+Found 92 diagnostics

@@ -18,13 +18,20 @@ def to_domain(row: ExpenseTable) -> Expense:
         subcategoria=row.subcategoria,
         metodo_pago=PaymentMethod(row.metodo_pago),
         es_recurrente=row.es_recurrente,
-        frecuencia=RecurrenceFrequency(row.frecuencia) if row.frecuencia else None,
+        frecuencia_recurrencia=(
+            RecurrenceFrequency(row.frecuencia) if row.frecuencia else None
+        ),
         notas=row.notas,
     )
 
 
 def to_table(expense: Expense) -> ExpenseTable:
     """Convertir modelo de dominio Expense a tabla de base de datos"""
+    frecuencia_value = (
+        expense.frecuencia_recurrencia.value
+        if expense.frecuencia_recurrencia
+        else None
+    )
     return ExpenseTable(
         monto=expense.monto,
         fecha=expense.fecha,
@@ -33,7 +40,7 @@ def to_table(expense: Expense) -> ExpenseTable:
         subcategoria=expense.subcategoria,
         metodo_pago=expense.metodo_pago.value,
         es_recurrente=expense.es_recurrente,
-        frecuencia=expense.frecuencia.value if expense.frecuencia else None,
+        frecuencia=frecuencia_value,
         notas=expense.notas,
     )
 

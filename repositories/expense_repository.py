@@ -125,7 +125,11 @@ class ExpenseRepository:
             row.subcategoria = expense.subcategoria
             row.metodo_pago = expense.metodo_pago.value
             row.es_recurrente = expense.es_recurrente
-            row.frecuencia = expense.frecuencia.value if expense.frecuencia else None
+            row.frecuencia = (
+                expense.frecuencia_recurrencia.value
+                if expense.frecuencia_recurrencia
+                else None
+            )
             row.notas = expense.notas
             
             self._session.flush()
