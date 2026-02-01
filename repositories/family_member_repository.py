@@ -21,8 +21,9 @@ from repositories.family_member_mappers import (
 class FamilyMemberRepository:
     """Repository para operaciones CRUD de miembros de la familia"""
     
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, familia_id: int | None = None) -> None:
         self._session = session
+        self._familia_id = familia_id
 
     def add(self, member: FamilyMember) -> Result[FamilyMember, DatabaseError]:
         """Agregar un nuevo miembro de la familia"""
@@ -38,22 +39,31 @@ class FamilyMemberRepository:
 
     def get_all(self) -> Sequence[FamilyMember]:
         """Obtener todos los miembros de la familia"""
-        rows = self._session.query(FamilyMemberTable).all()
+        query = self._session.query(FamilyMemberTable)
+        if self._familia_id is not None:
+            query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
+        rows = query.all()
         return [family_member_to_domain(row) for row in rows]
 
     def get_active(self) -> Sequence[FamilyMember]:
-        """Obtener solo miembros activos"""
-        rows = self._session.query(FamilyMemberTable).filter(
+        """Obtener solo miembros activos de la familia"""
+        query = self._session.query(FamilyMemberTable).filter(
             FamilyMemberTable.activo
-        ).all()
+        )
+        if self._familia_id is not None:
+            query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
+        rows = query.all()
         return [family_member_to_domain(row) for row in rows]
 
     def get_by_id(self, member_id: int) -> Result[FamilyMember, DatabaseError]:
-        """Obtener un miembro por ID"""
+        """Obtener un miembro por ID de la familia"""
         try:
-            row = self._session.query(FamilyMemberTable).filter(
+            query = self._session.query(FamilyMemberTable).filter(
                 FamilyMemberTable.id == member_id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Miembro {member_id} no encontrado"))
@@ -63,14 +73,17 @@ class FamilyMemberRepository:
             return Err(DatabaseError(message=f"Error al buscar miembro: {e}"))
 
     def update(self, member: FamilyMember) -> Result[FamilyMember, DatabaseError]:
-        """Actualizar un miembro existente"""
+        """Actualizar un miembro existente de la familia"""
         try:
             if member.id is None:
                 return Err(DatabaseError(message="El miembro debe tener un ID"))
             
-            row = self._session.query(FamilyMemberTable).filter(
+            query = self._session.query(FamilyMemberTable).filter(
                 FamilyMemberTable.id == member.id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Miembro {member.id} no encontrado"))
@@ -88,11 +101,14 @@ class FamilyMemberRepository:
             return Err(DatabaseError(message=f"Error al actualizar miembro: {e}"))
 
     def delete(self, member_id: int) -> Result[None, DatabaseError]:
-        """Eliminar un miembro (soft delete - marcar como inactivo)"""
+        """Eliminar un miembro de la familia (soft delete - marcar como inactivo)"""
         try:
-            row = self._session.query(FamilyMemberTable).filter(
+            query = self._session.query(FamilyMemberTable).filter(
                 FamilyMemberTable.id == member_id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Miembro {member_id} no encontrado"))

@@ -18,8 +18,9 @@ from repositories.income_mappers import income_to_domain, income_to_table
 class IncomeRepository:
     """Repository para operaciones CRUD de ingresos"""
     
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, familia_id: int | None = None) -> None:
         self._session = session
+        self._familia_id = familia_id
 
     def add(self, income: Income) -> Result[Income, DatabaseError]:
         """Agregar un nuevo ingreso"""
@@ -34,16 +35,22 @@ class IncomeRepository:
             return Err(DatabaseError(message=f"Error al guardar ingreso: {e}"))
 
     def get_all(self) -> Sequence[Income]:
-        """Obtener todos los ingresos"""
-        rows = self._session.query(IncomeTable).all()
+        """Obtener todos los ingresos de la familia"""
+        query = self._session.query(IncomeTable)
+        if self._familia_id is not None:
+            query = query.filter(IncomeTable.familia_id == self._familia_id)
+        rows = query.all()
         return [income_to_domain(row) for row in rows]
 
     def get_by_id(self, income_id: int) -> Result[Income, DatabaseError]:
-        """Obtener un ingreso por ID"""
+        """Obtener un ingreso por ID de la familia"""
         try:
-            row = self._session.query(IncomeTable).filter(
+            query = self._session.query(IncomeTable).filter(
                 IncomeTable.id == income_id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(IncomeTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Ingreso {income_id} no encontrado"))
@@ -53,28 +60,37 @@ class IncomeRepository:
             return Err(DatabaseError(message=f"Error al buscar ingreso: {e}"))
 
     def get_by_member(self, member_id: int) -> Sequence[Income]:
-        """Obtener ingresos de un miembro específico"""
-        rows = self._session.query(IncomeTable).filter(
+        """Obtener ingresos de un miembro específico de la familia"""
+        query = self._session.query(IncomeTable).filter(
             IncomeTable.family_member_id == member_id
-        ).all()
+        )
+        if self._familia_id is not None:
+            query = query.filter(IncomeTable.familia_id == self._familia_id)
+        rows = query.all()
         return [income_to_domain(row) for row in rows]
 
     def get_by_month(self, year: int, month: int) -> Sequence[Income]:
-        """Obtener ingresos de un mes específico"""
+        """Obtener ingresos de un mes específico de la familia"""
         from sqlalchemy import extract
         
-        rows = self._session.query(IncomeTable).filter(
+        query = self._session.query(IncomeTable).filter(
             extract('year', IncomeTable.fecha) == year,
             extract('month', IncomeTable.fecha) == month
-        ).all()
+        )
+        if self._familia_id is not None:
+            query = query.filter(IncomeTable.familia_id == self._familia_id)
+        rows = query.all()
         return [income_to_domain(row) for row in rows]
 
     def delete(self, income_id: int) -> Result[None, DatabaseError]:
-        """Eliminar un ingreso"""
+        """Eliminar un ingreso de la familia"""
         try:
-            row = self._session.query(IncomeTable).filter(
+            query = self._session.query(IncomeTable).filter(
                 IncomeTable.id == income_id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(IncomeTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Ingreso {income_id} no encontrado"))
@@ -86,14 +102,17 @@ class IncomeRepository:
             return Err(DatabaseError(message=f"Error al eliminar ingreso: {e}"))
 
     def update(self, income: Income) -> Result[Income, DatabaseError]:
-        """Actualizar un ingreso existente"""
+        """Actualizar un ingreso existente de la familia"""
         try:
             if income.id is None:
                 return Err(DatabaseError(message="El ingreso debe tener un ID"))
             
-            row = self._session.query(IncomeTable).filter(
+            query = self._session.query(IncomeTable).filter(
                 IncomeTable.id == income.id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(IncomeTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Ingreso {income.id} no encontrado"))

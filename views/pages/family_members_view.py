@@ -27,8 +27,11 @@ class FamilyMembersView:
             router.navigate("/login")
             return
         
+        # Obtener familia_id de la sesión
+        familia_id = SessionManager.get_familia_id(page)
+        
         # Controller
-        self.controller = FamilyMemberController()
+        self.controller = FamilyMemberController(familia_id=familia_id)
         
         # Campos del formulario
         self.nombre_input = ft.TextField(

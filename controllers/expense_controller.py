@@ -22,8 +22,9 @@ class ExpenseController:
     Controller para página de gastos
     """
 
-    def __init__(self, session: Session | None = None) -> None:
+    def __init__(self, session: Session | None = None, familia_id: int | None = None) -> None:
         self._session = session
+        self._familia_id = familia_id
 
     @contextmanager
     def _get_session(self) -> Generator[Session, None, None]:
@@ -40,41 +41,41 @@ class ExpenseController:
     def add_expense(self, expense: Expense) -> Result[Expense, AppError]:
         """Agregar un nuevo gasto"""
         with self._get_session() as session:
-            repo = ExpenseRepository(session)
+            repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.create_expense(expense)
 
     def list_expenses(self) -> list[Expense]:
         """Listar todos los gastos"""
         with self._get_session() as session:
-            repo = ExpenseRepository(session)
+            repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.list_expenses()
 
     def list_by_category(self, categoria: str) -> list[Expense]:
         """Listar gastos por categoría"""
         with self._get_session() as session:
-            repo = ExpenseRepository(session)
+            repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.list_by_category(categoria)
 
     def get_summary_by_categories(self) -> dict[str, float]:
         """Obtener resumen de gastos por categoría"""
         with self._get_session() as session:
-            repo = ExpenseRepository(session)
+            repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.get_summary_by_categories()
 
     def delete_expense(self, expense_id: int) -> Result[None, AppError]:
         """Eliminar un gasto"""
         with self._get_session() as session:
-            repo = ExpenseRepository(session)
+            repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.delete_expense(expense_id)
 
     def get_total_by_month(self, year: int, month: int) -> Result[float, AppError]:
         """Obtener total de gastos de un mes específico"""
         with self._get_session() as session:
-            repo = ExpenseRepository(session)
+            repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.get_total_by_month(year, month)

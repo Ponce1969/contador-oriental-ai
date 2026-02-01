@@ -16,6 +16,13 @@ class FamilyMemberTable(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     
+    # Relación con familia (multi-tenant)
+    familia_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("familias.id"),
+        nullable=False
+    )
+    
     # Datos básicos
     nombre: Mapped[str] = mapped_column(String(100), nullable=False)
     
@@ -39,6 +46,13 @@ class IncomeTable(Base):
     __tablename__ = "incomes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    
+    # Relación con familia (multi-tenant)
+    familia_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("familias.id"),
+        nullable=False
+    )
     
     # Relación con miembro de la familia
     family_member_id: Mapped[int] = mapped_column(
@@ -71,6 +85,13 @@ class ExpenseTable(Base):
     __tablename__ = "expenses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    
+    # Relación con familia (multi-tenant)
+    familia_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("familias.id"),
+        nullable=False
+    )
     
     # Datos básicos del gasto
     monto: Mapped[float] = mapped_column(Float, nullable=False)

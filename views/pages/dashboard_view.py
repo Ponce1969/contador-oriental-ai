@@ -26,9 +26,12 @@ class DashboardView:
             router.navigate("/login")
             return
         
+        # Obtener familia_id de la sesión
+        familia_id = SessionManager.get_familia_id(page)
+        
         # Controllers
-        self.income_controller = IncomeController()
-        self.expense_controller = ExpenseController()
+        self.income_controller = IncomeController(familia_id=familia_id)
+        self.expense_controller = ExpenseController(familia_id=familia_id)
         
         # Contenedores para los datos
         self.balance_card = ft.Container()

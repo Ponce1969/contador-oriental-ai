@@ -35,8 +35,11 @@ class ExpensesView:
             router.navigate("/login")
             return
         
+        # Obtener familia_id de la sesión
+        familia_id = SessionManager.get_familia_id(page)
+        
         # Controller con gestión automática de sesión
-        self.controller = ExpenseController()
+        self.controller = ExpenseController(familia_id=familia_id)
         
         # Campos del formulario
         self.descripcion_input = ft.TextField(

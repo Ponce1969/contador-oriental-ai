@@ -805,3 +805,89 @@ AttributeError: 'Page' object has no attribute 'client_storage'
 2026-01-31 17:02:39,912 | INFO | Router | Navigating to: /family
 2026-01-31 17:02:45,303 | INFO | Router | Navigating to: /incomes
 2026-01-31 17:02:46,717 | INFO | Router | Navigating to: /expenses
+2026-01-31 17:07:39,644 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 17:07:39,647 | INFO | flet | Starting up TCP server on localhost:54202
+2026-01-31 17:07:39,658 | INFO | flet | Flet app has started...
+2026-01-31 17:07:39,665 | INFO | flet | App URL: tcp://localhost:54202
+2026-01-31 17:07:39,668 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 17:07:39,669 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:07:39,670 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:07:40,025 | INFO | flet | App session started
+2026-01-31 17:07:40,047 | INFO | App | Base de datos inicializada
+2026-01-31 17:07:40,202 | INFO | Router | Navigating to: /login
+2026-01-31 17:07:40,245 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 17:07:54,714 | INFO | Router | Navigating to: /
+2026-01-31 17:12:47,737 | INFO | Router | Navigating to: /login
+2026-01-31 17:13:40,072 | INFO | Router | Navigating to: /
+2026-01-31 17:13:54,456 | INFO | Router | Navigating to: /family
+2026-01-31 17:14:00,436 | INFO | Router | Navigating to: /incomes
+2026-01-31 17:14:02,565 | INFO | Router | Navigating to: /expenses
+2026-01-31 17:14:05,900 | INFO | Router | Navigating to: /
+2026-01-31 17:14:20,072 | INFO | Router | Navigating to: /login
+2026-01-31 17:14:41,771 | INFO | Router | Navigating to: /
+2026-01-31 17:19:25,216 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 17:19:25,218 | INFO | flet | Starting up TCP server on localhost:51468
+2026-01-31 17:19:25,234 | INFO | flet | Flet app has started...
+2026-01-31 17:19:25,243 | INFO | flet | App URL: tcp://localhost:51468
+2026-01-31 17:19:25,243 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 17:19:25,245 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:19:25,245 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:19:25,555 | INFO | flet | App session started
+2026-01-31 17:19:25,578 | INFO | App | Base de datos inicializada
+2026-01-31 17:19:25,741 | INFO | Router | Navigating to: /login
+2026-01-31 17:19:25,782 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 17:20:51,147 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 17:20:51,148 | INFO | flet | Starting up TCP server on localhost:61807
+2026-01-31 17:20:51,162 | INFO | flet | Flet app has started...
+2026-01-31 17:20:51,171 | INFO | flet | App URL: tcp://localhost:61807
+2026-01-31 17:20:51,171 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 17:20:51,172 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:20:51,172 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 17:20:51,548 | INFO | flet | App session started
+2026-01-31 17:20:51,567 | INFO | App | Base de datos inicializada
+2026-01-31 17:20:51,725 | INFO | Router | Navigating to: /login
+2026-01-31 17:20:51,763 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 22:37:22,225 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 22:37:22,227 | INFO | flet | Starting up TCP server on localhost:50900
+2026-01-31 22:37:22,236 | INFO | flet | Flet app has started...
+2026-01-31 22:37:22,243 | INFO | flet | App URL: tcp://localhost:50900
+2026-01-31 22:37:22,243 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 22:37:22,244 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 22:37:22,245 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 22:37:23,548 | INFO | flet | App session started
+2026-01-31 22:37:23,584 | INFO | App | Base de datos inicializada
+2026-01-31 22:37:23,852 | INFO | Router | Navigating to: /login
+2026-01-31 22:37:23,954 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 22:37:35,787 | ERROR | flet | Unhandled error in 'on_submit' handler
+Traceback (most recent call last):
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\messaging\session.py", line 194, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet\controls\base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "C:\Users\cerra\codigo\flet\views\pages\login_view.py", line 167, in _on_login
+    result = self.auth_controller.login(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\codigo\flet\controllers\auth_controller.py", line 38, in login
+    return Result.Err(AppError(message=error.message))
+           ^^^^^^^^^^
+  File "C:\Users\cerra\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\typing.py", line 1212, in __getattr__
+    return getattr(self.__origin__, attr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\cerra\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\typing.py", line 489, in __getattr__
+    raise AttributeError(item)
+AttributeError: Err
+2026-01-31 22:37:46,900 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 22:37:46,902 | INFO | flet | Starting up TCP server on localhost:50937
+2026-01-31 22:37:46,910 | INFO | flet | Flet app has started...
+2026-01-31 22:37:46,913 | INFO | flet | App URL: tcp://localhost:50937
+2026-01-31 22:37:46,914 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 22:37:46,914 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 22:37:46,914 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 22:37:47,155 | INFO | flet | App session started
+2026-01-31 22:37:47,167 | INFO | App | Base de datos inicializada
+2026-01-31 22:37:47,264 | INFO | Router | Navigating to: /login
+2026-01-31 22:37:47,288 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 22:37:57,567 | INFO | Router | Navigating to: /
+2026-01-31 22:38:08,077 | INFO | Router | Navigating to: /family
+2026-01-31 22:38:23,419 | INFO | Router | Navigating to: /incomes
+2026-01-31 22:38:35,449 | INFO | Router | Navigating to: /expenses

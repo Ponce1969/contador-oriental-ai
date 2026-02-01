@@ -30,9 +30,12 @@ class IncomesView:
             router.navigate("/login")
             return
         
+        # Obtener familia_id de la sesión
+        familia_id = SessionManager.get_familia_id(page)
+        
         # Controllers
-        self.income_controller = IncomeController()
-        self.member_controller = FamilyMemberController()
+        self.income_controller = IncomeController(familia_id=familia_id)
+        self.member_controller = FamilyMemberController(familia_id=familia_id)
         
         # Cargar miembros activos
         self.active_members = self.member_controller.list_active_members()

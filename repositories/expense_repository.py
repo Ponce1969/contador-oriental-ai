@@ -18,8 +18,9 @@ from repositories.mappers import to_domain, to_table
 class ExpenseRepository:
     """Repository para operaciones CRUD de gastos"""
     
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, familia_id: int | None = None) -> None:
         self._session = session
+        self._familia_id = familia_id
 
     def add(self, expense: Expense) -> Result[Expense, DatabaseError]:
         """Agregar un nuevo gasto"""
@@ -34,16 +35,22 @@ class ExpenseRepository:
             return Err(DatabaseError(message=f"Error al guardar gasto: {e}"))
 
     def get_all(self) -> Sequence[Expense]:
-        """Obtener todos los gastos"""
-        rows = self._session.query(ExpenseTable).all()
+        """Obtener todos los gastos de la familia"""
+        query = self._session.query(ExpenseTable)
+        if self._familia_id is not None:
+            query = query.filter(ExpenseTable.familia_id == self._familia_id)
+        rows = query.all()
         return [to_domain(row) for row in rows]
 
     def get_by_id(self, expense_id: int) -> Result[Expense, DatabaseError]:
-        """Obtener un gasto por ID"""
+        """Obtener un gasto por ID de la familia"""
         try:
-            row = self._session.query(ExpenseTable).filter(
+            query = self._session.query(ExpenseTable).filter(
                 ExpenseTable.id == expense_id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(ExpenseTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Gasto {expense_id} no encontrado"))
@@ -53,28 +60,37 @@ class ExpenseRepository:
             return Err(DatabaseError(message=f"Error al buscar gasto: {e}"))
 
     def get_by_category(self, categoria: str) -> Sequence[Expense]:
-        """Obtener gastos por categoría"""
-        rows = self._session.query(ExpenseTable).filter(
+        """Obtener gastos por categoría de la familia"""
+        query = self._session.query(ExpenseTable).filter(
             ExpenseTable.categoria == categoria
-        ).all()
+        )
+        if self._familia_id is not None:
+            query = query.filter(ExpenseTable.familia_id == self._familia_id)
+        rows = query.all()
         return [to_domain(row) for row in rows]
 
     def get_by_month(self, year: int, month: int) -> Sequence[Expense]:
-        """Obtener gastos de un mes específico"""
+        """Obtener gastos de un mes específico de la familia"""
         from sqlalchemy import extract
         
-        rows = self._session.query(ExpenseTable).filter(
+        query = self._session.query(ExpenseTable).filter(
             extract('year', ExpenseTable.fecha) == year,
             extract('month', ExpenseTable.fecha) == month
-        ).all()
+        )
+        if self._familia_id is not None:
+            query = query.filter(ExpenseTable.familia_id == self._familia_id)
+        rows = query.all()
         return [to_domain(row) for row in rows]
 
     def delete(self, expense_id: int) -> Result[None, DatabaseError]:
-        """Eliminar un gasto"""
+        """Eliminar un gasto de la familia"""
         try:
-            row = self._session.query(ExpenseTable).filter(
+            query = self._session.query(ExpenseTable).filter(
                 ExpenseTable.id == expense_id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(ExpenseTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Gasto {expense_id} no encontrado"))
@@ -86,14 +102,17 @@ class ExpenseRepository:
             return Err(DatabaseError(message=f"Error al eliminar gasto: {e}"))
 
     def update(self, expense: Expense) -> Result[Expense, DatabaseError]:
-        """Actualizar un gasto existente"""
+        """Actualizar un gasto existente de la familia"""
         try:
             if expense.id is None:
                 return Err(DatabaseError(message="El gasto debe tener un ID"))
             
-            row = self._session.query(ExpenseTable).filter(
+            query = self._session.query(ExpenseTable).filter(
                 ExpenseTable.id == expense.id
-            ).first()
+            )
+            if self._familia_id is not None:
+                query = query.filter(ExpenseTable.familia_id == self._familia_id)
+            row = query.first()
             
             if row is None:
                 return Err(DatabaseError(message=f"Gasto {expense.id} no encontrado"))
