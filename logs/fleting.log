@@ -903,3 +903,36 @@ AttributeError: Err
 2026-01-31 23:09:41,603 | INFO | Router | Navigating to: /login
 2026-01-31 23:09:41,761 | INFO | App | Aplicação iniciada com sucesso
 2026-01-31 23:09:55,239 | INFO | Router | Navigating to: /
+2026-02-01 01:35:16,800 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-02-01 01:35:16,803 | INFO | flet | Starting up TCP server on localhost:52330
+2026-02-01 01:35:16,813 | INFO | flet | Flet app has started...
+2026-02-01 01:35:17,622 | INFO | flet | App URL: tcp://localhost:52330
+2026-02-01 01:35:17,622 | INFO | flet_desktop | Starting Flet View app...
+2026-02-01 01:35:17,622 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-02-01 01:35:17,622 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-02-01 01:35:19,329 | INFO | flet | App session started
+2026-02-01 01:35:19,350 | INFO | App | Base de datos inicializada
+2026-02-01 01:35:19,516 | INFO | Router | Navigating to: /login
+2026-02-01 01:35:19,552 | INFO | App | Aplicação iniciada com sucesso
+2026-02-01 01:37:39,960 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-02-01 01:37:39,962 | INFO | flet | Starting up TCP server on localhost:49863
+2026-02-01 01:37:39,971 | INFO | flet | Flet app has started...
+2026-02-01 01:37:39,978 | INFO | flet | App URL: tcp://localhost:49863
+2026-02-01 01:37:39,979 | INFO | flet_desktop | Starting Flet View app...
+2026-02-01 01:37:39,984 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-02-01 01:37:39,984 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-02-01 01:37:40,229 | INFO | flet | App session started
+2026-02-01 01:37:40,248 | INFO | App | Base de datos inicializada
+2026-02-01 01:37:40,345 | INFO | Router | Navigating to: /login
+2026-02-01 01:37:40,367 | INFO | App | Aplicação iniciada com sucesso
+2026-02-01 01:45:30,165 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-02-01 01:45:30,169 | INFO | flet | Starting up TCP server on localhost:50298
+2026-02-01 01:45:30,177 | INFO | flet | Flet app has started...
+2026-02-01 01:45:30,183 | INFO | flet | App URL: tcp://localhost:50298
+2026-02-01 01:45:30,183 | INFO | flet_desktop | Starting Flet View app...
+2026-02-01 01:45:30,185 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-02-01 01:45:30,185 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-02-01 01:45:30,508 | INFO | flet | App session started
+2026-02-01 01:45:30,525 | INFO | App | Base de datos inicializada
+2026-02-01 01:45:30,660 | INFO | Router | Navigating to: /login
+2026-02-01 01:45:30,691 | INFO | App | Aplicação iniciada com sucesso
