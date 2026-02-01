@@ -73,7 +73,7 @@ class FamilyMembersView:
         """Renderizar la vista completa"""
         content = ft.Column(
             controls=[
-                ft.Text(value=self.controller.get_title(), size=28, weight="bold"),
+                ft.Text(value=self.controller.get_title(), size=28, weight=ft.FontWeight.BOLD),
                 ft.Divider(),
                 
                 # Formulario de registro
@@ -236,7 +236,7 @@ class FamilyMembersView:
                         content=ft.Row(
                             controls=[
                                 ft.Icon(
-                                    ft.Icons.PERSON,
+                                    icon=ft.Icons.PERSON,
                                     color=ft.Colors.PURPLE_600,
                                     size=30
                                 ),

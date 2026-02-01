@@ -30,6 +30,6 @@ class Router:
             self.page.add(view)
         except Exception:
             logger.exception("Error rendering view")
-            self.page.add(ft.Text("Internal application error"))
+            self.page.add(ft.Text(value="Internal application error"))
 
         self.page.update()

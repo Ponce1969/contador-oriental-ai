@@ -44,8 +44,8 @@ class LoginView:
         self.login_button = ft.ElevatedButton(
             content=ft.Row(
                 controls=[
-                    ft.Icon(ft.Icons.LOGIN),
-                    ft.Text("Iniciar Sesión")
+                    ft.Icon(icon=ft.Icons.LOGIN),
+                    ft.Text(value="Iniciar Sesión")
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 spacing=10
@@ -64,18 +64,18 @@ class LoginView:
                         content=ft.Column(
                             controls=[
                                 ft.Icon(
-                                    ft.Icons.ACCOUNT_BALANCE_WALLET,
+                                    icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
                                     size=80,
                                     color=ft.Colors.BLUE_600
                                 ),
                                 ft.Text(
-                                    "Auditor Familiar",
+                                    value="Auditor Familiar",
                                     size=32,
                                     weight=ft.FontWeight.BOLD,
                                     color=ft.Colors.BLUE_700
                                 ),
                                 ft.Text(
-                                    "Sistema de Gestión de Finanzas",
+                                    value="Sistema de Gestión de Finanzas",
                                     size=16,
                                     color=ft.Colors.GREY_600
                                 ),
@@ -91,7 +91,7 @@ class LoginView:
                         content=ft.Column(
                             controls=[
                                 ft.Text(
-                                    "Iniciar Sesión",
+                                    value="Iniciar Sesión",
                                     size=24,
                                     weight=ft.FontWeight.BOLD,
                                     color=ft.Colors.BLUE_700
@@ -108,18 +108,18 @@ class LoginView:
                                         controls=[
                                             ft.Divider(),
                                             ft.Text(
-                                                "Credenciales por defecto:",
+                                                value="Credenciales por defecto:",
                                                 size=12,
                                                 color=ft.Colors.GREY_600,
                                                 italic=True
                                             ),
                                             ft.Text(
-                                                "Usuario: admin",
+                                                value="Usuario: admin",
                                                 size=12,
                                                 color=ft.Colors.GREY_600
                                             ),
                                             ft.Text(
-                                                "Contraseña: admin123",
+                                                value="Contraseña: admin123",
                                                 size=12,
                                                 color=ft.Colors.GREY_600
                                             ),
@@ -182,13 +182,13 @@ class LoginView:
         SessionManager.login(self.page, user)
         
         # Mostrar mensaje de bienvenida
-        self.page.snack_bar = ft.SnackBar(
+        self.page.snack_bar = ft.SnackBar(  # type: ignore
             content=ft.Text(
-                f"¡Bienvenido, {user.nombre_completo or user.username}!"
+                value=f"¡Bienvenido, {user.nombre_completo or user.username}!"
             ),
             bgcolor=ft.Colors.GREEN_400
         )
-        self.page.snack_bar.open = True
+        self.page.snack_bar.open = True  # type: ignore
         
         # Redirigir al dashboard
         from core.router import Router

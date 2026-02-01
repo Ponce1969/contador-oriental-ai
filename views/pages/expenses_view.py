@@ -62,7 +62,7 @@ class ExpensesView:
                 ft.dropdown.Option(cat.value) for cat in ExpenseCategory
             ]
         )
-        self.categoria_dropdown.on_change = self._on_category_change
+        self.categoria_dropdown.on_change = self._on_category_change  # type: ignore
         
         self.subcategoria_dropdown = ft.Dropdown(
             label="Subcategoría",
@@ -119,7 +119,7 @@ class ExpensesView:
         """Renderizar la vista completa"""
         content = ft.Column(
             controls=[
-                ft.Text(value=self.controller.get_title(), size=28, weight="bold"),
+                ft.Text(value=self.controller.get_title(), size=28, weight=ft.FontWeight.BOLD),
                 ft.Divider(),
                 
                 # Formulario de registro
@@ -293,8 +293,8 @@ class ExpensesView:
                 categoria=selected_cat,
                 subcategoria=self.subcategoria_dropdown.value,
                 metodo_pago=selected_metodo,
-                es_recurrente=self.es_recurrente_checkbox.value,
-                frecuencia=selected_freq,
+                es_recurrente=self.es_recurrente_checkbox.value or False,
+                frecuencia_recurrencia=selected_freq,
                 notas=self.notas_input.value if self.notas_input.value else None,
             )
             
@@ -330,14 +330,14 @@ class ExpensesView:
                         content=ft.Row(
                             controls=[
                                 ft.Icon(
-                                    ft.Icons.ATTACH_MONEY,
+                                    icon=ft.Icons.ATTACH_MONEY,
                                     color=ft.Colors.GREEN
                                 ),
                                 ft.Column(
                                     controls=[
                                         ft.Text(
                                             value=expense.descripcion,
-                                            weight="bold"
+                                            weight=ft.FontWeight.BOLD
                                         ),
                                         ft.Text(
                                             value=(
@@ -354,7 +354,7 @@ class ExpensesView:
                                 ft.Text(
                                     value=f"${expense.monto:.2f}",
                                     size=18,
-                                    weight="bold",
+                                    weight=ft.FontWeight.BOLD,
                                     color=ft.Colors.RED_700
                                 ),
                                 ft.Text(
@@ -416,11 +416,11 @@ class ExpensesView:
             self.summary_column.controls.append(
                 ft.Row(
                     controls=[
-                        ft.Text(value="TOTAL", weight="bold", width=150),
+                        ft.Text(value="TOTAL", weight=ft.FontWeight.BOLD, width=150),
                         ft.Text(value="", width=200),
                         ft.Text(
                             value=f"${total:.2f}",
-                            weight="bold",
+                            weight=ft.FontWeight.BOLD,
                             size=18,
                             color=ft.Colors.RED_700,
                             width=150

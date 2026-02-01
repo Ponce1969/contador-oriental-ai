@@ -113,8 +113,9 @@ class UserRepository:
                 row = result.fetchone()
                 session.commit()
                 
-                user.id = row[0]
-                user.created_at = row[1]
+                if row is not None:
+                    user.id = row[0]
+                    user.created_at = row[1]
                 
                 return Ok(user)
                 

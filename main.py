@@ -18,7 +18,7 @@ def main(page: ft.Page):
         page.spacing = 0
         
         # Configurar icono personalizado de la aplicación (formato ICO para Windows)
-        page.window_icon = "assets/icon-gastos.ico"
+        page.window_icon = "assets/icon-gastos.ico"  # type: ignore
 
         # Inicializar base de datos
         create_tables()
@@ -26,30 +26,30 @@ def main(page: ft.Page):
 
         # Banner de bienvenida
         def close_welcome_banner(e):
-            page.banner.open = False
+            page.banner.open = False  # type: ignore
             page.update()
 
         def go_to_family(e):
-            page.banner.open = False
+            page.banner.open = False  # type: ignore
             router.navigate("/family")
             page.update()
 
-        page.banner = ft.Banner(
+        page.banner = ft.Banner(  # type: ignore
             bgcolor=ft.Colors.BLUE_50,
-            leading=ft.Icon(ft.Icons.WAVING_HAND, color=ft.Colors.BLUE, size=40),
+            leading=ft.Icon(icon=ft.Icons.WAVING_HAND, color=ft.Colors.BLUE, size=40),
             content=ft.Row(
                 controls=[
-                    ft.Icon(ft.Icons.INFO, color=ft.Colors.BLUE_400),
+                    ft.Icon(icon=ft.Icons.INFO, color=ft.Colors.BLUE_400),
                     ft.Text(
-                        "¡Bienvenido al Auditor Familiar! "
+                        value="¡Bienvenido al Auditor Familiar! "
                         "Gestiona tus finanzas de forma fácil."
                     ),
                 ],
                 spacing=10
             ),
             actions=[
-                ft.TextButton("Ir a Familia", on_click=go_to_family),
-                ft.TextButton("Cerrar", on_click=close_welcome_banner),
+                ft.TextButton(content=ft.Text(value="Ir a Familia"), on_click=go_to_family),
+                ft.TextButton(content=ft.Text(value="Cerrar"), on_click=close_welcome_banner),
             ],
         )
 
@@ -72,7 +72,7 @@ def main(page: ft.Page):
         # Verificar si hay sesión activa
         if SessionManager.is_logged_in(page):
             # Usuario logueado - mostrar banner y dashboard
-            page.banner.open = True
+            page.banner.open = True  # type: ignore
             router.navigate("/")
         else:
             # No hay sesión - ir a login

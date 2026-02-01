@@ -32,39 +32,41 @@ class HelpView:
             spacing=24,
             controls=[
                 ft.Text(
-                    self.controller.get_title(),
+                    value=self.controller.get_title(),
                     size=28,
                     weight=ft.FontWeight.BOLD,
                 ),
 
                 ft.Text(
-                    "Precisa de ajuda com o Fleting?",
+                    value="Precisa de ajuda com o Fleting?",
                     size=18,
                     weight=ft.FontWeight.W_500,
                 ),
 
                 ft.Text(
-                    "Aqui você encontra links úteis para documentação, "
-                    "suporte e contribuição com o projeto.",
+                    value=(
+                        "Aqui você encontra links úteis para documentação, "
+                        "suporte e contribuição com o projeto."
+                    ),
                     color=ft.Colors.GREY_600,
                 ),
 
                 ft.Divider(),
 
                 ft.Button(
-                    "📘 Documentação Oficial",
+                    content=ft.Text(value="📘 Documentação Oficial"),
                     icon=ft.Icons.MENU_BOOK,
                     on_click=self.open_docs,
                 ),
 
                 ft.Button(
-                    "🐛 Reportar um problema",
+                    content=ft.Text(value="🐛 Reportar um problema"),
                     icon=ft.Icons.BUG_REPORT,
                     on_click=self.open_issues,
                 ),
 
                 ft.Button(
-                    "💬 Precisa de uma automação ou Sistema?",
+                    content=ft.Text(value="💬 Precisa de uma automação ou Sistema?"),
                     icon=ft.Icons.BUG_REPORT,
                     on_click=self.open_support,
                 ),

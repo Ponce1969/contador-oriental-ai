@@ -25,14 +25,14 @@ class FletingApp:
         for route, label in menu.items():
             menu_items.append(
                 ft.TextButton(
-                    text=label,
-                    icon=ft.icons.CIRCLE,
+                    content=ft.Text(value=label),
+                    icon=ft.Icons.CIRCLE,
                     on_click=lambda e, r=f"/{route}": self.router.navigate(r),
                 )
             )
 
         return ft.AppBar(
-            title=ft.Text(I18n.t("app.name")),
+            title=ft.Text(value=I18n.t("app.name")),
             actions=menu_items,
             center_title=False,
         )

@@ -96,7 +96,7 @@ class DashboardView:
                             ft.Row(
                                 controls=[
                                     ft.Icon(
-                                        balance_icon,
+                                        icon=balance_icon,
                                         color=balance_color,
                                         size=40
                                     ),
@@ -152,7 +152,7 @@ class DashboardView:
                                     ft.Row(
                                         controls=[
                                             ft.Icon(
-                                                ft.Icons.ACCOUNT_BALANCE_WALLET,
+                                                icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
                                                 color=ft.Colors.TEAL_600,
                                                 size=30
                                             ),
@@ -207,7 +207,7 @@ class DashboardView:
                                     ft.Row(
                                         controls=[
                                             ft.Icon(
-                                                ft.Icons.MONEY_OFF,
+                                                icon=ft.Icons.MONEY_OFF,
                                                 color=ft.Colors.ORANGE_600,
                                                 size=30
                                             ),

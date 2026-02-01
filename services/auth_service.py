@@ -48,7 +48,8 @@ class AuthService:
             return Err(ValidationError(message="Usuario o contraseña incorrectos"))
         
         # Actualizar último login
-        self._user_repo.update_last_login(user.id)
+        if user.id is not None:
+            self._user_repo.update_last_login(user.id)
         
         return Ok(user)
     

@@ -31,9 +31,9 @@ def get_connection():
 # =========================
 def _connect_sqlite():
     cfg = DATABASE.get("SQLITE", {})
-    path_cfg = cfg.get("PATH", "data/fleting.db")
+    path_cfg = cfg.get("PATH", "data/fleting.db") if isinstance(cfg, dict) else "data/fleting.db"
 
-    db_path = BASE_DIR / Path(path_cfg)
+    db_path = BASE_DIR / Path(str(path_cfg))
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     return sqlite3.connect(db_path)

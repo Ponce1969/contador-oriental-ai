@@ -19,21 +19,23 @@ class HomeView:
                     src="icon.png",
                     width=96,
                     height=96,
-                    fit="contain",
+                    fit=ft.BoxFit.CONTAIN,
                 ),
                 ft.Text(
-                    "Fleting Framework",
+                    value="Fleting Framework",
                     size=36,
                     weight=ft.FontWeight.BOLD,
                 ),
                 ft.Text(
-                    "Micro Framework MVC for Flet",
+                    value="Micro Framework MVC for Flet",
                     size=16,
                     color=ft.Colors.GREY_600,
                 ),
                 ft.Text(
-                    "Build modern applications with a clear architecture, "
-                    "Dynamic routing and productive CLI.",
+                    value=(
+                        "Build modern applications with a clear architecture, "
+                        "Dynamic routing and productive CLI."
+                    ),
                     size=14,
                     text_align=ft.TextAlign.CENTER,
                     width=420,
@@ -44,12 +46,12 @@ class HomeView:
                     spacing=16,
                     controls=[
                         ft.FilledButton(
-                            "Settings",
+                            content=ft.Text(value="Settings"),
                             icon=ft.Icons.SETTINGS,
                             on_click=lambda e: self.router.navigate("/settings"),
                         ),
                         ft.OutlinedButton(
-                            "Create new page",
+                            content=ft.Text(value="Create new page"),
                             icon=ft.Icons.ADD,
                         ),
                     ],

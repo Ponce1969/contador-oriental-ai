@@ -31,7 +31,7 @@ class ExpenseService:
             return Err(ValidationError(message="La descripción es obligatoria"))
         
         # Validación: si es recurrente, debe tener frecuencia
-        if expense.es_recurrente and not expense.frecuencia:
+        if expense.es_recurrente and not expense.frecuencia_recurrencia:
             return Err(
                 ValidationError(
                     message="Los gastos recurrentes deben tener frecuencia"

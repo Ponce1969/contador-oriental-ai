@@ -47,9 +47,9 @@ class MainLayout(ft.Column):
                 ft.PopupMenuItem(
                     content=ft.Row(
                         controls=[
-                            ft.Icon(r["icon"]),
+                            ft.Icon(icon=r["icon"]),  # type: ignore
                             ft.Text(
-                                I18n.t(r["label"]) if "." in r["label"] else r["label"]
+                                value=I18n.t(r["label"]) if "." in r["label"] else r["label"]  # type: ignore
                             ),
                         ],
                         spacing=10,
@@ -64,8 +64,8 @@ class MainLayout(ft.Column):
             ft.PopupMenuItem(
                 content=ft.Row(
                     controls=[
-                        ft.Icon(ft.Icons.LOGOUT, color=ft.Colors.RED_400),
-                        ft.Text("Cerrar Sesión", color=ft.Colors.RED_400),
+                        ft.Icon(icon=ft.Icons.LOGOUT, color=ft.Colors.RED_400),
+                        ft.Text(value="Cerrar Sesión", color=ft.Colors.RED_400),
                     ],
                     spacing=10,
                 ),
@@ -77,12 +77,12 @@ class MainLayout(ft.Column):
         username = SessionManager.get_username(self._page) or "Usuario"
 
         return ft.AppBar(
-            title=ft.Text(I18n.t("app.name")),
+            title=ft.Text(value=I18n.t("app.name")),
             actions=[
                 ft.Text(
-                    f"👤 {username}",
+                    value=f"👤 {username}",
                     size=14,
-                    color=ft.Colors.WHITE70
+                    color=ft.Colors.ON_SURFACE_VARIANT
                 ),
                 ft.PopupMenuButton(
                     icon=ft.Icons.MENU,
@@ -105,7 +105,7 @@ class MainLayout(ft.Column):
             if r.get("show_in_bottom"):
                 destinations.append(
                     ft.NavigationBarDestination(
-                        icon=r["icon"],
+                        icon=r["icon"],  # type: ignore
                         label=I18n.t(r["label"]),
                     )
                 )

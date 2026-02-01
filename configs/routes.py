@@ -78,7 +78,7 @@ ROUTES = [
     }
 ]
 
-def load_view(view_path: str):  # type: ignore[return]
+def load_view(view_path: str):
     module_name, class_name = view_path.rsplit(".", 1)
     
     try:

@@ -117,7 +117,7 @@ class IncomesView:
                 ft.Text(
                     value=self.income_controller.get_title(),
                     size=28,
-                    weight="bold"
+                    weight=ft.FontWeight.BOLD
                 ),
                 ft.Divider(),
                 
@@ -283,7 +283,7 @@ class IncomesView:
                 fecha=fecha,
                 descripcion=self.descripcion_input.value,
                 categoria=categoria,
-                es_recurrente=self.recurrente_checkbox.value,
+                es_recurrente=self.recurrente_checkbox.value or False,
                 frecuencia=frecuencia,
                 notas=self.notas_input.value if self.notas_input.value else None,
             )
@@ -343,7 +343,7 @@ class IncomesView:
                         content=ft.Row(
                             controls=[
                                 ft.Icon(
-                                    ft.Icons.ACCOUNT_BALANCE_WALLET,
+                                    icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
                                     color=ft.Colors.TEAL_600,
                                     size=30
                                 ),
