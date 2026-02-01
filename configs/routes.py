@@ -78,7 +78,7 @@ ROUTES = [
     }
 ]
 
-def load_view(view_path: str):
+def load_view(view_path: str):  # type: ignore[return]
     module_name, class_name = view_path.rsplit(".", 1)
     
     try:
@@ -93,7 +93,8 @@ def get_routes():
     routes = {}
 
     for r in ROUTES:
-        def create_view_lambda(path=r["view"]):
+        view_path = str(r["view"])  # Asegurar que es string
+        def create_view_lambda(path=view_path):
             return lambda page, router: load_view(path)(page, router).render()
 
         routes[r["path"]] = create_view_lambda()
