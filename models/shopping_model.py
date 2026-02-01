@@ -11,4 +11,4 @@ class ShoppingItem(BaseModel):
     price: float = Field(gt=0)
     category: str
     purchased: bool = False
-    purchase_date: date
+    purchase_date: date | None = None
