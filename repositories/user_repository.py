@@ -19,60 +19,55 @@ class UserRepository:
         """Get session - use provided or global"""
         if self._session is not None:
             return self._session
+        # Return the context manager, not the session directly
         return get_db_session()
 
     def _use_session(self, callback):
         """Execute callback with appropriate session handling"""
-        session = self._get_session()
         if self._session is not None:
-            # Use injected session (test mode)
-            return callback(session)
+            # Use injected session (test mode) - already in context
+            return callback(self._session)
         else:
-            # Use global session (production mode)
-            with session:
+            # Use global session (production mode) - manage context
+            with get_db_session() as session:
                 return callback(session)
 
     def get_by_username(self, username: str) -> Result[User, DatabaseError]:
         """Obtener usuario por nombre de usuario"""
+        def _query(session):
+            result = session.execute(
+                text("""
+                    SELECT 
+                        id, familia_id, username, password_hash,
+                        nombre_completo, activo, created_at, last_login
+                    FROM usuarios
+                    WHERE username = :username
+                """),
+                {"username": username}
+            )
+            row = result.fetchone()
+
+            if not row:
+                return Err(
+                    DatabaseError(message=f"Usuario {username} no encontrado")
+                )
+
+            user = User(
+                id=row[0],
+                familia_id=row[1],
+                username=row[2],
+                password_hash=row[3],
+                nombre_completo=row[4],
+                activo=row[5],
+                created_at=row[6],
+                last_login=row[7],
+            )
+            return Ok(user)
+
         try:
-            session = self._get_session()
-            if self._session is None:
-                with session:
-                    return self._get_by_username(session, username)
-            return self._get_by_username(session, username)
+            return self._use_session(_query)
         except Exception as e:
             return Err(DatabaseError(message=f"Error al buscar usuario: {e}"))
-    
-    def _get_by_username(self, session, username: str) -> Result[User, DatabaseError]:
-        """Internal method to get user by username with session"""
-        result = session.execute(
-            text("""
-                SELECT 
-                    id, familia_id, username, password_hash,
-                    nombre_completo, activo, created_at, last_login
-                FROM usuarios
-                WHERE username = :username
-            """),
-            {"username": username}
-        )
-        row = result.fetchone()
-        
-        if not row:
-            return Err(
-                DatabaseError(message=f"Usuario {username} no encontrado")
-            )
-        
-        user = User(
-            id=row[0],
-            familia_id=row[1],
-            username=row[2],
-            password_hash=row[3],
-            nombre_completo=row[4],
-            activo=row[5],
-            created_at=row[6],
-            last_login=row[7],
-        )
-        return Ok(user)
                 
     def get_by_id(self, user_id: int) -> Result[User, DatabaseError]:
         """Obtener usuario por ID"""
