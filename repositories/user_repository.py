@@ -1,12 +1,12 @@
 """
 Repositorio de usuarios - Acceso a datos de autenticación
 """
+from result import Err, Ok, Result
 from sqlalchemy import text
 
 from core.sqlalchemy_session import get_db_session
 from models.errors import DatabaseError
 from models.user_model import User
-from result import Err, Ok, Result
 
 
 class UserRepository:

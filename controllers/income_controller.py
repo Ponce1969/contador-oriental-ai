@@ -20,7 +20,11 @@ from services.income_service import IncomeService
 class IncomeController:
     """Controller para gestión de ingresos"""
 
-    def __init__(self, session: Session | None = None, familia_id: int | None = None) -> None:
+    def __init__(
+        self,
+        session: Session | None = None,
+        familia_id: int | None = None,
+    ) -> None:
         self._session = session
         self._familia_id = familia_id
 

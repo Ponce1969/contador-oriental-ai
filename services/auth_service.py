@@ -3,11 +3,11 @@ Servicio de autenticación - Login, logout, gestión de usuarios
 """
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
+from result import Err, Ok, Result
 
 from models.errors import DatabaseError, ValidationError
 from models.user_model import User, UserCreate, UserLogin
 from repositories.user_repository import UserRepository
-from result import Err, Ok, Result
 
 
 class AuthService:

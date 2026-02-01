@@ -2,6 +2,7 @@
 Modelo de Usuario - Sistema de autenticación
 """
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 

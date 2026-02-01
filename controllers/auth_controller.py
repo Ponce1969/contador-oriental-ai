@@ -2,11 +2,11 @@
 Controlador de autenticación - Manejo de login y usuarios
 """
 import flet as ft
+from result import Result
 
 from models.errors import AppError, DatabaseError, ValidationError
 from models.user_model import UserLogin
 from repositories.user_repository import UserRepository
-from result import Result
 from services.auth_service import AuthService
 
 

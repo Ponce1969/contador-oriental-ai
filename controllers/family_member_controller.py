@@ -20,7 +20,11 @@ from services.family_member_service import FamilyMemberService
 class FamilyMemberController:
     """Controller para gestión de miembros de la familia"""
 
-    def __init__(self, session: Session | None = None, familia_id: int | None = None) -> None:
+    def __init__(
+        self,
+        session: Session | None = None,
+        familia_id: int | None = None,
+    ) -> None:
         self._session = session
         self._familia_id = familia_id
 

@@ -891,3 +891,15 @@ AttributeError: Err
 2026-01-31 22:38:08,077 | INFO | Router | Navigating to: /family
 2026-01-31 22:38:23,419 | INFO | Router | Navigating to: /incomes
 2026-01-31 22:38:35,449 | INFO | Router | Navigating to: /expenses
+2026-01-31 23:09:38,837 | INFO | flet | Assets path configured: C:\Users\cerra\codigo\flet\assets
+2026-01-31 23:09:38,841 | INFO | flet | Starting up TCP server on localhost:49801
+2026-01-31 23:09:38,855 | INFO | flet | Flet app has started...
+2026-01-31 23:09:38,860 | INFO | flet | App URL: tcp://localhost:49801
+2026-01-31 23:09:38,860 | INFO | flet_desktop | Starting Flet View app...
+2026-01-31 23:09:38,865 | INFO | flet_desktop | Looking for Flet executable at: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 23:09:38,867 | INFO | flet_desktop | Flet View found in: C:\Users\cerra\codigo\flet\.venv\Lib\site-packages\flet_desktop\app\flet\flet.exe
+2026-01-31 23:09:41,065 | INFO | flet | App session started
+2026-01-31 23:09:41,120 | INFO | App | Base de datos inicializada
+2026-01-31 23:09:41,603 | INFO | Router | Navigating to: /login
+2026-01-31 23:09:41,761 | INFO | App | Aplicação iniciada com sucesso
+2026-01-31 23:09:55,239 | INFO | Router | Navigating to: /
