@@ -194,14 +194,42 @@ Esto permite:
 
 ---
 
-## � Instalación y Uso
+## 🚀 Instalación y Uso
 
-### **Requisitos previos**
+### **Opción 1: Docker (Recomendado para producción)**
 
+Ideal para desplegar en Orange Pi 5 Plus o cualquier servidor ARM64/x86_64.
+
+```bash
+# Clonar el repositorio
+git clone <tu-repo-url>
+cd flet
+
+# Configurar variables de entorno
+cp .env.example .env
+nano .env  # Editar con credenciales reales
+
+# Desplegar con script automático
+chmod +x deploy.sh
+./deploy.sh
+
+# O manualmente
+docker compose up -d
+
+# Ejecutar migraciones
+docker compose exec app python -m migrations.migrate
+
+# Ver logs
+docker compose logs -f
+```
+
+**📖 Ver [docs/DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) para guía completa de Docker**
+
+### **Opción 2: Instalación local (Desarrollo)**
+
+**Requisitos previos:**
 * Python 3.12+
 * uv (gestor de paquetes)
-
-### **Instalación**
 
 ```bash
 # Clonar el repositorio
