@@ -122,11 +122,41 @@ La aplicación se divide en capas claras:
 
 ## 🗄️ Base de datos
 
-* Base de datos: **SQLite**
+* Base de datos: **SQLite** (desarrollo) / **PostgreSQL** (producción)
 * ORM: **SQLAlchemy 2.0**
 * Estilo declarativo moderno
+* **Multi-tenant**: Aislamiento completo por familia
 
-La base de datos se crea automáticamente al iniciar la aplicación.
+### Configuración
+
+La aplicación soporta dos modos:
+
+**Desarrollo (SQLite)**
+```bash
+# .env
+DB_TYPE=sqlite
+SQLITE_DB_PATH=shopping.db
+```
+
+**Producción (PostgreSQL)**
+```bash
+# .env
+DB_TYPE=postgresql
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=auditor_familiar
+POSTGRES_USER=tu_usuario
+POSTGRES_PASSWORD=tu_password
+```
+
+**📖 Ver [docs/POSTGRESQL_SETUP.md](docs/POSTGRESQL_SETUP.md) para guía completa de PostgreSQL**
+
+### Seguridad Multi-Tenant
+
+- Cada familia tiene su propio `familia_id`
+- Todas las queries filtran automáticamente por familia
+- Los usuarios solo ven datos de su familia
+- Aislamiento en: `usuarios`, `family_members`, `incomes`, `expenses`
 
 El dominio **no depende del ORM**: se utilizan mappers explícitos para traducir entre tablas y modelos Pydantic.
 
@@ -178,12 +208,21 @@ Esto permite:
 git clone <tu-repo-url>
 cd flet
 
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales (ver sección Base de datos)
+
 # Instalar dependencias con uv
 uv sync
+
+# Ejecutar migraciones (primera vez)
+uv run python -m migrations.migrate
 
 # Ejecutar la aplicación
 uv run python main.py
 ```
+
+**⚠️ IMPORTANTE:** El archivo `.env` contiene credenciales sensibles y **NO debe subirse a GitHub**. Ya está incluido en `.gitignore`.
 
 ### **Comandos CLI de Fleting**
 

@@ -53,6 +53,13 @@ htmlcov/
 *.sqlite
 *.sqlite3
 
+# Environment variables (SECURITY)
+.env
+.env.local
+.env.production
+.env.test
+!.env.example
+
 # Logs
 *.log
 logs/

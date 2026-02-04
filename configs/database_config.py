@@ -3,18 +3,25 @@ Configuración de base de datos
 Soporta SQLite (desarrollo) y PostgreSQL (producción)
 """
 import os
+from pathlib import Path
 from typing import Literal
+
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 DatabaseType = Literal["sqlite", "postgresql"]
 
 class DatabaseConfig:
     """Configuración de base de datos"""
     
-    # Tipo de base de datos (cambiar a "postgresql" para producción)
-    DB_TYPE: DatabaseType = "sqlite"
+    # Tipo de base de datos desde variable de entorno
+    DB_TYPE: DatabaseType = os.getenv("DB_TYPE", "sqlite")  # type: ignore
     
     # Configuración SQLite (desarrollo)
-    SQLITE_DB_PATH = "shopping.db"
+    SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "shopping.db")
     
     # Configuración PostgreSQL (producción)
     POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
