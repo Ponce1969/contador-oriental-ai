@@ -76,3 +76,13 @@ uv.lock
 
 # Fleting
 .fleting
+
+# Temporary files
+ty_errors.txt
+*.sql.tmp
+create_usuarios.sql
+fix_password.sql
+
+# Docker volumes data (local only)
+postgres_data/
+app_data/

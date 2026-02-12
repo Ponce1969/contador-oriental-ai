@@ -13,6 +13,14 @@ ROUTES = [
         "show_in_bottom": False,
     },
     {
+        "path": "/register",
+        "view": "views.register_view.RegisterView",
+        "label": "📝 Registro",
+        "icon": ft.Icons.PERSON_ADD,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
+    {
         "path": "/",
         "view": "views.pages.dashboard_view.DashboardView",
         "label": "📊 Dashboard",

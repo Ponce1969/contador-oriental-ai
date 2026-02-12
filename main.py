@@ -1,3 +1,5 @@
+import os
+
 import flet as ft
 
 from configs.app_config import AppConfig
@@ -83,8 +85,21 @@ def main(page: ft.Page):
     except Exception as e:
         GlobalErrorHandler.handle(page, e)
 
-ft.app(
-    target=main,
-    assets_dir="assets"
-)
+# Detectar si estamos en Docker (modo web) o local (modo desktop)
+# Si existe POSTGRES_HOST, estamos en Docker
+if os.getenv("POSTGRES_HOST"):
+    # Modo web para Docker/producción
+    ft.run(
+        main,
+        assets_dir="assets",
+        view=ft.AppView.WEB_BROWSER,
+        port=int(os.getenv("APP_PORT", "8550")),
+        host="0.0.0.0"
+    )
+else:
+    # Modo desktop para desarrollo local
+    ft.run(
+        main,
+        assets_dir="assets"
+    )
 

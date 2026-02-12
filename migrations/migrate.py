@@ -10,19 +10,32 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import text
 
+from configs.database_config import DatabaseConfig
 from database.engine import engine
 
 
 def create_migrations_table():
     """Crear tabla para registrar migraciones aplicadas"""
     with engine.connect() as conn:
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS _fleting_migrations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                migration_name TEXT NOT NULL UNIQUE,
-                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
+        # Usar sintaxis correcta según el tipo de base de datos
+        if DatabaseConfig.is_postgresql():
+            # PostgreSQL usa SERIAL
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS _fleting_migrations (
+                    id SERIAL PRIMARY KEY,
+                    migration_name TEXT NOT NULL UNIQUE,
+                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+        else:
+            # SQLite usa AUTOINCREMENT
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS _fleting_migrations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    migration_name TEXT NOT NULL UNIQUE,
+                    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
         conn.commit()
 
 

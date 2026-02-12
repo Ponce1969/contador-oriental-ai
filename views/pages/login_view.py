@@ -102,31 +102,16 @@ class LoginView:
                                 self.error_text,
                                 self.login_button,
                                 
-                                # Credenciales por defecto (solo para desarrollo)
+                                # Link de registro
                                 ft.Container(
-                                    content=ft.Column(
-                                        controls=[
-                                            ft.Divider(),
-                                            ft.Text(
-                                                value="Credenciales por defecto:",
-                                                size=12,
-                                                color=ft.Colors.GREY_600,
-                                                italic=True
-                                            ),
-                                            ft.Text(
-                                                value="Usuario: admin",
-                                                size=12,
-                                                color=ft.Colors.GREY_600
-                                            ),
-                                            ft.Text(
-                                                value="Contraseña: admin123",
-                                                size=12,
-                                                color=ft.Colors.GREY_600
-                                            ),
-                                        ],
-                                        spacing=5
+                                    content=ft.TextButton(
+                                        content=ft.Text("¿No tienes cuenta? Regístrate aquí"),
+                                        on_click=self._on_register_click,
+                                        style=ft.ButtonStyle(
+                                            color=ft.Colors.BLUE_700,
+                                        )
                                     ),
-                                    margin=ft.margin.only(top=20)
+                                    margin=ft.margin.only(top=10)
                                 ),
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -194,6 +179,12 @@ class LoginView:
         from core.router import Router
         router = Router(self.page)
         router.navigate("/")
+    
+    def _on_register_click(self, e):
+        """Navegar a la página de registro"""
+        from core.router import Router
+        router = Router(self.page)
+        router.navigate("/register")
     
     def _show_error(self, message: str):
         """Mostrar mensaje de error"""

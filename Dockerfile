@@ -12,7 +12,8 @@ LABEL version="1.0.0"
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PATH="/home/appuser/.local/bin:${PATH}"
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
@@ -21,6 +22,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Instalar uv globalmente
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Crear usuario no-root para seguridad
 RUN useradd -m -u 1000 appuser && \
     mkdir -p /app && \
@@ -28,10 +32,6 @@ RUN useradd -m -u 1000 appuser && \
 
 # Establecer directorio de trabajo
 WORKDIR /app
-
-# Instalar uv (gestor de paquetes rápido)
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
 
 # Copiar archivos de dependencias
 COPY --chown=appuser:appuser pyproject.toml ./
