@@ -55,26 +55,76 @@ self.select_member_dropdown = ft.Dropdown(
     width=400,
     hint_text="Busca y selecciona un miembro para editar",
     options=[
-        ft.dropdown.Option(key=str(member.id), text=f"{member.nombre} ({member.tipo_miembro})")
+        ft.dropdown.Option(
+            key=str(member.id), 
+            text=f"{member.nombre} ({member.tipo_miembro})"
+        )
         for member in self.existing_members
     ],
-    on_change=lambda e: self._on_load_member_from_dropdown(e)
+    on_change=self._on_load_member_from_dropdown  # ← SIN lambda
 )
 ```
 
-### **Paso 2: Renombrar el método (línea 368)**
+⚠️ **Nota:** No usar `lambda e: self._on_load_member_from_dropdown(e)` - es innecesario.
+Solo usar lambda cuando necesitas pasar parámetros extra.
+
+### **Paso 2: Actualizar el método (línea 368)**
 
 **ANTES:**
 ```python
 def _on_load_member_click(self, e: ft.ControlEvent) -> None:
     """Cargar datos del miembro seleccionado cuando se hace clic en el botón"""
+    try:
+        if not self.select_member_dropdown.value:
+            self._show_error(AppError(message="Selecciona un miembro primero"))
+            return
+        
+        member_id = int(self.select_member_dropdown.value)
+        
+        # Buscar el miembro en la lista existente
+        for member in self.existing_members:
+            if member.id == member_id:
+                self._on_edit_member(member)
+                self._show_success(f"Datos de {member.nombre} cargados")
+                return
+        
+        self._show_error(AppError(message="Miembro no encontrado"))
+    except Exception as ex:
+        self._show_error(AppError(message=f"Error al cargar: {str(ex)}"))
 ```
 
 **DESPUÉS:**
 ```python
 def _on_load_member_from_dropdown(self, e: ft.ControlEvent) -> None:
     """Cargar datos del miembro seleccionado automáticamente"""
+    # Usar e.control.value en lugar de self.select_member_dropdown.value
+    member_id = e.control.value
+    
+    # Proteger contra eventos iniciales o valores vacíos
+    if not member_id:
+        return
+    
+    try:
+        member_id_int = int(member_id)
+        
+        # Buscar el miembro en la lista existente
+        for member in self.existing_members:
+            if member.id == member_id_int:
+                self._on_edit_member(member)
+                self._show_success(f"Datos de {member.nombre} cargados")
+                self.page.update()  # ← Importante: actualizar la UI
+                return
+        
+        self._show_error(AppError(message="Miembro no encontrado"))
+    except Exception as ex:
+        self._show_error(AppError(message=f"Error al cargar: {str(ex)}"))
 ```
+
+**Mejoras aplicadas:**
+- ✅ Usar `e.control.value` en lugar de `self.select_member_dropdown.value` (más desacoplado)
+- ✅ Proteger contra eventos iniciales con `if not member_id: return`
+- ✅ Llamar `self.page.update()` después de cargar datos
+- ✅ Más testeable y reusable
 
 ### **Paso 3: Eliminar el botón "Cargar" (línea 143-152)**
 
@@ -134,13 +184,62 @@ Después de implementar esto:
 
 ## ⚠️ Notas Importantes
 
-- Usar **lambda** para llamar al método porque el método se define después en la clase
+- **NO usar lambda innecesaria:** `on_change=self._on_load_member_from_dropdown` (sin lambda)
 - El evento `on_change` recibe un parámetro `e: ft.ControlEvent`
-- Acceder al valor seleccionado con `self.select_member_dropdown.value`
+- **Usar `e.control.value`** en lugar de `self.select_member_dropdown.value` (más desacoplado)
+- **Proteger contra eventos iniciales:** `if not member_id: return`
 - Después de cargar datos, llamar `self.page.update()` para refrescar la UI
+
+## 🎯 Mejores Prácticas Aplicadas
+
+### **1. Sin lambda innecesaria**
+```python
+# ❌ Innecesario
+on_change=lambda e: self._on_load_member_from_dropdown(e)
+
+# ✅ Mejor
+on_change=self._on_load_member_from_dropdown
+```
+
+### **2. Usar el evento, no el atributo**
+```python
+# ❌ Acoplado al atributo
+member_id = self.select_member_dropdown.value
+
+# ✅ Desacoplado, testeable
+member_id = e.control.value
+```
+
+### **3. Proteger contra eventos fantasma**
+```python
+# ✅ Evita cargas al inicializar
+if not member_id:
+    return
+```
+
+### **4. Crear controles una sola vez**
+⚠️ **Riesgo:** Si recreamos el dropdown en runtime, perdemos el handler.
+
+**Regla:** Crear controles una vez → reutilizar → actualizar propiedades
+
+### **5. Siempre actualizar la UI**
+```python
+self._on_edit_member(member)
+self.page.update()  # ← No olvidar
+```
+
+## 🚀 Ventajas de este Patrón
+
+- ✅ Más limpio y legible
+- ✅ Más fácil de testear
+- ✅ Más desacoplado
+- ✅ Menos closures innecesarios
+- ✅ Funciona aunque cambies el dropdown
+- ✅ Más reusable
 
 ---
 
 **Fecha:** 2026-02-13  
 **Estado:** Pendiente de implementación  
-**Prioridad:** Media (mejora de UX)
+**Prioridad:** Media (mejora de UX)  
+**Nivel:** Patrón profesional / Senior
