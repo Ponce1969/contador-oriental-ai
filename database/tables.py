@@ -24,6 +24,7 @@ class FamiliaTable(Base):
 class FamilyMemberTable(Base):
     """
     Tabla de miembros de la familia
+    Representa a las personas que conforman el núcleo familiar
     """
     __tablename__ = "family_members"
 
@@ -39,11 +40,20 @@ class FamilyMemberTable(Base):
     # Datos básicos
     nombre: Mapped[str] = mapped_column(String(100), nullable=False)
     
-    # Tipo de ingreso
-    tipo_ingreso: Mapped[str] = mapped_column(String(50), nullable=False)
+    # Tipo de miembro
+    tipo_miembro: Mapped[str] = mapped_column(String(20), default="persona")
     
-    # Sueldo mensual fijo (si aplica)
-    sueldo_mensual: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # Parentesco (solo para personas)
+    parentesco: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    
+    # Especie (solo para mascotas)
+    especie: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    
+    # Edad
+    edad: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    
+    # Estado laboral (solo para personas)
+    estado_laboral: Mapped[str | None] = mapped_column(String(50), nullable=True)
     
     # Estado
     activo: Mapped[bool] = mapped_column(Boolean, default=True)

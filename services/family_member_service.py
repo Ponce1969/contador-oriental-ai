@@ -7,7 +7,7 @@ from __future__ import annotations
 from result import Err, Result
 
 from models.errors import DatabaseError, ValidationError
-from models.family_member_model import FamilyMember, IncomeType
+from models.family_member_model import FamilyMember
 from repositories.family_member_repository import FamilyMemberRepository
 
 
@@ -26,17 +26,17 @@ class FamilyMemberService:
         if not member.nombre or member.nombre.strip() == "":
             return Err(ValidationError(message="El nombre es obligatorio"))
         
-        # Validación: si tiene sueldo fijo, debe especificar el monto
-        if member.tipo_ingreso in (IncomeType.FIJO, IncomeType.MIXTO):
-            if member.sueldo_mensual is None or member.sueldo_mensual <= 0:
-                return Err(
-                    ValidationError(
-                        message=(
-                            "Debe especificar el sueldo mensual "
-                            "para tipo FIJO o MIXTO"
-                        )
-                    )
-                )
+        # Validación: tipo_miembro debe ser válido
+        if member.tipo_miembro not in ("persona", "mascota"):
+            return Err(ValidationError(message="Tipo de miembro inválido"))
+        
+        # Validación: personas deben tener parentesco
+        if member.tipo_miembro == "persona" and not member.parentesco:
+            return Err(ValidationError(message="Las personas deben tener parentesco"))
+        
+        # Validación: mascotas deben tener especie
+        if member.tipo_miembro == "mascota" and not member.especie:
+            return Err(ValidationError(message="Las mascotas deben tener especie"))
         
         return self._repo.add(member)
 
@@ -67,17 +67,17 @@ class FamilyMemberService:
         if not member.nombre or member.nombre.strip() == "":
             return Err(ValidationError(message="El nombre es obligatorio"))
         
-        # Validación: si tiene sueldo fijo, debe especificar el monto
-        if member.tipo_ingreso in (IncomeType.FIJO, IncomeType.MIXTO):
-            if member.sueldo_mensual is None or member.sueldo_mensual <= 0:
-                return Err(
-                    ValidationError(
-                        message=(
-                            "Debe especificar el sueldo mensual "
-                            "para tipo FIJO o MIXTO"
-                        )
-                    )
-                )
+        # Validación: tipo_miembro debe ser válido
+        if member.tipo_miembro not in ("persona", "mascota"):
+            return Err(ValidationError(message="Tipo de miembro inválido"))
+        
+        # Validación: personas deben tener parentesco
+        if member.tipo_miembro == "persona" and not member.parentesco:
+            return Err(ValidationError(message="Las personas deben tener parentesco"))
+        
+        # Validación: mascotas deben tener especie
+        if member.tipo_miembro == "mascota" and not member.especie:
+            return Err(ValidationError(message="Las mascotas deben tener especie"))
         
         return self._repo.update(member)
 

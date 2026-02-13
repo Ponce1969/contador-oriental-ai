@@ -14,13 +14,15 @@ Sistema completo de gestión financiera familiar que permite:
 
 ### **Funcionalidades Implementadas** ✅
 
-* **👥 Gestión de Familia**: Registrar miembros con tipos de ingreso (Sueldo fijo, Jornalero, Mixto, Sin ingresos)
-* **💰 Gestión de Ingresos**: Registrar ingresos diarios (jornaleros) o mensuales (sueldos fijos) con 9 categorías
+* **� Sistema de Autenticación**: Login y registro de familias con hash Argon2
+* **�👥 Gestión de Familia**: Registrar personas (parentesco, edad, estado laboral) y mascotas (especie)
+* **💰 Gestión de Ingresos**: Registrar ingresos por miembro con múltiples tipos (sueldo, jubilación, renta, freelance, etc.)
 * **💸 Gestión de Gastos**: Registrar gastos familiares con categorías, subcategorías y métodos de pago
 * **📊 Dashboard**: Balance automático mensual (Ingresos - Gastos) con indicadores visuales
 * **✏️ Edición completa**: Editar y eliminar todos los registros
 * **🇺🇾 Formato uruguayo**: Montos con separador de miles ($50.000)
 * **📈 Resúmenes**: Análisis por categorías con barras de progreso y porcentajes
+* **🐾 Soporte para mascotas**: Incluye mascotas como miembros de la familia con gastos asociados
 
 ---
 
@@ -153,10 +155,36 @@ POSTGRES_PASSWORD=tu_password
 
 ### Seguridad Multi-Tenant
 
+- **Sistema de autenticación**: Login con usuario/contraseña (hash Argon2id)
+- **Auto-registro**: Las familias pueden registrarse desde la aplicación
 - Cada familia tiene su propio `familia_id`
 - Todas las queries filtran automáticamente por familia
 - Los usuarios solo ven datos de su familia
-- Aislamiento en: `usuarios`, `family_members`, `incomes`, `expenses`
+- Aislamiento completo en: `usuarios`, `family_members`, `incomes`, `expenses`
+
+### Estructura de Tablas
+
+**`familias`**
+- `id`, `nombre`, `email`, `activo`, `created_at`
+
+**`usuarios`**
+- `id`, `familia_id`, `username`, `password_hash`, `nombre_completo`, `activo`, `created_at`
+
+**`family_members`** (Personas y Mascotas)
+- `id`, `familia_id`, `nombre`, `tipo_miembro` (persona/mascota)
+- **Para personas**: `parentesco`, `edad`, `estado_laboral`
+- **Para mascotas**: `especie`, `edad`
+- `activo`, `notas`
+
+**`incomes`**
+- `id`, `familia_id`, `family_member_id`, `tipo_ingreso`
+- `monto`, `fecha`, `categoria`, `descripcion`
+- `es_recurrente`, `frecuencia`, `notas`
+
+**`expenses`**
+- `id`, `familia_id`, `monto`, `fecha`, `descripcion`
+- `categoria`, `subcategoria`, `metodo_pago`
+- `es_recurrente`, `frecuencia`, `notas`
 
 El dominio **no depende del ORM**: se utilizan mappers explícitos para traducir entre tablas y modelos Pydantic.
 
@@ -217,7 +245,7 @@ chmod +x deploy.sh
 docker compose up -d
 
 # Ejecutar migraciones
-docker compose exec app python -m migrations.migrate
+docker exec auditor_familiar_app python migrations/migrate.py migrate
 
 # Ver logs
 docker compose logs -f
@@ -244,7 +272,7 @@ cp .env.example .env
 uv sync
 
 # Ejecutar migraciones (primera vez)
-uv run python -m migrations.migrate
+uv run python migrations/migrate.py migrate
 
 # Ejecutar la aplicación
 uv run python main.py
@@ -278,24 +306,32 @@ fleting scaffold nombre_entidad
 
 ### **Flujo de uso de la aplicación**
 
-1. **Registra tu familia** en 👥 Familia
-   - Agrega miembros con su tipo de ingreso
-   - Para sueldos fijos, indica el monto mensual
+1. **Registro e Inicio de Sesión**
+   - Crea una cuenta nueva desde "¿No tienes cuenta? Regístrate aquí"
+   - Completa: nombre de familia, email, admin username, contraseña
+   - Inicia sesión con tus credenciales
 
-2. **Registra ingresos** en 💰 Ingresos
-   - Jornaleros: registra cada día trabajado
-   - Sueldos fijos: registra cuando cobras
-   - Extras: bonos, freelance, etc.
+2. **Configura tu familia** en 👥 Familia
+   - **Personas**: Agrega miembros con parentesco, edad y estado laboral
+     - Padre, Madre, Hijo/Hija, Abuelo/Abuela, Otro
+     - Estado: Empleado, Desempleado, Jubilado, Estudiante, Independiente
+   - **Mascotas**: Agrega tus mascotas con especie y edad
+     - Gato, Perro, Pájaro, u otra especie (texto libre)
 
-3. **Registra gastos** en 💸 Gastos
+3. **Registra ingresos** en 💰 Ingresos
+   - Selecciona el miembro de la familia
+   - Tipo de ingreso: Sueldo, Jubilación, Renta, Freelance, Bono, Subsidio
+   - Indica monto, fecha y si es recurrente
+
+4. **Registra gastos** en 💸 Gastos
    - Selecciona categoría y subcategoría
-   - Indica método de pago
-   - Marca si es recurrente
+   - Indica método de pago (Efectivo, Tarjeta, Transferencia)
+   - Marca si es recurrente (mensual, quincenal, anual)
 
-4. **Consulta el balance** en 📊 Dashboard
+5. **Consulta el balance** en 📊 Dashboard
    - Ve el balance del mes actual
-   - Analiza ingresos vs gastos
-   - Identifica categorías con mayor gasto
+   - Analiza ingresos vs gastos por categoría
+   - Identifica patrones de gasto familiar
 
 ---
 
@@ -303,20 +339,24 @@ fleting scaffold nombre_entidad
 
 ### **Funcionalidades pendientes** 🔮
 
+* **🤖 AI Contador Uruguayo**: Asistente con Ollama (Gemma2:2b) + RAG curado
+  - 9 archivos MD con normativa uruguaya (IRPF, IVA, Ley de Inclusión Financiera, UI)
+  - Análisis contextual de gastos familiares
+  - Recomendaciones fiscales personalizadas
 * **📅 Selector de mes/año**: Ver balance de meses anteriores
 * **📊 Gráficos avanzados**: Gráficos de línea, torta, evolución mensual
 * **🔔 Alertas**: Notificaciones cuando gastos superan presupuesto
 * **💾 Exportar datos**: Exportar a Excel/CSV para análisis externo
 * **🎯 Presupuestos**: Definir presupuestos por categoría
 * **📱 Versión móvil**: Adaptar para Android/iOS con Flet
-* **👨‍👩‍👧‍👦 Multi-usuario**: Login y datos por familia
-* **🔄 Sincronización**: Sync entre dispositivos (cloud)
+* ** Sincronización**: Sync entre dispositivos (cloud)
 * **📈 Proyecciones**: Predicción de gastos futuros con IA
 * **🏦 Integración bancaria**: Importar movimientos automáticamente
 * **📸 Recibos**: Adjuntar fotos de tickets/facturas
 * **🔍 Búsqueda avanzada**: Filtros por fecha, monto, categoría
 * **📊 Comparativas**: Comparar meses/años anteriores
-* **💡 Recomendaciones**: Sugerencias de ahorro basadas en patrones
+* **� Gestión de vehículos**: Tabla dedicada para vehículos y sus gastos
+* **🏠 Gestión de propiedades**: Tabla para propiedades (alquileres, impuestos)
 
 ---
 
@@ -347,16 +387,19 @@ fleting scaffold nombre_entidad
 
 ## ✅ Estado actual
 
-✔ ✅ **Sistema completo de gestión familiar implementado**
-✔ ✅ **Módulo de Familia con edición**
-✔ ✅ **Módulo de Ingresos con 9 categorías**
+✔ ✅ **Sistema de autenticación con registro y login**
+✔ ✅ **Multi-tenant con aislamiento completo por familia**
+✔ ✅ **Gestión de personas (parentesco, edad, estado laboral)**
+✔ ✅ **Soporte para mascotas (especie, edad)**
+✔ ✅ **Módulo de Ingresos asociados a miembros**
 ✔ ✅ **Módulo de Gastos con categorías y subcategorías**
 ✔ ✅ **Dashboard con balance automático mensual**
 ✔ ✅ **Formato uruguayo con separador de miles**
 ✔ ✅ **Arquitectura MVC con tipado estricto**
-✔ ✅ **Base de datos SQLite con SQLAlchemy 2.0**
+✔ ✅ **PostgreSQL con sistema de migraciones (estilo Django/Alembic)**
+✔ ✅ **Docker deployment listo para Orange Pi 5 Plus**
 
-**🎯 Sistema funcional listo para producción!**
+**🎯 Sistema multi-familia funcional listo para producción!**
 
 ---
 

@@ -1877,3 +1877,258 @@ AttributeError: module 'flet' has no attribute 'colors'. Did you mean: 'Colors'?
 2026-02-12 01:22:54,761 | INFO | flet | Flet app has started...
 2026-02-12 01:22:54,935 | INFO | flet_web.fastapi | Starting up Flet App Manager
 2026-02-12 01:22:54,937 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-12 01:23:11,290 | INFO | flet_web.fastapi | New FletApp: IIQj5Ftv
+2026-02-12 01:23:11,307 | INFO | flet_web.fastapi | New session created (1 total): _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:23:11,310 | INFO | flet_web.fastapi | Start session: y7ws0pNB5pePgNKC
+2026-02-12 01:23:11,433 | INFO | App | Base de datos inicializada
+2026-02-12 01:23:11,462 | INFO | Router | Navigating to: /login
+2026-02-12 01:23:11,501 | INFO | App | Aplicação iniciada com sucesso
+2026-02-12 01:25:21,558 | INFO | flet_web.fastapi | Session disconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:25:21,581 | INFO | flet_web.fastapi | Disposing FletApp: IIQj5Ftv
+2026-02-12 01:25:21,584 | INFO | flet_web.fastapi | FletApp was garbage collected: IIQj5Ftv
+2026-02-12 01:25:22,147 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmp7ppagakv
+2026-02-12 01:25:22,150 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-12 01:25:22,154 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-12 01:25:22,212 | INFO | flet_web.fastapi | New FletApp: ZBKwyry2
+2026-02-12 01:25:22,261 | INFO | flet_web.fastapi | Session reconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:25:22,431 | INFO | flet_web.fastapi | Session disconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:25:22,432 | INFO | flet_web.fastapi | Disposing FletApp: ZBKwyry2
+2026-02-12 01:25:22,434 | INFO | flet_web.fastapi | FletApp was garbage collected: ZBKwyry2
+2026-02-12 01:25:24,175 | INFO | flet_web.fastapi | New FletApp: hxswPsiD
+2026-02-12 01:25:24,449 | INFO | flet_web.fastapi | Session reconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:25:26,194 | INFO | Router | Navigating to: /register
+2026-02-12 01:28:26,061 | INFO | flet_web.fastapi | Session disconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:28:26,096 | INFO | flet_web.fastapi | Disposing FletApp: hxswPsiD
+2026-02-12 01:28:26,099 | INFO | flet_web.fastapi | FletApp was garbage collected: hxswPsiD
+2026-02-12 01:28:26,678 | INFO | flet_web.fastapi | New FletApp: 07s79PfV
+2026-02-12 01:28:26,722 | INFO | flet_web.fastapi | Session reconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:28:26,861 | INFO | flet_web.fastapi | Session disconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:28:26,862 | INFO | flet_web.fastapi | Disposing FletApp: 07s79PfV
+2026-02-12 01:28:26,862 | INFO | flet_web.fastapi | FletApp was garbage collected: 07s79PfV
+2026-02-12 01:28:28,545 | INFO | flet_web.fastapi | New FletApp: KTUuP1iA
+2026-02-12 01:28:28,749 | INFO | flet_web.fastapi | Session reconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 01:28:37,642 | INFO | Router | Navigating to: /login
+2026-02-12 01:28:55,325 | INFO | Router | Navigating to: /
+2026-02-12 01:29:00,042 | INFO | Router | Navigating to: /family
+2026-02-12 01:29:15,853 | INFO | Router | Navigating to: /login
+2026-02-12 01:29:27,735 | INFO | Router | Navigating to: /
+2026-02-12 02:20:05,417 | INFO | Router | Navigating to: /family
+2026-02-12 02:20:07,926 | INFO | Router | Navigating to: /family
+2026-02-12 02:20:10,737 | INFO | Router | Navigating to: /incomes
+2026-02-12 02:20:13,217 | INFO | Router | Navigating to: /expenses
+2026-02-12 02:20:15,720 | INFO | Router | Navigating to: /family
+2026-02-12 02:20:21,242 | INFO | Router | Navigating to: /
+2026-02-12 02:34:13,743 | INFO | flet_web.fastapi | Session disconnected: _y7ws0pNB5pePgNKC_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-12 02:34:13,760 | INFO | flet_web.fastapi | Disposing FletApp: KTUuP1iA
+2026-02-12 02:34:13,764 | INFO | flet_web.fastapi | FletApp was garbage collected: KTUuP1iA
+2026-02-12 02:34:13,830 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-12 02:34:13,832 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmp7ppagakv
+2026-02-12 02:34:13,880 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-12 02:34:14,037 | INFO | flet | Session was garbage collected: y7ws0pNB5pePgNKC
+2026-02-13 00:38:44,384 | INFO | flet | Assets path configured: /app/assets
+2026-02-13 00:38:45,120 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-13 00:38:45,122 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-13 00:38:45,123 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-13 00:38:45,123 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-13 00:38:45,125 | INFO | flet | Flet app has started...
+2026-02-13 00:38:45,273 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-13 00:38:45,274 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-13 00:40:31,167 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmppuz9yi3g
+2026-02-13 00:40:31,170 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-13 00:40:31,170 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-13 00:40:32,726 | INFO | flet_web.fastapi | New FletApp: z7sAfjNO
+2026-02-13 00:40:32,738 | INFO | flet_web.fastapi | New session created (1 total): _rq8POzIbx6uayyAR_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 00:40:32,742 | INFO | flet_web.fastapi | Start session: rq8POzIbx6uayyAR
+2026-02-13 00:40:32,907 | INFO | App | Base de datos inicializada
+2026-02-13 00:40:32,939 | INFO | Router | Navigating to: /login
+2026-02-13 00:40:33,007 | INFO | App | Aplicação iniciada com sucesso
+2026-02-13 00:40:56,810 | INFO | Router | Navigating to: /
+2026-02-13 00:41:00,146 | INFO | Router | Navigating to: /family
+2026-02-13 00:41:00,695 | INFO | Router | Navigating to: /family
+2026-02-13 00:45:13,515 | INFO | Router | Navigating to: /incomes
+2026-02-13 00:45:50,111 | INFO | Router | Navigating to: /family
+2026-02-13 00:45:54,092 | INFO | Router | Navigating to: /incomes
+2026-02-13 00:46:08,500 | INFO | Router | Navigating to: /family
+2026-02-13 00:47:13,994 | INFO | Router | Navigating to: /family
+2026-02-13 00:47:20,777 | INFO | Router | Navigating to: /incomes
+2026-02-13 00:49:22,711 | INFO | Router | Navigating to: /expenses
+2026-02-13 00:49:50,123 | INFO | Router | Navigating to: /incomes
+2026-02-13 00:51:52,216 | INFO | Router | Navigating to: /family
+2026-02-13 00:52:17,952 | INFO | Router | Navigating to: /incomes
+2026-02-13 00:52:48,450 | INFO | Router | Navigating to: /expenses
+2026-02-13 01:01:05,935 | INFO | flet_web.fastapi | Session disconnected: _rq8POzIbx6uayyAR_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:01:05,965 | INFO | flet_web.fastapi | Disposing FletApp: z7sAfjNO
+2026-02-13 01:01:06,017 | INFO | flet_web.fastapi | FletApp was garbage collected: z7sAfjNO
+2026-02-13 01:01:06,057 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-13 01:01:06,057 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmppuz9yi3g
+2026-02-13 01:01:06,127 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-13 01:01:06,315 | INFO | flet | Session was garbage collected: rq8POzIbx6uayyAR
+2026-02-13 01:01:55,162 | INFO | flet | Assets path configured: /app/assets
+2026-02-13 01:01:56,169 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-13 01:01:56,173 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-13 01:01:56,174 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-13 01:01:56,174 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-13 01:01:56,178 | INFO | flet | Flet app has started...
+2026-02-13 01:01:56,293 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-13 01:01:56,294 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-13 01:02:02,832 | INFO | flet_web.fastapi | New FletApp: rm2fIMmD
+2026-02-13 01:02:02,890 | INFO | flet_web.fastapi | New session created (1 total): _jtzlsIIEsYJD14Cf_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:02:02,895 | INFO | flet_web.fastapi | Start session: jtzlsIIEsYJD14Cf
+2026-02-13 01:02:02,954 | INFO | App | Base de datos inicializada
+2026-02-13 01:02:02,980 | INFO | Router | Navigating to: /login
+2026-02-13 01:02:03,033 | INFO | App | Aplicação iniciada com sucesso
+2026-02-13 01:14:47,362 | INFO | flet_web.fastapi | Session disconnected: _jtzlsIIEsYJD14Cf_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:14:47,393 | INFO | flet_web.fastapi | Disposing FletApp: rm2fIMmD
+2026-02-13 01:14:47,447 | INFO | flet_web.fastapi | FletApp was garbage collected: rm2fIMmD
+2026-02-13 01:14:47,470 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-13 01:14:47,499 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-13 01:14:47,648 | INFO | flet | Session was garbage collected: jtzlsIIEsYJD14Cf
+2026-02-13 01:16:00,395 | INFO | flet | Assets path configured: /app/assets
+2026-02-13 01:16:01,474 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-13 01:16:01,477 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-13 01:16:01,477 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-13 01:16:01,478 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-13 01:16:01,480 | INFO | flet | Flet app has started...
+2026-02-13 01:16:01,595 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-13 01:16:01,596 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-13 01:16:07,323 | INFO | flet_web.fastapi | New FletApp: YrLHLzwk
+2026-02-13 01:16:07,352 | INFO | flet_web.fastapi | New session created (1 total): _sBqWv27HTpIiNq3x_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:16:07,356 | INFO | flet_web.fastapi | Start session: sBqWv27HTpIiNq3x
+2026-02-13 01:16:07,555 | INFO | App | Base de datos inicializada
+2026-02-13 01:16:07,578 | INFO | Router | Navigating to: /login
+2026-02-13 01:16:07,637 | INFO | App | Aplicação iniciada com sucesso
+2026-02-13 01:20:41,010 | INFO | flet_web.fastapi | Session disconnected: _sBqWv27HTpIiNq3x_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:20:41,027 | INFO | flet_web.fastapi | Disposing FletApp: YrLHLzwk
+2026-02-13 01:20:41,030 | INFO | flet_web.fastapi | FletApp was garbage collected: YrLHLzwk
+2026-02-13 01:20:41,595 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmp07ic_fu1
+2026-02-13 01:20:41,598 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-13 01:20:41,599 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-13 01:20:41,663 | INFO | flet_web.fastapi | New FletApp: mFAFuIiB
+2026-02-13 01:20:43,385 | INFO | flet_web.fastapi | New FletApp: 4vRBDh6h
+2026-02-13 01:20:43,646 | INFO | flet_web.fastapi | Session reconnected: _sBqWv27HTpIiNq3x_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:20:55,782 | INFO | Router | Navigating to: /
+2026-02-13 01:21:00,676 | INFO | Router | Navigating to: /family
+2026-02-13 01:21:00,707 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "/app/core/router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/configs/routes.py", line 106, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not callable
+2026-02-13 01:21:04,260 | INFO | flet_web.fastapi | Session disconnected: _sBqWv27HTpIiNq3x_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:21:04,260 | INFO | flet_web.fastapi | Disposing FletApp: 4vRBDh6h
+2026-02-13 01:21:04,262 | INFO | flet_web.fastapi | FletApp was garbage collected: 4vRBDh6h
+2026-02-13 01:21:07,636 | INFO | flet_web.fastapi | New FletApp: TtTI3a0c
+2026-02-13 01:21:07,895 | INFO | flet_web.fastapi | Session reconnected: _sBqWv27HTpIiNq3x_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:24:28,638 | INFO | flet_web.fastapi | Session disconnected: _sBqWv27HTpIiNq3x_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:24:28,668 | INFO | flet_web.fastapi | Disposing FletApp: TtTI3a0c
+2026-02-13 01:24:28,853 | INFO | flet_web.fastapi | FletApp was garbage collected: TtTI3a0c
+2026-02-13 01:24:38,280 | INFO | flet | Assets path configured: /app/assets
+2026-02-13 01:24:40,250 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-13 01:24:40,252 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-13 01:24:40,253 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-13 01:24:40,254 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-13 01:24:40,259 | INFO | flet | Flet app has started...
+2026-02-13 01:24:40,386 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-13 01:24:40,386 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-13 01:24:40,973 | INFO | flet_web.fastapi | New FletApp: ysAKILFZ
+2026-02-13 01:24:41,027 | INFO | flet_web.fastapi | New session created (1 total): _ZiIlcjfFXKqtXLTM_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:24:41,032 | INFO | flet_web.fastapi | Start session: ZiIlcjfFXKqtXLTM
+2026-02-13 01:24:41,202 | INFO | App | Base de datos inicializada
+2026-02-13 01:24:41,227 | INFO | Router | Navigating to: /login
+2026-02-13 01:24:41,276 | INFO | App | Aplicação iniciada com sucesso
+2026-02-13 01:25:02,367 | INFO | flet_web.fastapi | Session disconnected: _ZiIlcjfFXKqtXLTM_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:25:02,371 | INFO | flet_web.fastapi | Disposing FletApp: ysAKILFZ
+2026-02-13 01:25:02,373 | INFO | flet_web.fastapi | FletApp was garbage collected: ysAKILFZ
+2026-02-13 01:25:02,541 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpvtpmk5m1
+2026-02-13 01:25:02,543 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-13 01:25:02,544 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-13 01:25:03,861 | INFO | flet_web.fastapi | New FletApp: fmTw6lBb
+2026-02-13 01:25:04,046 | INFO | flet_web.fastapi | Session reconnected: _ZiIlcjfFXKqtXLTM_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:25:13,287 | INFO | Router | Navigating to: /
+2026-02-13 01:25:18,207 | INFO | Router | Navigating to: /incomes
+2026-02-13 01:25:24,225 | INFO | Router | Navigating to: /expenses
+2026-02-13 01:25:27,845 | INFO | Router | Navigating to: /family
+2026-02-13 01:25:27,859 | ERROR | Router | Error rendering view
+Traceback (most recent call last):
+  File "/app/core/router.py", line 29, in navigate
+    view = routes[route](self.page, self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/configs/routes.py", line 106, in <lambda>
+    return lambda page, router: load_view(path)(page, router).render()
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/views/pages/family_members_view.py", line 43, in __init__
+    self.tipo_miembro_dropdown = ft.Dropdown(
+                                 ^^^^^^^^^^^^
+TypeError: Dropdown.__init__() got an unexpected keyword argument 'on_change'
+2026-02-13 01:27:23,896 | INFO | flet_web.fastapi | Session disconnected: _ZiIlcjfFXKqtXLTM_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:27:23,934 | INFO | flet_web.fastapi | Disposing FletApp: fmTw6lBb
+2026-02-13 01:27:24,041 | INFO | flet_web.fastapi | FletApp was garbage collected: fmTw6lBb
+2026-02-13 01:27:24,090 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-13 01:27:24,092 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmpvtpmk5m1
+2026-02-13 01:27:24,169 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-13 01:27:24,365 | INFO | flet | Session was garbage collected: ZiIlcjfFXKqtXLTM
+2026-02-13 01:27:33,157 | INFO | flet | Assets path configured: /app/assets
+2026-02-13 01:27:34,442 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-13 01:27:34,444 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-13 01:27:34,445 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-13 01:27:34,446 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-13 01:27:34,451 | INFO | flet | Flet app has started...
+2026-02-13 01:27:34,588 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-13 01:27:34,588 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-13 01:27:36,946 | INFO | flet_web.fastapi | New FletApp: qz9U6qO3
+2026-02-13 01:27:36,983 | INFO | flet_web.fastapi | New session created (1 total): _SY9nahOG37VyI77Y_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:27:36,989 | INFO | flet_web.fastapi | Start session: SY9nahOG37VyI77Y
+2026-02-13 01:27:37,119 | INFO | App | Base de datos inicializada
+2026-02-13 01:27:37,138 | INFO | Router | Navigating to: /login
+2026-02-13 01:27:37,173 | INFO | App | Aplicação iniciada com sucesso
+2026-02-13 01:28:17,261 | INFO | Router | Navigating to: /
+2026-02-13 01:28:20,105 | INFO | Router | Navigating to: /family
+2026-02-13 01:31:05,434 | INFO | Router | Navigating to: /incomes
+2026-02-13 01:31:53,680 | INFO | Router | Navigating to: /family
+2026-02-13 01:32:04,165 | INFO | Router | Navigating to: /incomes
+2026-02-13 01:32:31,877 | INFO | Router | Navigating to: /family
+2026-02-13 01:35:16,432 | INFO | Router | Navigating to: /incomes
+2026-02-13 01:36:29,197 | INFO | Router | Navigating to: /family
+2026-02-13 01:37:03,357 | INFO | Router | Navigating to: /incomes
+2026-02-13 01:38:21,031 | INFO | Router | Navigating to: /family
+2026-02-13 01:38:30,459 | INFO | Router | Navigating to: /incomes
+2026-02-13 01:54:16,011 | INFO | flet_web.fastapi | Session disconnected: _SY9nahOG37VyI77Y_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:54:16,057 | INFO | flet_web.fastapi | Disposing FletApp: qz9U6qO3
+2026-02-13 01:54:16,148 | INFO | flet_web.fastapi | FletApp was garbage collected: qz9U6qO3
+2026-02-13 01:54:16,201 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-13 01:54:16,278 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-13 01:54:16,475 | INFO | flet | Session was garbage collected: SY9nahOG37VyI77Y
+2026-02-13 01:54:23,984 | INFO | flet | Assets path configured: /app/assets
+2026-02-13 01:54:24,926 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-13 01:54:24,928 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-13 01:54:24,929 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-13 01:54:24,929 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-13 01:54:24,932 | INFO | flet | Flet app has started...
+2026-02-13 01:54:25,045 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-13 01:54:25,046 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-13 01:54:26,675 | INFO | flet_web.fastapi | New FletApp: sUd2lajM
+2026-02-13 01:54:26,721 | INFO | flet_web.fastapi | New session created (1 total): _wCQmGe5lo5vp4p2N_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 01:54:26,723 | INFO | flet_web.fastapi | Start session: wCQmGe5lo5vp4p2N
+2026-02-13 01:54:26,887 | INFO | App | Base de datos inicializada
+2026-02-13 01:54:26,903 | INFO | Router | Navigating to: /login
+2026-02-13 01:54:26,945 | INFO | App | Aplicação iniciada com sucesso
+2026-02-13 01:55:05,617 | INFO | Router | Navigating to: /
+2026-02-13 01:55:13,378 | INFO | Router | Navigating to: /family
+2026-02-13 01:55:22,608 | INFO | Router | Navigating to: /incomes
+2026-02-13 02:03:04,163 | INFO | flet_web.fastapi | Session disconnected: _wCQmGe5lo5vp4p2N_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-13 02:03:04,201 | INFO | flet_web.fastapi | Disposing FletApp: sUd2lajM
+2026-02-13 02:03:04,252 | INFO | flet_web.fastapi | FletApp was garbage collected: sUd2lajM
+2026-02-13 02:03:04,296 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-13 02:03:04,342 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-13 02:03:04,519 | INFO | flet | Session was garbage collected: wCQmGe5lo5vp4p2N
+2026-02-13 02:03:15,042 | INFO | flet | Assets path configured: /app/assets
+2026-02-13 02:03:16,912 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-13 02:03:16,916 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-13 02:03:16,917 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-13 02:03:16,918 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-13 02:03:16,922 | INFO | flet | Flet app has started...
+2026-02-13 02:03:17,143 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-13 02:03:17,145 | INFO | flet | App URL: http://0.0.0.0:8550

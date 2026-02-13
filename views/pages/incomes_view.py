@@ -14,7 +14,7 @@ from controllers.income_controller import IncomeController
 from core.session import SessionManager
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
-from models.income_model import Income, IncomeCategory, RecurrenceFrequency
+from models.income_model import Income, IncomeCategory
 from views.layouts.main_layout import MainLayout
 
 
@@ -78,23 +78,9 @@ class IncomesView:
             width=150
         )
         
-        self.recurrente_checkbox = ft.Checkbox(
-            label="Es recurrente",
-            value=False
-        )
-        
-        self.frecuencia_dropdown = ft.Dropdown(
-            label="Frecuencia",
-            width=150,
-            disabled=True,
-            options=[
-                ft.dropdown.Option(key=freq.name, text=freq.value)
-                for freq in RecurrenceFrequency
-            ]
-        )
-        
         self.notas_input = ft.TextField(
             label="Notas (opcional)",
+            hint_text="Ej: Mensual, Quincenal, Jornal diario, etc.",
             multiline=True,
             min_lines=2,
             max_lines=3,
@@ -145,13 +131,6 @@ class IncomesView:
                                 spacing=10
                             ),
                             self.descripcion_input,
-                            ft.Row(
-                                controls=[
-                                    self.recurrente_checkbox,
-                                    self.frecuencia_dropdown,
-                                ],
-                                spacing=10
-                            ),
                             self.notas_input,
                             ft.Row(
                                 controls=[
@@ -256,25 +235,6 @@ class IncomesView:
                 self._show_error(AppError(message="Categoría inválida"))
                 return
             
-            # Obtener frecuencia si es recurrente
-            frecuencia = None
-            if self.recurrente_checkbox.value:
-                if not self.frecuencia_dropdown.value:
-                    self._show_error(
-                        AppError(
-                            message=(
-                                "Debe seleccionar frecuencia "
-                                "para ingresos recurrentes"
-                            )
-                        )
-                    )
-                    return
-                try:
-                    frecuencia = RecurrenceFrequency[self.frecuencia_dropdown.value]
-                except KeyError:
-                    self._show_error(AppError(message="Frecuencia inválida"))
-                    return
-            
             # Crear o actualizar el ingreso
             income = Income(
                 id=self.editing_income_id,
@@ -283,8 +243,8 @@ class IncomesView:
                 fecha=fecha,
                 descripcion=self.descripcion_input.value,
                 categoria=categoria,
-                es_recurrente=self.recurrente_checkbox.value or False,
-                frecuencia=frecuencia,
+                es_recurrente=False,
+                frecuencia=None,
                 notas=self.notas_input.value if self.notas_input.value else None,
             )
             
@@ -332,8 +292,6 @@ class IncomesView:
                         break
                 
                 recurrente_text = ""
-                if income.es_recurrente and income.frecuencia:
-                    recurrente_text = f" 🔄 {income.frecuencia.value}"
                 
                 # Formatear monto con separador de miles
                 monto_formateado = f"{income.monto:,.0f}".replace(",", ".")
@@ -477,10 +435,6 @@ class IncomesView:
         self.descripcion_input.value = income.descripcion
         self.categoria_dropdown.value = income.categoria.name
         self.fecha_input.value = str(income.fecha)
-        self.recurrente_checkbox.value = income.es_recurrente
-        if income.frecuencia:
-            self.frecuencia_dropdown.value = income.frecuencia.name
-            self.frecuencia_dropdown.disabled = False
         self.notas_input.value = income.notas if income.notas else ""
         self.page.update()
 
@@ -509,9 +463,6 @@ class IncomesView:
         self.descripcion_input.value = ""
         self.categoria_dropdown.value = None
         self.fecha_input.value = str(date.today())
-        self.recurrente_checkbox.value = False
-        self.frecuencia_dropdown.value = None
-        self.frecuencia_dropdown.disabled = True
         self.notas_input.value = ""
 
     def _show_error(self, error: AppError) -> None:

@@ -4,40 +4,53 @@ Modelo de dominio para miembros de la familia
 
 from __future__ import annotations
 
-from enum import Enum
-
 from pydantic import BaseModel, Field
-
-
-class IncomeType(str, Enum):
-    """Tipo de ingreso del miembro de la familia"""
-    FIJO = "Sueldo fijo"
-    JORNALERO = "Jornalero"
-    MIXTO = "Mixto"
-    NINGUNO = "Sin ingresos"
 
 
 class FamilyMember(BaseModel):
     """
     Miembro de la familia
-    Representa a cada persona que forma parte del núcleo familiar
+    Representa a cada persona o mascota que forma parte del núcleo familiar
     """
     id: int | None = None
     
     # Datos básicos
-    nombre: str = Field(min_length=1, max_length=100, description="Nombre del miembro")
+    nombre: str = Field(min_length=1, max_length=100, description="Nombre completo del miembro o mascota")
     
-    # Tipo de ingreso
-    tipo_ingreso: IncomeType = Field(
-        default=IncomeType.NINGUNO,
-        description="Tipo de ingreso que recibe"
+    # Tipo de miembro
+    tipo_miembro: str = Field(
+        default="persona",
+        max_length=20,
+        description="Tipo: persona o mascota"
     )
     
-    # Sueldo mensual fijo (si aplica)
-    sueldo_mensual: float | None = Field(
+    # Parentesco (solo para personas)
+    parentesco: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Parentesco: padre, madre, hijo, hija, abuelo, abuela, otro (solo personas)"
+    )
+    
+    # Especie (solo para mascotas)
+    especie: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Especie: gato, perro, pájaro, otro (solo mascotas)"
+    )
+    
+    # Edad
+    edad: int | None = Field(
         default=None,
         ge=0,
-        description="Sueldo mensual fijo (solo para tipo FIJO o MIXTO)"
+        le=150,
+        description="Edad del miembro o mascota"
+    )
+    
+    # Estado laboral (solo para personas)
+    estado_laboral: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Estado laboral: empleado, desempleado, jubilado, estudiante, independiente (solo personas)"
     )
     
     # Estado
@@ -54,14 +67,10 @@ class FamilyMember(BaseModel):
     )
     
     def __str__(self) -> str:
-        return f"{self.nombre} ({self.tipo_ingreso.value})"
-    
-    @property
-    def tiene_sueldo_fijo(self) -> bool:
-        """Indica si el miembro tiene sueldo fijo"""
-        return self.tipo_ingreso in (IncomeType.FIJO, IncomeType.MIXTO)
-    
-    @property
-    def es_jornalero(self) -> bool:
-        """Indica si el miembro es jornalero"""
-        return self.tipo_ingreso in (IncomeType.JORNALERO, IncomeType.MIXTO)
+        edad_str = f"{self.edad} años" if self.edad else "edad no especificada"
+        if self.tipo_miembro == "mascota":
+            especie_str = self.especie if self.especie else "mascota"
+            return f"{self.nombre} ({especie_str}, {edad_str})"
+        else:
+            parentesco_str = self.parentesco if self.parentesco else "otro"
+            return f"{self.nombre} ({parentesco_str}, {edad_str})"

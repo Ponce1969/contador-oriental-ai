@@ -11,7 +11,7 @@ from controllers.family_member_controller import FamilyMemberController
 from core.session import SessionManager
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
-from models.family_member_model import FamilyMember, IncomeType
+from models.family_member_model import FamilyMember
 from views.layouts.main_layout import MainLayout
 
 
@@ -33,25 +33,76 @@ class FamilyMembersView:
         # Controller
         self.controller = FamilyMemberController(familia_id=familia_id)
         
+        # Cargar miembros existentes para el dropdown
+        self.existing_members = self.controller.list_active_members()
+        
+        # Dropdown para seleccionar miembro existente
+        self.select_member_dropdown = ft.Dropdown(
+            label="Seleccionar miembro existente (para editar)",
+            width=400,
+            hint_text="Busca y selecciona un miembro para editar",
+            options=[
+                ft.dropdown.Option(key=str(member.id), text=f"{member.nombre} ({member.tipo_miembro})")
+                for member in self.existing_members
+            ]
+        )
+        self.select_member_dropdown.on_change = self._on_select_member
+        
         # Campos del formulario
         self.nombre_input = ft.TextField(
             label="Nombre",
-            hint_text="Ej: Juan Pérez",
+            hint_text="Ej: Juan Pérez o Firulais",
             width=300
         )
         
-        self.sueldo_input = ft.TextField(
-            label="Sueldo mensual ($) - Solo para Sueldo fijo o Mixto",
-            hint_text="Ej: 50.000 o 50000",
-            width=300
+        self.tipo_miembro_dropdown = ft.Dropdown(
+            label="Tipo",
+            width=150,
+            value="persona",
+            options=[
+                ft.dropdown.Option("persona", "Persona"),
+                ft.dropdown.Option("mascota", "Mascota"),
+            ]
         )
+        self.tipo_miembro_dropdown.on_change = self._on_tipo_miembro_change
         
-        self.tipo_ingreso_dropdown = ft.Dropdown(
-            label="Tipo de ingreso",
+        self.parentesco_dropdown = ft.Dropdown(
+            label="Parentesco",
             width=200,
             options=[
-                ft.dropdown.Option(key=tipo.name, text=tipo.value)
-                for tipo in IncomeType
+                ft.dropdown.Option("padre", "Padre"),
+                ft.dropdown.Option("madre", "Madre"),
+                ft.dropdown.Option("hijo", "Hijo"),
+                ft.dropdown.Option("hija", "Hija"),
+                ft.dropdown.Option("abuelo", "Abuelo"),
+                ft.dropdown.Option("abuela", "Abuela"),
+                ft.dropdown.Option("otro", "Otro"),
+            ]
+        )
+        
+        self.especie_input = ft.TextField(
+            label="Especie",
+            hint_text="Ej: Gato, Perro, Pájaro",
+            width=200,
+            visible=False
+        )
+        
+        self.edad_input = ft.TextField(
+            label="Edad",
+            hint_text="Ej: 35",
+            width=100,
+            keyboard_type=ft.KeyboardType.NUMBER
+        )
+        
+        self.estado_laboral_dropdown = ft.Dropdown(
+            label="Estado laboral",
+            width=200,
+            options=[
+                ft.dropdown.Option("empleado", "Empleado"),
+                ft.dropdown.Option("desempleado", "Desempleado"),
+                ft.dropdown.Option("jubilado", "Jubilado"),
+                ft.dropdown.Option("estudiante", "Estudiante"),
+                ft.dropdown.Option("independiente", "Independiente/Autónomo"),
             ]
         )
         
@@ -90,11 +141,26 @@ class FamilyMembersView:
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.PURPLE_700
                             ),
+                            self.select_member_dropdown,
+                            ft.Divider(),
                             ft.Row(
                                 controls=[
                                     self.nombre_input,
-                                    self.tipo_ingreso_dropdown,
-                                    self.sueldo_input,
+                                    self.tipo_miembro_dropdown,
+                                    self.edad_input,
+                                ],
+                                spacing=10
+                            ),
+                            ft.Row(
+                                controls=[
+                                    self.parentesco_dropdown,
+                                    self.estado_laboral_dropdown,
+                                ],
+                                spacing=10
+                            ),
+                            ft.Row(
+                                controls=[
+                                    self.especie_input,
                                 ],
                                 spacing=10
                             ),
@@ -157,36 +223,43 @@ class FamilyMembersView:
                 self._show_error(AppError(message="El nombre es obligatorio"))
                 return
             
-            if not self.tipo_ingreso_dropdown.value:
-                self._show_error(AppError(message="El tipo de ingreso es obligatorio"))
-                return
+            # Validar campos según tipo de miembro
+            tipo_miembro = self.tipo_miembro_dropdown.value or "persona"
             
-            # Buscar el tipo enum por key
-            try:
-                selected_tipo = IncomeType[self.tipo_ingreso_dropdown.value]
-            except KeyError:
-                selected_tipo = IncomeType.NINGUNO
-            
-            # Validar sueldo si es necesario
-            sueldo_mensual = None
-            if selected_tipo in (IncomeType.FIJO, IncomeType.MIXTO):
-                if not self.sueldo_input.value:
-                    self._show_error(
-                        AppError(
-                            message="El sueldo mensual es obligatorio para este tipo"
-                        )
-                    )
+            if tipo_miembro == "persona":
+                if not self.parentesco_dropdown.value:
+                    self._show_error(AppError(message="El parentesco es obligatorio para personas"))
                     return
-                # Limpiar formato: eliminar puntos de separador de miles
-                sueldo_str = self.sueldo_input.value.replace(".", "").replace(",", ".")
-                sueldo_mensual = float(sueldo_str)
+                
+                if not self.estado_laboral_dropdown.value:
+                    self._show_error(AppError(message="El estado laboral es obligatorio para personas"))
+                    return
+            else:
+                if not self.especie_input.value:
+                    self._show_error(AppError(message="La especie es obligatoria para mascotas"))
+                    return
+            
+            # Validar edad
+            edad = None
+            if self.edad_input.value:
+                try:
+                    edad = int(self.edad_input.value)
+                    if edad < 0 or edad > 150:
+                        self._show_error(AppError(message="La edad debe estar entre 0 y 150"))
+                        return
+                except ValueError:
+                    self._show_error(AppError(message="La edad debe ser un número válido"))
+                    return
             
             # Crear o actualizar el miembro
             member = FamilyMember(
                 id=self.editing_member_id,
                 nombre=self.nombre_input.value,
-                tipo_ingreso=selected_tipo,
-                sueldo_mensual=sueldo_mensual,
+                tipo_miembro=tipo_miembro,
+                parentesco=self.parentesco_dropdown.value if tipo_miembro == "persona" else None,
+                especie=self.especie_input.value if tipo_miembro == "mascota" else None,
+                edad=edad,
+                estado_laboral=self.estado_laboral_dropdown.value if tipo_miembro == "persona" else None,
                 notas=self.notas_input.value if self.notas_input.value else None,
             )
             
@@ -208,8 +281,8 @@ class FamilyMembersView:
                 case Err(error):
                     self._show_error(error)
         
-        except ValueError:
-            self._show_error(AppError(message="El sueldo debe ser un número válido"))
+        except Exception as e:
+            self._show_error(AppError(message=f"Error al guardar: {str(e)}"))
 
     def _render_members(self) -> None:
         """Renderizar lista de miembros"""
@@ -223,20 +296,25 @@ class FamilyMembersView:
             )
         else:
             for member in members:
-                sueldo_text = ""
-                if member.sueldo_mensual:
-                    # Formatear con separador de miles
-                    sueldo_formateado = (
-                        f"{member.sueldo_mensual:,.0f}".replace(",", ".")
-                    )
-                    sueldo_text = f" • ${sueldo_formateado}/mes"
+                # Construir texto descriptivo según tipo
+                edad_text = f"{member.edad} años" if member.edad else "Edad no especificada"
+                
+                if member.tipo_miembro == "mascota":
+                    especie_text = member.especie.capitalize() if member.especie else "Mascota"
+                    info_text = f"🐾 {especie_text} • {edad_text}"
+                    icon = ft.Icons.PETS
+                else:
+                    parentesco_text = member.parentesco.capitalize() if member.parentesco else "Otro"
+                    estado_text = member.estado_laboral.capitalize() if member.estado_laboral else "No especificado"
+                    info_text = f"{parentesco_text} • {edad_text} • {estado_text}"
+                    icon = ft.Icons.PERSON
                 
                 self.members_column.controls.append(
                     ft.Container(
                         content=ft.Row(
                             controls=[
                                 ft.Icon(
-                                    icon=ft.Icons.PERSON,
+                                    icon=icon,
                                     color=ft.Colors.PURPLE_600,
                                     size=30
                                 ),
@@ -248,7 +326,7 @@ class FamilyMembersView:
                                             color=ft.Colors.PURPLE_900
                                         ),
                                         ft.Text(
-                                            value=f"{member.tipo_ingreso.value}{sueldo_text}",
+                                            value=info_text,
                                             size=12,
                                             color=ft.Colors.PURPLE_700
                                         ),
@@ -279,15 +357,30 @@ class FamilyMembersView:
         
         self.page.update()
 
+    def _on_select_member(self, e: ft.ControlEvent) -> None:
+        """Cargar datos del miembro seleccionado automáticamente"""
+        if not self.select_member_dropdown.value:
+            return
+        
+        member_id = int(self.select_member_dropdown.value)
+        
+        # Buscar el miembro en la lista existente
+        for member in self.existing_members:
+            if member.id == member_id:
+                self._on_edit_member(member)
+                break
+    
     def _on_edit_member(self, member: FamilyMember) -> None:
         """Cargar datos del miembro para editar"""
         self.editing_member_id = member.id
         self.nombre_input.value = member.nombre
-        self.tipo_ingreso_dropdown.value = member.tipo_ingreso.name
-        self.sueldo_input.value = (
-            str(member.sueldo_mensual) if member.sueldo_mensual else ""
-        )
+        self.tipo_miembro_dropdown.value = member.tipo_miembro if member.tipo_miembro else "persona"
+        self.parentesco_dropdown.value = member.parentesco if member.parentesco else None
+        self.especie_input.value = member.especie if member.especie else ""
+        self.edad_input.value = str(member.edad) if member.edad else ""
+        self.estado_laboral_dropdown.value = member.estado_laboral if member.estado_laboral else None
         self.notas_input.value = member.notas if member.notas else ""
+        self._update_fields_visibility()
         self.page.update()
 
     def _on_cancel_edit(self, _: ft.ControlEvent) -> None:
@@ -296,12 +389,39 @@ class FamilyMembersView:
         self._clear_inputs()
         self.page.update()
 
+    def _on_tipo_miembro_change(self, e: ft.ControlEvent) -> None:
+        """Manejar cambio de tipo de miembro"""
+        self._update_fields_visibility()
+        self.page.update()
+    
+    def _update_fields_visibility(self) -> None:
+        """Actualizar visibilidad de campos según tipo de miembro"""
+        es_persona = self.tipo_miembro_dropdown.value == "persona"
+        self.parentesco_dropdown.visible = es_persona
+        self.estado_laboral_dropdown.visible = es_persona
+        self.especie_input.visible = not es_persona
+    
     def _clear_inputs(self) -> None:
         """Limpiar formulario"""
+        self.select_member_dropdown.value = None
         self.nombre_input.value = ""
-        self.tipo_ingreso_dropdown.value = None
-        self.sueldo_input.value = ""
+        self.tipo_miembro_dropdown.value = "persona"
+        self.parentesco_dropdown.value = None
+        self.especie_input.value = ""
+        self.edad_input.value = ""
+        self.estado_laboral_dropdown.value = None
         self.notas_input.value = ""
+        self._update_fields_visibility()
+        
+        # Recargar lista de miembros en el dropdown
+        self.existing_members = self.controller.list_active_members()
+        self.select_member_dropdown.options = [
+            ft.dropdown.Option(
+                key=str(member.id), 
+                text=f"{member.nombre} ({member.tipo_miembro})"
+            )
+            for member in self.existing_members
+        ]
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

@@ -93,8 +93,11 @@ class FamilyMemberRepository:
             
             # Actualizar campos
             row.nombre = member.nombre
-            row.tipo_ingreso = member.tipo_ingreso.value
-            row.sueldo_mensual = member.sueldo_mensual
+            row.tipo_miembro = member.tipo_miembro
+            row.parentesco = member.parentesco
+            row.especie = member.especie
+            row.edad = member.edad
+            row.estado_laboral = member.estado_laboral
             row.activo = member.activo
             row.notas = member.notas
             

@@ -15,8 +15,7 @@ from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.categories import (
     ExpenseCategory,
     PaymentMethod,
-    RecurrenceFrequency,
-    get_subcategories,
+    get_subcategories
 )
 from models.errors import AppError
 from models.expense_model import Expense
@@ -86,23 +85,9 @@ class ExpensesView:
             read_only=True
         )
         
-        self.es_recurrente_checkbox = ft.Checkbox(
-            label="Gasto recurrente",
-            value=False
-        )
-        self.es_recurrente_checkbox.on_change = self._on_recurrente_change
-        
-        self.frecuencia_dropdown = ft.Dropdown(
-            label="Frecuencia",
-            width=150,
-            disabled=True,
-            options=[
-                ft.dropdown.Option(freq.value) for freq in RecurrenceFrequency
-            ]
-        )
-        
         self.notas_input = ft.TextField(
             label="Notas (opcional)",
+            hint_text="Ej: Mensual, Quincenal, Pago recurrente, etc.",
             multiline=True,
             min_lines=2,
             max_lines=3,
@@ -145,13 +130,6 @@ class ExpensesView:
                                     self.categoria_dropdown,
                                     self.subcategoria_dropdown,
                                     self.metodo_pago_dropdown,
-                                ],
-                                spacing=10
-                            ),
-                            ft.Row(
-                                controls=[
-                                    self.es_recurrente_checkbox,
-                                    self.frecuencia_dropdown,
                                 ],
                                 spacing=10
                             ),
@@ -238,10 +216,6 @@ class ExpensesView:
         
         self.page.update()
 
-    def _on_recurrente_change(self, e):
-        """Manejar cambio de gasto recurrente"""
-        self.frecuencia_dropdown.disabled = not self.es_recurrente_checkbox.value
-        self.page.update()
 
     def _on_add_expense(self, _: ft.ControlEvent) -> None:
         """Agregar un nuevo gasto"""
@@ -277,24 +251,16 @@ class ExpensesView:
                     selected_metodo = metodo
                     break
             
-            # Buscar frecuencia si es recurrente
-            selected_freq = None
-            if self.es_recurrente_checkbox.value and self.frecuencia_dropdown.value:
-                for freq in RecurrenceFrequency:
-                    if freq.value == self.frecuencia_dropdown.value:
-                        selected_freq = freq
-                        break
-            
             # Crear el gasto
             expense = Expense(
-                descripcion=self.descripcion_input.value,
                 monto=float(self.monto_input.value),
                 fecha=date.today(),
+                descripcion=self.descripcion_input.value,
                 categoria=selected_cat,
                 subcategoria=self.subcategoria_dropdown.value,
                 metodo_pago=selected_metodo,
-                es_recurrente=self.es_recurrente_checkbox.value or False,
-                frecuencia_recurrencia=selected_freq,
+                es_recurrente=False,
+                frecuencia_recurrencia=None,
                 notas=self.notas_input.value if self.notas_input.value else None,
             )
             
@@ -439,9 +405,6 @@ class ExpensesView:
         self.subcategoria_dropdown.value = None
         self.subcategoria_dropdown.disabled = True
         self.metodo_pago_dropdown.value = PaymentMethod.EFECTIVO.value
-        self.es_recurrente_checkbox.value = False
-        self.frecuencia_dropdown.value = None
-        self.frecuencia_dropdown.disabled = True
         self.notas_input.value = ""
 
     def _show_error(self, error: AppError) -> None:
