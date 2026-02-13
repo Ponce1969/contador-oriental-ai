@@ -46,7 +46,6 @@ class FamilyMembersView:
                 for member in self.existing_members
             ]
         )
-        self.select_member_dropdown.on_change = self._on_select_member
         
         # Campos del formulario
         self.nombre_input = ft.TextField(
@@ -141,7 +140,16 @@ class FamilyMembersView:
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.PURPLE_700
                             ),
-                            self.select_member_dropdown,
+                            ft.Row(
+                                controls=[
+                                    self.select_member_dropdown,
+                                    CorrectElevatedButton(
+                                        "🔄 Cargar",
+                                        on_click=self._on_load_member_click
+                                    ),
+                                ],
+                                spacing=10
+                            ),
                             ft.Divider(),
                             ft.Row(
                                 controls=[
@@ -357,18 +365,25 @@ class FamilyMembersView:
         
         self.page.update()
 
-    def _on_select_member(self, e: ft.ControlEvent) -> None:
-        """Cargar datos del miembro seleccionado automáticamente"""
-        if not self.select_member_dropdown.value:
-            return
-        
-        member_id = int(self.select_member_dropdown.value)
-        
-        # Buscar el miembro en la lista existente
-        for member in self.existing_members:
-            if member.id == member_id:
-                self._on_edit_member(member)
-                break
+    def _on_load_member_click(self, e: ft.ControlEvent) -> None:
+        """Cargar datos del miembro seleccionado cuando se hace clic en el botón"""
+        try:
+            if not self.select_member_dropdown.value:
+                self._show_error(AppError(message="Selecciona un miembro primero"))
+                return
+            
+            member_id = int(self.select_member_dropdown.value)
+            
+            # Buscar el miembro en la lista existente
+            for member in self.existing_members:
+                if member.id == member_id:
+                    self._on_edit_member(member)
+                    self._show_success(f"Datos de {member.nombre} cargados")
+                    return
+            
+            self._show_error(AppError(message="Miembro no encontrado"))
+        except Exception as ex:
+            self._show_error(AppError(message=f"Error al cargar: {str(ex)}"))
     
     def _on_edit_member(self, member: FamilyMember) -> None:
         """Cargar datos del miembro para editar"""
