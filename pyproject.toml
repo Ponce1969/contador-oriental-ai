@@ -16,6 +16,7 @@ dependencies = [
     "psycopg2-binary",
     "pillow",
     "python-dotenv>=1.2.1",
+    "ollama>=0.1.0",
 ]
 
 [dependency-groups]
@@ -26,7 +27,19 @@ dev = [
     "pytest-cov",
 ]
 
-[tool.ty]
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_return_any = false
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "flet.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "flet_web.*"
+ignore_errors = true
 
 [tool.ruff]
 line-length = 88

@@ -92,7 +92,6 @@ class TestIntegrationFlows:
         # Add incomes
         incomes = [
             Income(
-                familia_id=1,
                 family_member_id=1,
                 monto=2500.00,
                 fecha=date.today(),
@@ -100,7 +99,6 @@ class TestIntegrationFlows:
                 categoria=IncomeCategory.SUELDO,
             ),
             Income(
-                familia_id=1,
                 family_member_id=1,
                 monto=500.00,
                 fecha=date.today(),
@@ -136,7 +134,6 @@ class TestIntegrationFlows:
 
         # Add income
         income = Income(
-            familia_id=1,
             family_member_id=1,
             monto=3000.00,
             fecha=date.today(),

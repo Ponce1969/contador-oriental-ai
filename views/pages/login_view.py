@@ -155,15 +155,18 @@ class LoginView:
         )
         
         if result.is_err():
-            error = result.err_value
-            if isinstance(error, AppError):
+            error = result.err()
+            if error is not None and isinstance(error, AppError):
                 self._show_error(error.message)
             else:
                 self._show_error("Error al iniciar sesión")
             return
         
         # Login exitoso - redirigir al dashboard
-        user = result.ok_value
+        user = result.ok()
+        if user is None:
+            self._show_error("Error al iniciar sesión")
+            return
         SessionManager.login(self.page, user)
         
         # Mostrar mensaje de bienvenida

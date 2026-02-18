@@ -14,8 +14,7 @@ from core.session import SessionManager
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.categories import (
     ExpenseCategory,
-    PaymentMethod,
-    get_subcategories
+    PaymentMethod
 )
 from models.errors import AppError
 from models.expense_model import Expense
@@ -40,6 +39,9 @@ class ExpensesView:
         # Controller con gestión automática de sesión
         self.controller = ExpenseController(familia_id=familia_id)
         
+        # Estado de edición
+        self.editing_expense_id = None
+        
         # Campos del formulario
         self.descripcion_input = ft.TextField(
             label="Descripción",
@@ -60,13 +62,6 @@ class ExpensesView:
             options=[
                 ft.dropdown.Option(cat.value) for cat in ExpenseCategory
             ]
-        )
-        self.categoria_dropdown.on_change = self._on_category_change  # type: ignore
-        
-        self.subcategoria_dropdown = ft.Dropdown(
-            label="Subcategoría",
-            width=200,
-            disabled=True
         )
         
         self.metodo_pago_dropdown = ft.Dropdown(
@@ -128,7 +123,6 @@ class ExpensesView:
                             ft.Row(
                                 controls=[
                                     self.categoria_dropdown,
-                                    self.subcategoria_dropdown,
                                     self.metodo_pago_dropdown,
                                 ],
                                 spacing=10
@@ -194,31 +188,8 @@ class ExpensesView:
             router=self.router,
         )
 
-    def _on_category_change(self, e):
-        """Manejar cambio de categoría"""
-        if not self.categoria_dropdown.value:
-            self.subcategoria_dropdown.disabled = True
-            self.subcategoria_dropdown.options = []
-        else:
-            # Buscar la categoría seleccionada
-            selected_cat = None
-            for cat in ExpenseCategory:
-                if cat.value == self.categoria_dropdown.value:
-                    selected_cat = cat
-                    break
-            
-            if selected_cat:
-                subcats = get_subcategories(selected_cat)
-                self.subcategoria_dropdown.options = [
-                    ft.dropdown.Option(subcat) for subcat in subcats
-                ]
-                self.subcategoria_dropdown.disabled = False
-        
-        self.page.update()
-
-
     def _on_add_expense(self, _: ft.ControlEvent) -> None:
-        """Agregar un nuevo gasto"""
+        """Agregar o actualizar un gasto"""
         try:
             # Validar campos obligatorios
             if not self.descripcion_input.value:
@@ -251,27 +222,33 @@ class ExpensesView:
                     selected_metodo = metodo
                     break
             
-            # Crear el gasto
+            # Crear o actualizar el gasto
             expense = Expense(
+                id=self.editing_expense_id,
                 monto=float(self.monto_input.value),
                 fecha=date.today(),
                 descripcion=self.descripcion_input.value,
                 categoria=selected_cat,
-                subcategoria=self.subcategoria_dropdown.value,
                 metodo_pago=selected_metodo,
                 es_recurrente=False,
                 frecuencia_recurrencia=None,
                 notas=self.notas_input.value if self.notas_input.value else None,
             )
             
-            result = self.controller.add_expense(expense)
+            # Decidir si crear o actualizar
+            if self.editing_expense_id:
+                result = self.controller.update_expense(expense)
+                mensaje_exito = "Gasto actualizado correctamente"
+            else:
+                result = self.controller.add_expense(expense)
+                mensaje_exito = "Gasto guardado correctamente"
             
             match result:
                 case Ok(_):
                     self._clear_inputs()
                     self._render_expenses()
                     self._render_summary()
-                    self._show_success("Gasto guardado correctamente")
+                    self._show_success(mensaje_exito)
                 
                 case Err(error):
                     self._show_error(error)
@@ -327,6 +304,18 @@ class ExpensesView:
                                     value=expense.fecha.strftime("%d/%m"),
                                     size=12,
                                     color=ft.Colors.GREY_600
+                                ),
+                                ft.IconButton(
+                                    icon=ft.Icons.EDIT,
+                                    icon_color=ft.Colors.BLUE,
+                                    tooltip="Editar gasto",
+                                    on_click=lambda e, exp=expense: self._on_edit_expense(exp)
+                                ),
+                                ft.IconButton(
+                                    icon=ft.Icons.DELETE,
+                                    icon_color=ft.Colors.RED,
+                                    tooltip="Eliminar gasto",
+                                    on_click=lambda e, exp=expense: self._on_delete_expense(exp)
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN
@@ -397,13 +386,36 @@ class ExpensesView:
         
         self.page.update()
 
+    def _on_edit_expense(self, expense: Expense) -> None:
+        """Cargar gasto en el formulario para editar"""
+        self.editing_expense_id = expense.id
+        
+        self.descripcion_input.value = expense.descripcion
+        self.monto_input.value = str(expense.monto)
+        self.categoria_dropdown.value = expense.categoria.value
+        self.metodo_pago_dropdown.value = expense.metodo_pago.value
+        self.notas_input.value = expense.notas if expense.notas else ""
+        
+        self.page.update()
+    
+    def _on_delete_expense(self, expense: Expense) -> None:
+        """Eliminar un gasto"""
+        result = self.controller.delete_expense(expense.id)
+        
+        match result:
+            case Ok(_):
+                self._render_expenses()
+                self._render_summary()
+                self._show_success("Gasto eliminado correctamente")
+            case Err(error):
+                self._show_error(error)
+    
     def _clear_inputs(self) -> None:
         """Limpiar formulario"""
+        self.editing_expense_id = None
         self.descripcion_input.value = ""
         self.monto_input.value = ""
         self.categoria_dropdown.value = None
-        self.subcategoria_dropdown.value = None
-        self.subcategoria_dropdown.disabled = True
         self.metodo_pago_dropdown.value = PaymentMethod.EFECTIVO.value
         self.notas_input.value = ""
 

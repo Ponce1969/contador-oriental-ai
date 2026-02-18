@@ -3,85 +3,73 @@ Tests for FamilyMember model.
 """
 import pytest
 
-from models.family_member_model import FamilyMember, IncomeType
+from models.family_member_model import FamilyMember
 
 
 class TestFamilyMemberModel:
     """Test cases for FamilyMember model."""
 
-    def test_family_member_creation(self):
-        """Test basic family member creation."""
+    def test_family_member_creation_person(self):
+        """Test basic person member creation."""
         member = FamilyMember(
-            nombre="Juan",
-            tipo_ingreso=IncomeType.FIJO,
-            sueldo_mensual=2500.00,
+            nombre="Juan Pérez",
+            tipo_miembro="persona",
+            parentesco="padre",
+            edad=35,
+            estado_laboral="empleado",
         )
-        assert member.nombre == "Juan"
-        assert member.tipo_ingreso == IncomeType.FIJO
-        assert member.sueldo_mensual == 2500.00
+        assert member.nombre == "Juan Pérez"
+        assert member.tipo_miembro == "persona"
+        assert member.parentesco == "padre"
+        assert member.edad == 35
         assert member.activo is True
 
-    def test_family_member_str(self):
-        """Test string representation."""
-        member = FamilyMember(nombre="María", tipo_ingreso=IncomeType.MIXTO)
+    def test_family_member_creation_pet(self):
+        """Test pet member creation."""
+        member = FamilyMember(
+            nombre="Firulais",
+            tipo_miembro="mascota",
+            especie="perro",
+            edad=3,
+        )
+        assert member.nombre == "Firulais"
+        assert member.tipo_miembro == "mascota"
+        assert member.especie == "perro"
+        assert member.edad == 3
+
+    def test_family_member_str_person(self):
+        """Test string representation for person."""
+        member = FamilyMember(
+            nombre="María García",
+            tipo_miembro="persona",
+            parentesco="madre",
+            edad=40
+        )
         str_repr = str(member)
-        assert "María" in str_repr
-        assert "Mixto" in str_repr
+        assert "María García" in str_repr
+        assert "madre" in str_repr
+        assert "40 años" in str_repr
 
-    def test_tiene_sueldo_fijo_fijo(self):
-        """Test tiene_sueldo_fijo for FIJO type."""
+    def test_family_member_str_pet(self):
+        """Test string representation for pet."""
         member = FamilyMember(
-            nombre="Pedro",
-            tipo_ingreso=IncomeType.FIJO,
-            sueldo_mensual=2000.00,
+            nombre="Michi",
+            tipo_miembro="mascota",
+            especie="gato",
+            edad=2
         )
-        assert member.tiene_sueldo_fijo is True
-
-    def test_tiene_sueldo_fijo_mixto(self):
-        """Test tiene_sueldo_fijo for MIXTO type."""
-        member = FamilyMember(
-            nombre="Ana",
-            tipo_ingreso=IncomeType.MIXTO,
-            sueldo_mensual=1500.00,
-        )
-        assert member.tiene_sueldo_fijo is True
-
-    def test_tiene_sueldo_fijo_jornalero(self):
-        """Test tiene_sueldo_fijo for JORNALERO type."""
-        member = FamilyMember(
-            nombre="Luis",
-            tipo_ingreso=IncomeType.JORNALERO,
-        )
-        assert member.tiene_sueldo_fijo is False
-
-    def test_es_jornalero_jornalero(self):
-        """Test es_jornalero for JORNALERO type."""
-        member = FamilyMember(
-            nombre="Carlos",
-            tipo_ingreso=IncomeType.JORNALERO,
-        )
-        assert member.es_jornalero is True
-
-    def test_es_jornalero_mixto(self):
-        """Test es_jornalero for MIXTO type."""
-        member = FamilyMember(
-            nombre="Sofía",
-            tipo_ingreso=IncomeType.MIXTO,
-        )
-        assert member.es_jornalero is True
-
-    def test_es_jornalero_fijo(self):
-        """Test es_jornalero for FIJO type."""
-        member = FamilyMember(
-            nombre="Diego",
-            tipo_ingreso=IncomeType.FIJO,
-        )
-        assert member.es_jornalero is False
+        str_repr = str(member)
+        assert "Michi" in str_repr
+        assert "gato" in str_repr
+        assert "2 años" in str_repr
 
     def test_family_member_default_values(self):
         """Test default values."""
         member = FamilyMember(nombre="Test")
-        assert member.tipo_ingreso == IncomeType.NINGUNO
-        assert member.sueldo_mensual is None
+        assert member.tipo_miembro == "persona"
         assert member.activo is True
         assert member.notas is None
+        assert member.parentesco is None
+        assert member.especie is None
+        assert member.edad is None
+        assert member.estado_laboral is None

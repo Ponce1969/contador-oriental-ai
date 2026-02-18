@@ -70,6 +70,13 @@ class ExpenseController:
             service = ExpenseService(repo)
             return service.get_summary_by_categories()
 
+    def update_expense(self, expense: Expense) -> Result[Expense, AppError]:
+        """Actualizar un gasto existente"""
+        with self._get_session() as session:
+            repo = ExpenseRepository(session, self._familia_id)
+            service = ExpenseService(repo)
+            return service.update_expense(expense)
+
     def delete_expense(self, expense_id: int) -> Result[None, AppError]:
         """Eliminar un gasto"""
         with self._get_session() as session:

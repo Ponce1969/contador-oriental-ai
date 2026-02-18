@@ -4,7 +4,7 @@ Tests for FamilyMemberService.
 import pytest
 from result import Err, Ok
 
-from models.family_member_model import FamilyMember, IncomeType
+from models.family_member_model import FamilyMember
 from models.errors import ValidationError
 
 
@@ -21,69 +21,48 @@ class TestFamilyMemberService:
 
     def test_create_member_success(self, service):
         """Test successful member creation."""
-        member = FamilyMember(nombre="Juan", apellido="Pérez", relacion="Padre")
+        member = FamilyMember(
+            nombre="Juan Pérez",
+            tipo_miembro="persona",
+            parentesco="padre",
+            edad=35,
+            estado_laboral="empleado"
+        )
         result = service.create_member(member)
 
         assert isinstance(result, Ok)
-        assert result.ok_value.nombre == "Juan"
+        assert result.ok_value.nombre == "Juan Pérez"
 
     def test_create_member_empty_name(self, service):
         """Test creating member with empty/whitespace name fails."""
-        # Use a name that passes Pydantic but fails business validation
-        member = FamilyMember(nombre="   ", apellido="Pérez", relacion="Padre")
+        member = FamilyMember(
+            nombre="   ",
+            tipo_miembro="persona",
+            parentesco="padre"
+        )
         result = service.create_member(member)
 
         assert isinstance(result, Err)
         assert isinstance(result.err_value, ValidationError)
         assert "nombre" in result.err_value.message.lower()
 
-    def test_create_member_fijo_without_sueldo(self, service):
-        """Test creating FIJO member without sueldo fails."""
+    def test_create_pet_success(self, service):
+        """Test creating pet member succeeds."""
         member = FamilyMember(
-            nombre="María",
-            apellido="García",
-            relacion="Madre",
-            tipo_ingreso=IncomeType.FIJO,
-            sueldo_mensual=None,
-        )
-        result = service.create_member(member)
-
-        assert isinstance(result, Err)
-        assert isinstance(result.err_value, ValidationError)
-        assert "sueldo" in result.err_value.message.lower()
-
-    def test_create_member_fijo_with_sueldo(self, service):
-        """Test creating FIJO member with sueldo succeeds."""
-        member = FamilyMember(
-            nombre="Carlos",
-            apellido="López",
-            relacion="Hijo",
-            tipo_ingreso=IncomeType.FIJO,
-            sueldo_mensual=2500.00,
+            nombre="Firulais",
+            tipo_miembro="mascota",
+            especie="perro",
+            edad=3
         )
         result = service.create_member(member)
 
         assert isinstance(result, Ok)
-        assert result.ok_value.sueldo_mensual == 2500.00
-
-    def test_create_member_mixto_without_sueldo(self, service):
-        """Test creating MIXTO member without sueldo fails."""
-        member = FamilyMember(
-            nombre="Ana",
-            apellido="Ruiz",
-            relacion="Hija",
-            tipo_ingreso=IncomeType.MIXTO,
-            sueldo_mensual=0,
-        )
-        result = service.create_member(member)
-
-        assert isinstance(result, Err)
-        assert isinstance(result.err_value, ValidationError)
+        assert result.ok_value.tipo_miembro == "mascota"
 
     def test_list_members(self, service):
         """Test listing all members."""
-        member1 = FamilyMember(nombre="Miembro1", relacion="Padre")
-        member2 = FamilyMember(nombre="Miembro2", relacion="Madre")
+        member1 = FamilyMember(nombre="Miembro1", tipo_miembro="persona", parentesco="padre")
+        member2 = FamilyMember(nombre="Miembro2", tipo_miembro="persona", parentesco="madre")
 
         service.create_member(member1)
         service.create_member(member2)
@@ -93,7 +72,7 @@ class TestFamilyMemberService:
 
     def test_list_active_members(self, service):
         """Test listing only active members."""
-        member = FamilyMember(nombre="Activo", relacion="Tío")
+        member = FamilyMember(nombre="Activo", tipo_miembro="persona", parentesco="tío")
         created = service.create_member(member)
 
         if created.is_ok():
@@ -102,7 +81,7 @@ class TestFamilyMemberService:
 
     def test_get_member(self, service):
         """Test getting member by id."""
-        member = FamilyMember(nombre="Pedro", relacion="Primo")
+        member = FamilyMember(nombre="Pedro", tipo_miembro="persona", parentesco="primo")
         created = service.create_member(member)
 
         if created.is_ok():
@@ -113,7 +92,7 @@ class TestFamilyMemberService:
 
     def test_update_member_success(self, service):
         """Test successful member update."""
-        member = FamilyMember(nombre="Original", relacion="Sobrino")
+        member = FamilyMember(nombre="Original", tipo_miembro="persona", parentesco="sobrino")
         created = service.create_member(member)
 
         if created.is_ok():
@@ -121,7 +100,8 @@ class TestFamilyMemberService:
             update_data = FamilyMember(
                 id=member_id,
                 nombre="Actualizado",
-                relacion="Sobrino",
+                tipo_miembro="persona",
+                parentesco="sobrino",
             )
             result = service.update_member(update_data)
             assert isinstance(result, Ok)
@@ -129,7 +109,7 @@ class TestFamilyMemberService:
 
     def test_update_member_without_id(self, service):
         """Test updating member without id fails."""
-        member = FamilyMember(nombre="SinID", relacion="Test")
+        member = FamilyMember(nombre="SinID", tipo_miembro="persona")
         result = service.update_member(member)
 
         assert isinstance(result, Err)
@@ -137,16 +117,15 @@ class TestFamilyMemberService:
 
     def test_update_member_empty_name(self, service):
         """Test updating member with whitespace name fails."""
-        member = FamilyMember(nombre="Valid", relacion="Test")
+        member = FamilyMember(nombre="Valid", tipo_miembro="persona")
         created = service.create_member(member)
 
         if created.is_ok():
             member_id = created.ok_value.id
-            # Use whitespace that passes Pydantic but fails business validation
             update_data = FamilyMember(
                 id=member_id,
                 nombre="   ",
-                relacion="Test",
+                tipo_miembro="persona",
             )
             result = service.update_member(update_data)
             assert isinstance(result, Err)
@@ -154,38 +133,10 @@ class TestFamilyMemberService:
 
     def test_deactivate_member(self, service):
         """Test deactivating member."""
-        member = FamilyMember(nombre="Desactivar", relacion="Test")
+        member = FamilyMember(nombre="Desactivar", tipo_miembro="persona")
         created = service.create_member(member)
 
         if created.is_ok():
             member_id = created.ok_value.id
             result = service.deactivate_member(member_id)
             assert isinstance(result, Ok)
-
-    def test_create_member_mixto_with_sueldo(self, service):
-        """Test creating MIXTO member with sueldo succeeds."""
-        member = FamilyMember(
-            nombre="Luis",
-            apellido="Martínez",
-            relacion="Hijo",
-            tipo_ingreso=IncomeType.MIXTO,
-            sueldo_mensual=1800.00,
-        )
-        result = service.create_member(member)
-
-        assert isinstance(result, Ok)
-        assert result.ok_value.tipo_ingreso == IncomeType.MIXTO
-
-    def test_create_member_variable_without_sueldo(self, service):
-        """Test creating JORNALERO member without sueldo succeeds."""
-        member = FamilyMember(
-            nombre="Pedro",
-            apellido="Sánchez",
-            relacion="Tío",
-            tipo_ingreso=IncomeType.JORNALERO,
-            sueldo_mensual=None,
-        )
-        result = service.create_member(member)
-
-        assert isinstance(result, Ok)
-        assert result.ok_value.tipo_ingreso == IncomeType.JORNALERO

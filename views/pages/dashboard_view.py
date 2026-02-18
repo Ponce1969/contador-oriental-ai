@@ -331,23 +331,11 @@ class DashboardView:
 
     def _get_total_ingresos(self, year: int, month: int) -> float:
         """Obtener total de ingresos del mes"""
-        result = self.income_controller.get_total_by_month(year, month)
-        from result import Ok
-        match result:
-            case Ok(total):
-                return total
-            case _:
-                return 0.0
+        return self.income_controller.get_total_by_month(year, month)
 
     def _get_total_gastos(self, year: int, month: int) -> float:
         """Obtener total de gastos del mes"""
-        result = self.expense_controller.get_total_by_month(year, month)
-        from result import Ok
-        match result:
-            case Ok(total):
-                return total
-            case _:
-                return 0.0
+        return self.expense_controller.get_total_by_month(year, month)
 
     def _render_income_summary(self) -> ft.Column:
         """Renderizar resumen de ingresos por categoría"""

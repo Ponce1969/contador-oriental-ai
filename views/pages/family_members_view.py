@@ -1,5 +1,6 @@
 """
 Vista para gestión de miembros de la familia
+Arquitectura: State + Sync Pattern (Profesional)
 """
 
 from __future__ import annotations
@@ -16,55 +17,60 @@ from views.layouts.main_layout import MainLayout
 
 
 class FamilyMembersView:
-    """Vista para gestionar miembros de la familia"""
-    
-    def __init__(self, page, router):
+    """Vista para gestionar miembros de la familia - State + Sync Pattern"""
+
+    def __init__(self, page: ft.Page, router):
         self.page = page
         self.router = router
-        
-        # Verificar login
+
         if not SessionManager.is_logged_in(page):
             router.navigate("/login")
             return
-        
-        # Obtener familia_id de la sesión
+
         familia_id = SessionManager.get_familia_id(page)
-        
-        # Controller
         self.controller = FamilyMemberController(familia_id=familia_id)
-        
-        # Cargar miembros existentes para el dropdown
-        self.existing_members = self.controller.list_active_members()
-        
-        # Dropdown para seleccionar miembro existente
-        self.select_member_dropdown = ft.Dropdown(
-            label="Seleccionar miembro existente (para editar)",
+
+        # ===============================
+        # STATE CENTRAL
+        # ===============================
+        self.state = {
+            "members": [],  # list[FamilyMember]
+            "editing_id": None,  # int | None
+            "selected_id": None,  # str | None
+        }
+        # Type hints para cada acceso
+        self._members: list[FamilyMember] = []
+        self._editing_id: int | None = None
+        self._selected_id: str | None = None
+
+        # ===============================
+        # CONTROLS
+        # ===============================
+        self.select_dropdown = ft.Dropdown(
+            label="Seleccionar miembro",
             width=400,
-            hint_text="Busca y selecciona un miembro para editar",
-            options=[
-                ft.dropdown.Option(key=str(member.id), text=f"{member.nombre} ({member.tipo_miembro})")
-                for member in self.existing_members
-            ]
         )
+        self.select_dropdown.on_select = self._on_select
         
-        # Campos del formulario
-        self.nombre_input = ft.TextField(
-            label="Nombre",
-            hint_text="Ej: Juan Pérez o Firulais",
-            width=300
+        # Botón oculto (ya no necesario, se dispara automáticamente)
+        self.load_button = CorrectElevatedButton(
+            "🔄 Cargar",
+            on_click=self._on_load_click,
+            visible=False,
         )
-        
-        self.tipo_miembro_dropdown = ft.Dropdown(
+
+        self.name_input = ft.TextField(label="Nombre", width=300)
+
+        self.type_dropdown = ft.Dropdown(
             label="Tipo",
-            width=150,
             value="persona",
             options=[
                 ft.dropdown.Option("persona", "Persona"),
                 ft.dropdown.Option("mascota", "Mascota"),
-            ]
+            ],
         )
-        self.tipo_miembro_dropdown.on_change = self._on_tipo_miembro_change
-        
+        self.type_dropdown.on_select = self._on_type_change
+
         self.parentesco_dropdown = ft.Dropdown(
             label="Parentesco",
             width=200,
@@ -76,382 +82,378 @@ class FamilyMembersView:
                 ft.dropdown.Option("abuelo", "Abuelo"),
                 ft.dropdown.Option("abuela", "Abuela"),
                 ft.dropdown.Option("otro", "Otro"),
-            ]
+            ],
         )
-        
+
         self.especie_input = ft.TextField(
             label="Especie",
-            hint_text="Ej: Gato, Perro, Pájaro",
             width=200,
-            visible=False
+            visible=False,
         )
-        
-        self.edad_input = ft.TextField(
+
+        self.age_input = ft.TextField(
             label="Edad",
-            hint_text="Ej: 35",
             width=100,
-            keyboard_type=ft.KeyboardType.NUMBER
+            keyboard_type=ft.KeyboardType.NUMBER,
         )
-        
-        self.estado_laboral_dropdown = ft.Dropdown(
+
+        self.job_dropdown = ft.Dropdown(
             label="Estado laboral",
             width=200,
             options=[
                 ft.dropdown.Option("empleado", "Empleado"),
-                ft.dropdown.Option("desempleado", "Desempleado"),
-                ft.dropdown.Option("jubilado", "Jubilado"),
                 ft.dropdown.Option("estudiante", "Estudiante"),
-                ft.dropdown.Option("independiente", "Independiente/Autónomo"),
-            ]
+                ft.dropdown.Option("jubilado", "Jubilado"),
+                ft.dropdown.Option("desempleado", "Desempleado"),
+                ft.dropdown.Option("independiente", "Independiente"),
+            ],
         )
-        
-        self.notas_input = ft.TextField(
-            label="Notas (opcional)",
-            multiline=True,
-            min_lines=2,
-            max_lines=3,
-            width=600
-        )
-        
-        # Lista de miembros
-        self.members_column = ft.Column(spacing=10)
-        
-        # Estado de edición
-        self.editing_member_id = None
 
+        self.notes_input = ft.TextField(
+            label="Notas",
+            multiline=True,
+            width=600,
+        )
+
+        self.members_column = ft.Column(spacing=10)
+
+        # Load inicial
+        self._load_members()
+
+    # =====================================================
+    # DATA
+    # =====================================================
+    def _load_members(self):
+        self.state["members"] = self.controller.list_active_members()
+
+    # =====================================================
+    # RENDER
+    # =====================================================
     def render(self):
-        """Renderizar la vista completa"""
         content = ft.Column(
             controls=[
-                ft.Text(value=self.controller.get_title(), size=28, weight=ft.FontWeight.BOLD),
+                ft.Text(
+                    self.controller.get_title(),
+                    size=26,
+                    weight=ft.FontWeight.BOLD,
+                ),
                 ft.Divider(),
-                
-                # Formulario de registro
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            ft.Text(
-                                value=(
-                                    "👥 Agregar miembro de la familia"
-                                    if not self.editing_member_id
-                                    else "✏️ Editar miembro de la familia"
-                                ),
-                                size=20,
-                                weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.PURPLE_700
+                            ft.Row(
+                                controls=[
+                                    self.select_dropdown,
+                                    self.load_button,
+                                ],
+                                spacing=10,
                             ),
                             ft.Row(
                                 controls=[
-                                    self.select_member_dropdown,
-                                    CorrectElevatedButton(
-                                        "🔄 Cargar",
-                                        on_click=self._on_load_member_click
-                                    ),
-                                ],
-                                spacing=10
-                            ),
-                            ft.Divider(),
-                            ft.Row(
-                                controls=[
-                                    self.nombre_input,
-                                    self.tipo_miembro_dropdown,
-                                    self.edad_input,
-                                ],
-                                spacing=10
+                                    self.name_input,
+                                    self.type_dropdown,
+                                    self.age_input,
+                                ]
                             ),
                             ft.Row(
                                 controls=[
                                     self.parentesco_dropdown,
-                                    self.estado_laboral_dropdown,
-                                ],
-                                spacing=10
+                                    self.job_dropdown,
+                                ]
                             ),
-                            ft.Row(
-                                controls=[
-                                    self.especie_input,
-                                ],
-                                spacing=10
-                            ),
-                            self.notas_input,
+                            self.especie_input,
+                            self.notes_input,
                             ft.Row(
                                 controls=[
                                     CorrectElevatedButton(
-                                        (
-                                            "💾 Guardar"
-                                            if not self.editing_member_id
-                                            else "✅ Actualizar"
-                                        ),
-                                        on_click=self._on_save_member
+                                        "Guardar",
+                                        on_click=self._on_save,
                                     ),
                                     CorrectElevatedButton(
-                                        "❌ Cancelar",
-                                        on_click=self._on_cancel_edit
-                                    ) if self.editing_member_id else ft.Container(),
-                                ],
-                                spacing=10
+                                        "Cancelar",
+                                        on_click=self._on_cancel,
+                                    ),
+                                ]
                             ),
                         ],
-                        spacing=15
+                        spacing=12,
                     ),
                     padding=20,
                     bgcolor=ft.Colors.PURPLE_50,
                     border=ft.border.all(2, ft.Colors.PURPLE_200),
                     border_radius=10,
-                    shadow=ft.BoxShadow(
-                        spread_radius=1,
-                        blur_radius=6,
-                        color=ft.Colors.PURPLE_100,
-                    )
                 ),
-                
                 ft.Divider(),
-                
-                # Lista de miembros
-                ft.Text(value="👨‍👩‍👧‍👦 Miembros de la familia", size=20),
+                ft.Text("👨‍👩‍👧‍👦 Miembros", size=20),
                 self.members_column,
             ],
-            spacing=20,
-            scroll=ft.ScrollMode.AUTO
+            scroll=ft.ScrollMode.AUTO,
         )
+
+        # Handlers - Usar on_select según documentación de Fleting
+        self.select_dropdown.on_select = self._on_select
         
-        # Cargar datos iniciales
-        self._render_members()
-        
+        # Sync inicial
+        self._sync_ui()
+
         return MainLayout(
             page=self.page,
             content=content,
             router=self.router,
         )
 
-    def _on_save_member(self, _: ft.ControlEvent) -> None:
-        """Guardar miembro (crear o actualizar)"""
+    # =====================================================
+    # SYNC
+    # =====================================================
+    def _sync_ui(self):
+        # Dropdown
+        self.select_dropdown.options = [
+            ft.dropdown.Option(
+                key=str(m.id),
+                text=f"{m.nombre} ({m.tipo_miembro})",
+            )
+            for m in self.state["members"]
+        ]
+        self.select_dropdown.value = self.state["selected_id"]
+        
+        # Workaround: Forzar update individual del dropdown
+        # (bug conocido de Flet donde value no se refleja visualmente)
         try:
-            # Validar campos obligatorios
-            if not self.nombre_input.value:
-                self._show_error(AppError(message="El nombre es obligatorio"))
-                return
-            
-            # Validar campos según tipo de miembro
-            tipo_miembro = self.tipo_miembro_dropdown.value or "persona"
-            
-            if tipo_miembro == "persona":
-                if not self.parentesco_dropdown.value:
-                    self._show_error(AppError(message="El parentesco es obligatorio para personas"))
-                    return
-                
-                if not self.estado_laboral_dropdown.value:
-                    self._show_error(AppError(message="El estado laboral es obligatorio para personas"))
-                    return
-            else:
-                if not self.especie_input.value:
-                    self._show_error(AppError(message="La especie es obligatoria para mascotas"))
-                    return
-            
-            # Validar edad
-            edad = None
-            if self.edad_input.value:
-                try:
-                    edad = int(self.edad_input.value)
-                    if edad < 0 or edad > 150:
-                        self._show_error(AppError(message="La edad debe estar entre 0 y 150"))
-                        return
-                except ValueError:
-                    self._show_error(AppError(message="La edad debe ser un número válido"))
-                    return
-            
-            # Crear o actualizar el miembro
-            member = FamilyMember(
-                id=self.editing_member_id,
-                nombre=self.nombre_input.value,
-                tipo_miembro=tipo_miembro,
-                parentesco=self.parentesco_dropdown.value if tipo_miembro == "persona" else None,
-                especie=self.especie_input.value if tipo_miembro == "mascota" else None,
-                edad=edad,
-                estado_laboral=self.estado_laboral_dropdown.value if tipo_miembro == "persona" else None,
-                notas=self.notas_input.value if self.notas_input.value else None,
-            )
-            
-            if self.editing_member_id:
-                result = self.controller.update_member(member)
-                success_msg = "Miembro actualizado correctamente"
-            else:
-                result = self.controller.add_member(member)
-                success_msg = "Miembro guardado correctamente"
-            
-            match result:
-                case Ok(_):
-                    self.editing_member_id = None
-                    self._clear_inputs()
-                    self._render_members()
-                    self._show_success(success_msg)
-                    self.page.update()
-                
-                case Err(error):
-                    self._show_error(error)
-        
-        except Exception as e:
-            self._show_error(AppError(message=f"Error al guardar: {str(e)}"))
+            self.select_dropdown.update()
+        except:
+            pass  # Control aún no está en la página
 
-    def _render_members(self) -> None:
-        """Renderizar lista de miembros"""
-        self.members_column.controls.clear()
-        
-        members = self.controller.list_active_members()
-        
-        if not members:
-            self.members_column.controls.append(
-                ft.Text(value="No hay miembros registrados", italic=True)
-            )
+        # Form
+        if self.state["editing_id"]:
+            member = self._get_member(self.state["editing_id"])
+            if member:
+                self._fill_form(member)
         else:
-            for member in members:
-                # Construir texto descriptivo según tipo
-                edad_text = f"{member.edad} años" if member.edad else "Edad no especificada"
-                
-                if member.tipo_miembro == "mascota":
-                    especie_text = member.especie.capitalize() if member.especie else "Mascota"
-                    info_text = f"🐾 {especie_text} • {edad_text}"
-                    icon = ft.Icons.PETS
-                else:
-                    parentesco_text = member.parentesco.capitalize() if member.parentesco else "Otro"
-                    estado_text = member.estado_laboral.capitalize() if member.estado_laboral else "No especificado"
-                    info_text = f"{parentesco_text} • {edad_text} • {estado_text}"
-                    icon = ft.Icons.PERSON
-                
-                self.members_column.controls.append(
-                    ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                ft.Icon(
-                                    icon=icon,
-                                    color=ft.Colors.PURPLE_600,
-                                    size=30
-                                ),
-                                ft.Column(
-                                    controls=[
-                                        ft.Text(
-                                            value=member.nombre,
-                                            weight=ft.FontWeight.BOLD,
-                                            color=ft.Colors.PURPLE_900
-                                        ),
-                                        ft.Text(
-                                            value=info_text,
-                                            size=12,
-                                            color=ft.Colors.PURPLE_700
-                                        ),
-                                    ],
-                                    spacing=2,
-                                    expand=True
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.EDIT,
-                                    tooltip="Editar",
-                                    icon_color=ft.Colors.DEEP_PURPLE_400,
-                                    on_click=lambda e, m=member: self._on_edit_member(m)
-                                ),
-                            ],
-                            alignment=ft.MainAxisAlignment.START
-                        ),
-                        padding=15,
-                        bgcolor=ft.Colors.PURPLE_50,
-                        border=ft.border.all(2, ft.Colors.PURPLE_200),
-                        border_radius=10,
-                        shadow=ft.BoxShadow(
-                            spread_radius=1,
-                            blur_radius=4,
-                            color=ft.Colors.PURPLE_100,
-                        )
-                    )
-                )
+            self._clear_form()
+
+        # List
+        self._render_list()
         
-        self.page.update()
-
-    def _on_load_member_click(self, e: ft.ControlEvent) -> None:
-        """Cargar datos del miembro seleccionado cuando se hace clic en el botón"""
+        # Workaround: Forzar updates individuales de todos los campos
+        # (bug conocido de Flet donde los controles no se actualizan visualmente)
         try:
-            if not self.select_member_dropdown.value:
-                self._show_error(AppError(message="Selecciona un miembro primero"))
-                return
-            
-            member_id = int(self.select_member_dropdown.value)
-            
-            # Buscar el miembro en la lista existente
-            for member in self.existing_members:
-                if member.id == member_id:
-                    self._on_edit_member(member)
-                    self._show_success(f"Datos de {member.nombre} cargados")
-                    return
-            
-            self._show_error(AppError(message="Miembro no encontrado"))
-        except Exception as ex:
-            self._show_error(AppError(message=f"Error al cargar: {str(ex)}"))
-    
-    def _on_edit_member(self, member: FamilyMember) -> None:
-        """Cargar datos del miembro para editar"""
-        self.editing_member_id = member.id
-        self.nombre_input.value = member.nombre
-        self.tipo_miembro_dropdown.value = member.tipo_miembro if member.tipo_miembro else "persona"
-        self.parentesco_dropdown.value = member.parentesco if member.parentesco else None
-        self.especie_input.value = member.especie if member.especie else ""
-        self.edad_input.value = str(member.edad) if member.edad else ""
-        self.estado_laboral_dropdown.value = member.estado_laboral if member.estado_laboral else None
-        self.notas_input.value = member.notas if member.notas else ""
-        self._update_fields_visibility()
+            self.name_input.update()
+            self.type_dropdown.update()
+            self.parentesco_dropdown.update()
+            self.especie_input.update()
+            self.age_input.update()
+            self.job_dropdown.update()
+            self.notes_input.update()
+        except:
+            pass  # Controles aún no están en la página
+
         self.page.update()
 
-    def _on_cancel_edit(self, _: ft.ControlEvent) -> None:
-        """Cancelar edición"""
-        self.editing_member_id = None
-        self._clear_inputs()
-        self.page.update()
+    # =====================================================
+    # FORM
+    # =====================================================
+    def _fill_form(self, m: FamilyMember):
+        self.name_input.value = m.nombre
+        self.type_dropdown.value = m.tipo_miembro or "persona"
+        self.parentesco_dropdown.value = m.parentesco
+        self.especie_input.value = m.especie or ""
+        self.age_input.value = str(m.edad or "")
+        self.job_dropdown.value = m.estado_laboral
+        self.notes_input.value = m.notas or ""
 
-    def _on_tipo_miembro_change(self, e: ft.ControlEvent) -> None:
-        """Manejar cambio de tipo de miembro"""
-        self._update_fields_visibility()
-        self.page.update()
-    
-    def _update_fields_visibility(self) -> None:
-        """Actualizar visibilidad de campos según tipo de miembro"""
-        es_persona = self.tipo_miembro_dropdown.value == "persona"
-        self.parentesco_dropdown.visible = es_persona
-        self.estado_laboral_dropdown.visible = es_persona
-        self.especie_input.visible = not es_persona
-    
-    def _clear_inputs(self) -> None:
-        """Limpiar formulario"""
-        self.select_member_dropdown.value = None
-        self.nombre_input.value = ""
-        self.tipo_miembro_dropdown.value = "persona"
+        self._update_visibility()
+
+    def _clear_form(self):
+        self.name_input.value = ""
+        self.type_dropdown.value = "persona"
         self.parentesco_dropdown.value = None
         self.especie_input.value = ""
-        self.edad_input.value = ""
-        self.estado_laboral_dropdown.value = None
-        self.notas_input.value = ""
-        self._update_fields_visibility()
-        
-        # Recargar lista de miembros en el dropdown
-        self.existing_members = self.controller.list_active_members()
-        self.select_member_dropdown.options = [
-            ft.dropdown.Option(
-                key=str(member.id), 
-                text=f"{member.nombre} ({member.tipo_miembro})"
-            )
-            for member in self.existing_members
-        ]
+        self.age_input.value = ""
+        self.job_dropdown.value = None
+        self.notes_input.value = ""
 
-    def _show_error(self, error: AppError) -> None:
-        """Mostrar mensaje de error"""
-        snack_bar = CorrectSnackBar(
-            content=ft.Text(value=f"❌ {error.message}"),
-            open=True
-        )
-        self.page.overlay.append(snack_bar)
+        self._update_visibility()
+
+    def _update_visibility(self):
+        is_person = self.type_dropdown.value == "persona"
+
+        self.parentesco_dropdown.visible = is_person
+        self.job_dropdown.visible = is_person
+        self.especie_input.visible = not is_person
+
+    # =====================================================
+    # LIST
+    # =====================================================
+    def _render_list(self):
+        self.members_column.controls.clear()
+
+        for m in self.state["members"]:
+            # Construir texto descriptivo
+            edad_text = f"{m.edad} años" if m.edad else "Edad no especificada"
+            
+            if m.tipo_miembro == "mascota":
+                especie_text = m.especie.capitalize() if m.especie else "Mascota"
+                info_text = f"🐾 {especie_text} • {edad_text}"
+                icon = ft.Icons.PETS
+            else:
+                parentesco_text = m.parentesco.capitalize() if m.parentesco else "Otro"
+                estado_text = m.estado_laboral.capitalize() if m.estado_laboral else "No especificado"
+                info_text = f"{parentesco_text} • {edad_text} • {estado_text}"
+                icon = ft.Icons.PERSON
+
+            self.members_column.controls.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(icon=icon, color=ft.Colors.PURPLE_600, size=30),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        m.nombre,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.PURPLE_900,
+                                    ),
+                                    ft.Text(
+                                        info_text,
+                                        size=12,
+                                        color=ft.Colors.PURPLE_700,
+                                    ),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT,
+                                tooltip="Editar",
+                                icon_color=ft.Colors.DEEP_PURPLE_400,
+                                on_click=lambda e, mm=m: self._on_edit(mm),
+                            ),
+                        ]
+                    ),
+                    padding=15,
+                    bgcolor=ft.Colors.PURPLE_50,
+                    border=ft.border.all(2, ft.Colors.PURPLE_200),
+                    border_radius=10,
+                )
+            )
+
+    # =====================================================
+    # HELPERS
+    # =====================================================
+    def _get_member(self, member_id: int):
+        for m in self.state["members"]:
+            if m.id == member_id:
+                return m
+        return None
+
+    # =====================================================
+    # EVENTS
+    # =====================================================
+    def _on_select(self, e):
+        """Handler para on_change del dropdown - dispara carga automática"""
+        # Disparar automáticamente la carga de datos sin necesidad del botón
+        self._on_load_click(e)
+    
+    def _on_load_click(self, e):
+        """Cargar datos del miembro seleccionado al hacer clic en el botón"""
+        if not self.select_dropdown.value:
+            return
+
+        self.state["selected_id"] = self.select_dropdown.value
+        self.state["editing_id"] = int(self.select_dropdown.value)
+
+        self._sync_ui()
+
+    def _on_edit(self, member: FamilyMember):
+        self.state["editing_id"] = member.id
+        self.state["selected_id"] = str(member.id)  # Convertir a str para compatibilidad
+
+        self._sync_ui()
+
+    def _on_type_change(self, e):
+        self._update_visibility()
         self.page.update()
 
-    def _show_success(self, message: str) -> None:
-        """Mostrar mensaje de éxito"""
-        snack_bar = CorrectSnackBar(
-            content=ft.Text(value=f"✅ {message}"),
-            open=True
+    def _on_save(self, e):
+        if not self.name_input.value:
+            self._error("Nombre obligatorio")
+            return
+
+        # Validaciones según tipo
+        tipo = self.type_dropdown.value
+        if tipo == "persona":
+            if not self.parentesco_dropdown.value:
+                self._error("Parentesco obligatorio para personas")
+                return
+            if not self.job_dropdown.value:
+                self._error("Estado laboral obligatorio para personas")
+                return
+        else:
+            if not self.especie_input.value:
+                self._error("Especie obligatoria para mascotas")
+                return
+
+        # Validar edad
+        edad = None
+        if self.age_input.value:
+            try:
+                edad = int(self.age_input.value)
+                if edad < 0 or edad > 150:
+                    self._error("Edad debe estar entre 0 y 150")
+                    return
+            except ValueError:
+                self._error("Edad debe ser un número")
+                return
+
+        member = FamilyMember(
+            id=self.state["editing_id"],
+            nombre=self.name_input.value,
+            tipo_miembro=tipo,
+            parentesco=self.parentesco_dropdown.value if tipo == "persona" else None,
+            especie=self.especie_input.value if tipo == "mascota" else None,
+            edad=edad,
+            estado_laboral=self.job_dropdown.value if tipo == "persona" else None,
+            notas=self.notes_input.value if self.notes_input.value else None,
         )
-        self.page.overlay.append(snack_bar)
+
+        if self.state["editing_id"]:
+            result = self.controller.update_member(member)
+        else:
+            result = self.controller.add_member(member)
+
+        if isinstance(result, Err):
+            self._error(result.err_value.message)
+            return
+
+        # Reload
+        self._load_members()
+
+        self.state["editing_id"] = None
+        self.state["selected_id"] = None
+
+        self._sync_ui()
+
+        self._success("Guardado")
+
+    def _on_cancel(self, e):
+        self.state["editing_id"] = None
+        self.state["selected_id"] = None
+
+        self._sync_ui()
+
+    # =====================================================
+    # FEEDBACK
+    # =====================================================
+    def _error(self, msg: str):
+        self.page.snack_bar = CorrectSnackBar(
+            content=ft.Text(f"❌ {msg}"),
+            open=True,
+        )
+        self.page.update()
+
+    def _success(self, msg: str):
+        self.page.snack_bar = CorrectSnackBar(
+            content=ft.Text(f"✅ {msg}"),
+            open=True,
+        )
         self.page.update()

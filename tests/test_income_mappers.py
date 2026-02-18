@@ -53,7 +53,6 @@ class TestIncomeMappers:
     def test_income_to_table_with_frequency(self):
         """Test converting income with recurrence frequency."""
         income = Income(
-            familia_id=1,
             family_member_id=1,
             monto=1500.00,
             fecha=date.today(),
@@ -71,7 +70,6 @@ class TestIncomeMappers:
         """Test mapper with all income categories."""
         for category in IncomeCategory:
             income = Income(
-                familia_id=1,
                 family_member_id=1,
                 monto=100.00,
                 fecha=date.today(),

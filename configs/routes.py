@@ -1,7 +1,16 @@
+from __future__ import annotations
 
 import importlib
+import logging
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import flet as ft
+
+if TYPE_CHECKING:
+    from core.router import Router
+
+logger = logging.getLogger(__name__)
 
 ROUTES = [
     {
@@ -61,6 +70,14 @@ ROUTES = [
         "show_in_bottom": True,
     },
     {
+        "path": "/ai-contador",
+        "view": "views.pages.ai_advisor_view.AIAdvisorView",
+        "label": "🧮 Contador Oriental",
+        "icon": ft.Icons.PSYCHOLOGY,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+    {
         "path": "/shopping",
         "view": "views.pages.shopping_view.ShoppingView",
         "label": "Shopping (legacy)",
@@ -86,7 +103,16 @@ ROUTES = [
     }
 ]
 
-def load_view(view_path: str):
+def load_view_class(view_path: str) -> type | None:
+    """
+    Carga dinámicamente una clase de vista desde su ruta de módulo.
+    
+    Args:
+        view_path: Ruta completa del módulo y clase (ej: 'views.pages.login_view.LoginView')
+        
+    Returns:
+        Clase de vista o None si falla la carga
+    """
     module_name, class_name = view_path.rsplit(".", 1)
     
     try:
@@ -94,20 +120,53 @@ def load_view(view_path: str):
         view_class = getattr(module, class_name)
         return view_class
     except (ImportError, AttributeError) as e:
-        print(f"Erro ao carregar view {view_path}: {e}")
+        logger.error(f"Error al cargar view {view_path}: {e}")
         return None
 
-def get_routes():
-    routes = {}
 
-    for r in ROUTES:
-        view_path = str(r["view"])  # Asegurar que es string
-        def create_view_lambda(path=view_path):
-            return lambda page, router: load_view(path)(page, router).render()
+def create_view_renderer(view_path: str) -> Callable:
+    """
+    Crea una función nombrada que renderiza una vista.
+    Más legible y debuggeable que lambdas anidadas.
+    
+    Args:
+        view_path: Ruta completa del módulo y clase de la vista
+        
+    Returns:
+        Función que instancia y renderiza la vista
+    """
+    def render_view(page: ft.Page, router: Router) -> ft.Control:
+        view_class = load_view_class(view_path)
+        if view_class is None:
+            logger.error(f"No se pudo cargar la vista: {view_path}")
+            return ft.Text("Error: Vista no encontrada")
+        
+        view_instance = view_class(page, router)
+        return view_instance.render()
+    
+    # Asignar nombre descriptivo para debugging
+    render_view.__name__ = f"render_{view_path.split('.')[-1]}"
+    return render_view
 
-        routes[r["path"]] = create_view_lambda()
 
-    return routes
+def build_routes_dict() -> dict[str, Callable]:
+    """
+    Construye el diccionario de rutas mapeando paths a funciones de renderizado.
+    Usa funciones nombradas en lugar de lambdas para mejor legibilidad.
+    
+    Returns:
+        Diccionario con paths como keys y funciones de renderizado como values
+    """
+    routes_dict = {}
+    
+    for route_config in ROUTES:
+        path = route_config["path"]
+        view_path = route_config["view"]
+        routes_dict[path] = create_view_renderer(view_path)
+    
+    logger.info(f"Rutas configuradas: {len(routes_dict)} rutas cargadas")
+    return routes_dict
 
-routes = get_routes()
+
+routes = build_routes_dict()
 

@@ -403,6 +403,30 @@ fleting scaffold nombre_entidad
 
 ---
 
+## ⚠️ Problemas Conocidos
+
+### Evento correcto de Dropdown en Flet
+
+**Aclaración importante**: El control `Dropdown` de Flet **NO tiene** el evento `on_change`. El evento correcto es **`on_select`**.
+
+**Implementación correcta**:
+```python
+self.dropdown = ft.Dropdown(
+    label="Seleccionar opción",
+    options=[...]
+)
+self.dropdown.on_select = self._on_select_handler  # ✅ Correcto
+```
+
+**Solución implementada en este proyecto**:
+- En `family_members_view.py`, se usa `dropdown.on_select` para detectar cuando el usuario selecciona un miembro
+- Al seleccionar un miembro, se dispara automáticamente la carga de datos en el formulario
+- No se requiere botón adicional, la carga es automática y transparente
+
+**Patrón State + Sync**: Se implementó el patrón State + Sync profesional que centraliza el estado y sincroniza la UI de forma determinista. Este patrón es correcto, escalable y funciona perfectamente con `on_select`.
+
+---
+
 ## 🤝 Contribuir
 
 Si quieres contribuir al proyecto:
