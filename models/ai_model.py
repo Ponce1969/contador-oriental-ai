@@ -37,7 +37,40 @@ class AIRequest(BaseModel):
     )
     
     def __str__(self) -> str:
-        return f"AIRequest(familia={self.familia_id}, pregunta='{self.pregunta[:30]}...')"
+        return (
+            f"AIRequest(familia={self.familia_id}, "
+            f"pregunta='{self.pregunta[:30]}...')"
+        )
+
+
+class AIContext(BaseModel):
+    """Contexto financiero pre-calculado por Python para el Contador Oriental.
+    Gemma solo lee estos valores, nunca los calcula.
+    """
+    resumen_gastos: dict = Field(
+        default_factory=dict,
+        description="Gastos agrupados por categoría y descripción con totales"
+    )
+    total_gastos_count: int = Field(
+        default=0,
+        description="Cantidad de transacciones en el filtro actual"
+    )
+    total_gastos_mes: float = Field(
+        default=0.0,
+        description="Total de gastos del mes completo (todas las categorías)"
+    )
+    ingresos_total: float = Field(
+        default=0.0,
+        description="Total de ingresos del mes"
+    )
+    miembros_count: int = Field(
+        default=0,
+        description="Cantidad de miembros en la familia"
+    )
+    resumen_metodos_pago: str = Field(
+        default="",
+        description="Resumen de métodos de pago usados en el mes (ej: Efectivo: 6, Tarjeta débito: 1)"
+    )
 
 
 class AIResponse(BaseModel):
@@ -54,4 +87,7 @@ class AIResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     
     def __str__(self) -> str:
-        return f"AIResponse(archivo={self.archivo_usado}, gastos={self.gastos_incluidos})"
+        return (
+            f"AIResponse(archivo={self.archivo_usado}, "
+            f"gastos={self.gastos_incluidos})"
+        )

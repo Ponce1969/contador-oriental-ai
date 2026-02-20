@@ -6,17 +6,13 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING
 
 from result import Err, Ok, Result
 
-from models.ai_model import AIRequest, AIResponse
+from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from models.expense_model import Expense
 
 
 class AIAdvisorService:
@@ -31,8 +27,8 @@ class AIAdvisorService:
                 "peso": 2
             },
             "inclusion_financiera_uy.md": {
-                "keywords": ["iva", "tarjeta", "debito", "credito", "descuento", 
-                           "restaurante", "compra", "super"],
+                "keywords": ["iva", "tarjeta", "debito", "credito", "descuento",
+                           "inclusion financiera", "beneficio tarjeta"],
                 "peso": 1
             },
             "ahorro_ui_uy.md": {
@@ -64,69 +60,82 @@ class AIAdvisorService:
         if scores[archivo_seleccionado] > 0:
             ruta = os.path.join(self.knowledge_path, archivo_seleccionado)
             try:
-                with open(ruta, "r", encoding="utf-8") as f:
+                with open(ruta, encoding="utf-8") as f:
                     return f.read(), archivo_seleccionado
             except FileNotFoundError:
                 return "", None
         
         return "", None
     
-    def _formatear_datos_financieros(
-        self,
-        gastos: list[Expense],
-        ingresos_total: float,
-        miembros: int
-    ) -> str:
+    def _formatear_datos_financieros(self, ctx: AIContext) -> str:
         """
         Prepara el bloque de datos financieros para el Prompt de Gemma 2:2b.
-        Muestra TODOS los gastos que el controlador filtró, sin límites artificiales.
+        Todos los valores ya vienen calculados en ctx; Gemma solo narra.
         
         Args:
-            gastos: Lista de gastos filtrados por el controlador
-            ingresos_total: Total de ingresos del mes
-            miembros: Cantidad de miembros en la familia
+            ctx: Contexto financiero pre-calculado por Python
             
         Returns:
-            String formateado con todos los datos financieros
+            String formateado con el resumen financiero
         """
+        balance_mes: float = ctx.ingresos_total - ctx.total_gastos_mes
+        
         lineas: list[str] = [
             "### ESTADO DE LA HACIENDA FAMILIAR ###",
-            f"- Miembros en el hogar: {miembros}",
-            f"- Ingresos totales del mes: ${ingresos_total:,.0f}",
-            f"- Gastos registrados en este contexto: {len(gastos)}",
+            f"- Miembros en el hogar: {ctx.miembros_count}",
+            f"- Ingresos totales del mes: ${ctx.ingresos_total:,.0f}",
+            f"- TOTAL gastos del mes (todas las categorías):"
+            f" ${ctx.total_gastos_mes:,.0f}",
+            f"- BALANCE DEL MES (Ingresos - Gastos totales): ${balance_mes:,.0f}",
+        ]
+
+        if ctx.resumen_metodos_pago:
+            lineas.append(
+                f"- Métodos de pago usados este mes: {ctx.resumen_metodos_pago}"
+            )
+
+        lineas += [
             "",
-            "DETALLE DE MOVIMIENTOS:"
+            "DETALLE DE GASTOS CONSULTADOS:"
         ]
         
-        # Mostrar TODOS los gastos que el controlador filtró
-        if not gastos:
-            lineas.append("- No hay gastos específicos para mostrar en esta categoría.")
-        else:
-            for gasto in gastos:
-                # Formato claro: Fecha | Categoría | Monto | Descripción
-                fecha_str: str = gasto.fecha.strftime('%d/%m')
-                categoria_str: str = gasto.categoria.value
-                monto_str: str = f"${gasto.monto:,.0f}"
-                lineas.append(
-                    f"• {fecha_str}: {categoria_str} - {monto_str} ({gasto.descripcion})"
-                )
+        total_filtrado = 0.0
         
-        # Cálculo del balance para que la IA no tenga que adivinar
-        total_gastos: float = sum(g.monto for g in gastos)
-        balance: float = ingresos_total - total_gastos
+        if not ctx.resumen_gastos:
+            lineas.append("- No hay gastos registrados en este contexto.")
+        else:
+            for categoria, items in ctx.resumen_gastos.items():
+                total_categoria = sum(d["total"] for d in items.values())
+                cant_categoria = sum(d["cantidad"] for d in items.values())
+                total_filtrado += total_categoria
+                
+                lineas.append(
+                    f"\n📂 {categoria}"
+                    f" → TOTAL: ${total_categoria:,.0f} ({cant_categoria} compras):"
+                )
+                for descripcion, datos in items.items():
+                    monto = datos["total"]
+                    cantidad = datos["cantidad"]
+                    metodos = datos.get("metodos", {})
+                    metodo_str = ", ".join(
+                        f"{m}({c}x)" for m, c in metodos.items()
+                    )
+                    lineas.append(
+                        f"  • {descripcion}: ${monto:,.0f}"
+                        f" ({cantidad} veces, {metodo_str})"
+                    )
         
         lineas.append("")
-        lineas.append(f"TOTAL GASTOS EN ESTA CONSULTA: ${total_gastos:,.0f}")
-        lineas.append(f"BALANCE (Ingresos - Gastos): ${balance:,.0f}")
-        
-        if miembros > 0:
-            gasto_per_capita: float = total_gastos / miembros
-            lineas.append(f"GASTO PER CÁPITA: ${gasto_per_capita:,.0f}")
-        
-        logger.info(
-            f"Contexto formateado: {len(gastos)} gastos, "
-            f"Total: ${total_gastos:,.0f}, Balance: ${balance:,.0f}"
+        lineas.append(
+            f"SUBTOTAL CONSULTADO: ${total_filtrado:,.0f}"
+            f" ({ctx.total_gastos_count} transacciones)"
         )
+        
+        if ctx.miembros_count > 0:
+            gasto_per_capita: float = ctx.total_gastos_mes / ctx.miembros_count
+            lineas.append(
+                f"GASTO PER CÁPITA (mes completo): ${gasto_per_capita:,.0f}"
+            )
         
         return "\n".join(lineas)
     
@@ -140,37 +149,49 @@ class AIAdvisorService:
         Construye el prompt optimizado para gemma2:2b
         CRÍTICO: Mantener conciso para evitar que el modelo se pierda
         """
-        prompt = f"""Sos el Contador Oriental, experto en Uruguay.
+        seccion_rag = (
+            f"NORMATIVA URUGUAYA RELEVANTE:\n{contexto_legal}\n"
+            if contexto_legal else ""
+        )
+        
+        seccion_gastos = (
+            f"{gastos_formateados}\n"
+            if gastos_formateados else ""
+        )
+        
+        datos_reales = bool(seccion_gastos)
+        prioridad = (
+            "- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier"
+            " normativa general. Respondé basándote en esos datos primero.\n"
+            if datos_reales else ""
+        )
 
-REGLAS:
-1. Respuesta breve (máximo 4 líneas)
-2. Usar datos del CONTEXTO si están disponibles
-3. Hablar en español rioplatense
-4. Usar pesos uruguayos ($)
+        prompt = f"""Sos el Contador Oriental, un contador público uruguayo.
 
-{contexto_legal if contexto_legal else ""}
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+{prioridad}- Máximo 4 líneas de respuesta.
 
-{gastos_formateados}
-
-PREGUNTA: {pregunta}
+{seccion_rag}{seccion_gastos}PREGUNTA: {pregunta}
 
 RESPUESTA:"""
         
         return prompt
     
-    def consultar(
+    async def consultar(
         self,
         request: AIRequest,
-        gastos: list[Expense] | None = None,
-        ingresos_total: float = 0.0,
-        miembros_count: int = 0
+        ctx: AIContext | None = None
     ) -> Result[AIResponse, AppError]:
         """
-        Consulta al Contador Oriental
+        Consulta al Contador Oriental (asíncrono)
         
         Args:
             request: Datos de la consulta
-            gastos: Lista de gastos recientes (opcional)
+            ctx: Contexto financiero pre-calculado por Python (opcional)
             
         Returns:
             Result con la respuesta o error
@@ -185,13 +206,9 @@ RESPUESTA:"""
             
             # 2. Formatear gastos si están disponibles
             gastos_formateados = ""
-            cantidad_gastos = 0
             
-            if request.incluir_gastos_recientes and gastos:
-                gastos_formateados = self._formatear_datos_financieros(
-                    gastos, ingresos_total, miembros_count
-                )
-                cantidad_gastos = len(gastos)
+            if request.incluir_gastos_recientes and ctx and ctx.resumen_gastos:
+                gastos_formateados = self._formatear_datos_financieros(ctx)
             
             # 3. Construir prompt
             prompt = self._construir_prompt(
@@ -202,19 +219,19 @@ RESPUESTA:"""
             
             # Log del contexto para debugging
             ai_logger.info("=" * 80)
-            ai_logger.info(f"📊 CONTEXTO ENVIADO AL MODELO:")
+            ai_logger.info("📊 CONTEXTO ENVIADO AL MODELO:")
             ai_logger.info(f"  - Pregunta: {request.pregunta}")
             ai_logger.info(f"  - Incluir gastos: {request.incluir_gastos_recientes}")
-            ai_logger.info(f"  - Gastos disponibles: {cantidad_gastos}")
+            ai_logger.info(f"  - Transacciones: {ctx.total_gastos_count if ctx else 0}")
             ai_logger.info(f"  - Contexto legal: {'Sí' if contexto else 'No'}")
             ai_logger.info(f"  - Prompt completo ({len(prompt)} chars):")
             ai_logger.info("-" * 80)
             ai_logger.info(prompt)
             ai_logger.info("=" * 80)
             
-            # 4. Llamar a Ollama (gemma2:2b) con manejo robusto de errores
+            # 4. Llamar a Ollama (gemma2:2b) con cliente asíncrono
             try:
-                import ollama
+                from ollama import AsyncClient
             except ImportError:
                 ai_logger.error(
                     "❌ Librería 'ollama' no encontrada en el entorno. "
@@ -226,12 +243,12 @@ RESPUESTA:"""
                 ))
             
             try:
-                # Configurar cliente para conectar desde Docker a host
+                # Cliente asíncrono: no bloquea el event loop mientras Gemma genera
                 ai_logger.info("🔌 Conectando con Ollama en host.docker.internal:11434")
-                client = ollama.Client(host='http://host.docker.internal:11434')
+                client = AsyncClient(host='http://host.docker.internal:11434')
                 
-                ai_logger.info("🤖 Generando respuesta con gemma2:2b")
-                response = client.generate(
+                ai_logger.info("🤖 Generando respuesta con gemma2:2b (async)")
+                response = await client.generate(
                     model='gemma2:2b',
                     prompt=prompt,
                     options={
@@ -251,7 +268,9 @@ RESPUESTA:"""
                     "de IA. Verificar que Ollama esté corriendo en el host."
                 ))
             except Exception as e:
-                ai_logger.error(f"❌ Error inesperado en Ollama: {type(e).__name__}: {str(e)}")
+                ai_logger.error(
+                    f"❌ Error inesperado en Ollama: {type(e).__name__}: {str(e)}"
+                )
                 return Err(AppError(
                     message=f"Error al consultar al Contador Oriental: {str(e)}"
                 ))
@@ -260,7 +279,7 @@ RESPUESTA:"""
             ai_response = AIResponse(
                 respuesta=respuesta_texto,
                 archivo_usado=archivo,
-                gastos_incluidos=cantidad_gastos
+                gastos_incluidos=ctx.total_gastos_count if ctx else 0
             )
             
             return Ok(ai_response)

@@ -23,6 +23,7 @@ Sistema completo de gestión financiera familiar que permite:
 * **🇺🇾 Formato uruguayo**: Montos con separador de miles ($50.000)
 * **📈 Resúmenes**: Análisis por categorías con barras de progreso y porcentajes
 * **🐾 Soporte para mascotas**: Incluye mascotas como miembros de la familia con gastos asociados
+* **🤖 Contador Oriental (IA Local)**: Asistente contable con Gemma 2:2b vía Ollama, RAG con normativa uruguaya, chat premium con animaciones
 
 ---
 
@@ -116,8 +117,14 @@ La aplicación se divide en capas claras:
 ├── configs/                          # Configuraciones
 │   ├── routes.py                     # Rutas de la app
 │   └── app_config.py
-└── flet_types/                       # Tipos correctos Flet
-    └── flet_types.py
+├── flet_types/                       # Tipos correctos Flet
+│   └── flet_types.py
+├── knowledge/                        # Base de conocimiento RAG (Contador Oriental)
+│   ├── inclusion_financiera_uy.md    # Ley de Inclusión Financiera (IVA débito/crédito)
+│   ├── irpf_familia_uy.md            # IRPF: deducciones familia uruguaya
+│   └── ahorro_ui_uy.md              # Ahorro en Unidades Indexadas
+└── models/
+    └── ai_model.py                   # AIContext, AIRequest, AIResponse, ChatMessage
 ```
 
 ---
@@ -333,16 +340,109 @@ fleting scaffold nombre_entidad
    - Analiza ingresos vs gastos por categoría
    - Identifica patrones de gasto familiar
 
+6. **Consultá al Contador Oriental** en 🤖 Contador Oriental
+   - Usá los chips de acceso rápido (IVA, Débito/Crédito, Alquiler, Resumen)
+   - O escribí tu consulta libre y presioná Enter o el botón de envío
+   - El contador analiza tus gastos reales del mes y responde en español rioplatense
+   - Marcá "Incluir mis gastos del mes" para que la IA tenga contexto financiero real
+
+---
+
+---
+
+## 🤖 Contador Oriental — Asistente IA Local
+
+El **Contador Oriental** es un asistente contable integrado que corre 100% local usando **Gemma 2:2b** vía **Ollama**. No envía datos a ningún servidor externo.
+
+### Arquitectura del Contador Oriental
+
+```
+Usuario (Flet UI)
+    │  async/await
+    ▼
+AIController.consultar_contador()   ← async def
+    │  Consultas síncronas a BD (SQLAlchemy)
+    │  Construye AIContext con datos pre-calculados
+    ▼
+AIAdvisorService.consultar()        ← async def
+    │  ollama.AsyncClient (no bloquea el event loop)
+    │  Construye prompt con datos reales
+    ▼
+Gemma 2:2b (Ollama local)
+    │  Solo narra, NUNCA calcula
+    ▼
+Respuesta en el chat
+```
+
+### Principio fundamental: Python calcula, Gemma narra
+
+Gemma 2:2b es un modelo pequeño propenso a errores de cálculo. Por eso:
+
+- **Python pre-calcula** todos los totales, balances, subtotales y per cápita
+- **`AIContext`** (Pydantic model) agrupa todos los datos financieros del mes
+- **Gemma solo lee** el contexto y lo narra en español rioplatense
+- El prompt incluye instrucción explícita: *"NUNCA sumes ni calcules nada"*
+
+### AIContext — Datos pre-calculados
+
+```python
+class AIContext(BaseModel):
+    resumen_gastos: dict          # Gastos agrupados por categoría/descripción
+    total_gastos_count: int       # Cantidad de transacciones
+    total_gastos_mes: float       # Total real del mes (para balance correcto)
+    ingresos_total: float         # Total de ingresos
+    miembros_count: int           # Miembros de la familia
+    resumen_metodos_pago: str     # Ej: "Efectivo: 6 compras (85%), Tarjeta débito: 1 (14%)"
+```
+
+### RAG — Retrieval Augmented Generation
+
+Se incluye normativa uruguaya **solo cuando la pregunta es relevante**:
+
+| Archivo | Se activa con |
+|---|---|
+| `inclusion_financiera_uy.md` | iva, tarjeta, débito, crédito, descuento |
+| `irpf_familia_uy.md` | irpf, impuesto, alquiler, hijo, hipoteca, dgi |
+| `ahorro_ui_uy.md` | ahorro, ui, unidad indexada, inflación, plazo fijo |
+
+Cuando hay datos financieros reales, el prompt instruye a Gemma a **priorizar los datos del usuario** sobre la normativa general.
+
+### Detección inteligente de categorías
+
+- **Fuzzy matching** (`difflib`) para tolerar errores tipográficos ("alamcen" → "Almacén")
+- **Tokenización estricta** (`re.findall`) para evitar falsos positivos ("gastos" no activa "Hogar" por contener "gas")
+- Detección de frases compuestas ("seguro auto", "tarjeta débito")
+
+### Chat UI Premium
+
+- **Burbujas con Markdown**: Gemma puede responder con listas, negritas, etc.
+- **Quick chips**: 4 accesos rápidos (IVA, Débito/Crédito, Alquiler, Resumen)
+- **Typing indicator**: Tres puntos animados con efecto onda mientras Gemma responde
+- **Ancho controlado** (`width=500`): Las burbujas no se estiran en pantallas anchas
+- **Bordes asimétricos**: Estilo iMessage/WhatsApp según el emisor
+- **Auto-scroll**: El chat baja automáticamente al último mensaje
+- **Enter para enviar**: `on_submit` en el TextField
+
+### Requisitos para el Contador Oriental
+
+```bash
+# Instalar Ollama (https://ollama.com)
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Descargar el modelo
+ollama pull gemma2:2b
+
+# En Docker, Ollama debe estar corriendo en el host
+# La app se conecta a: http://host.docker.internal:11434
+```
+
 ---
 
 ## 🛣️ Roadmap de mejoras futuras
 
 ### **Funcionalidades pendientes** 🔮
 
-* **🤖 AI Contador Uruguayo**: Asistente con Ollama (Gemma2:2b) + RAG curado
-  - 9 archivos MD con normativa uruguaya (IRPF, IVA, Ley de Inclusión Financiera, UI)
-  - Análisis contextual de gastos familiares
-  - Recomendaciones fiscales personalizadas
+* **📄 Exportar chat a PDF**: Descargar el análisis del Contador Oriental en PDF
 * **📅 Selector de mes/año**: Ver balance de meses anteriores
 * **📊 Gráficos avanzados**: Gráficos de línea, torta, evolución mensual
 * **🔔 Alertas**: Notificaciones cuando gastos superan presupuesto
@@ -398,8 +498,15 @@ fleting scaffold nombre_entidad
 ✔ ✅ **Arquitectura MVC con tipado estricto**
 ✔ ✅ **PostgreSQL con sistema de migraciones (estilo Django/Alembic)**
 ✔ ✅ **Docker deployment listo para Orange Pi 5 Plus**
+✔ ✅ **Contador Oriental (IA local con Gemma 2:2b + Ollama)**
+✔ ✅ **RAG con normativa uruguaya (IRPF, IVA, Inclusión Financiera, UI)**
+✔ ✅ **Arquitectura async: AI no bloquea el event loop de Flet**
+✔ ✅ **AIContext: Python pre-calcula todo, Gemma solo narra**
+✔ ✅ **Detección de categorías con fuzzy matching y tokenización**
+✔ ✅ **Chat premium: Markdown, chips, typing indicator animado**
+✔ ✅ **Resumen de métodos de pago en contexto financiero**
 
-**🎯 Sistema multi-familia funcional listo para producción!**
+**🎯 Sistema multi-familia con IA local funcional listo para producción!**
 
 ---
 

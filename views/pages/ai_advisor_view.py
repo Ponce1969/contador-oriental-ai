@@ -4,337 +4,334 @@ Vista de chat con el Contador Oriental
 
 from __future__ import annotations
 
+import asyncio
+
 import flet as ft
 from result import Err, Ok
 
 from controllers.ai_controller import AIController
 from core.session import SessionManager
-from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
+from flet_types.flet_types import CorrectSnackBar
 from models.ai_model import ChatMessage
 from views.layouts.main_layout import MainLayout
 
 
 class AIAdvisorView:
     """Vista de chat con el Contador Oriental"""
-    
-    def __init__(self, page, router):
+
+    def __init__(self, page: ft.Page, router):
         self.page = page
         self.router = router
-        
-        # Verificar login
+
         if not SessionManager.is_logged_in(page):
             router.navigate("/login")
             return
-        
-        # Obtener familia_id de la sesión
+
         familia_id = SessionManager.get_familia_id(page)
-        
-        # Controller
         self.controller = AIController(familia_id=familia_id)
-        
-        # Historial de chat
         self.chat_history: list[ChatMessage] = []
-        
-        # Campo de pregunta
+
+        # Campo de pregunta moderno
         self.pregunta_input = ft.TextField(
-            label="Pregunta al Contador Oriental",
-            hint_text="Ej: ¿Me conviene pagar el súper con débito?",
+            hint_text="Escribí tu consulta financiera...",
             multiline=True,
-            min_lines=2,
-            max_lines=4,
-            width=600,
-            autofocus=True
+            min_lines=1,
+            max_lines=3,
+            expand=True,
+            border_radius=25,
+            bgcolor=ft.Colors.WHITE,
+            content_padding=ft.padding.symmetric(horizontal=20, vertical=14),
+            border_color=ft.Colors.GREY_300,
+            on_submit=self._handle_submit,
         )
-        
+
         # Checkbox para incluir gastos
         self.incluir_gastos_checkbox = ft.Checkbox(
-            label="Incluir mis gastos recientes en la consulta",
-            value=True
+            label="Incluir mis gastos del mes",
+            value=True,
         )
-        
-        # Columna de chat con fondo gris para contraste
+
+        # Columna de chat
         self.chat_column = ft.Column(
-            spacing=10,
+            spacing=15,
             scroll=ft.ScrollMode.AUTO,
-            height=400,
-            horizontal_alignment=ft.CrossAxisAlignment.STRETCH
+            expand=True,
         )
-        
-        # Indicador de carga elegante con mensaje
-        self.progress_ring = ft.ProgressRing(
-            width=20,
-            height=20,
-            stroke_width=2,
-            color=ft.Colors.BLUE_700
+
+        # Typing indicator: tres puntos animados
+        self._dot1 = ft.Text("•", size=28, color=ft.Colors.BLUE_700, opacity=1)
+        self._dot2 = ft.Text("•", size=28, color=ft.Colors.BLUE_700, opacity=0.4)
+        self._dot3 = ft.Text("•", size=28, color=ft.Colors.BLUE_700, opacity=0.1)
+        self.typing_indicator = ft.Container(
+            content=ft.Row(
+                controls=[self._dot1, self._dot2, self._dot3],
+                spacing=4,
+            ),
+            visible=False,
+            padding=ft.padding.only(left=16),
         )
-        
-        self.progress_text = ft.Text(
-            value="El Contador Oriental está reflexionando...",
-            size=13,
-            color=ft.Colors.BLUE_700,
-            italic=True
-        )
-        
-        self.loading_indicator = ft.Row(
+
+        # Quick chips
+        self.quick_chips = ft.Row(
+            wrap=True,
+            spacing=8,
             controls=[
-                self.progress_ring,
-                self.progress_text
+                self._create_chip("¿Cómo ahorrar IVA?", ft.Icons.ACCOUNT_BALANCE_WALLET),
+                self._create_chip("¿Débito o Crédito?", ft.Icons.CREDIT_CARD),
+                self._create_chip("Deducir Alquiler", ft.Icons.HOME),
+                self._create_chip("Resumen de Gastos", ft.Icons.ANALYTICS),
             ],
-            spacing=10,
-            visible=False
         )
-    
+
+    def _create_chip(self, text: str, icon_data: ft.IconData) -> ft.Chip:
+        return ft.Chip(
+            label=ft.Text(text, size=12),
+            leading=ft.Icon(icon_data, size=16),
+            on_click=lambda e, t=text: self.page.run_task(
+                self._send_quick_question, t
+            ),
+            bgcolor=ft.Colors.GREEN_50,
+        )
+
+    async def _animate_typing(self) -> None:
+        """Animación cíclica de opacidad para los tres puntos (efecto onda)"""
+        dots = self.typing_indicator.content.controls  # type: ignore[union-attr]
+        for i, dot in enumerate(dots):
+            dot.opacity = 0.3 + (i * 0.2)
+
+        while self.typing_indicator.visible:
+            for dot in dots:
+                dot.opacity = 1.0 if dot.opacity < 0.5 else 0.3
+            self.page.update()
+            await asyncio.sleep(0.4)
+
+    async def _handle_submit(self, e) -> None:
+        """Puente para on_submit del TextField y on_click del IconButton"""
+        await self._on_consultar(e)
+
+    async def _send_quick_question(self, text: str) -> None:
+        self.pregunta_input.value = text
+        self.page.update()
+        await self._on_consultar(None)
+
     def render(self):
-        """Renderizar la vista completa"""
-        content = ft.Column(
-            controls=[
-                ft.Text(
-                    value=self.controller.get_title(),
-                    size=28,
-                    weight=ft.FontWeight.BOLD
-                ),
-                ft.Text(
-                    value=self.controller.get_description(),
-                    size=14,
-                    color=ft.Colors.GREY_700
-                ),
-                ft.Divider(),
-                
-                # Área de chat con fondo gris claro
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Text(
-                                value="💬 Conversación",
-                                size=20,
-                                weight=ft.FontWeight.BOLD
-                            ),
-                            self.chat_column,
-                        ],
-                        spacing=5
-                    ),
-                    padding=5,
-                    bgcolor=ft.Colors.GREY_100,
-                    border_radius=10,
-                ),
-                
-                ft.Divider(),
-                
-                # Formulario de pregunta
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Text(
-                                value="❓ Hacer una pregunta",
-                                size=20,
-                                weight=ft.FontWeight.BOLD
-                            ),
-                            self.pregunta_input,
-                            self.incluir_gastos_checkbox,
-                            ft.Row(
-                                controls=[
-                                    CorrectElevatedButton(
-                                        "🧮 Consultar",
-                                        on_click=self._on_consultar
-                                    ),
-                                    self.loading_indicator,
-                                ],
-                                spacing=10
-                            ),
-                        ],
-                        spacing=10
-                    ),
-                    padding=20,
-                    bgcolor=ft.Colors.GREEN_50,
-                    border=ft.border.all(2, ft.Colors.GREEN_200),
-                    border_radius=10,
-                ),
-                
-                # Ejemplos de preguntas
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Text(
-                                value="💡 Ejemplos de preguntas:",
-                                size=16,
-                                weight=ft.FontWeight.BOLD
-                            ),
-                            ft.Text("• ¿Me conviene pagar con débito o crédito?"),
-                            ft.Text("• ¿Cómo puedo ahorrar en impuestos?"),
-                            ft.Text("• ¿Qué hago con mis ahorros?"),
-                            ft.Text("• ¿Puedo deducir el alquiler?"),
-                        ],
-                        spacing=5
-                    ),
-                    padding=15,
-                    bgcolor=ft.Colors.AMBER_50,
-                    border_radius=10,
-                ),
-            ],
-            spacing=20,
-            scroll=ft.ScrollMode.AUTO
-        )
-        
-        # Mensaje de bienvenida
+        """Layout principal"""
         self._agregar_mensaje_bienvenida()
-        
+
         return MainLayout(
             page=self.page,
-            content=content,
             router=self.router,
-        )
-    
-    def _agregar_mensaje_bienvenida(self):
-        """Agrega mensaje de bienvenida al chat"""
-        mensaje = ChatMessage(
-            role="assistant",
-            content="¡Hola! Soy el Contador Oriental, tu asistente contable. "
-                   "Preguntame sobre impuestos, ahorros o cómo optimizar tus gastos en Uruguay."
-        )
-        self.chat_history.append(mensaje)
-        self._render_chat()
-    
-    def _on_consultar(self, e):
-        """Manejar consulta al contador"""
-        if not self.pregunta_input.value:
-            self._show_error("Por favor escribe una pregunta")
-            return
-        
-        # Guardar pregunta antes de limpiar
-        pregunta = self.pregunta_input.value
-        
-        # Agregar pregunta al historial
-        self.chat_history.append(ChatMessage(role="user", content=pregunta))
-        self._render_chat()
-        
-        # Mostrar ProgressRing, limpiar y deshabilitar input
-        self.loading_indicator.visible = True
-        self.pregunta_input.value = ""
-        self.pregunta_input.disabled = True
-        self.page.update()
-        
-        # Consultar al contador en thread separado para no bloquear UI
-        incluir_gastos = self.incluir_gastos_checkbox.value or False
-        
-        def consultar_async():
-            result = self.controller.consultar_contador(
-                pregunta=pregunta,
-                incluir_gastos=incluir_gastos
-            )
-            
-            # Procesar resultado
-            match result:
-                case Ok(response):
-                    self.chat_history.append(
-                        ChatMessage(role="assistant", content=response.respuesta)
-                    )
-                case Err(error):
-                    # Mostrar error en el chat también
-                    self.chat_history.append(
-                        ChatMessage(
-                            role="assistant",
-                            content=f"❌ Error: {error.message}"
-                        )
-                    )
-                    self._show_error(error.message)
-            
-            # Ocultar loading
-            self.loading_indicator.visible = False
-            self.pregunta_input.disabled = False
-            self._render_chat()
-            self.page.update()
-        
-        # Ejecutar en thread separado
-        import threading
-        thread = threading.Thread(target=consultar_async, daemon=True)
-        thread.start()
-    
-    def _render_chat(self):
-        """Renderizar chat estilo WhatsApp/Telegram moderno y responsive"""
-        self.chat_column.controls.clear()
-        
-        for mensaje in self.chat_history:
-            if mensaje.role == "user":
-                # Usuario a la derecha (azul oscuro)
-                self.chat_column.controls.append(
+            content=ft.Column(
+                controls=[
+                    # Encabezado
                     ft.Row(
                         controls=[
-                            ft.Container(expand=True),
+                            ft.Text(
+                                "🇺🇾 Contador Oriental",
+                                size=26,
+                                weight=ft.FontWeight.BOLD,
+                            ),
                             ft.Container(
                                 content=ft.Text(
-                                    value=mensaje.content,
-                                    size=15,
+                                    "IA LOCAL",
+                                    size=10,
                                     color=ft.Colors.WHITE,
-                                    selectable=True,
-                                    no_wrap=False
+                                    weight=ft.FontWeight.BOLD,
                                 ),
-                                padding=ft.padding.symmetric(horizontal=14, vertical=10),
-                                bgcolor=ft.Colors.BLUE_700,
-                                border_radius=ft.border_radius.only(
-                                    top_left=18,
-                                    top_right=18,
-                                    bottom_left=18,
-                                    bottom_right=4
-                                ),
-                                shadow=ft.BoxShadow(
-                                    spread_radius=0,
-                                    blur_radius=3,
-                                    color=ft.Colors.with_opacity(0.15, ft.Colors.BLACK),
-                                    offset=ft.Offset(0, 1)
-                                ),
-                                margin=ft.margin.only(left=40, bottom=8),
+                                bgcolor=ft.Colors.GREEN_600,
+                                padding=ft.padding.symmetric(horizontal=10, vertical=4),
+                                border_radius=10,
                             ),
-                        ]
-                    )
-                )
-            else:
-                # Bot a la izquierda (blanco con borde)
-                self.chat_column.controls.append(
-                    ft.Row(
-                        controls=[
-                            ft.Container(
-                                content=ft.Column(
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    ),
+                    ft.Text(
+                        "Asesoría basada en leyes uruguayas y tus gastos reales.",
+                        color=ft.Colors.GREY_600,
+                        size=13,
+                    ),
+
+                    # Área de chat
+                    ft.Container(
+                        content=self.chat_column,
+                        bgcolor=ft.Colors.GREY_50,
+                        border_radius=20,
+                        padding=20,
+                        expand=True,
+                        border=ft.border.all(1, ft.Colors.GREY_200),
+                        height=420,
+                    ),
+
+                    # Typing indicator (aparece encima del input)
+                    self.typing_indicator,
+
+                    # Chips de acceso rápido + input + botón enviar
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                self.quick_chips,
+                                ft.Row(
                                     controls=[
-                                        ft.Text(
-                                            value="🧮",
-                                            size=18
-                                        ),
-                                        ft.Text(
-                                            value=mensaje.content,
-                                            size=15,
-                                            color=ft.Colors.BLACK87,
-                                            selectable=True,
-                                            no_wrap=False
+                                        self.pregunta_input,
+                                        ft.IconButton(
+                                            icon=ft.Icons.SEND_ROUNDED,
+                                            icon_color=ft.Colors.WHITE,
+                                            bgcolor=ft.Colors.BLUE_700,
+                                            icon_size=22,
+                                            on_click=self._handle_submit,
+                                            tooltip="Enviar consulta",
                                         ),
                                     ],
-                                    spacing=5,
-                                    tight=True
+                                    spacing=10,
+                                    vertical_alignment=ft.CrossAxisAlignment.END,
                                 ),
-                                padding=ft.padding.symmetric(horizontal=14, vertical=10),
-                                bgcolor=ft.Colors.WHITE,
-                                border=ft.border.all(1, ft.Colors.GREY_300),
-                                border_radius=ft.border_radius.only(
-                                    top_left=18,
-                                    top_right=18,
-                                    bottom_left=4,
-                                    bottom_right=18
+                                ft.Container(
+                                    content=self.incluir_gastos_checkbox,
+                                    padding=ft.padding.only(left=10),
                                 ),
-                                shadow=ft.BoxShadow(
-                                    spread_radius=0,
-                                    blur_radius=3,
-                                    color=ft.Colors.with_opacity(0.15, ft.Colors.BLACK),
-                                    offset=ft.Offset(0, 1)
-                                ),
-                                margin=ft.margin.only(right=40, bottom=8),
-                                expand=True
-                            ),
-                            ft.Container(expand=True),
-                        ]
+                            ],
+                            spacing=10,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=4, vertical=8),
+                    ),
+                ],
+                spacing=16,
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
+            ),
+        )
+
+    def _agregar_mensaje_bienvenida(self) -> None:
+        self.chat_history.append(ChatMessage(
+            role="assistant",
+            content=(
+                "¡Hola! Soy el **Contador Oriental**, tu asesor contable.\n\n"
+                "Puedo ayudarte con:\n"
+                "- 💳 Beneficios de débito/crédito (Inclusión Financiera)\n"
+                "- 🏠 Deducciones de IRPF (alquiler, hijos, hipoteca)\n"
+                "- 💰 Ahorro en UI contra la inflación\n"
+                "- 📊 Análisis de tus gastos del mes\n\n"
+                "Usá los botones de acceso rápido o escribí tu consulta."
+            ),
+        ))
+        self._render_chat()
+
+    async def _on_consultar(self, e) -> None:
+        """Manejar consulta al contador (async: no bloquea la UI)"""
+        if not self.pregunta_input.value or not self.pregunta_input.value.strip():
+            self._show_error("Por favor escribí una pregunta")
+            return
+
+        pregunta = self.pregunta_input.value.strip()
+
+        self.chat_history.append(ChatMessage(role="user", content=pregunta))
+        self._render_chat()
+
+        self.pregunta_input.value = ""
+        self.pregunta_input.disabled = True
+        self.typing_indicator.visible = True
+        self.page.update()
+
+        asyncio.create_task(self._animate_typing())
+
+        incluir_gastos = self.incluir_gastos_checkbox.value or False
+
+        result = await self.controller.consultar_contador(
+            pregunta=pregunta,
+            incluir_gastos=incluir_gastos,
+        )
+
+        self.typing_indicator.visible = False
+
+        match result:
+            case Ok(response):
+                self.chat_history.append(
+                    ChatMessage(role="assistant", content=response.respuesta)
+                )
+            case Err(error):
+                self.chat_history.append(
+                    ChatMessage(
+                        role="assistant",
+                        content=f"❌ Error: {error.message}",
                     )
                 )
-    
-    def _show_error(self, msg: str):
-        """Mostrar mensaje de error"""
+                self._show_error(error.message)
+
+        self.pregunta_input.disabled = False
+        self._render_chat()
+        self.page.update()
+
+    def _render_chat(self) -> None:
+        """Renderizado premium con Markdown y anchos controlados"""
+        self.chat_column.controls.clear()
+
+        for mensaje in self.chat_history:
+            is_user = mensaje.role == "user"
+
+            bubble = ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Icon(
+                                    ft.Icons.PERSON if is_user
+                                    else ft.Icons.AUTO_AWESOME,
+                                    size=12,
+                                    color=ft.Colors.BLUE_GREY_400,
+                                ),
+                                ft.Text(
+                                    "TÚ" if is_user else "CONTADOR ORIENTAL",
+                                    size=10,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.BLUE_GREY_400,
+                                ),
+                            ],
+                            spacing=5,
+                        ),
+                        ft.Markdown(
+                            value=mensaje.content,
+                            selectable=True,
+                            extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+                            on_tap_link=lambda e: self.page.launch_url(e.data),
+                        ),
+                    ],
+                    spacing=8,
+                    tight=True,
+                ),
+                padding=15,
+                bgcolor=ft.Colors.BLUE_50 if is_user else ft.Colors.WHITE,
+                border=ft.border.all(
+                    1,
+                    ft.Colors.BLUE_100 if is_user else ft.Colors.GREY_200,
+                ),
+                border_radius=ft.border_radius.only(
+                    top_left=15,
+                    top_right=15,
+                    bottom_left=15 if is_user else 2,
+                    bottom_right=2 if is_user else 15,
+                ),
+                width=500,
+                shadow=ft.BoxShadow(
+                    blur_radius=5,
+                    color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK),
+                    offset=ft.Offset(0, 2),
+                ),
+            )
+
+            self.chat_column.controls.append(
+                ft.Row(
+                    controls=[bubble],
+                    alignment=(
+                        ft.MainAxisAlignment.END if is_user
+                        else ft.MainAxisAlignment.START
+                    ),
+                )
+            )
+
+        self.page.update()
+        self.chat_column.scroll_to(offset=-1, duration=400)
+
+    def _show_error(self, msg: str) -> None:
         self.page.snack_bar = CorrectSnackBar(
             content=ft.Text(f"❌ {msg}"),
             open=True,

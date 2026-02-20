@@ -12,7 +12,7 @@ from result import Result
 from sqlalchemy.orm import Session
 
 from core.sqlalchemy_session import get_db_session
-from models.ai_model import AIRequest, AIResponse
+from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
@@ -185,13 +185,63 @@ class AIController:
         
         return gastos_filtrados
     
-    def consultar_contador(
+    def _agrupar_gastos(self, gastos: list[Expense]) -> dict:
+        """
+        Agrupa gastos por categoría y descripción para el analista financiero.
+        
+        Returns:
+            {
+                "Categoría": {
+                    "Descripción": {"total": float, "cantidad": int, "metodos": dict}
+                }
+            }
+        """
+        resumen = {}
+        for gasto in gastos:
+            cat = gasto.categoria.value
+            desc = gasto.descripcion.strip().capitalize()
+            metodo = gasto.metodo_pago.value
+            
+            if cat not in resumen:
+                resumen[cat] = {}
+            
+            if desc not in resumen[cat]:
+                resumen[cat][desc] = {"total": 0.0, "cantidad": 0, "metodos": {}}
+            
+            resumen[cat][desc]["total"] += gasto.monto
+            resumen[cat][desc]["cantidad"] += 1
+            metodos = resumen[cat][desc]["metodos"]
+            metodos[metodo] = metodos.get(metodo, 0) + 1
+            
+        return resumen
+
+    def _resumir_metodos_pago(self, gastos: list[Expense]) -> str:
+        """
+        Genera un resumen de métodos de pago usados en el mes.
+        
+        Returns:
+            String con el conteo por método de pago
+        """
+        conteo: dict[str, int] = {}
+        for gasto in gastos:
+            metodo = gasto.metodo_pago.value
+            conteo[metodo] = conteo.get(metodo, 0) + 1
+        
+        total = sum(conteo.values())
+        partes = [
+            f"{metodo}: {cant} compras ({cant * 100 // total}%)"
+            for metodo, cant in sorted(conteo.items(), key=lambda x: -x[1])
+        ]
+        return ", ".join(partes)
+
+    async def consultar_contador(
         self,
         pregunta: str,
         incluir_gastos: bool = True
     ) -> Result[AIResponse, AppError]:
         """
         Consulta al Contador Oriental con detección inteligente de contexto.
+        La parte de IA es asíncrona; la BD permanece síncrona.
         
         Args:
             pregunta: Pregunta del usuario
@@ -211,8 +261,7 @@ class AIController:
         
         # Obtener datos financieros y familiares si se solicita
         gastos_filtrados: list[Expense] | None = None
-        ingresos_total = 0.0
-        miembros_count = 0
+        ctx = AIContext()
         
         if incluir_gastos:
             with self._get_session() as session:
@@ -243,6 +292,16 @@ class AIController:
                     gastos_mes, categorias_relevantes
                 )
                 
+                # Total real del mes (TODOS los gastos, sin filtrar por categoría)
+                total_gastos_mes = sum(g.monto for g in gastos_mes)
+                
+                # Agregación para el Analista Financiero
+                resumen_gastos: dict = {}
+                total_gastos_count = 0
+                if gastos_filtrados:
+                    resumen_gastos = self._agrupar_gastos(gastos_filtrados)
+                    total_gastos_count = len(gastos_filtrados)
+                
                 # Obtener ingresos del mes actual
                 income_repo = IncomeRepository(session, self.familia_id)
                 income_service = IncomeService(income_repo)
@@ -257,12 +316,18 @@ class AIController:
                 member_repo = FamilyMemberRepository(session, self.familia_id)
                 member_service = FamilyMemberService(member_repo)
                 miembros = member_service.list_members()
-                miembros_count = len(miembros)
+                
+                ctx = AIContext(
+                    resumen_gastos=resumen_gastos,
+                    total_gastos_count=total_gastos_count,
+                    total_gastos_mes=total_gastos_mes,
+                    ingresos_total=ingresos_total,
+                    miembros_count=len(miembros),
+                    resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes)
+                )
         
-        # Consultar al servicio de IA con gastos filtrados
-        return self.ai_service.consultar(
-            request, gastos_filtrados, ingresos_total, miembros_count
-        )
+        # Consultar al servicio de IA (await = no bloquea el event loop)
+        return await self.ai_service.consultar(request, ctx=ctx)
     
     def get_title(self) -> str:
         """Título de la vista"""
