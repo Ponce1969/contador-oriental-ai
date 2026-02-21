@@ -131,7 +131,11 @@ class AIAdvisorService:
             f" ({ctx.total_gastos_count} transacciones)"
         )
         
-        if ctx.miembros_count > 0:
+        es_consulta_general = (
+            ctx.miembros_count > 0
+            and abs(total_filtrado - ctx.total_gastos_mes) < 1.0
+        )
+        if es_consulta_general:
             gasto_per_capita: float = ctx.total_gastos_mes / ctx.miembros_count
             lineas.append(
                 f"GASTO PER CÁPITA (mes completo): ${gasto_per_capita:,.0f}"

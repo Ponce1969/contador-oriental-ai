@@ -5,7 +5,9 @@ import flet as ft
 from configs.app_config import AppConfig
 from core.error_handler import GlobalErrorHandler
 from core.logger import get_logger
+from core.responsive import get_device_type
 from core.sqlalchemy_session import create_tables
+from core.state import AppState
 
 logger = get_logger("App")
 
@@ -68,9 +70,18 @@ def main(page: ft.Page):
 
         from core.router import Router
         from core.session import SessionManager
-        
+
         router = Router(page)
-        
+
+        def on_resize(e: object) -> None:
+            new_device = get_device_type(page.width)
+            if new_device != AppState.device:
+                AppState.device = new_device
+                router.navigate(router.current_route)
+
+        page.on_resize = on_resize
+        AppState.device = get_device_type(page.width or 1280)
+
         # Verificar si hay sesión activa
         if SessionManager.is_logged_in(page):
             # Usuario logueado - mostrar banner y dashboard
@@ -88,7 +99,6 @@ def main(page: ft.Page):
 # Detectar si estamos en Docker (modo web) o local (modo desktop)
 # Si existe POSTGRES_HOST, estamos en Docker
 if os.getenv("POSTGRES_HOST"):
-    # Modo web para Docker/producción
     ft.run(
         main,
         assets_dir="assets",

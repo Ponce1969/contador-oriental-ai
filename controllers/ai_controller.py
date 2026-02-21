@@ -72,6 +72,8 @@ class AIController:
     def __init__(self, familia_id: int):
         self.familia_id = familia_id
         self.ai_service = AIAdvisorService()
+        self.last_context: AIContext = AIContext()
+        self.last_pregunta: str = ""
     
     @contextmanager
     def _get_session(self) -> Generator[Session, None, None]:
@@ -326,6 +328,10 @@ class AIController:
                     resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes)
                 )
         
+        # Guardar contexto para exportación PDF
+        self.last_context = ctx
+        self.last_pregunta = pregunta
+
         # Consultar al servicio de IA (await = no bloquea el event loop)
         return await self.ai_service.consultar(request, ctx=ctx)
     

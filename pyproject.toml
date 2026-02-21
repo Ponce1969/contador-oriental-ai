@@ -17,6 +17,7 @@ dependencies = [
     "pillow",
     "python-dotenv>=1.2.1",
     "ollama>=0.1.0",
+    "fpdf2>=2.7.0",
 ]
 
 [dependency-groups]

@@ -12,6 +12,7 @@ from result import Err, Ok
 from controllers.family_member_controller import FamilyMemberController
 from controllers.income_controller import IncomeController
 from core.session import SessionManager
+from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
 from models.income_model import Income, IncomeCategory
@@ -43,48 +44,48 @@ class IncomesView:
         # Campos del formulario
         self.member_dropdown = ft.Dropdown(
             label="Miembro de la familia",
-            width=250,
+            expand=True,
             options=[
                 ft.dropdown.Option(key=str(member.id), text=member.nombre)
                 for member in self.active_members
-            ]
+            ],
         )
-        
+
         self.monto_input = ft.TextField(
             label="Monto ($)",
             hint_text="Ej: 50.000 o 50000",
-            width=200
+            expand=True,
         )
-        
+
         self.descripcion_input = ft.TextField(
             label="Descripción",
             hint_text="Ej: Jornal día 15, Cobro de sueldo enero",
-            width=400
+            expand=True,
         )
-        
+
         self.categoria_dropdown = ft.Dropdown(
             label="Categoría",
-            width=200,
+            expand=True,
             options=[
                 ft.dropdown.Option(key=cat.name, text=cat.value)
                 for cat in IncomeCategory
-            ]
+            ],
         )
-        
+
         self.fecha_input = ft.TextField(
             label="Fecha (YYYY-MM-DD)",
             hint_text=str(date.today()),
             value=str(date.today()),
-            width=150
+            expand=True,
         )
-        
+
         self.notas_input = ft.TextField(
             label="Notas (opcional)",
             hint_text="Ej: Mensual, Quincenal, Jornal diario, etc.",
             multiline=True,
             min_lines=2,
             max_lines=3,
-            width=600
+            expand=True,
         )
         
         # Lista de ingresos
@@ -98,15 +99,18 @@ class IncomesView:
 
     def render(self):
         """Renderizar la vista completa"""
+        is_mobile = AppState.device == "mobile"
+        col_half = {"xs": 12, "sm": 6}
+
         content = ft.Column(
             controls=[
                 ft.Text(
                     value=self.income_controller.get_title(),
-                    size=28,
-                    weight=ft.FontWeight.BOLD
+                    size=20 if is_mobile else 28,
+                    weight=ft.FontWeight.BOLD,
                 ),
                 ft.Divider(),
-                
+
                 # Formulario de registro
                 ft.Container(
                     content=ft.Column(
@@ -117,18 +121,31 @@ class IncomesView:
                                     if not self.editing_income_id
                                     else "✏️ Editar ingreso"
                                 ),
-                                size=20,
+                                size=16 if is_mobile else 20,
                                 weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.TEAL_700
+                                color=ft.Colors.TEAL_700,
                             ),
-                            ft.Row(
+                            ft.ResponsiveRow(
                                 controls=[
-                                    self.member_dropdown,
-                                    self.categoria_dropdown,
-                                    self.monto_input,
-                                    self.fecha_input,
+                                    ft.Container(
+                                        content=self.member_dropdown,
+                                        col=col_half,
+                                    ),
+                                    ft.Container(
+                                        content=self.categoria_dropdown,
+                                        col=col_half,
+                                    ),
+                                    ft.Container(
+                                        content=self.monto_input,
+                                        col=col_half,
+                                    ),
+                                    ft.Container(
+                                        content=self.fecha_input,
+                                        col=col_half,
+                                    ),
                                 ],
-                                spacing=10
+                                spacing=10,
+                                run_spacing=10,
                             ),
                             self.descripcion_input,
                             self.notas_input,
@@ -140,19 +157,19 @@ class IncomesView:
                                             if not self.editing_income_id
                                             else "✅ Actualizar"
                                         ),
-                                        on_click=self._on_save_income
+                                        on_click=self._on_save_income,
                                     ),
                                     CorrectElevatedButton(
                                         "❌ Cancelar",
-                                        on_click=self._on_cancel_edit
+                                        on_click=self._on_cancel_edit,
                                     ) if self.editing_income_id else ft.Container(),
                                 ],
-                                spacing=10
+                                spacing=10,
                             ),
                         ],
-                        spacing=15
+                        spacing=12,
                     ),
-                    padding=20,
+                    padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.CYAN_50,
                     border=ft.border.all(2, ft.Colors.TEAL_200),
                     border_radius=10,
@@ -160,29 +177,33 @@ class IncomesView:
                         spread_radius=1,
                         blur_radius=6,
                         color=ft.Colors.TEAL_100,
-                    )
+                    ),
                 ),
-                
+
                 ft.Divider(),
-                
-                # Resumen por categorías
-                ft.Text(value="📊 Resumen por categorías", size=20),
+
+                ft.Text(
+                    value="📊 Resumen por categorías",
+                    size=16 if is_mobile else 20,
+                ),
                 self.summary_column,
-                
+
                 ft.Divider(),
-                
-                # Lista de ingresos
-                ft.Text(value="💵 Ingresos registrados", size=20),
+
+                ft.Text(
+                    value="💵 Ingresos registrados",
+                    size=16 if is_mobile else 20,
+                ),
                 self.incomes_column,
             ],
-            spacing=20,
-            scroll=ft.ScrollMode.AUTO
+            spacing=16,
+            scroll=ft.ScrollMode.AUTO,
         )
-        
+
         # Cargar datos iniciales
         self._render_incomes()
         self._render_summary()
-        
+
         return MainLayout(
             page=self.page,
             content=content,

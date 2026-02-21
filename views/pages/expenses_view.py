@@ -11,6 +11,7 @@ from result import Err, Ok
 
 from controllers.expense_controller import ExpenseController
 from core.session import SessionManager
+from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.categories import (
     ExpenseCategory,
@@ -46,47 +47,47 @@ class ExpensesView:
         self.descripcion_input = ft.TextField(
             label="Descripción",
             hint_text="Ej: Compra en supermercado",
-            width=300
+            expand=True,
         )
-        
+
         self.monto_input = ft.TextField(
             label="Monto ($)",
             hint_text="0.00",
-            width=150,
-            keyboard_type=ft.KeyboardType.NUMBER
+            expand=True,
+            keyboard_type=ft.KeyboardType.NUMBER,
         )
-        
+
         self.categoria_dropdown = ft.Dropdown(
             label="Categoría",
-            width=200,
+            expand=True,
             options=[
                 ft.dropdown.Option(cat.value) for cat in ExpenseCategory
-            ]
+            ],
         )
-        
+
         self.metodo_pago_dropdown = ft.Dropdown(
             label="Método de pago",
-            width=200,
+            expand=True,
             value=PaymentMethod.EFECTIVO.value,
             options=[
                 ft.dropdown.Option(metodo.value) for metodo in PaymentMethod
-            ]
+            ],
         )
-        
+
         self.fecha_picker = ft.TextField(
             label="Fecha",
             value=date.today().strftime("%Y-%m-%d"),
-            width=150,
-            read_only=True
+            expand=True,
+            read_only=True,
         )
-        
+
         self.notas_input = ft.TextField(
             label="Notas (opcional)",
             hint_text="Ej: Mensual, Quincenal, Pago recurrente, etc.",
             multiline=True,
             min_lines=2,
             max_lines=3,
-            width=600
+            expand=True,
         )
         
         # Lista de gastos
@@ -97,45 +98,70 @@ class ExpensesView:
 
     def render(self):
         """Renderizar la vista completa"""
+        is_mobile = AppState.device == "mobile"
+        col_half = {"xs": 12, "sm": 6}
+        col_third = {"xs": 12, "sm": 4}
+
         content = ft.Column(
             controls=[
-                ft.Text(value=self.controller.get_title(), size=28, weight=ft.FontWeight.BOLD),
+                ft.Text(
+                    value=self.controller.get_title(),
+                    size=20 if is_mobile else 28,
+                    weight=ft.FontWeight.BOLD,
+                ),
                 ft.Divider(),
-                
+
                 # Formulario de registro
                 ft.Container(
                     content=ft.Column(
                         controls=[
                             ft.Text(
-                                value="� Registrar gasto",
-                                size=20,
+                                value="Registrar gasto",
+                                size=16 if is_mobile else 20,
                                 weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.ORANGE_700
+                                color=ft.Colors.ORANGE_700,
                             ),
-                            ft.Row(
+                            ft.ResponsiveRow(
                                 controls=[
-                                    self.descripcion_input,
-                                    self.monto_input,
-                                    self.fecha_picker,
+                                    ft.Container(
+                                        content=self.descripcion_input,
+                                        col={"xs": 12, "sm": 5},
+                                    ),
+                                    ft.Container(
+                                        content=self.monto_input,
+                                        col=col_third,
+                                    ),
+                                    ft.Container(
+                                        content=self.fecha_picker,
+                                        col=col_third,
+                                    ),
                                 ],
-                                spacing=10
+                                spacing=10,
+                                run_spacing=10,
                             ),
-                            ft.Row(
+                            ft.ResponsiveRow(
                                 controls=[
-                                    self.categoria_dropdown,
-                                    self.metodo_pago_dropdown,
+                                    ft.Container(
+                                        content=self.categoria_dropdown,
+                                        col=col_half,
+                                    ),
+                                    ft.Container(
+                                        content=self.metodo_pago_dropdown,
+                                        col=col_half,
+                                    ),
                                 ],
-                                spacing=10
+                                spacing=10,
+                                run_spacing=10,
                             ),
                             self.notas_input,
                             CorrectElevatedButton(
                                 "💾 Guardar gasto",
-                                on_click=self._on_add_expense
+                                on_click=self._on_add_expense,
                             ),
                         ],
-                        spacing=15
+                        spacing=12,
                     ),
-                    padding=20,
+                    padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.ORANGE_50,
                     border=ft.border.all(2, ft.Colors.ORANGE_200),
                     border_radius=10,
@@ -143,21 +169,24 @@ class ExpensesView:
                         spread_radius=1,
                         blur_radius=6,
                         color=ft.Colors.ORANGE_100,
-                    )
+                    ),
                 ),
-                
+
                 ft.Divider(),
-                
+
                 # Resumen por categorías
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            ft.Text(value="📊 Resumen por categorías", size=20),
+                            ft.Text(
+                                value="📊 Resumen por categorías",
+                                size=16 if is_mobile else 20,
+                            ),
                             self.summary_column,
                         ],
-                        spacing=10
+                        spacing=10,
                     ),
-                    padding=20,
+                    padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.ORANGE_50,
                     border=ft.border.all(2, ft.Colors.ORANGE_200),
                     border_radius=10,
@@ -165,23 +194,25 @@ class ExpensesView:
                         spread_radius=1,
                         blur_radius=6,
                         color=ft.Colors.ORANGE_100,
-                    )
+                    ),
                 ),
-                
+
                 ft.Divider(),
-                
-                # Lista de gastos
-                ft.Text(value="📋 Gastos registrados", size=20),
+
+                ft.Text(
+                    value="📋 Gastos registrados",
+                    size=16 if is_mobile else 20,
+                ),
                 self.expenses_column,
             ],
-            spacing=20,
-            scroll=ft.ScrollMode.AUTO
+            spacing=16,
+            scroll=ft.ScrollMode.AUTO,
         )
-        
+
         # Cargar datos iniciales
         self._render_expenses()
         self._render_summary()
-        
+
         return MainLayout(
             page=self.page,
             content=content,

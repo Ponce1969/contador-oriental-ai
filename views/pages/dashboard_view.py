@@ -11,6 +11,7 @@ import flet as ft
 from controllers.expense_controller import ExpenseController
 from controllers.income_controller import IncomeController
 from core.session import SessionManager
+from core.state import AppState
 from views.layouts.main_layout import MainLayout
 
 
@@ -80,15 +81,20 @@ class DashboardView:
             porcentaje_ingresos = 0.5
             porcentaje_gastos = 0.5
         
+        is_mobile = AppState.device == "mobile"
+        title_size = 20 if is_mobile else 28
+        # col spec: 12 columnas en mobile (apilado), 6 en tablet/desktop (lado a lado)
+        col_half = {"xs": 12, "sm": 6}
+
         content = ft.Column(
             controls=[
                 ft.Text(
                     value=f"📊 Dashboard - {month_name} {year}",
-                    size=28,
-                    weight=ft.FontWeight.BOLD
+                    size=title_size,
+                    weight=ft.FontWeight.BOLD,
                 ),
                 ft.Divider(),
-                
+
                 # Tarjeta de Balance Principal
                 ft.Container(
                     content=ft.Column(
@@ -98,54 +104,53 @@ class DashboardView:
                                     ft.Icon(
                                         icon=balance_icon,
                                         color=balance_color,
-                                        size=40
+                                        size=36 if is_mobile else 40,
                                     ),
                                     ft.Column(
                                         controls=[
                                             ft.Text(
                                                 value="Balance del mes",
-                                                size=16,
-                                                color=ft.Colors.BLUE_GREY_700
+                                                size=14 if is_mobile else 16,
+                                                color=ft.Colors.BLUE_GREY_700,
                                             ),
                                             ft.Text(
                                                 value=f"${balance_fmt}",
-                                                size=36,
+                                                size=28 if is_mobile else 36,
                                                 weight=ft.FontWeight.BOLD,
-                                                color=balance_color
+                                                color=balance_color,
                                             ),
                                             ft.Text(
                                                 value=balance_msg,
-                                                size=14,
+                                                size=12 if is_mobile else 14,
                                                 italic=True,
-                                                color=balance_color
+                                                color=balance_color,
                                             ),
                                         ],
-                                        spacing=5,
-                                        expand=True
+                                        spacing=4,
+                                        expand=True,
                                     ),
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
-                                spacing=20
+                                spacing=16,
                             ),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=10
+                        spacing=10,
                     ),
-                    padding=30,
+                    padding=20 if is_mobile else 30,
                     bgcolor=ft.Colors.LIGHT_BLUE_50,
                     border_radius=15,
-                    margin=ft.margin.only(bottom=20),
+                    margin=ft.margin.only(bottom=16),
                     shadow=ft.BoxShadow(
                         spread_radius=1,
                         blur_radius=8,
                         color=ft.Colors.BLUE_GREY_100,
-                    )
+                    ),
                 ),
-                
-                # Tarjetas de Ingresos y Gastos
-                ft.Row(
+
+                # Tarjetas de Ingresos y Gastos — ResponsiveRow
+                ft.ResponsiveRow(
                     controls=[
-                        # Tarjeta de Ingresos
                         ft.Container(
                             content=ft.Column(
                                 controls=[
@@ -154,53 +159,48 @@ class DashboardView:
                                             ft.Icon(
                                                 icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
                                                 color=ft.Colors.TEAL_600,
-                                                size=30
+                                                size=28,
                                             ),
                                             ft.Text(
                                                 value="Ingresos",
-                                                size=18,
+                                                size=16,
                                                 weight=ft.FontWeight.BOLD,
-                                                color=ft.Colors.TEAL_900
+                                                color=ft.Colors.TEAL_900,
                                             ),
                                         ],
-                                        spacing=10
+                                        spacing=10,
                                     ),
                                     ft.Text(
                                         value=f"${ingresos_fmt}",
-                                        size=28,
+                                        size=24 if is_mobile else 28,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.GREEN_600
+                                        color=ft.Colors.GREEN_600,
                                     ),
                                     ft.ProgressBar(
                                         value=porcentaje_ingresos,
                                         color=ft.Colors.TEAL_400,
                                         bgcolor=ft.Colors.TEAL_100,
-                                        height=10
+                                        height=10,
                                     ),
                                     ft.Text(
-                                        value=(
-                                            f"{porcentaje_ingresos * 100:.1f}% "
-                                            f"del total"
-                                        ),
+                                        value=f"{porcentaje_ingresos * 100:.1f}% del total",
                                         size=12,
-                                        color=ft.Colors.TEAL_700
+                                        color=ft.Colors.TEAL_700,
                                     ),
                                 ],
                                 spacing=10,
-                                horizontal_alignment=ft.CrossAxisAlignment.START
+                                horizontal_alignment=ft.CrossAxisAlignment.START,
                             ),
-                            padding=20,
+                            padding=16,
                             bgcolor=ft.Colors.CYAN_50,
                             border_radius=10,
-                            expand=True,
                             shadow=ft.BoxShadow(
                                 spread_radius=1,
                                 blur_radius=6,
                                 color=ft.Colors.TEAL_100,
-                            )
+                            ),
+                            col=col_half,
                         ),
-                        
-                        # Tarjeta de Gastos
                         ft.Container(
                             content=ft.Column(
                                 controls=[
@@ -209,118 +209,115 @@ class DashboardView:
                                             ft.Icon(
                                                 icon=ft.Icons.MONEY_OFF,
                                                 color=ft.Colors.ORANGE_600,
-                                                size=30
+                                                size=28,
                                             ),
                                             ft.Text(
                                                 value="Gastos",
-                                                size=18,
+                                                size=16,
                                                 weight=ft.FontWeight.BOLD,
-                                                color=ft.Colors.ORANGE_900
+                                                color=ft.Colors.ORANGE_900,
                                             ),
                                         ],
-                                        spacing=10
+                                        spacing=10,
                                     ),
                                     ft.Text(
                                         value=f"${gastos_fmt}",
-                                        size=28,
+                                        size=24 if is_mobile else 28,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.DEEP_ORANGE_600
+                                        color=ft.Colors.DEEP_ORANGE_600,
                                     ),
                                     ft.ProgressBar(
                                         value=porcentaje_gastos,
                                         color=ft.Colors.ORANGE_400,
                                         bgcolor=ft.Colors.ORANGE_100,
-                                        height=10
+                                        height=10,
                                     ),
                                     ft.Text(
-                                        value=(
-                                            f"{porcentaje_gastos * 100:.1f}% del total"
-                                        ),
+                                        value=f"{porcentaje_gastos * 100:.1f}% del total",
                                         size=12,
-                                        color=ft.Colors.ORANGE_700
+                                        color=ft.Colors.ORANGE_700,
                                     ),
                                 ],
                                 spacing=10,
-                                horizontal_alignment=ft.CrossAxisAlignment.START
+                                horizontal_alignment=ft.CrossAxisAlignment.START,
                             ),
-                            padding=20,
+                            padding=16,
                             bgcolor=ft.Colors.ORANGE_50,
                             border_radius=10,
-                            expand=True,
                             shadow=ft.BoxShadow(
                                 spread_radius=1,
                                 blur_radius=6,
                                 color=ft.Colors.ORANGE_100,
-                            )
+                            ),
+                            col=col_half,
                         ),
                     ],
-                    spacing=20
+                    spacing=16,
+                    run_spacing=16,
                 ),
-                
-                ft.Divider(height=30),
-                
-                # Resumen por categorías
+
+                ft.Divider(height=24),
+
+                # Resumen por categorías — ResponsiveRow
                 ft.Text(
                     value="📈 Resumen detallado",
-                    size=20,
-                    weight=ft.FontWeight.BOLD
+                    size=18 if is_mobile else 20,
+                    weight=ft.FontWeight.BOLD,
                 ),
-                
-                ft.Row(
+
+                ft.ResponsiveRow(
                     controls=[
-                        # Columna de Ingresos por categoría
                         ft.Container(
                             content=ft.Column(
                                 controls=[
                                     ft.Text(
                                         value="💰 Ingresos por categoría",
-                                        size=16,
+                                        size=14,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.TEAL_700
+                                        color=ft.Colors.TEAL_700,
                                     ),
                                     ft.Divider(),
-                                    self._render_income_summary()
+                                    self._render_income_summary(),
                                 ],
                                 spacing=10,
-                                scroll=ft.ScrollMode.AUTO
+                                scroll=ft.ScrollMode.AUTO,
                             ),
-                            padding=15,
+                            padding=14,
                             bgcolor=ft.Colors.CYAN_50,
                             border=ft.border.all(2, ft.Colors.TEAL_200),
                             border_radius=10,
-                            expand=True,
-                            height=300
+                            height=280,
+                            col=col_half,
                         ),
-                        
-                        # Columna de Gastos por categoría
                         ft.Container(
                             content=ft.Column(
                                 controls=[
                                     ft.Text(
                                         value="💸 Gastos por categoría",
-                                        size=16,
+                                        size=14,
                                         weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.ORANGE_700
+                                        color=ft.Colors.ORANGE_700,
                                     ),
                                     ft.Divider(),
-                                    self._render_expense_summary()
+                                    self._render_expense_summary(),
                                 ],
                                 spacing=10,
-                                scroll=ft.ScrollMode.AUTO
+                                scroll=ft.ScrollMode.AUTO,
                             ),
-                            padding=15,
+                            padding=14,
                             bgcolor=ft.Colors.ORANGE_50,
                             border=ft.border.all(2, ft.Colors.ORANGE_200),
                             border_radius=10,
-                            expand=True,
-                            height=300
+                            height=280,
+                            col=col_half,
                         ),
                     ],
-                    spacing=20
+                    spacing=16,
+                    run_spacing=16,
                 ),
             ],
-            spacing=20,
-            scroll=ft.ScrollMode.AUTO
+            spacing=16,
+            scroll=ft.ScrollMode.AUTO,
         )
         
         return MainLayout(

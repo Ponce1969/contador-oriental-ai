@@ -9,12 +9,20 @@ from core.state import AppState
 
 class MainLayout(ft.Column):
     def __init__(self, page, content, router):
-        super().__init__(expand=True)
+        super().__init__(expand=True, spacing=0)
         self._page = page
         self.router = router
         self.content = content
 
         self._build()
+
+    @property
+    def _is_mobile(self) -> bool:
+        return AppState.device == "mobile"
+
+    @property
+    def _is_desktop(self) -> bool:
+        return AppState.device == "desktop"
 
     def _build(self):
         self.controls.clear()
@@ -22,17 +30,21 @@ class MainLayout(ft.Column):
         # TOP BAR
         self.controls.append(self._top_bar())
 
-        # CONTENT
+        # CONTENT — padding lateral adaptativo
+        content_padding = ft.padding.symmetric(
+            horizontal=8 if self._is_mobile else 24,
+            vertical=8 if self._is_mobile else 16,
+        )
         self.controls.append(
             ft.Container(
                 content=self.content,
                 expand=True,
-                padding=0,
+                padding=content_padding,
             )
         )
 
-        # BOTTOM BAR (mobile / tablet)
-        if AppState.device != "desktop":
+        # BOTTOM BAR — solo en mobile y tablet
+        if not self._is_desktop:
             self.controls.append(self._bottom_bar())
 
     # ---------- TOP BAR ----------

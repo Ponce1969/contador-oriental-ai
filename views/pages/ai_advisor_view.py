@@ -5,14 +5,17 @@ Vista de chat con el Contador Oriental
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 
 import flet as ft
 from result import Err, Ok
 
 from controllers.ai_controller import AIController
 from core.session import SessionManager
+from core.state import AppState
 from flet_types.flet_types import CorrectSnackBar
 from models.ai_model import ChatMessage
+from services.report_service import ReportService
 from views.layouts.main_layout import MainLayout
 
 
@@ -29,7 +32,12 @@ class AIAdvisorView:
 
         familia_id = SessionManager.get_familia_id(page)
         self.controller = AIController(familia_id=familia_id)
+        self.report_service = ReportService()
         self.chat_history: list[ChatMessage] = []
+        self._last_respuesta: str = ""
+        self._familia_nombre: str = (
+            SessionManager.get_username(page) or "Familia"
+        )
 
         # Campo de pregunta moderno
         self.pregunta_input = ft.TextField(
@@ -71,12 +79,23 @@ class AIAdvisorView:
             padding=ft.padding.only(left=16),
         )
 
+        # Botón ver informe (oculto hasta recibir respuesta)
+        self.pdf_button = ft.IconButton(
+            icon=ft.Icons.ASSIGNMENT_ROUNDED,
+            icon_color=ft.Colors.BLUE_700,
+            tooltip="Ver informe formal",
+            visible=False,
+            on_click=lambda e: self.page.run_task(self._exportar_pdf),  # type: ignore
+        )
+
         # Quick chips
         self.quick_chips = ft.Row(
             wrap=True,
             spacing=8,
             controls=[
-                self._create_chip("¿Cómo ahorrar IVA?", ft.Icons.ACCOUNT_BALANCE_WALLET),
+                self._create_chip(
+                    "¿Cómo ahorrar IVA?", ft.Icons.ACCOUNT_BALANCE_WALLET
+                ),
                 self._create_chip("¿Débito o Crédito?", ft.Icons.CREDIT_CARD),
                 self._create_chip("Deducir Alquiler", ft.Icons.HOME),
                 self._create_chip("Resumen de Gastos", ft.Icons.ANALYTICS),
@@ -117,6 +136,7 @@ class AIAdvisorView:
     def render(self):
         """Layout principal"""
         self._agregar_mensaje_bienvenida()
+        is_mobile = AppState.device == "mobile"
 
         return MainLayout(
             page=self.page,
@@ -128,19 +148,29 @@ class AIAdvisorView:
                         controls=[
                             ft.Text(
                                 "🇺🇾 Contador Oriental",
-                                size=26,
+                                size=20 if is_mobile else 26,
                                 weight=ft.FontWeight.BOLD,
                             ),
-                            ft.Container(
-                                content=ft.Text(
-                                    "IA LOCAL",
-                                    size=10,
-                                    color=ft.Colors.WHITE,
-                                    weight=ft.FontWeight.BOLD,
-                                ),
-                                bgcolor=ft.Colors.GREEN_600,
-                                padding=ft.padding.symmetric(horizontal=10, vertical=4),
-                                border_radius=10,
+                            ft.Column(
+                                controls=[
+                                    ft.Container(
+                                        content=ft.Text(
+                                            "IA LOCAL",
+                                            size=9 if is_mobile else 10,
+                                            color=ft.Colors.WHITE,
+                                            weight=ft.FontWeight.BOLD,
+                                        ),
+                                        bgcolor=ft.Colors.GREEN_600,
+                                        padding=ft.padding.symmetric(
+                                            horizontal=8 if is_mobile else 10,
+                                            vertical=3 if is_mobile else 4,
+                                        ),
+                                        border_radius=10,
+                                    ),
+                                    self.pdf_button,
+                                ],
+                                horizontal_alignment=ft.CrossAxisAlignment.END,
+                                spacing=2,
                             ),
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -148,24 +178,23 @@ class AIAdvisorView:
                     ft.Text(
                         "Asesoría basada en leyes uruguayas y tus gastos reales.",
                         color=ft.Colors.GREY_600,
-                        size=13,
+                        size=11 if is_mobile else 13,
                     ),
 
                     # Área de chat
                     ft.Container(
                         content=self.chat_column,
                         bgcolor=ft.Colors.GREY_50,
-                        border_radius=20,
-                        padding=20,
+                        border_radius=16 if is_mobile else 20,
+                        padding=12 if is_mobile else 20,
                         expand=True,
                         border=ft.border.all(1, ft.Colors.GREY_200),
-                        height=420,
                     ),
 
-                    # Typing indicator (aparece encima del input)
+                    # Typing indicator
                     self.typing_indicator,
 
-                    # Chips de acceso rápido + input + botón enviar
+                    # Chips + input + botón enviar
                     ft.Container(
                         content=ft.Column(
                             controls=[
@@ -177,25 +206,28 @@ class AIAdvisorView:
                                             icon=ft.Icons.SEND_ROUNDED,
                                             icon_color=ft.Colors.WHITE,
                                             bgcolor=ft.Colors.BLUE_700,
-                                            icon_size=22,
+                                            icon_size=20 if is_mobile else 22,
                                             on_click=self._handle_submit,
                                             tooltip="Enviar consulta",
                                         ),
                                     ],
-                                    spacing=10,
+                                    spacing=8,
                                     vertical_alignment=ft.CrossAxisAlignment.END,
                                 ),
                                 ft.Container(
                                     content=self.incluir_gastos_checkbox,
-                                    padding=ft.padding.only(left=10),
+                                    padding=ft.padding.only(left=6 if is_mobile else 10),
                                 ),
                             ],
-                            spacing=10,
+                            spacing=8 if is_mobile else 10,
                         ),
-                        padding=ft.padding.symmetric(horizontal=4, vertical=8),
+                        padding=ft.padding.symmetric(
+                            horizontal=2 if is_mobile else 4,
+                            vertical=6 if is_mobile else 8,
+                        ),
                     ),
                 ],
-                spacing=16,
+                spacing=10 if is_mobile else 16,
                 scroll=ft.ScrollMode.AUTO,
                 expand=True,
             ),
@@ -245,6 +277,8 @@ class AIAdvisorView:
 
         match result:
             case Ok(response):
+                self._last_respuesta = response.respuesta
+                self.pdf_button.visible = True
                 self.chat_history.append(
                     ChatMessage(role="assistant", content=response.respuesta)
                 )
@@ -310,7 +344,7 @@ class AIAdvisorView:
                     bottom_left=15 if is_user else 2,
                     bottom_right=2 if is_user else 15,
                 ),
-                width=500,
+                width=None if AppState.device == "mobile" else 500,
                 shadow=ft.BoxShadow(
                     blur_radius=5,
                     color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK),
@@ -330,6 +364,74 @@ class AIAdvisorView:
 
         self.page.update()
         self.chat_column.scroll_to(offset=-1, duration=400)
+
+    async def _exportar_pdf(self) -> None:
+        """Muestra el informe en un modal con opción de copiar al portapapeles."""
+        if not self._last_respuesta:
+            return
+
+        fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
+        reporte = (
+            f"## INFORME CONTABLE - AUDITOR FAMILIAR\n"
+            f"**Familia:** {self._familia_nombre}  "
+            f"**Fecha:** {fecha}\n\n"
+            f"**Consulta:** {self.controller.last_pregunta}\n\n"
+            f"---\n\n"
+            f"{self._last_respuesta}\n\n"
+            f"---\n"
+            f"*Generado por el Contador Oriental · Auditor Familiar*"
+        )
+
+        def copiar(e: object) -> None:
+            self.page.set_clipboard(reporte)
+            self.page.snack_bar = CorrectSnackBar(
+                content=ft.Text("✅ Copiado al portapapeles"),
+                open=True,
+            )
+            self.page.update()
+
+        def cerrar(e: object) -> None:
+            dlg.open = False
+            self.page.update()
+
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.DESCRIPTION, color=ft.Colors.BLUE_700),
+                    ft.Text("Informe del Contador Oriental"),
+                ],
+                spacing=10,
+            ),
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Markdown(
+                            reporte,
+                            selectable=True,
+                            extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+                        )
+                    ],
+                    scroll=ft.ScrollMode.AUTO,
+                    tight=True,
+                ),
+                width=600,
+                height=420,
+            ),
+            actions=[
+                ft.ElevatedButton(
+                    "Copiar texto",
+                    icon=ft.Icons.COPY,
+                    on_click=copiar,
+                ),
+                ft.TextButton("Cerrar", on_click=cerrar),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            open=True,
+        )
+
+        self.page.overlay.append(dlg)
+        self.page.update()
 
     def _show_error(self, msg: str) -> None:
         self.page.snack_bar = CorrectSnackBar(

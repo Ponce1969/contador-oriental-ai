@@ -4664,3 +4664,1865 @@ RESPUESTA:
 2026-02-20 01:31:28,079 | INFO | flet | Flet app has started...
 2026-02-20 01:31:28,384 | INFO | flet_web.fastapi | Starting up Flet App Manager
 2026-02-20 01:31:28,385 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-20 01:31:30,012 | INFO | flet_web.fastapi | New FletApp: Ps2HVqhb
+2026-02-20 01:31:30,056 | INFO | flet_web.fastapi | New session created (1 total): _qUhcdne9EhC7aVJT_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-20 01:31:30,059 | INFO | flet_web.fastapi | Start session: qUhcdne9EhC7aVJT
+2026-02-20 01:31:30,327 | INFO | App | Base de datos inicializada
+2026-02-20 01:31:30,406 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-20 01:31:30,407 | INFO | Router | Navigating to: /login
+2026-02-20 01:31:30,472 | INFO | App | Aplicação iniciada com sucesso
+2026-02-20 01:32:16,598 | INFO | Router | Navigating to: /
+2026-02-20 01:32:19,807 | INFO | Router | Navigating to: /ai-contador
+2026-02-20 01:35:04,760 | INFO | controllers.ai_controller | Consulta recibida: '¿Débito o Crédito?'
+2026-02-20 01:35:05,003 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-20 01:35:05,012 | INFO | controllers.ai_controller | Consulta general detectada: '¿Débito o Crédito?'
+2026-02-20 01:35:05,013 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🚗 Vehículos', '🛒 Almacén'}
+2026-02-20 01:35:05,014 | INFO | controllers.ai_controller | Consulta general: enviando totalidad de 7 gastos del mes
+2026-02-20 01:35:05,077 | INFO | AIAdvisor | ================================================================================
+2026-02-20 01:35:05,078 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-20 01:35:05,078 | INFO | AIAdvisor |   - Pregunta: ¿Débito o Crédito?
+2026-02-20 01:35:05,079 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-20 01:35:05,079 | INFO | AIAdvisor |   - Transacciones: 7
+2026-02-20 01:35:05,080 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-20 01:35:05,080 | INFO | AIAdvisor |   - Prompt completo (1560 chars):
+2026-02-20 01:35:05,080 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-20 01:35:05,080 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+📂 👕 Ropa → TOTAL: $4,000 (1 compras):
+  • Compra de vestimenta deportiva: $4,000 (1 veces, Efectivo(1x))
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $72,000 (7 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: ¿Débito o Crédito?
+
+RESPUESTA:
+2026-02-20 01:35:05,081 | INFO | AIAdvisor | ================================================================================
+2026-02-20 01:35:06,466 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-20 01:35:06,473 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-20 01:35:14,362 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-20 01:35:14,368 | INFO | AIAdvisor | ✅ Respuesta generada: 272 chars
+2026-02-20 01:47:55,319 | INFO | flet_web.fastapi | Session disconnected: _qUhcdne9EhC7aVJT_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-20 01:47:55,344 | INFO | flet_web.fastapi | Disposing FletApp: Ps2HVqhb
+2026-02-20 01:47:55,349 | INFO | flet_web.fastapi | FletApp was garbage collected: Ps2HVqhb
+2026-02-20 01:47:55,405 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-20 01:47:55,426 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-20 01:47:55,595 | INFO | flet | Session was garbage collected: qUhcdne9EhC7aVJT
+2026-02-21 00:52:53,486 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 00:52:54,435 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 00:52:54,438 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 00:52:54,439 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 00:52:54,439 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 00:52:54,442 | INFO | flet | Flet app has started...
+2026-02-21 00:52:54,555 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 00:52:54,556 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 01:07:31,686 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 01:07:31,827 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 01:07:41,776 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 01:07:42,759 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 01:07:42,760 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 01:07:42,761 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 01:07:42,761 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 01:07:42,764 | INFO | flet | Flet app has started...
+2026-02-21 01:07:42,870 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 01:07:42,870 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 01:26:19,315 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 01:26:19,455 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 01:26:34,271 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 01:26:35,078 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 01:26:35,080 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 01:26:35,081 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 01:26:35,081 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 01:26:35,084 | INFO | flet | Flet app has started...
+2026-02-21 01:26:35,181 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 01:26:35,181 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 01:28:40,633 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmp4qd9egtu
+2026-02-21 01:28:40,659 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 01:28:40,663 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 01:28:42,680 | INFO | flet_web.fastapi | New FletApp: tGssrjKW
+2026-02-21 01:28:43,053 | INFO | flet_web.fastapi | New session created (1 total): _wv8bvhUux0bq1ZYN_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:28:43,091 | INFO | flet_web.fastapi | Start session: wv8bvhUux0bq1ZYN
+2026-02-21 01:28:43,785 | INFO | App | Base de datos inicializada
+2026-02-21 01:28:43,892 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 01:28:43,893 | INFO | Router | Navigating to: /login
+2026-02-21 01:28:43,997 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 01:28:52,737 | INFO | Router | Navigating to: /
+2026-02-21 01:29:04,480 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 01:42:46,240 | INFO | flet_web.fastapi | Session disconnected: _wv8bvhUux0bq1ZYN_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:42:46,325 | INFO | flet_web.fastapi | Disposing FletApp: tGssrjKW
+2026-02-21 01:42:46,373 | INFO | flet_web.fastapi | FletApp was garbage collected: tGssrjKW
+2026-02-21 01:42:47,242 | INFO | flet_web.fastapi | New FletApp: 2EhBbxVC
+2026-02-21 01:42:47,776 | INFO | flet_web.fastapi | Session reconnected: _wv8bvhUux0bq1ZYN_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:42:50,216 | WARNING | flet_web.fastapi | Receive loop error: WebSocket is not connected. Need to call "accept" first.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet_web/fastapi/flet_app.py", line 200, in __receive_loop
+    data = await self.__websocket.receive_bytes()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/starlette/websockets.py", line 125, in receive_bytes
+    raise RuntimeError('WebSocket is not connected. Need to call "accept" first.')
+RuntimeError: WebSocket is not connected. Need to call "accept" first.
+2026-02-21 01:42:52,712 | INFO | flet_web.fastapi | New FletApp: x1WChifE
+2026-02-21 01:42:53,065 | INFO | flet_web.fastapi | Session reconnected: _wv8bvhUux0bq1ZYN_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:43:23,056 | INFO | flet_web.fastapi | Session disconnected: _wv8bvhUux0bq1ZYN_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:43:23,093 | INFO | flet_web.fastapi | Disposing FletApp: x1WChifE
+2026-02-21 01:43:23,244 | INFO | flet_web.fastapi | FletApp was garbage collected: x1WChifE
+2026-02-21 01:43:23,314 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 01:43:23,316 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmp4qd9egtu
+2026-02-21 01:43:23,435 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 01:43:23,655 | INFO | flet_web.fastapi | FletApp was garbage collected: 2EhBbxVC
+2026-02-21 01:43:23,663 | INFO | flet | Session was garbage collected: wv8bvhUux0bq1ZYN
+2026-02-21 01:43:36,543 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 01:43:37,791 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 01:43:37,794 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 01:43:37,794 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 01:43:37,795 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 01:43:37,799 | INFO | flet | Flet app has started...
+2026-02-21 01:43:37,933 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 01:43:37,934 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 01:43:40,476 | INFO | flet_web.fastapi | New FletApp: fd8K9pwx
+2026-02-21 01:43:40,495 | INFO | flet_web.fastapi | New session created (1 total): _BlGfBroFVFQqItCT_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:43:40,500 | INFO | flet_web.fastapi | Start session: BlGfBroFVFQqItCT
+2026-02-21 01:43:40,699 | INFO | App | Base de datos inicializada
+2026-02-21 01:43:40,726 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 01:43:40,727 | INFO | Router | Navigating to: /login
+2026-02-21 01:43:40,775 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 01:44:11,690 | INFO | flet_web.fastapi | Session disconnected: _BlGfBroFVFQqItCT_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:44:11,703 | INFO | flet_web.fastapi | Disposing FletApp: fd8K9pwx
+2026-02-21 01:44:11,706 | INFO | flet_web.fastapi | FletApp was garbage collected: fd8K9pwx
+2026-02-21 01:44:12,218 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpz34843py
+2026-02-21 01:44:12,221 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 01:44:12,224 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 01:44:12,345 | INFO | flet_web.fastapi | New FletApp: 4ejLrP1r
+2026-02-21 01:44:14,268 | INFO | flet_web.fastapi | New FletApp: ahIJsWmV
+2026-02-21 01:44:14,527 | INFO | flet_web.fastapi | Session reconnected: _BlGfBroFVFQqItCT_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:44:26,744 | INFO | Router | Navigating to: /
+2026-02-21 01:44:30,003 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 01:45:24,754 | INFO | controllers.ai_controller | Consulta recibida: 'hola puedes decirme los gastos de almacen que tengo ?'
+2026-02-21 01:45:24,769 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 01:45:24,771 | INFO | controllers.ai_controller | Categorías detectadas en 'hola puedes decirme los gastos de almacen que tengo ?': ['🛒 Almacén']
+2026-02-21 01:45:24,772 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🚗 Vehículos', '👕 Ropa', '🛒 Almacén', '🏠 Hogar'}
+2026-02-21 01:45:24,773 | INFO | controllers.ai_controller | Filtrado por categorías ['🛒 Almacén']: 4 gastos de 7 totales
+2026-02-21 01:45:24,813 | INFO | AIAdvisor | ================================================================================
+2026-02-21 01:45:24,814 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 01:45:24,815 | INFO | AIAdvisor |   - Pregunta: hola puedes decirme los gastos de almacen que tengo ?
+2026-02-21 01:45:24,820 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 01:45:24,821 | INFO | AIAdvisor |   - Transacciones: 4
+2026-02-21 01:45:24,822 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 01:45:24,823 | INFO | AIAdvisor |   - Prompt completo (1275 chars):
+2026-02-21 01:45:24,824 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 01:45:24,825 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+SUBTOTAL CONSULTADO: $12,000 (4 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: hola puedes decirme los gastos de almacen que tengo ?
+
+RESPUESTA:
+2026-02-21 01:45:24,826 | INFO | AIAdvisor | ================================================================================
+2026-02-21 01:45:25,424 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 01:45:25,437 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 01:45:38,125 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 01:45:38,149 | INFO | AIAdvisor | ✅ Respuesta generada: 137 chars
+2026-02-21 01:45:56,204 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7ab9a872f530 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 01:46:07,743 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7ab9a872f620 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 01:46:09,049 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7ab9a87242f0 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 01:46:09,761 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7ab9a87258e0 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 01:58:56,681 | INFO | flet_web.fastapi | Session disconnected: _BlGfBroFVFQqItCT_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 01:58:56,693 | INFO | flet_web.fastapi | Disposing FletApp: ahIJsWmV
+2026-02-21 01:58:56,741 | INFO | flet_web.fastapi | FletApp was garbage collected: ahIJsWmV
+2026-02-21 02:01:43,193 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 02:01:45,280 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 02:01:45,290 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 02:01:45,291 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 02:01:45,295 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 02:01:45,299 | INFO | flet | Flet app has started...
+2026-02-21 02:01:45,509 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 02:01:45,511 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 02:04:03,055 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmp7unf5f5h
+2026-02-21 02:04:03,070 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 02:04:03,072 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 02:04:04,529 | INFO | flet_web.fastapi | New FletApp: 2BYdvrmm
+2026-02-21 02:04:04,843 | INFO | flet_web.fastapi | New session created (1 total): _FIM7DN46YmPYS9xF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:04:04,882 | INFO | flet_web.fastapi | Start session: FIM7DN46YmPYS9xF
+2026-02-21 02:04:05,302 | INFO | App | Base de datos inicializada
+2026-02-21 02:04:05,372 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 02:04:05,373 | INFO | Router | Navigating to: /login
+2026-02-21 02:04:05,452 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 02:04:14,106 | INFO | Router | Navigating to: /
+2026-02-21 02:04:16,167 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 02:05:21,417 | INFO | Router | Navigating to: /expenses
+2026-02-21 02:05:44,174 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 02:06:11,456 | INFO | controllers.ai_controller | Consulta recibida: 'cuanto fue el total de gastos del Hogar ?'
+2026-02-21 02:06:11,461 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 02:06:11,467 | INFO | controllers.ai_controller | Categorías detectadas en 'cuanto fue el total de gastos del Hogar ?': ['🏠 Hogar']
+2026-02-21 02:06:11,469 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🛒 Almacén', '🚗 Vehículos', '🏠 Hogar', '👕 Ropa'}
+2026-02-21 02:06:11,470 | INFO | controllers.ai_controller | Filtrado por categorías ['🏠 Hogar']: 1 gastos de 7 totales
+2026-02-21 02:06:11,513 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:06:11,514 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 02:06:11,514 | INFO | AIAdvisor |   - Pregunta: cuanto fue el total de gastos del Hogar ?
+2026-02-21 02:06:11,515 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 02:06:11,515 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 02:06:11,515 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 02:06:11,516 | INFO | AIAdvisor |   - Prompt completo (1155 chars):
+2026-02-21 02:06:11,516 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 02:06:11,516 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $40,000 (1 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: cuanto fue el total de gastos del Hogar ?
+
+RESPUESTA:
+2026-02-21 02:06:11,516 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:06:11,897 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 02:06:11,904 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 02:06:17,886 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 02:06:17,894 | INFO | AIAdvisor | ✅ Respuesta generada: 72 chars
+2026-02-21 02:07:06,206 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d5814a9c70 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:07:08,524 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d5814abf80 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:07:09,204 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d5814a8da0 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:07:09,392 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d5814abfe0 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:07:09,588 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d581708fe0 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:07:09,789 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d581709d90 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:07:10,012 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d5814a9e20 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:07:11,146 | ERROR | concurrent.futures | exception calling callback for <Future at 0x77d5814ab770 state=finished raised ValueError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 376, in _exportar_pdf
+    await self.file_picker.save_file(  # type: ignore
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/services/file_picker.py", line 234, in save_file
+    raise ValueError(
+ValueError: "src_bytes" is required when saving a file in web mode,or on mobile (Android & iOS).
+2026-02-21 02:11:49,059 | INFO | flet_web.fastapi | Session disconnected: _FIM7DN46YmPYS9xF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:11:49,093 | INFO | flet_web.fastapi | Disposing FletApp: 2BYdvrmm
+2026-02-21 02:11:49,618 | INFO | flet_web.fastapi | FletApp was garbage collected: 2BYdvrmm
+2026-02-21 02:11:49,692 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 02:11:49,692 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmp7unf5f5h
+2026-02-21 02:11:49,794 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 02:11:57,147 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 02:11:57,933 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 02:11:57,935 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 02:11:57,935 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 02:11:57,936 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 02:11:57,937 | INFO | flet | Flet app has started...
+2026-02-21 02:11:58,015 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 02:11:58,015 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 02:11:59,683 | INFO | flet_web.fastapi | New FletApp: gyf0u8vn
+2026-02-21 02:11:59,714 | INFO | flet_web.fastapi | New session created (1 total): _KOYAdS6waz4DXW3J_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:11:59,717 | INFO | flet_web.fastapi | Start session: KOYAdS6waz4DXW3J
+2026-02-21 02:11:59,813 | INFO | App | Base de datos inicializada
+2026-02-21 02:11:59,830 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 02:11:59,831 | INFO | Router | Navigating to: /login
+2026-02-21 02:11:59,854 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 02:15:53,126 | INFO | Router | Navigating to: /
+2026-02-21 02:15:56,196 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 02:16:39,871 | INFO | Router | Navigating to: /expenses
+2026-02-21 02:17:01,238 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 02:17:25,312 | INFO | controllers.ai_controller | Consulta recibida: 'Puedes decirme los gastos de vehiculos de este mes ?'
+2026-02-21 02:17:25,318 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 02:17:25,319 | INFO | controllers.ai_controller | Fuzzy match: 'vehiculos' -> 'vehiculo' (🚗 Vehículos)
+2026-02-21 02:17:25,321 | INFO | controllers.ai_controller | Categorías detectadas en 'Puedes decirme los gastos de vehiculos de este mes ?': ['🚗 Vehículos']
+2026-02-21 02:17:25,321 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'👕 Ropa', '🚗 Vehículos', '🏠 Hogar', '🛒 Almacén'}
+2026-02-21 02:17:25,322 | INFO | controllers.ai_controller | Filtrado por categorías ['🚗 Vehículos']: 1 gastos de 7 totales
+2026-02-21 02:17:25,333 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:17:25,334 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 02:17:25,334 | INFO | AIAdvisor |   - Pregunta: Puedes decirme los gastos de vehiculos de este mes ?
+2026-02-21 02:17:25,335 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 02:17:25,335 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 02:17:25,336 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 02:17:25,336 | INFO | AIAdvisor |   - Prompt completo (1156 chars):
+2026-02-21 02:17:25,336 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 02:17:25,337 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $16,000 (1 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: Puedes decirme los gastos de vehiculos de este mes ?
+
+RESPUESTA:
+2026-02-21 02:17:25,337 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:17:25,607 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 02:17:25,617 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 02:17:32,320 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 02:17:32,325 | INFO | AIAdvisor | ✅ Respuesta generada: 212 chars
+2026-02-21 02:17:44,623 | ERROR | services.report_service | Error generando PDF: Character "🚗" at index 1 in text is outside the range of characters supported by the font used: "helvetica". Please consider using a Unicode font.
+2026-02-21 02:17:48,526 | ERROR | services.report_service | Error generando PDF: Character "🚗" at index 1 in text is outside the range of characters supported by the font used: "helvetica". Please consider using a Unicode font.
+2026-02-21 02:17:50,162 | ERROR | services.report_service | Error generando PDF: Character "🚗" at index 1 in text is outside the range of characters supported by the font used: "helvetica". Please consider using a Unicode font.
+2026-02-21 02:23:06,769 | INFO | flet_web.fastapi | Session disconnected: _KOYAdS6waz4DXW3J_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:23:06,818 | INFO | flet_web.fastapi | Disposing FletApp: gyf0u8vn
+2026-02-21 02:23:06,913 | INFO | flet_web.fastapi | FletApp was garbage collected: gyf0u8vn
+2026-02-21 02:23:06,974 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 02:23:07,019 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 02:23:07,248 | INFO | flet | Session was garbage collected: KOYAdS6waz4DXW3J
+2026-02-21 02:23:17,734 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 02:23:18,725 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 02:23:18,728 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 02:23:18,729 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 02:23:18,729 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 02:23:18,733 | INFO | flet | Flet app has started...
+2026-02-21 02:23:18,832 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 02:23:18,832 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 02:23:21,020 | INFO | flet_web.fastapi | New FletApp: fH1oxdiv
+2026-02-21 02:23:21,056 | INFO | flet_web.fastapi | New session created (1 total): _yD60gmQrc4JXCFmv_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:23:21,061 | INFO | flet_web.fastapi | Start session: yD60gmQrc4JXCFmv
+2026-02-21 02:23:21,238 | INFO | App | Base de datos inicializada
+2026-02-21 02:23:21,309 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 02:23:21,310 | INFO | Router | Navigating to: /login
+2026-02-21 02:23:21,385 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 02:24:30,160 | INFO | Router | Navigating to: /
+2026-02-21 02:24:33,222 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 02:25:06,018 | INFO | controllers.ai_controller | Consulta recibida: 'hola puedes decirme los gastos de vehiculo de este mes ?'
+2026-02-21 02:25:06,022 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 02:25:06,025 | INFO | controllers.ai_controller | Categorías detectadas en 'hola puedes decirme los gastos de vehiculo de este mes ?': ['🚗 Vehículos']
+2026-02-21 02:25:06,026 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🚗 Vehículos', '🛒 Almacén'}
+2026-02-21 02:25:06,026 | INFO | controllers.ai_controller | Filtrado por categorías ['🚗 Vehículos']: 1 gastos de 7 totales
+2026-02-21 02:25:06,037 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:25:06,038 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 02:25:06,038 | INFO | AIAdvisor |   - Pregunta: hola puedes decirme los gastos de vehiculo de este mes ?
+2026-02-21 02:25:06,039 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 02:25:06,039 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 02:25:06,040 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 02:25:06,040 | INFO | AIAdvisor |   - Prompt completo (1160 chars):
+2026-02-21 02:25:06,040 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 02:25:06,041 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $16,000 (1 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: hola puedes decirme los gastos de vehiculo de este mes ?
+
+RESPUESTA:
+2026-02-21 02:25:06,041 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:25:06,334 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 02:25:06,340 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 02:25:13,026 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 02:25:13,031 | INFO | AIAdvisor | ✅ Respuesta generada: 217 chars
+2026-02-21 02:26:04,349 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_022604.pdf
+2026-02-21 02:26:07,719 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_022607.pdf
+2026-02-21 02:32:23,027 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpupwp7rus
+2026-02-21 02:32:23,058 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 02:32:23,061 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 02:32:23,160 | INFO | flet_web.fastapi | Session disconnected: _yD60gmQrc4JXCFmv_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:32:23,162 | INFO | flet_web.fastapi | Disposing FletApp: fH1oxdiv
+2026-02-21 02:32:23,164 | INFO | flet_web.fastapi | FletApp was garbage collected: fH1oxdiv
+2026-02-21 02:33:13,036 | INFO | flet_web.fastapi | New FletApp: iH6zQ4kq
+2026-02-21 02:33:13,457 | INFO | flet_web.fastapi | Session reconnected: _yD60gmQrc4JXCFmv_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:36:44,596 | INFO | flet_web.fastapi | Session disconnected: _yD60gmQrc4JXCFmv_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:36:44,644 | INFO | flet_web.fastapi | Disposing FletApp: iH6zQ4kq
+2026-02-21 02:36:45,703 | INFO | flet_web.fastapi | FletApp was garbage collected: iH6zQ4kq
+2026-02-21 02:37:00,856 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 02:37:02,149 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 02:37:02,152 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 02:37:02,152 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 02:37:02,153 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 02:37:02,156 | INFO | flet | Flet app has started...
+2026-02-21 02:37:02,301 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 02:37:02,302 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 02:37:05,369 | INFO | flet_web.fastapi | New FletApp: 7mXmXQez
+2026-02-21 02:37:05,389 | INFO | flet_web.fastapi | New session created (1 total): _5h14y0zKLQ3xUSYo_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:37:05,394 | INFO | flet_web.fastapi | Start session: 5h14y0zKLQ3xUSYo
+2026-02-21 02:37:05,685 | INFO | App | Base de datos inicializada
+2026-02-21 02:37:05,775 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 02:37:05,776 | INFO | Router | Navigating to: /login
+2026-02-21 02:37:05,832 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 02:37:53,107 | INFO | Router | Navigating to: /
+2026-02-21 02:38:28,363 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 02:38:57,325 | INFO | controllers.ai_controller | Consulta recibida: 'hola puedes decirme el gasto de vehiculo ?'
+2026-02-21 02:38:57,330 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 02:38:57,332 | INFO | controllers.ai_controller | Categorías detectadas en 'hola puedes decirme el gasto de vehiculo ?': ['🚗 Vehículos']
+2026-02-21 02:38:57,333 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'👕 Ropa', '🛒 Almacén', '🏠 Hogar', '🚗 Vehículos'}
+2026-02-21 02:38:57,333 | INFO | controllers.ai_controller | Filtrado por categorías ['🚗 Vehículos']: 1 gastos de 7 totales
+2026-02-21 02:38:57,342 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:38:57,343 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 02:38:57,343 | INFO | AIAdvisor |   - Pregunta: hola puedes decirme el gasto de vehiculo ?
+2026-02-21 02:38:57,344 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 02:38:57,344 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 02:38:57,344 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 02:38:57,345 | INFO | AIAdvisor |   - Prompt completo (1105 chars):
+2026-02-21 02:38:57,345 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 02:38:57,345 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $16,000 (1 transacciones)
+PREGUNTA: hola puedes decirme el gasto de vehiculo ?
+
+RESPUESTA:
+2026-02-21 02:38:57,346 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:38:57,600 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 02:38:57,609 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 02:39:03,529 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 02:39:03,533 | INFO | AIAdvisor | ✅ Respuesta generada: 92 chars
+2026-02-21 02:39:13,821 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_023913.pdf
+2026-02-21 02:39:13,831 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7212687d6ba0 state=finished raised TypeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.launch_url(
+  File "/usr/local/lib/python3.12/site-packages/flet/utils/deprecated.py", line 40, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+TypeError: Page.launch_url() got an unexpected keyword argument 'web_window_name'
+2026-02-21 02:39:18,426 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_023918.pdf
+2026-02-21 02:39:18,427 | ERROR | concurrent.futures | exception calling callback for <Future at 0x721268488a10 state=finished raised TypeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.launch_url(
+  File "/usr/local/lib/python3.12/site-packages/flet/utils/deprecated.py", line 40, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+TypeError: Page.launch_url() got an unexpected keyword argument 'web_window_name'
+2026-02-21 02:39:23,167 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_023923.pdf
+2026-02-21 02:39:23,167 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7212686d3530 state=finished raised TypeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.launch_url(
+  File "/usr/local/lib/python3.12/site-packages/flet/utils/deprecated.py", line 40, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+TypeError: Page.launch_url() got an unexpected keyword argument 'web_window_name'
+2026-02-21 02:45:24,740 | INFO | flet_web.fastapi | Session disconnected: _5h14y0zKLQ3xUSYo_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:45:24,778 | INFO | flet_web.fastapi | Disposing FletApp: 7mXmXQez
+2026-02-21 02:45:24,882 | INFO | flet_web.fastapi | FletApp was garbage collected: 7mXmXQez
+2026-02-21 02:45:24,926 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 02:45:24,986 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 02:45:25,183 | INFO | flet | Session was garbage collected: 5h14y0zKLQ3xUSYo
+2026-02-21 02:45:39,568 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 02:45:41,421 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 02:45:41,422 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 02:45:41,423 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 02:45:41,423 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 02:45:41,427 | INFO | flet | Flet app has started...
+2026-02-21 02:45:41,639 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 02:45:41,639 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 02:45:45,300 | INFO | flet_web.fastapi | New FletApp: VZtCEvCR
+2026-02-21 02:45:45,357 | INFO | flet_web.fastapi | New session created (1 total): _xLvMjWAKsO4uz5zs_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 02:45:45,362 | INFO | flet_web.fastapi | Start session: xLvMjWAKsO4uz5zs
+2026-02-21 02:45:45,523 | INFO | App | Base de datos inicializada
+2026-02-21 02:45:45,551 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 02:45:45,551 | INFO | Router | Navigating to: /login
+2026-02-21 02:45:45,595 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 02:46:29,123 | INFO | Router | Navigating to: /
+2026-02-21 02:46:32,007 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 02:50:23,836 | INFO | controllers.ai_controller | Consulta recibida: 'hola podrias decirme el gasto de articulos del hogar?'
+2026-02-21 02:50:23,845 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 02:50:23,848 | INFO | controllers.ai_controller | Categorías detectadas en 'hola podrias decirme el gasto de articulos del hogar?': ['🏠 Hogar']
+2026-02-21 02:50:23,848 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🛒 Almacén', '🚗 Vehículos', '👕 Ropa', '🏠 Hogar'}
+2026-02-21 02:50:23,849 | INFO | controllers.ai_controller | Filtrado por categorías ['🏠 Hogar']: 1 gastos de 7 totales
+2026-02-21 02:50:23,862 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:50:23,862 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 02:50:23,863 | INFO | AIAdvisor |   - Pregunta: hola podrias decirme el gasto de articulos del hogar?
+2026-02-21 02:50:23,863 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 02:50:23,864 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 02:50:23,864 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 02:50:23,865 | INFO | AIAdvisor |   - Prompt completo (1126 chars):
+2026-02-21 02:50:23,865 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 02:50:23,866 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $40,000 (1 transacciones)
+PREGUNTA: hola podrias decirme el gasto de articulos del hogar?
+
+RESPUESTA:
+2026-02-21 02:50:23,866 | INFO | AIAdvisor | ================================================================================
+2026-02-21 02:50:24,186 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 02:50:24,193 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 02:50:29,565 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 02:50:29,571 | INFO | AIAdvisor | ✅ Respuesta generada: 113 chars
+2026-02-21 02:50:39,499 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_025039.pdf
+2026-02-21 02:50:39,500 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7b8c71b0a990 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 378, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 02:50:57,212 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_025057.pdf
+2026-02-21 02:50:57,213 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7b8c71acf770 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 378, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 02:51:04,854 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_025104.pdf
+2026-02-21 02:51:04,855 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7b8c71af9580 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 378, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:00:25,627 | INFO | flet_web.fastapi | Session disconnected: _xLvMjWAKsO4uz5zs_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:00:25,665 | INFO | flet_web.fastapi | Disposing FletApp: VZtCEvCR
+2026-02-21 03:00:25,808 | INFO | flet_web.fastapi | FletApp was garbage collected: VZtCEvCR
+2026-02-21 03:00:25,859 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 03:00:25,902 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 03:00:26,086 | INFO | flet | Session was garbage collected: xLvMjWAKsO4uz5zs
+2026-02-21 03:00:34,636 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 03:00:35,401 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 03:00:35,404 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 03:00:35,404 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 03:00:35,405 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 03:00:35,407 | INFO | flet | Flet app has started...
+2026-02-21 03:00:35,498 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 03:00:35,498 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 03:00:36,067 | INFO | flet_web.fastapi | New FletApp: E1JbACaD
+2026-02-21 03:00:36,089 | INFO | flet_web.fastapi | New session created (1 total): _4OBQULYHyokMgylG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:00:36,092 | INFO | flet_web.fastapi | Start session: 4OBQULYHyokMgylG
+2026-02-21 03:00:36,226 | INFO | App | Base de datos inicializada
+2026-02-21 03:00:36,248 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 03:00:36,248 | INFO | Router | Navigating to: /login
+2026-02-21 03:00:36,280 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 03:01:11,100 | INFO | Router | Navigating to: /
+2026-02-21 03:01:13,505 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 03:01:46,034 | INFO | Router | Navigating to: /expenses
+2026-02-21 03:01:54,497 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 03:02:16,666 | INFO | controllers.ai_controller | Consulta recibida: 'hola cuanto gaste en ropa en lo que va del mes ?'
+2026-02-21 03:02:16,672 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 03:02:16,674 | INFO | controllers.ai_controller | Categorías detectadas en 'hola cuanto gaste en ropa en lo que va del mes ?': ['👕 Ropa']
+2026-02-21 03:02:16,675 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '🛒 Almacén', '👕 Ropa', '🚗 Vehículos'}
+2026-02-21 03:02:16,675 | INFO | controllers.ai_controller | Filtrado por categorías ['👕 Ropa']: 1 gastos de 7 totales
+2026-02-21 03:02:16,685 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:02:16,686 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 03:02:16,687 | INFO | AIAdvisor |   - Pregunta: hola cuanto gaste en ropa en lo que va del mes ?
+2026-02-21 03:02:16,687 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 03:02:16,689 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 03:02:16,689 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 03:02:16,690 | INFO | AIAdvisor |   - Prompt completo (1114 chars):
+2026-02-21 03:02:16,690 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 03:02:16,691 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 👕 Ropa → TOTAL: $4,000 (1 compras):
+  • Compra de vestimenta deportiva: $4,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $4,000 (1 transacciones)
+PREGUNTA: hola cuanto gaste en ropa en lo que va del mes ?
+
+RESPUESTA:
+2026-02-21 03:02:16,691 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:02:16,949 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 03:02:16,956 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 03:02:22,147 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 03:02:22,152 | INFO | AIAdvisor | ✅ Respuesta generada: 45 chars
+2026-02-21 03:02:27,929 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030227.pdf
+2026-02-21 03:02:27,929 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02ef33b0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:02:50,331 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpl90ezikw
+2026-02-21 03:02:50,343 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 03:02:50,346 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 03:02:50,468 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030250.pdf
+2026-02-21 03:02:50,470 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02ca03e0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:02:57,421 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030257.pdf
+2026-02-21 03:02:57,423 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02c9d7f0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:03:28,865 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030328.pdf
+2026-02-21 03:03:28,866 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02efcb60 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:04:06,372 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030406.pdf
+2026-02-21 03:04:06,373 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02c9db20 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:04:35,839 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030435.pdf
+2026-02-21 03:04:35,840 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02ef74a0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:04:37,408 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030437.pdf
+2026-02-21 03:04:37,409 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02c9ee70 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:04:40,490 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030440.pdf
+2026-02-21 03:04:40,491 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02c9e900 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:04,559 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030604.pdf
+2026-02-21 03:06:04,560 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02c9db20 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:05,946 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030605.pdf
+2026-02-21 03:06:05,947 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02ca9d60 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:06,365 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030606.pdf
+2026-02-21 03:06:06,365 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02caa900 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:17,863 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030617.pdf
+2026-02-21 03:06:17,864 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02caa960 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:18,037 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030618.pdf
+2026-02-21 03:06:18,038 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02caaa80 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:18,239 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030618.pdf
+2026-02-21 03:06:18,239 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02ca03e0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:18,457 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030618.pdf
+2026-02-21 03:06:18,458 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02caca40 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:23,311 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030623.pdf
+2026-02-21 03:06:23,312 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cac980 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:06:40,946 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030640.pdf
+2026-02-21 03:06:40,947 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cada90 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:07:26,946 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030726.pdf
+2026-02-21 03:07:26,947 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cb01a0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:07:28,407 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030728.pdf
+2026-02-21 03:07:28,408 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cb0c50 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:07:28,835 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030728.pdf
+2026-02-21 03:07:28,836 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cb2780 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:07:42,486 | INFO | flet_web.fastapi | Session disconnected: _4OBQULYHyokMgylG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:07:42,490 | INFO | flet_web.fastapi | Disposing FletApp: E1JbACaD
+2026-02-21 03:07:42,493 | INFO | flet_web.fastapi | FletApp was garbage collected: E1JbACaD
+2026-02-21 03:07:43,046 | INFO | flet_web.fastapi | New FletApp: Dhn3VABD
+2026-02-21 03:07:43,102 | INFO | flet_web.fastapi | Session reconnected: _4OBQULYHyokMgylG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:07:43,132 | INFO | flet_web.fastapi | Session disconnected: _4OBQULYHyokMgylG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:07:43,133 | INFO | flet_web.fastapi | Disposing FletApp: Dhn3VABD
+2026-02-21 03:07:43,134 | INFO | flet_web.fastapi | FletApp was garbage collected: Dhn3VABD
+2026-02-21 03:07:44,332 | INFO | flet_web.fastapi | New FletApp: pErYv28m
+2026-02-21 03:07:44,524 | INFO | flet_web.fastapi | Session reconnected: _4OBQULYHyokMgylG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:07:46,138 | INFO | flet_web.fastapi | Session disconnected: _4OBQULYHyokMgylG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:07:46,139 | INFO | flet_web.fastapi | Disposing FletApp: pErYv28m
+2026-02-21 03:07:46,144 | INFO | flet_web.fastapi | FletApp was garbage collected: pErYv28m
+2026-02-21 03:08:05,440 | INFO | flet_web.fastapi | New FletApp: bnfT4OvZ
+2026-02-21 03:08:05,461 | INFO | flet_web.fastapi | New session created (2 total): _SgNAr2P3Yd5TdLnl_729018704bcd9b73ac8d4497bf679bd1ac314e41
+2026-02-21 03:08:05,467 | INFO | flet_web.fastapi | Start session: SgNAr2P3Yd5TdLnl
+2026-02-21 03:08:05,592 | INFO | App | Base de datos inicializada
+2026-02-21 03:08:05,616 | INFO | Router | Navigating to: /login
+2026-02-21 03:08:05,654 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 03:08:18,931 | INFO | Router | Navigating to: /
+2026-02-21 03:08:23,687 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 03:08:25,493 | INFO | Router | Navigating to: /expenses
+2026-02-21 03:08:56,231 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 03:09:19,832 | INFO | controllers.ai_controller | Consulta recibida: 'puedes decirme cuanto gaste en carniceria ?'
+2026-02-21 03:09:19,838 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 03:09:19,842 | INFO | controllers.ai_controller | Categorías detectadas en 'puedes decirme cuanto gaste en carniceria ?': ['🛒 Almacén']
+2026-02-21 03:09:19,842 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '🛒 Almacén', '👕 Ropa', '🚗 Vehículos'}
+2026-02-21 03:09:19,843 | INFO | controllers.ai_controller | Filtrado por categorías ['🛒 Almacén']: 4 gastos de 7 totales
+2026-02-21 03:09:19,852 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:09:19,853 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 03:09:19,853 | INFO | AIAdvisor |   - Pregunta: puedes decirme cuanto gaste en carniceria ?
+2026-02-21 03:09:19,854 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 03:09:19,854 | INFO | AIAdvisor |   - Transacciones: 4
+2026-02-21 03:09:19,854 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 03:09:19,855 | INFO | AIAdvisor |   - Prompt completo (1224 chars):
+2026-02-21 03:09:19,855 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 03:09:19,856 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+SUBTOTAL CONSULTADO: $12,000 (4 transacciones)
+PREGUNTA: puedes decirme cuanto gaste en carniceria ?
+
+RESPUESTA:
+2026-02-21 03:09:19,856 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:09:19,857 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 03:09:19,936 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 03:09:25,168 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 03:09:25,185 | INFO | AIAdvisor | ✅ Respuesta generada: 41 chars
+2026-02-21 03:09:32,792 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030932.pdf
+2026-02-21 03:09:32,793 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02caf740 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:09:52,439 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030952.pdf
+2026-02-21 03:09:52,440 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02d1d610 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:09:57,393 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_030957.pdf
+2026-02-21 03:09:57,394 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02d1d970 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:10:08,592 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_031008.pdf
+2026-02-21 03:10:08,593 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02ef3050 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:10:09,587 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_031009.pdf
+2026-02-21 03:10:09,588 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a04183e90 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:10:10,133 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_031010.pdf
+2026-02-21 03:10:10,134 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cab950 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:10:11,201 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_031011.pdf
+2026-02-21 03:10:11,201 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cb0590 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:10:13,597 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_031013.pdf
+2026-02-21 03:10:13,599 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02ed5b80 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:10:25,255 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_031025.pdf
+2026-02-21 03:10:25,256 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a02cb3b30 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:10:54,253 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_031054.pdf
+2026-02-21 03:10:54,254 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7c3a041826f0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 377, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:11:04,834 | INFO | flet_web.fastapi | Session disconnected: _SgNAr2P3Yd5TdLnl_729018704bcd9b73ac8d4497bf679bd1ac314e41
+2026-02-21 03:11:04,835 | INFO | flet_web.fastapi | Disposing FletApp: bnfT4OvZ
+2026-02-21 03:11:04,837 | INFO | flet_web.fastapi | FletApp was garbage collected: bnfT4OvZ
+2026-02-21 03:21:23,862 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 03:21:23,901 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmpl90ezikw
+2026-02-21 03:21:24,045 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 03:21:24,323 | INFO | flet | Session was garbage collected: SgNAr2P3Yd5TdLnl
+2026-02-21 03:21:24,329 | INFO | flet | Session was garbage collected: 4OBQULYHyokMgylG
+2026-02-21 03:21:33,495 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 03:21:34,520 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 03:21:34,522 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 03:21:34,523 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 03:21:34,523 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 03:21:34,525 | INFO | flet | Flet app has started...
+2026-02-21 03:21:34,637 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 03:21:34,638 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 03:22:00,656 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpzh1f4300
+2026-02-21 03:22:00,657 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 03:22:00,657 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 03:22:02,107 | INFO | flet_web.fastapi | New FletApp: fYs58B1d
+2026-02-21 03:22:02,470 | INFO | flet_web.fastapi | New session created (1 total): _fPA9EjrejsPiYCTU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:22:02,474 | INFO | flet_web.fastapi | Start session: fPA9EjrejsPiYCTU
+2026-02-21 03:22:02,646 | INFO | App | Base de datos inicializada
+2026-02-21 03:22:02,667 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 03:22:02,667 | INFO | Router | Navigating to: /login
+2026-02-21 03:22:02,703 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 03:22:23,230 | INFO | Router | Navigating to: /
+2026-02-21 03:22:26,035 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 03:22:56,564 | INFO | controllers.ai_controller | Consulta recibida: 'hola dime los gastos de carniceria ?'
+2026-02-21 03:22:56,569 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 03:22:56,570 | INFO | controllers.ai_controller | Categorías detectadas en 'hola dime los gastos de carniceria ?': ['🛒 Almacén']
+2026-02-21 03:22:56,571 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '🛒 Almacén', '👕 Ropa', '🚗 Vehículos'}
+2026-02-21 03:22:56,572 | INFO | controllers.ai_controller | Filtrado por categorías ['🛒 Almacén']: 4 gastos de 7 totales
+2026-02-21 03:22:56,586 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:22:56,587 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 03:22:56,587 | INFO | AIAdvisor |   - Pregunta: hola dime los gastos de carniceria ?
+2026-02-21 03:22:56,588 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 03:22:56,588 | INFO | AIAdvisor |   - Transacciones: 4
+2026-02-21 03:22:56,589 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 03:22:56,591 | INFO | AIAdvisor |   - Prompt completo (1217 chars):
+2026-02-21 03:22:56,591 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 03:22:56,592 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+SUBTOTAL CONSULTADO: $12,000 (4 transacciones)
+PREGUNTA: hola dime los gastos de carniceria ?
+
+RESPUESTA:
+2026-02-21 03:22:56,593 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:22:56,974 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 03:22:56,982 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 03:23:03,625 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 03:23:03,632 | INFO | AIAdvisor | ✅ Respuesta generada: 175 chars
+2026-02-21 03:23:06,742 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_032306.pdf
+2026-02-21 03:23:06,745 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_032306.pdf | existe=True | bytes=2764
+2026-02-21 03:23:06,746 | ERROR | concurrent.futures | exception calling callback for <Future at 0x761a978dd430 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 390, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:23:10,088 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_032310.pdf
+2026-02-21 03:23:10,089 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_032310.pdf | existe=True | bytes=2764
+2026-02-21 03:23:10,090 | ERROR | concurrent.futures | exception calling callback for <Future at 0x761a945c1df0 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 390, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:23:10,608 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_032310.pdf
+2026-02-21 03:23:10,609 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_032310.pdf | existe=True | bytes=2764
+2026-02-21 03:23:10,610 | ERROR | concurrent.futures | exception calling callback for <Future at 0x761a978dd430 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 390, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:23:11,021 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_032311.pdf
+2026-02-21 03:23:11,022 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_032311.pdf | existe=True | bytes=2764
+2026-02-21 03:23:11,023 | ERROR | concurrent.futures | exception calling callback for <Future at 0x761a9482e720 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 390, in _exportar_pdf
+    self.page.run_javascript(  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'run_javascript'
+2026-02-21 03:26:32,657 | INFO | flet_web.fastapi | Session disconnected: _fPA9EjrejsPiYCTU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:26:32,745 | INFO | flet_web.fastapi | Disposing FletApp: fYs58B1d
+2026-02-21 03:26:32,903 | INFO | flet_web.fastapi | FletApp was garbage collected: fYs58B1d
+2026-02-21 03:26:32,959 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 03:26:32,961 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmpzh1f4300
+2026-02-21 03:26:33,048 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 03:26:33,266 | INFO | flet | Session was garbage collected: fPA9EjrejsPiYCTU
+2026-02-21 03:26:45,303 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 03:26:45,306 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 03:26:45,306 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 03:26:45,307 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 03:26:45,598 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 03:26:45,691 | INFO | flet_web.fastapi | New FletApp: vfTBeWyW
+2026-02-21 03:26:45,757 | INFO | flet_web.fastapi | New session created (1 total): _6cw2vpSytXTJfBFG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:26:45,761 | INFO | flet_web.fastapi | Start session: 6cw2vpSytXTJfBFG
+2026-02-21 03:26:45,962 | INFO | App | Base de datos inicializada
+2026-02-21 03:26:46,008 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 03:26:46,009 | INFO | Router | Navigating to: /login
+2026-02-21 03:26:46,046 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 03:27:40,078 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmp_ljv3kcf
+2026-02-21 03:27:40,095 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 03:27:40,098 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 03:31:09,826 | INFO | flet_web.fastapi | Session disconnected: _6cw2vpSytXTJfBFG_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:31:09,859 | INFO | flet_web.fastapi | Disposing FletApp: vfTBeWyW
+2026-02-21 03:31:10,038 | INFO | flet_web.fastapi | FletApp was garbage collected: vfTBeWyW
+2026-02-21 03:31:10,069 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 03:31:10,070 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmp_ljv3kcf
+2026-02-21 03:31:10,194 | INFO | flet | Session was garbage collected: 6cw2vpSytXTJfBFG
+2026-02-21 03:36:55,170 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 03:36:56,434 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 03:36:56,437 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 03:36:56,438 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 03:36:56,439 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 03:36:56,441 | INFO | flet | Flet app has started...
+2026-02-21 03:36:56,768 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 03:36:56,769 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 03:37:52,594 | INFO | flet_web.fastapi | New FletApp: 105qybPF
+2026-02-21 03:37:52,786 | INFO | flet_web.fastapi | New session created (1 total): _cLuzrh3GfEUu7Vd9_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:37:52,844 | INFO | flet_web.fastapi | Start session: cLuzrh3GfEUu7Vd9
+2026-02-21 03:37:53,760 | INFO | App | Base de datos inicializada
+2026-02-21 03:37:53,930 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 03:37:53,931 | INFO | Router | Navigating to: /login
+2026-02-21 03:37:54,072 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 03:40:42,219 | INFO | flet_web.fastapi | Session disconnected: _cLuzrh3GfEUu7Vd9_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:40:42,246 | INFO | flet_web.fastapi | Disposing FletApp: 105qybPF
+2026-02-21 03:40:42,335 | INFO | flet_web.fastapi | FletApp was garbage collected: 105qybPF
+2026-02-21 03:40:42,370 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 03:40:42,413 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 03:40:42,618 | INFO | flet | Session was garbage collected: cLuzrh3GfEUu7Vd9
+2026-02-21 03:40:53,308 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 03:40:57,409 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 03:40:57,416 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 03:40:57,416 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 03:40:57,417 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 03:40:57,420 | INFO | flet | Flet app has started...
+2026-02-21 03:40:57,845 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 03:40:57,846 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 03:40:59,942 | INFO | flet_web.fastapi | New FletApp: 0fbGvlyE
+2026-02-21 03:40:59,962 | INFO | flet_web.fastapi | New session created (1 total): _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:40:59,966 | INFO | flet_web.fastapi | Start session: gc3bHp8e63T4PkoF
+2026-02-21 03:41:00,179 | INFO | App | Base de datos inicializada
+2026-02-21 03:41:00,201 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 03:41:00,201 | INFO | Router | Navigating to: /login
+2026-02-21 03:41:00,236 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 03:44:55,239 | INFO | Router | Navigating to: /
+2026-02-21 03:45:47,806 | INFO | flet_web.fastapi | Session disconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:45:47,853 | INFO | flet_web.fastapi | Disposing FletApp: 0fbGvlyE
+2026-02-21 03:45:47,923 | INFO | flet_web.fastapi | FletApp was garbage collected: 0fbGvlyE
+2026-02-21 03:45:48,452 | INFO | flet_web.fastapi | New FletApp: tkpG182V
+2026-02-21 03:45:48,692 | INFO | flet_web.fastapi | Session reconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:45:49,183 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpre87nzxb
+2026-02-21 03:45:49,190 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 03:45:49,193 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 03:45:50,686 | INFO | flet_web.fastapi | Session disconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:45:50,687 | INFO | flet_web.fastapi | Disposing FletApp: tkpG182V
+2026-02-21 03:45:50,689 | INFO | flet_web.fastapi | FletApp was garbage collected: tkpG182V
+2026-02-21 03:45:51,997 | INFO | flet_web.fastapi | New FletApp: 2mOwpH00
+2026-02-21 03:45:52,206 | INFO | flet_web.fastapi | Session reconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:46:00,440 | INFO | Router | Navigating to: /login
+2026-02-21 03:46:09,909 | INFO | Router | Navigating to: /
+2026-02-21 03:46:13,731 | INFO | Router | Navigating to: /expenses
+2026-02-21 03:46:19,618 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 03:47:26,100 | INFO | controllers.ai_controller | Consulta recibida: 'Hola cuanto gaste de ropa este mes ?'
+2026-02-21 03:47:26,125 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 03:47:26,128 | INFO | controllers.ai_controller | Categorías detectadas en 'Hola cuanto gaste de ropa este mes ?': ['👕 Ropa']
+2026-02-21 03:47:26,128 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🛒 Almacén', '🏠 Hogar', '🚗 Vehículos', '👕 Ropa'}
+2026-02-21 03:47:26,129 | INFO | controllers.ai_controller | Filtrado por categorías ['👕 Ropa']: 1 gastos de 7 totales
+2026-02-21 03:47:26,158 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:47:26,160 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 03:47:26,161 | INFO | AIAdvisor |   - Pregunta: Hola cuanto gaste de ropa este mes ?
+2026-02-21 03:47:26,161 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 03:47:26,162 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 03:47:26,162 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 03:47:26,163 | INFO | AIAdvisor |   - Prompt completo (1102 chars):
+2026-02-21 03:47:26,165 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 03:47:26,166 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 👕 Ropa → TOTAL: $4,000 (1 compras):
+  • Compra de vestimenta deportiva: $4,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $4,000 (1 transacciones)
+PREGUNTA: Hola cuanto gaste de ropa este mes ?
+
+RESPUESTA:
+2026-02-21 03:47:26,167 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:47:26,540 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 03:47:26,546 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 03:47:32,701 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 03:47:32,709 | INFO | AIAdvisor | ✅ Respuesta generada: 109 chars
+2026-02-21 03:47:41,034 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_034741.pdf
+2026-02-21 03:47:41,036 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_034741.pdf | existe=True | bytes=2583
+2026-02-21 03:47:41,038 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7e2694c24800 state=finished raised TypeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 389, in _exportar_pdf
+    self.page.launch_url(
+  File "/usr/local/lib/python3.12/site-packages/flet/utils/deprecated.py", line 40, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+TypeError: Page.launch_url() got an unexpected keyword argument 'web_window_name'
+2026-02-21 03:57:03,844 | INFO | flet_web.fastapi | Session disconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:57:03,891 | INFO | flet_web.fastapi | Disposing FletApp: 2mOwpH00
+2026-02-21 03:57:03,895 | INFO | flet_web.fastapi | FletApp was garbage collected: 2mOwpH00
+2026-02-21 03:57:04,505 | INFO | flet_web.fastapi | New FletApp: nec32xV4
+2026-02-21 03:57:04,606 | INFO | flet_web.fastapi | Session reconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:57:04,979 | INFO | flet_web.fastapi | Session disconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:57:04,979 | INFO | flet_web.fastapi | Disposing FletApp: nec32xV4
+2026-02-21 03:57:04,980 | INFO | flet_web.fastapi | FletApp was garbage collected: nec32xV4
+2026-02-21 03:57:06,670 | INFO | flet_web.fastapi | New FletApp: VQDjod5P
+2026-02-21 03:57:06,950 | INFO | flet_web.fastapi | Session reconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:57:14,616 | INFO | Router | Navigating to: /login
+2026-02-21 03:57:18,938 | INFO | flet_web.fastapi | Session disconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:57:18,940 | INFO | flet_web.fastapi | Disposing FletApp: VQDjod5P
+2026-02-21 03:57:18,942 | INFO | flet_web.fastapi | FletApp was garbage collected: VQDjod5P
+2026-02-21 03:57:20,190 | INFO | flet_web.fastapi | New FletApp: Z0B8Uctv
+2026-02-21 03:57:20,349 | INFO | flet_web.fastapi | Session reconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 03:59:22,297 | INFO | Router | Navigating to: /
+2026-02-21 03:59:24,959 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 03:59:45,880 | INFO | controllers.ai_controller | Consulta recibida: 'hola cuanto gastamos de almacen ?'
+2026-02-21 03:59:46,002 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 03:59:46,014 | INFO | controllers.ai_controller | Categorías detectadas en 'hola cuanto gastamos de almacen ?': ['🛒 Almacén']
+2026-02-21 03:59:46,017 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🛒 Almacén', '🏠 Hogar', '🚗 Vehículos', '👕 Ropa'}
+2026-02-21 03:59:46,018 | INFO | controllers.ai_controller | Filtrado por categorías ['🛒 Almacén']: 4 gastos de 7 totales
+2026-02-21 03:59:46,057 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:59:46,059 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 03:59:46,059 | INFO | AIAdvisor |   - Pregunta: hola cuanto gastamos de almacen ?
+2026-02-21 03:59:46,060 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 03:59:46,061 | INFO | AIAdvisor |   - Transacciones: 4
+2026-02-21 03:59:46,062 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 03:59:46,062 | INFO | AIAdvisor |   - Prompt completo (1214 chars):
+2026-02-21 03:59:46,063 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 03:59:46,064 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+SUBTOTAL CONSULTADO: $12,000 (4 transacciones)
+PREGUNTA: hola cuanto gastamos de almacen ?
+
+RESPUESTA:
+2026-02-21 03:59:46,064 | INFO | AIAdvisor | ================================================================================
+2026-02-21 03:59:46,066 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 03:59:46,274 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 03:59:53,357 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 03:59:53,375 | INFO | AIAdvisor | ✅ Respuesta generada: 199 chars
+2026-02-21 04:00:31,288 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_040031.pdf
+2026-02-21 04:00:31,306 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_040031.pdf | existe=True | bytes=2730
+2026-02-21 04:00:31,311 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7e2694c4af60 state=finished raised TypeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 389, in _exportar_pdf
+    self.page.launch_url(
+  File "/usr/local/lib/python3.12/site-packages/flet/utils/deprecated.py", line 40, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+TypeError: Page.launch_url() got an unexpected keyword argument 'web_window_name'
+2026-02-21 04:00:34,452 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_040034.pdf
+2026-02-21 04:00:34,452 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_040034.pdf | existe=True | bytes=2730
+2026-02-21 04:00:34,453 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7e26949d8920 state=finished raised TypeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 389, in _exportar_pdf
+    self.page.launch_url(
+  File "/usr/local/lib/python3.12/site-packages/flet/utils/deprecated.py", line 40, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+TypeError: Page.launch_url() got an unexpected keyword argument 'web_window_name'
+2026-02-21 04:00:35,617 | INFO | services.report_service | PDF generado: assets/reports/Informe_anibal_20260221_040035.pdf
+2026-02-21 04:00:35,618 | INFO | PDFExport | PDF path=assets/reports/Informe_anibal_20260221_040035.pdf | existe=True | bytes=2730
+2026-02-21 04:00:35,619 | ERROR | concurrent.futures | exception calling callback for <Future at 0x7e2695ba0da0 state=finished raised TypeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 389, in _exportar_pdf
+    self.page.launch_url(
+  File "/usr/local/lib/python3.12/site-packages/flet/utils/deprecated.py", line 40, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+TypeError: Page.launch_url() got an unexpected keyword argument 'web_window_name'
+2026-02-21 04:02:16,311 | INFO | Router | Navigating to: /expenses
+2026-02-21 04:04:25,087 | INFO | flet_web.fastapi | Session disconnected: _gc3bHp8e63T4PkoF_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:04:25,114 | INFO | flet_web.fastapi | Disposing FletApp: Z0B8Uctv
+2026-02-21 04:04:25,215 | INFO | flet_web.fastapi | FletApp was garbage collected: Z0B8Uctv
+2026-02-21 04:04:25,285 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 04:04:25,293 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmpre87nzxb
+2026-02-21 04:04:25,389 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 04:04:25,631 | INFO | flet | Session was garbage collected: gc3bHp8e63T4PkoF
+2026-02-21 04:04:47,043 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 04:04:48,101 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 04:04:48,104 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 04:04:48,104 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 04:04:48,105 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 04:04:48,108 | INFO | flet | Flet app has started...
+2026-02-21 04:04:48,449 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 04:04:48,450 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 04:04:49,247 | INFO | flet_web.fastapi | New FletApp: olpmgWke
+2026-02-21 04:04:49,303 | INFO | flet_web.fastapi | New session created (1 total): _7ikDUe2vK9DSCzAa_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:04:49,313 | INFO | flet_web.fastapi | Start session: 7ikDUe2vK9DSCzAa
+2026-02-21 04:04:49,637 | INFO | App | Base de datos inicializada
+2026-02-21 04:04:49,721 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 04:04:49,722 | INFO | Router | Navigating to: /login
+2026-02-21 04:04:49,820 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 04:05:12,534 | INFO | Router | Navigating to: /
+2026-02-21 04:05:15,637 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 04:06:09,450 | INFO | controllers.ai_controller | Consulta recibida: 'hola puedes decirme los gastos de vehiculo de lo que va del  mes ?'
+2026-02-21 04:06:09,523 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 04:06:09,531 | INFO | controllers.ai_controller | Categorías detectadas en 'hola puedes decirme los gastos de vehiculo de lo que va del  mes ?': ['🚗 Vehículos']
+2026-02-21 04:06:09,532 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🛒 Almacén', '🚗 Vehículos', '🏠 Hogar', '👕 Ropa'}
+2026-02-21 04:06:09,533 | INFO | controllers.ai_controller | Filtrado por categorías ['🚗 Vehículos']: 1 gastos de 7 totales
+2026-02-21 04:06:09,571 | INFO | AIAdvisor | ================================================================================
+2026-02-21 04:06:09,572 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 04:06:09,572 | INFO | AIAdvisor |   - Pregunta: hola puedes decirme los gastos de vehiculo de lo que va del  mes ?
+2026-02-21 04:06:09,573 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 04:06:09,574 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 04:06:09,574 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 04:06:09,575 | INFO | AIAdvisor |   - Prompt completo (1129 chars):
+2026-02-21 04:06:09,576 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 04:06:09,576 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $16,000 (1 transacciones)
+PREGUNTA: hola puedes decirme los gastos de vehiculo de lo que va del  mes ?
+
+RESPUESTA:
+2026-02-21 04:06:09,578 | INFO | AIAdvisor | ================================================================================
+2026-02-21 04:06:10,061 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 04:06:10,070 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 04:06:16,976 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 04:06:16,988 | INFO | AIAdvisor | ✅ Respuesta generada: 95 chars
+2026-02-21 04:06:23,751 | ERROR | concurrent.futures | exception calling callback for <Future at 0x78c8338dc920 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 424, in _exportar_pdf
+    self.page.open(dlg)
+    ^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'open'
+2026-02-21 04:06:30,508 | ERROR | concurrent.futures | exception calling callback for <Future at 0x78c8338cff50 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 424, in _exportar_pdf
+    self.page.open(dlg)
+    ^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'open'
+2026-02-21 04:06:37,163 | ERROR | concurrent.futures | exception calling callback for <Future at 0x78c833689640 state=finished raised AttributeError>
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 340, in _invoke_callbacks
+    callback(self)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/page.py", line 504, in _on_completion
+    raise exception
+  File "/app/views/pages/ai_advisor_view.py", line 424, in _exportar_pdf
+    self.page.open(dlg)
+    ^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'open'
+2026-02-21 04:12:39,671 | INFO | flet_web.fastapi | Session disconnected: _7ikDUe2vK9DSCzAa_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:12:39,705 | INFO | flet_web.fastapi | Disposing FletApp: olpmgWke
+2026-02-21 04:12:39,790 | INFO | flet_web.fastapi | FletApp was garbage collected: olpmgWke
+2026-02-21 04:12:39,842 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 04:12:39,888 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 04:12:40,065 | INFO | flet | Session was garbage collected: 7ikDUe2vK9DSCzAa
+2026-02-21 04:12:50,573 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 04:12:51,735 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 04:12:51,738 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 04:12:51,739 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 04:12:51,739 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 04:12:51,741 | INFO | flet | Flet app has started...
+2026-02-21 04:12:51,852 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 04:12:51,853 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 04:12:54,290 | INFO | flet_web.fastapi | New FletApp: q6SEAxNI
+2026-02-21 04:12:54,316 | INFO | flet_web.fastapi | New session created (1 total): _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:12:54,320 | INFO | flet_web.fastapi | Start session: qgRgLcTqFNL2RfxU
+2026-02-21 04:12:54,564 | INFO | App | Base de datos inicializada
+2026-02-21 04:12:54,648 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 04:12:54,648 | INFO | Router | Navigating to: /login
+2026-02-21 04:12:54,693 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 04:14:51,382 | INFO | Router | Navigating to: /
+2026-02-21 04:14:57,380 | INFO | Router | Navigating to: /expenses
+2026-02-21 04:15:06,542 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 04:15:27,439 | INFO | controllers.ai_controller | Consulta recibida: 'Puedes decirme el gasto de Hogar ?'
+2026-02-21 04:15:27,456 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 04:15:27,460 | INFO | controllers.ai_controller | Categorías detectadas en 'Puedes decirme el gasto de Hogar ?': ['🏠 Hogar']
+2026-02-21 04:15:27,461 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🛒 Almacén', '🚗 Vehículos'}
+2026-02-21 04:15:27,462 | INFO | controllers.ai_controller | Filtrado por categorías ['🏠 Hogar']: 1 gastos de 7 totales
+2026-02-21 04:15:27,484 | INFO | AIAdvisor | ================================================================================
+2026-02-21 04:15:27,484 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 04:15:27,485 | INFO | AIAdvisor |   - Pregunta: Puedes decirme el gasto de Hogar ?
+2026-02-21 04:15:27,486 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 04:15:27,487 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 04:15:27,488 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 04:15:27,489 | INFO | AIAdvisor |   - Prompt completo (1107 chars):
+2026-02-21 04:15:27,490 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 04:15:27,490 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $40,000 (1 transacciones)
+PREGUNTA: Puedes decirme el gasto de Hogar ?
+
+RESPUESTA:
+2026-02-21 04:15:27,491 | INFO | AIAdvisor | ================================================================================
+2026-02-21 04:15:27,976 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 04:15:27,994 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 04:15:35,108 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 04:15:35,147 | INFO | AIAdvisor | ✅ Respuesta generada: 61 chars
+2026-02-21 04:15:47,932 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet/messaging/session.py", line 198, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "/app/views/pages/ai_advisor_view.py", line 380, in copiar
+    self.page.set_clipboard(reporte)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'clipboard'?
+2026-02-21 04:22:54,602 | INFO | flet_web.fastapi | Session disconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:22:54,641 | INFO | flet_web.fastapi | Disposing FletApp: q6SEAxNI
+2026-02-21 04:22:54,644 | INFO | flet_web.fastapi | FletApp was garbage collected: q6SEAxNI
+2026-02-21 04:22:55,257 | INFO | flet_web.fastapi | New FletApp: MyhccZv9
+2026-02-21 04:22:55,372 | INFO | flet_web.fastapi | Session reconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:22:55,544 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpgeai_ees
+2026-02-21 04:22:55,555 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-21 04:22:55,561 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-21 04:22:55,786 | INFO | flet_web.fastapi | Session disconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:22:55,786 | INFO | flet_web.fastapi | Disposing FletApp: MyhccZv9
+2026-02-21 04:22:55,788 | INFO | flet_web.fastapi | FletApp was garbage collected: MyhccZv9
+2026-02-21 04:22:57,168 | INFO | flet_web.fastapi | New FletApp: a44zPiJY
+2026-02-21 04:22:57,436 | INFO | flet_web.fastapi | Session reconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:23:24,921 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet/messaging/session.py", line 198, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "/app/views/pages/ai_advisor_view.py", line 380, in copiar
+    self.page.set_clipboard(reporte)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'clipboard'?
+2026-02-21 04:23:31,551 | INFO | flet_web.fastapi | Session disconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:23:31,553 | INFO | flet_web.fastapi | Disposing FletApp: a44zPiJY
+2026-02-21 04:23:31,558 | INFO | flet_web.fastapi | FletApp was garbage collected: a44zPiJY
+2026-02-21 04:23:32,095 | INFO | flet_web.fastapi | New FletApp: KlxfYP9k
+2026-02-21 04:23:32,132 | INFO | flet_web.fastapi | Session reconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:23:44,684 | INFO | flet_web.fastapi | Session disconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:23:44,686 | INFO | flet_web.fastapi | Disposing FletApp: KlxfYP9k
+2026-02-21 04:23:44,687 | INFO | flet_web.fastapi | FletApp was garbage collected: KlxfYP9k
+2026-02-21 04:23:48,383 | INFO | flet_web.fastapi | New FletApp: 3MlbDamx
+2026-02-21 04:23:48,675 | INFO | flet_web.fastapi | Session reconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:28:37,579 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet/messaging/session.py", line 198, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "/app/views/pages/ai_advisor_view.py", line 380, in copiar
+    self.page.set_clipboard(reporte)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'clipboard'?
+2026-02-21 04:28:56,606 | INFO | flet_web.fastapi | Session disconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:28:56,612 | INFO | flet_web.fastapi | Disposing FletApp: 3MlbDamx
+2026-02-21 04:28:56,619 | INFO | flet_web.fastapi | FletApp was garbage collected: 3MlbDamx
+2026-02-21 04:29:00,912 | INFO | flet_web.fastapi | New FletApp: oOIhFzz8
+2026-02-21 04:29:01,140 | INFO | flet_web.fastapi | Session reconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:45:09,295 | INFO | flet_web.fastapi | Session disconnected: _qgRgLcTqFNL2RfxU_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:45:09,378 | INFO | flet_web.fastapi | Disposing FletApp: oOIhFzz8
+2026-02-21 04:45:09,569 | INFO | flet_web.fastapi | FletApp was garbage collected: oOIhFzz8
+2026-02-21 04:45:09,682 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 04:45:09,685 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmpgeai_ees
+2026-02-21 04:45:22,080 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 04:45:23,126 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 04:45:23,128 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 04:45:23,128 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 04:45:23,130 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 04:45:23,132 | INFO | flet | Flet app has started...
+2026-02-21 04:45:23,253 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 04:45:23,254 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 04:45:23,487 | INFO | flet_web.fastapi | New FletApp: Kq3EphB6
+2026-02-21 04:45:23,519 | INFO | flet_web.fastapi | New session created (1 total): _gDBsE0P2JF25U39Z_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:45:23,524 | INFO | flet_web.fastapi | Start session: gDBsE0P2JF25U39Z
+2026-02-21 04:45:23,722 | INFO | App | Base de datos inicializada
+2026-02-21 04:45:23,754 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 04:45:23,754 | INFO | Router | Navigating to: /login
+2026-02-21 04:45:23,792 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 04:56:23,066 | INFO | flet_web.fastapi | Session disconnected: _gDBsE0P2JF25U39Z_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:56:23,109 | INFO | flet_web.fastapi | Disposing FletApp: Kq3EphB6
+2026-02-21 04:56:23,257 | INFO | flet_web.fastapi | FletApp was garbage collected: Kq3EphB6
+2026-02-21 04:56:23,309 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 04:56:23,371 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 04:56:23,565 | INFO | flet | Session was garbage collected: gDBsE0P2JF25U39Z
+2026-02-21 04:56:33,718 | INFO | flet | Assets path configured: /app/assets
+2026-02-21 04:56:34,749 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-21 04:56:34,751 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-21 04:56:34,752 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-21 04:56:34,752 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-21 04:56:34,755 | INFO | flet | Flet app has started...
+2026-02-21 04:56:35,119 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-21 04:56:35,119 | INFO | flet | App URL: http://0.0.0.0:8550

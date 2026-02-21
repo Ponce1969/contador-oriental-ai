@@ -10,6 +10,7 @@ from result import Err, Ok
 
 from controllers.family_member_controller import FamilyMemberController
 from core.session import SessionManager
+from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
 from models.family_member_model import FamilyMember
@@ -48,7 +49,7 @@ class FamilyMembersView:
         # ===============================
         self.select_dropdown = ft.Dropdown(
             label="Seleccionar miembro",
-            width=400,
+            expand=True,
         )
         self.select_dropdown.on_select = self._on_select
         
@@ -59,7 +60,7 @@ class FamilyMembersView:
             visible=False,
         )
 
-        self.name_input = ft.TextField(label="Nombre", width=300)
+        self.name_input = ft.TextField(label="Nombre", expand=True)
 
         self.type_dropdown = ft.Dropdown(
             label="Tipo",
@@ -112,7 +113,7 @@ class FamilyMembersView:
         self.notes_input = ft.TextField(
             label="Notas",
             multiline=True,
-            width=600,
+            expand=True,
         )
 
         self.members_column = ft.Column(spacing=10)
@@ -130,11 +131,15 @@ class FamilyMembersView:
     # RENDER
     # =====================================================
     def render(self):
+        is_mobile = AppState.device == "mobile"
+        col_half = {"xs": 12, "sm": 6}
+        col_third = {"xs": 12, "sm": 4}
+
         content = ft.Column(
             controls=[
                 ft.Text(
                     self.controller.get_title(),
-                    size=26,
+                    size=20 if is_mobile else 26,
                     weight=ft.FontWeight.BOLD,
                 ),
                 ft.Divider(),
@@ -148,18 +153,37 @@ class FamilyMembersView:
                                 ],
                                 spacing=10,
                             ),
-                            ft.Row(
+                            ft.ResponsiveRow(
                                 controls=[
-                                    self.name_input,
-                                    self.type_dropdown,
-                                    self.age_input,
-                                ]
+                                    ft.Container(
+                                        content=self.name_input,
+                                        col={"xs": 12, "sm": 5},
+                                    ),
+                                    ft.Container(
+                                        content=self.type_dropdown,
+                                        col=col_third,
+                                    ),
+                                    ft.Container(
+                                        content=self.age_input,
+                                        col={"xs": 6, "sm": 2},
+                                    ),
+                                ],
+                                spacing=10,
+                                run_spacing=10,
                             ),
-                            ft.Row(
+                            ft.ResponsiveRow(
                                 controls=[
-                                    self.parentesco_dropdown,
-                                    self.job_dropdown,
-                                ]
+                                    ft.Container(
+                                        content=self.parentesco_dropdown,
+                                        col=col_half,
+                                    ),
+                                    ft.Container(
+                                        content=self.job_dropdown,
+                                        col=col_half,
+                                    ),
+                                ],
+                                spacing=10,
+                                run_spacing=10,
                             ),
                             self.especie_input,
                             self.notes_input,
@@ -173,20 +197,25 @@ class FamilyMembersView:
                                         "Cancelar",
                                         on_click=self._on_cancel,
                                     ),
-                                ]
+                                ],
+                                spacing=10,
                             ),
                         ],
                         spacing=12,
                     ),
-                    padding=20,
+                    padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.PURPLE_50,
                     border=ft.border.all(2, ft.Colors.PURPLE_200),
                     border_radius=10,
                 ),
                 ft.Divider(),
-                ft.Text("👨‍👩‍👧‍👦 Miembros", size=20),
+                ft.Text(
+                    "👨‍👩‍👧‍👦 Miembros",
+                    size=16 if is_mobile else 20,
+                ),
                 self.members_column,
             ],
+            spacing=16,
             scroll=ft.ScrollMode.AUTO,
         )
 

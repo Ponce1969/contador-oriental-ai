@@ -53,6 +53,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - app_data:/app/data
+      - ./exports:/app/exports
     ports:
       - "${APP_PORT:-8550}:8550"
     networks:
