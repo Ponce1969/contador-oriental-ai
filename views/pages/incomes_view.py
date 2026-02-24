@@ -9,6 +9,7 @@ from datetime import date
 import flet as ft
 from result import Err, Ok
 
+from constants.responsive import Responsive
 from controllers.family_member_controller import FamilyMemberController
 from controllers.income_controller import IncomeController
 from core.session import SessionManager
@@ -100,7 +101,6 @@ class IncomesView:
     def render(self):
         """Renderizar la vista completa"""
         is_mobile = AppState.device == "mobile"
-        col_half = {"xs": 12, "sm": 6}
 
         content = ft.Column(
             controls=[
@@ -129,19 +129,19 @@ class IncomesView:
                                 controls=[
                                     ft.Container(
                                         content=self.member_dropdown,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                     ft.Container(
                                         content=self.categoria_dropdown,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                     ft.Container(
                                         content=self.monto_input,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                     ft.Container(
                                         content=self.fecha_input,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                 ],
                                 spacing=10,

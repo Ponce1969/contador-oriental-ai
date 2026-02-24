@@ -6,9 +6,11 @@ from __future__ import annotations
 
 from result import Err, Result
 
+from constants.messages import ValidationMessages
 from models.errors import DatabaseError, ValidationError
 from models.family_member_model import FamilyMember
 from repositories.family_member_repository import FamilyMemberRepository
+from services.validators import validate_id_requerido
 
 
 class FamilyMemberService:
@@ -21,23 +23,9 @@ class FamilyMemberService:
         self, member: FamilyMember
     ) -> Result[FamilyMember, ValidationError | DatabaseError]:
         """Crear un nuevo miembro con validaciones"""
-        
-        # Validación: nombre no puede estar vacío
-        if not member.nombre or member.nombre.strip() == "":
-            return Err(ValidationError(message="El nombre es obligatorio"))
-        
-        # Validación: tipo_miembro debe ser válido
-        if member.tipo_miembro not in ("persona", "mascota"):
-            return Err(ValidationError(message="Tipo de miembro inválido"))
-        
-        # Validación: personas deben tener parentesco
-        if member.tipo_miembro == "persona" and not member.parentesco:
-            return Err(ValidationError(message="Las personas deben tener parentesco"))
-        
-        # Validación: mascotas deben tener especie
-        if member.tipo_miembro == "mascota" and not member.especie:
-            return Err(ValidationError(message="Las mascotas deben tener especie"))
-        
+        err = self._validate_member(member)
+        if err is not None:
+            return err
         return self._repo.add(member)
 
     def list_members(self) -> list[FamilyMember]:
@@ -58,29 +46,32 @@ class FamilyMemberService:
         self, member: FamilyMember
     ) -> Result[FamilyMember, ValidationError | DatabaseError]:
         """Actualizar un miembro existente con validaciones"""
-        
-        # Validación: debe tener ID
-        if member.id is None:
-            return Err(ValidationError(message="El miembro debe tener un ID"))
-        
-        # Validación: nombre no puede estar vacío
-        if not member.nombre or member.nombre.strip() == "":
-            return Err(ValidationError(message="El nombre es obligatorio"))
-        
-        # Validación: tipo_miembro debe ser válido
-        if member.tipo_miembro not in ("persona", "mascota"):
-            return Err(ValidationError(message="Tipo de miembro inválido"))
-        
-        # Validación: personas deben tener parentesco
-        if member.tipo_miembro == "persona" and not member.parentesco:
-            return Err(ValidationError(message="Las personas deben tener parentesco"))
-        
-        # Validación: mascotas deben tener especie
-        if member.tipo_miembro == "mascota" and not member.especie:
-            return Err(ValidationError(message="Las mascotas deben tener especie"))
-        
+        id_check = validate_id_requerido(
+            member.id, ValidationMessages.ID_REQUERIDO_MIEMBRO
+        )
+        if id_check.is_err():
+            return id_check  # type: ignore[return-value]
+        err = self._validate_member(member)
+        if err is not None:
+            return err
         return self._repo.update(member)
 
     def deactivate_member(self, member_id: int) -> Result[None, DatabaseError]:
         """Desactivar un miembro (soft delete)"""
         return self._repo.delete(member_id)
+
+    def _validate_member(
+        self, member: FamilyMember
+    ) -> Result[FamilyMember, ValidationError] | None:
+        """Validaciones comunes para create y update."""
+        if not member.nombre or member.nombre.strip() == "":
+            return Err(ValidationError(message=ValidationMessages.NOMBRE_REQUERIDO))
+        if member.tipo_miembro not in ("persona", "mascota"):
+            return Err(
+                ValidationError(message=ValidationMessages.TIPO_MIEMBRO_INVALIDO)
+            )
+        if member.tipo_miembro == "persona" and not member.parentesco:
+            return Err(ValidationError(message=ValidationMessages.PARENTESCO_REQUERIDO))
+        if member.tipo_miembro == "mascota" and not member.especie:
+            return Err(ValidationError(message=ValidationMessages.ESPECIE_REQUERIDA))
+        return None

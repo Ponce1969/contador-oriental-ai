@@ -9,7 +9,9 @@ from datetime import date
 import flet as ft
 from result import Err, Ok
 
+from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
+
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
@@ -91,8 +93,6 @@ class ExpensesView:
     def render(self):
         """Renderizar la vista completa"""
         is_mobile = AppState.device == "mobile"
-        col_half = {"xs": 12, "sm": 6}
-        col_third = {"xs": 12, "sm": 4}
 
         content = ft.Column(
             controls=[
@@ -121,11 +121,11 @@ class ExpensesView:
                                     ),
                                     ft.Container(
                                         content=self.monto_input,
-                                        col=col_third,
+                                        col=Responsive.COL_THIRD,
                                     ),
                                     ft.Container(
                                         content=self.fecha_picker,
-                                        col=col_third,
+                                        col=Responsive.COL_THIRD,
                                     ),
                                 ],
                                 spacing=10,
@@ -135,11 +135,11 @@ class ExpensesView:
                                 controls=[
                                     ft.Container(
                                         content=self.categoria_dropdown,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                     ft.Container(
                                         content=self.metodo_pago_dropdown,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                 ],
                                 spacing=10,

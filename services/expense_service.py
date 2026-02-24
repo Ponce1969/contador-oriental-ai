@@ -4,11 +4,18 @@ Servicio de lógica de negocio para gastos familiares
 
 from __future__ import annotations
 
-from result import Err, Result
+from result import Result
 
+from constants.messages import ValidationMessages
 from models.errors import DatabaseError, ValidationError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
+from services.validators import (
+    validate_descripcion_requerida,
+    validate_id_requerido,
+    validate_monto_positivo,
+    validate_recurrente_con_frecuencia,
+)
 
 
 class ExpenseService:
@@ -21,23 +28,17 @@ class ExpenseService:
         self, expense: Expense
     ) -> Result[Expense, ValidationError | DatabaseError]:
         """Crear un nuevo gasto con validaciones"""
-        
-        # Validación: monto debe ser positivo
-        if expense.monto <= 0:
-            return Err(ValidationError(message="El monto debe ser mayor a 0"))
-        
-        # Validación: descripción no puede estar vacía
-        if not expense.descripcion or expense.descripcion.strip() == "":
-            return Err(ValidationError(message="La descripción es obligatoria"))
-        
-        # Validación: si es recurrente, debe tener frecuencia
-        if expense.es_recurrente and not expense.frecuencia_recurrencia:
-            return Err(
-                ValidationError(
-                    message="Los gastos recurrentes deben tener frecuencia"
-                )
-            )
-        
+        for check in (
+            validate_monto_positivo(expense.monto),
+            validate_descripcion_requerida(expense.descripcion),
+            validate_recurrente_con_frecuencia(
+                expense.es_recurrente,
+                expense.frecuencia_recurrencia,
+                ValidationMessages.RECURRENTE_SIN_FRECUENCIA_GASTO,
+            ),
+        ):
+            if check.is_err():
+                return check  # type: ignore[return-value]
         return self._repo.add(expense)
 
     def list_expenses(self) -> list[Expense]:
@@ -67,19 +68,13 @@ class ExpenseService:
         self, expense: Expense
     ) -> Result[Expense, ValidationError | DatabaseError]:
         """Actualizar un gasto existente con validaciones"""
-        
-        # Validación: debe tener ID
-        if expense.id is None:
-            return Err(ValidationError(message="El gasto debe tener un ID"))
-        
-        # Validación: monto debe ser positivo
-        if expense.monto <= 0:
-            return Err(ValidationError(message="El monto debe ser mayor a 0"))
-        
-        # Validación: descripción no puede estar vacía
-        if not expense.descripcion or expense.descripcion.strip() == "":
-            return Err(ValidationError(message="La descripción es obligatoria"))
-        
+        for check in (
+            validate_id_requerido(expense.id, ValidationMessages.ID_REQUERIDO_GASTO),
+            validate_monto_positivo(expense.monto),
+            validate_descripcion_requerida(expense.descripcion),
+        ):
+            if check.is_err():
+                return check  # type: ignore[return-value]
         return self._repo.update(expense)
 
     def get_total_by_category(self, categoria: str) -> float:

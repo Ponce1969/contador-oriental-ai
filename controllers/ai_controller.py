@@ -5,13 +5,10 @@ from __future__ import annotations
 import difflib
 import logging
 import re
-from collections.abc import Generator
-from contextlib import contextmanager
 
 from result import Result
-from sqlalchemy.orm import Session
 
-from core.sqlalchemy_session import get_db_session
+from controllers.base_controller import BaseController
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 from models.expense_model import Expense
@@ -27,7 +24,7 @@ from services.income_service import IncomeService
 logger = logging.getLogger(__name__)
 
 
-class AIController:
+class AIController(BaseController):
     """Controlador para interactuar con el Contador Oriental"""
     
     # Diccionario de palabras clave mapeadas a valores reales de ExpenseCategory
@@ -71,16 +68,10 @@ class AIController:
     }
     
     def __init__(self, familia_id: int):
-        self.familia_id = familia_id
+        super().__init__(familia_id=familia_id)
         self.ai_service = AIAdvisorService()
         self.last_context: AIContext = AIContext()
         self.last_pregunta: str = ""
-    
-    @contextmanager
-    def _get_session(self) -> Generator[Session, None, None]:
-        """Obtener sesión de base de datos."""
-        with get_db_session() as session:
-            yield session
     
     def _detectar_categorias_relevantes(self, pregunta: str) -> list[str]:
         """
@@ -258,7 +249,7 @@ class AIController:
         # Crear request
         request = AIRequest(
             pregunta=pregunta,
-            familia_id=self.familia_id,
+            familia_id=self._familia_id,
             incluir_gastos_recientes=incluir_gastos
         )
         
@@ -271,7 +262,7 @@ class AIController:
                 from datetime import datetime
                 
                 # Obtener gastos del mes actual
-                expense_repo = ExpenseRepository(session, self.familia_id)
+                expense_repo = ExpenseRepository(session, self._familia_id)
                 expense_service = ExpenseService(expense_repo)
                 gastos_mes = expense_service.list_expenses()
                 
@@ -306,7 +297,7 @@ class AIController:
                     total_gastos_count = len(gastos_filtrados)
                 
                 # Obtener ingresos del mes actual
-                income_repo = IncomeRepository(session, self.familia_id)
+                income_repo = IncomeRepository(session, self._familia_id)
                 income_service = IncomeService(income_repo)
                 ingresos = income_service.list_incomes()
                 ingresos = [
@@ -316,12 +307,12 @@ class AIController:
                 ingresos_total = sum(i.monto for i in ingresos)
                 
                 # Obtener miembros de la familia
-                member_repo = FamilyMemberRepository(session, self.familia_id)
+                member_repo = FamilyMemberRepository(session, self._familia_id)
                 member_service = FamilyMemberService(member_repo)
                 miembros = member_service.list_members()
                 
                 # Upsert snapshot del mes actual y obtener comparativa
-                snapshot_repo = MonthlySnapshotRepository(session, self.familia_id)
+                snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
                 comparativa = []
                 try:
                     snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)
@@ -365,7 +356,7 @@ class AIController:
 
         request = AIRequest(
             pregunta=pregunta,
-            familia_id=self.familia_id,
+            familia_id=self._familia_id,
             incluir_gastos_recientes=incluir_gastos,
         )
 
@@ -375,7 +366,7 @@ class AIController:
             with self._get_session() as session:
                 from datetime import datetime
 
-                expense_repo = ExpenseRepository(session, self.familia_id)
+                expense_repo = ExpenseRepository(session, self._familia_id)
                 expense_service = ExpenseService(expense_repo)
                 gastos_mes = expense_service.list_expenses()
 
@@ -398,7 +389,7 @@ class AIController:
                     resumen_gastos = self._agrupar_gastos(gastos_filtrados)
                     total_gastos_count = len(gastos_filtrados)
 
-                income_repo = IncomeRepository(session, self.familia_id)
+                income_repo = IncomeRepository(session, self._familia_id)
                 income_service = IncomeService(income_repo)
                 ingresos = income_service.list_incomes()
                 ingresos = [
@@ -407,11 +398,11 @@ class AIController:
                 ]
                 ingresos_total = sum(i.monto for i in ingresos)
 
-                member_repo = FamilyMemberRepository(session, self.familia_id)
+                member_repo = FamilyMemberRepository(session, self._familia_id)
                 member_service = FamilyMemberService(member_repo)
                 miembros = member_service.list_members()
 
-                snapshot_repo = MonthlySnapshotRepository(session, self.familia_id)
+                snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
                 comparativa = []
                 try:
                     snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)

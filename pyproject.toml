@@ -1,7 +1,7 @@
 [project]
-name = "smart-shopping-list"
+name = "contador-oriental"
 version = "0.1.0"
-description = "Proyecto control de gastos con fleting y arquitectura MVC"
+description = "Auditor familiar con IA local para Uruguay - Contador Oriental"
 readme = "README.md"
 requires-python = ">=3.12"
 

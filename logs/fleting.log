@@ -7247,3 +7247,40 @@ AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'c
 2026-02-24 02:08:38,865 | INFO | flet | Flet app has started...
 2026-02-24 02:08:39,011 | INFO | flet_web.fastapi | Starting up Flet App Manager
 2026-02-24 02:08:39,012 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-24 02:08:42,646 | INFO | flet_web.fastapi | New FletApp: kBpshcxj
+2026-02-24 02:08:42,685 | INFO | flet_web.fastapi | New session created (1 total): _oCh55sm5cQ8ZFaew_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-24 02:08:42,693 | INFO | flet_web.fastapi | Start session: oCh55sm5cQ8ZFaew
+2026-02-24 02:08:42,989 | INFO | App | Base de datos inicializada
+2026-02-24 02:08:43,043 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-24 02:08:43,044 | INFO | Router | Navigating to: /login
+2026-02-24 02:08:43,109 | INFO | App | Aplicação iniciada com sucesso
+2026-02-24 02:14:35,366 | INFO | Router | Navigating to: /
+2026-02-24 02:14:42,915 | INFO | Router | Navigating to: /expenses
+2026-02-24 02:15:09,801 | INFO | Router | Navigating to: /ai-contador
+2026-02-24 02:15:31,865 | INFO | Router | Navigating to: /expenses
+2026-02-24 02:15:39,846 | INFO | Router | Navigating to: /ai-contador
+2026-02-24 02:16:35,808 | INFO | controllers.ai_controller | Stream consulta: 'Hola cuanto fue mi gasto de Educacion en lo que va del mes y como lo pague efectivo , credito o debito ?'
+2026-02-24 02:16:35,815 | INFO | controllers.ai_controller | Categorías detectadas en 'Hola cuanto fue mi gasto de Educacion en lo que va del mes y como lo pague efectivo , credito o debito ?': ['📚 Educación']
+2026-02-24 02:16:35,817 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'📚 Educación', '🏠 Hogar', '👕 Ropa', '🛒 Almacén', '🚗 Vehículos'}
+2026-02-24 02:16:35,817 | INFO | controllers.ai_controller | Filtrado por categorías ['📚 Educación']: 1 gastos de 8 totales
+2026-02-24 02:16:35,885 | INFO | repositories.monthly_snapshot_repository | Snapshot upsert: familia=3 2/2026 → 5 categorías
+2026-02-24 02:16:35,904 | INFO | repositories.monthly_snapshot_repository | Comparativa mensual: familia=3 2/2026 → 5 categorías
+2026-02-24 02:16:35,911 | INFO | AIAdvisor.stream | 🔴 STREAM iniciado (3037 chars prompt)
+2026-02-24 02:16:42,752 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-24 02:16:43,500 | INFO | AIAdvisor.stream | ✅ STREAM completado
+2026-02-24 02:17:16,702 | INFO | Router | Navigating to: /incomes
+2026-02-24 03:06:34,894 | INFO | flet | Assets path configured: /app/assets
+2026-02-24 03:06:35,657 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-24 03:06:35,658 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-24 03:06:35,659 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-24 03:06:35,659 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-24 03:06:35,662 | INFO | flet | Flet app has started...
+2026-02-24 03:06:35,738 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-24 03:06:35,740 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-24 03:06:35,903 | INFO | flet_web.fastapi | New FletApp: WCjBRged
+2026-02-24 03:06:35,912 | INFO | flet_web.fastapi | New session created (1 total): _EHWHFqwolfZxskBk_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-24 03:06:35,915 | INFO | flet_web.fastapi | Start session: EHWHFqwolfZxskBk
+2026-02-24 03:06:36,102 | INFO | App | Base de datos inicializada
+2026-02-24 03:06:36,133 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-24 03:06:36,134 | INFO | Router | Navigating to: /login
+2026-02-24 03:06:36,163 | INFO | App | Aplicação iniciada com sucesso

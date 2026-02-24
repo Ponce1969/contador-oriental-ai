@@ -4,40 +4,19 @@ Controller para gestión de gastos familiares
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from contextlib import contextmanager
-
 from result import Result
-from sqlalchemy.orm import Session
 
-from core.sqlalchemy_session import get_db_session
+from controllers.base_controller import BaseController
 from models.errors import AppError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
 from services.expense_service import ExpenseService
 
 
-class ExpenseController:
+class ExpenseController(BaseController):
     """
     Controller para página de gastos
     """
-
-    def __init__(
-        self,
-        session: Session | None = None,
-        familia_id: int | None = None,
-    ) -> None:
-        self._session = session
-        self._familia_id = familia_id
-
-    @contextmanager
-    def _get_session(self) -> Generator[Session, None, None]:
-        """Obtener sesión de base de datos."""
-        if self._session:
-            yield self._session
-        else:
-            with get_db_session() as session:
-                yield session
 
     def get_title(self) -> str:
         return "Gastos Familiares"

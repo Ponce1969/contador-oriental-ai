@@ -6,9 +6,16 @@ from __future__ import annotations
 
 from result import Err, Result
 
+from constants.messages import ValidationMessages
 from models.errors import DatabaseError, ValidationError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
+from services.validators import (
+    validate_descripcion_requerida,
+    validate_id_requerido,
+    validate_monto_positivo,
+    validate_recurrente_con_frecuencia,
+)
 
 
 class IncomeService:
@@ -21,31 +28,19 @@ class IncomeService:
         self, income: Income
     ) -> Result[Income, ValidationError | DatabaseError]:
         """Crear un nuevo ingreso con validaciones"""
-        
-        # Validación: monto debe ser positivo
-        if income.monto <= 0:
-            return Err(ValidationError(message="El monto debe ser mayor a 0"))
-        
-        # Validación: descripción no puede estar vacía
-        if not income.descripcion or income.descripcion.strip() == "":
-            return Err(ValidationError(message="La descripción es obligatoria"))
-        
-        # Validación: debe tener un miembro asociado
+        for check in (
+            validate_monto_positivo(income.monto),
+            validate_descripcion_requerida(income.descripcion),
+            validate_recurrente_con_frecuencia(
+                income.es_recurrente,
+                income.frecuencia,
+                ValidationMessages.RECURRENTE_SIN_FRECUENCIA_INGRESO,
+            ),
+        ):
+            if check.is_err():
+                return check  # type: ignore[return-value]
         if income.family_member_id <= 0:
-            return Err(
-                ValidationError(
-                    message="Debe seleccionar un miembro de la familia"
-                )
-            )
-        
-        # Validación: si es recurrente, debe tener frecuencia
-        if income.es_recurrente and not income.frecuencia:
-            return Err(
-                ValidationError(
-                    message="Los ingresos recurrentes deben tener frecuencia"
-                )
-            )
-        
+            return Err(ValidationError(message=ValidationMessages.MIEMBRO_REQUERIDO))  # type: ignore[return-value]
         return self._repo.add(income)
 
     def list_incomes(self) -> list[Income]:
@@ -75,19 +70,13 @@ class IncomeService:
         self, income: Income
     ) -> Result[Income, ValidationError | DatabaseError]:
         """Actualizar un ingreso existente con validaciones"""
-        
-        # Validación: debe tener ID
-        if income.id is None:
-            return Err(ValidationError(message="El ingreso debe tener un ID"))
-        
-        # Validación: monto debe ser positivo
-        if income.monto <= 0:
-            return Err(ValidationError(message="El monto debe ser mayor a 0"))
-        
-        # Validación: descripción no puede estar vacía
-        if not income.descripcion or income.descripcion.strip() == "":
-            return Err(ValidationError(message="La descripción es obligatoria"))
-        
+        for check in (
+            validate_id_requerido(income.id, ValidationMessages.ID_REQUERIDO_INGRESO),
+            validate_monto_positivo(income.monto),
+            validate_descripcion_requerida(income.descripcion),
+        ):
+            if check.is_err():
+                return check  # type: ignore[return-value]
         return self._repo.update(income)
 
     def get_total_by_month(self, year: int, month: int) -> float:

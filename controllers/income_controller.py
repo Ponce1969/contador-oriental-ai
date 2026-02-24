@@ -4,38 +4,17 @@ Controller para gestión de ingresos familiares
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from contextlib import contextmanager
-
 from result import Result
-from sqlalchemy.orm import Session
 
-from core.sqlalchemy_session import get_db_session
+from controllers.base_controller import BaseController
 from models.errors import AppError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
 from services.income_service import IncomeService
 
 
-class IncomeController:
+class IncomeController(BaseController):
     """Controller para gestión de ingresos"""
-
-    def __init__(
-        self,
-        session: Session | None = None,
-        familia_id: int | None = None,
-    ) -> None:
-        self._session = session
-        self._familia_id = familia_id
-
-    @contextmanager
-    def _get_session(self) -> Generator[Session, None, None]:
-        """Obtener sesión de base de datos."""
-        if self._session:
-            yield self._session
-        else:
-            with get_db_session() as session:
-                yield session
 
     def get_title(self) -> str:
         return "Ingresos Familiares"

@@ -8,10 +8,12 @@ from datetime import date
 
 import flet as ft
 
+from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
 from controllers.income_controller import IncomeController
 from core.session import SessionManager
 from core.state import AppState
+from views.components.summary_renderer import SummaryRenderer
 from views.layouts.main_layout import MainLayout
 
 
@@ -83,8 +85,6 @@ class DashboardView:
         
         is_mobile = AppState.device == "mobile"
         title_size = 20 if is_mobile else 28
-        # col spec: 12 columnas en mobile (apilado), 6 en tablet/desktop (lado a lado)
-        col_half = {"xs": 12, "sm": 6}
 
         content = ft.Column(
             controls=[
@@ -183,7 +183,10 @@ class DashboardView:
                                         height=10,
                                     ),
                                     ft.Text(
-                                        value=f"{porcentaje_ingresos * 100:.1f}% del total",
+                                        value=(
+                                            f"{porcentaje_ingresos * 100:.1f}%"
+                                            " del total"
+                                        ),
                                         size=12,
                                         color=ft.Colors.TEAL_700,
                                     ),
@@ -199,7 +202,7 @@ class DashboardView:
                                 blur_radius=6,
                                 color=ft.Colors.TEAL_100,
                             ),
-                            col=col_half,
+                            col=Responsive.COL_HALF,
                         ),
                         ft.Container(
                             content=ft.Column(
@@ -233,7 +236,9 @@ class DashboardView:
                                         height=10,
                                     ),
                                     ft.Text(
-                                        value=f"{porcentaje_gastos * 100:.1f}% del total",
+                                        value=(
+                                            f"{porcentaje_gastos * 100:.1f}% del total"
+                                        ),
                                         size=12,
                                         color=ft.Colors.ORANGE_700,
                                     ),
@@ -249,7 +254,7 @@ class DashboardView:
                                 blur_radius=6,
                                 color=ft.Colors.ORANGE_100,
                             ),
-                            col=col_half,
+                            col=Responsive.COL_HALF,
                         ),
                     ],
                     spacing=16,
@@ -277,7 +282,12 @@ class DashboardView:
                                         color=ft.Colors.TEAL_700,
                                     ),
                                     ft.Divider(),
-                                    self._render_income_summary(),
+                                    SummaryRenderer.render(
+                                        self.income_controller.get_summary_by_categories(),
+                                        color=ft.Colors.GREEN,
+                                        color_bg=ft.Colors.GREEN_100,
+                                        empty_msg="No hay ingresos registrados",
+                                    ),
                                 ],
                                 spacing=10,
                                 scroll=ft.ScrollMode.AUTO,
@@ -287,7 +297,7 @@ class DashboardView:
                             border=ft.border.all(2, ft.Colors.TEAL_200),
                             border_radius=10,
                             height=280,
-                            col=col_half,
+                            col=Responsive.COL_HALF,
                         ),
                         ft.Container(
                             content=ft.Column(
@@ -299,7 +309,12 @@ class DashboardView:
                                         color=ft.Colors.ORANGE_700,
                                     ),
                                     ft.Divider(),
-                                    self._render_expense_summary(),
+                                    SummaryRenderer.render(
+                                        self.expense_controller.get_summary_by_categories(),
+                                        color=ft.Colors.RED,
+                                        color_bg=ft.Colors.RED_100,
+                                        empty_msg="No hay gastos registrados",
+                                    ),
                                 ],
                                 spacing=10,
                                 scroll=ft.ScrollMode.AUTO,
@@ -309,7 +324,7 @@ class DashboardView:
                             border=ft.border.all(2, ft.Colors.ORANGE_200),
                             border_radius=10,
                             height=280,
-                            col=col_half,
+                            col=Responsive.COL_HALF,
                         ),
                     ],
                     spacing=16,
@@ -333,124 +348,6 @@ class DashboardView:
     def _get_total_gastos(self, year: int, month: int) -> float:
         """Obtener total de gastos del mes"""
         return self.expense_controller.get_total_by_month(year, month)
-
-    def _render_income_summary(self) -> ft.Column:
-        """Renderizar resumen de ingresos por categoría"""
-        summary = self.income_controller.get_summary_by_categories()
-        
-        if not summary:
-            return ft.Column(
-                controls=[
-                    ft.Text(
-                        value="No hay ingresos registrados",
-                        italic=True,
-                        color=ft.Colors.GREY_600
-                    )
-                ]
-            )
-        
-        total = sum(summary.values())
-        sorted_summary = sorted(summary.items(), key=lambda x: x[1], reverse=True)
-        
-        controls = []
-        for categoria, monto in sorted_summary:
-            porcentaje = (monto / total * 100) if total > 0 else 0
-            monto_fmt = f"{monto:,.0f}".replace(",", ".")
-            
-            controls.append(
-                ft.Column(
-                    controls=[
-                        ft.Row(
-                            controls=[
-                                ft.Text(
-                                    value=categoria,
-                                    size=14,
-                                    weight=ft.FontWeight.BOLD,
-                                    expand=True
-                                ),
-                                ft.Text(
-                                    value=f"${monto_fmt}",
-                                    size=14,
-                                    color=ft.Colors.GREEN
-                                ),
-                            ]
-                        ),
-                        ft.ProgressBar(
-                            value=porcentaje / 100,
-                            color=ft.Colors.GREEN,
-                            bgcolor=ft.Colors.GREEN_100,
-                            height=8
-                        ),
-                        ft.Text(
-                            value=f"{porcentaje:.1f}%",
-                            size=11,
-                            color=ft.Colors.GREY_600
-                        ),
-                    ],
-                    spacing=3
-                )
-            )
-        
-        return ft.Column(controls=controls, spacing=15)
-
-    def _render_expense_summary(self) -> ft.Column:
-        """Renderizar resumen de gastos por categoría"""
-        summary = self.expense_controller.get_summary_by_categories()
-        
-        if not summary:
-            return ft.Column(
-                controls=[
-                    ft.Text(
-                        value="No hay gastos registrados",
-                        italic=True,
-                        color=ft.Colors.GREY_600
-                    )
-                ]
-            )
-        
-        total = sum(summary.values())
-        sorted_summary = sorted(summary.items(), key=lambda x: x[1], reverse=True)
-        
-        controls = []
-        for categoria, monto in sorted_summary:
-            porcentaje = (monto / total * 100) if total > 0 else 0
-            monto_fmt = f"{monto:,.0f}".replace(",", ".")
-            
-            controls.append(
-                ft.Column(
-                    controls=[
-                        ft.Row(
-                            controls=[
-                                ft.Text(
-                                    value=categoria,
-                                    size=14,
-                                    weight=ft.FontWeight.BOLD,
-                                    expand=True
-                                ),
-                                ft.Text(
-                                    value=f"${monto_fmt}",
-                                    size=14,
-                                    color=ft.Colors.RED
-                                ),
-                            ]
-                        ),
-                        ft.ProgressBar(
-                            value=porcentaje / 100,
-                            color=ft.Colors.RED,
-                            bgcolor=ft.Colors.RED_100,
-                            height=8
-                        ),
-                        ft.Text(
-                            value=f"{porcentaje:.1f}%",
-                            size=11,
-                            color=ft.Colors.GREY_600
-                        ),
-                    ],
-                    spacing=3
-                )
-            )
-        
-        return ft.Column(controls=controls, spacing=15)
 
     def _get_month_name(self, month: int) -> str:
         """Obtener nombre del mes en español"""

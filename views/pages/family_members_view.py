@@ -6,13 +6,13 @@ Arquitectura: State + Sync Pattern (Profesional)
 from __future__ import annotations
 
 import flet as ft
-from result import Err, Ok
+from result import Err
 
+from constants.responsive import Responsive
 from controllers.family_member_controller import FamilyMemberController
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
-from models.errors import AppError
 from models.family_member_model import FamilyMember
 from views.layouts.main_layout import MainLayout
 
@@ -132,8 +132,6 @@ class FamilyMembersView:
     # =====================================================
     def render(self):
         is_mobile = AppState.device == "mobile"
-        col_half = {"xs": 12, "sm": 6}
-        col_third = {"xs": 12, "sm": 4}
 
         content = ft.Column(
             controls=[
@@ -161,7 +159,7 @@ class FamilyMembersView:
                                     ),
                                     ft.Container(
                                         content=self.type_dropdown,
-                                        col=col_third,
+                                        col=Responsive.COL_THIRD,
                                     ),
                                     ft.Container(
                                         content=self.age_input,
@@ -175,11 +173,11 @@ class FamilyMembersView:
                                 controls=[
                                     ft.Container(
                                         content=self.parentesco_dropdown,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                     ft.Container(
                                         content=self.job_dropdown,
-                                        col=col_half,
+                                        col=Responsive.COL_HALF,
                                     ),
                                 ],
                                 spacing=10,
@@ -249,7 +247,7 @@ class FamilyMembersView:
         # (bug conocido de Flet donde value no se refleja visualmente)
         try:
             self.select_dropdown.update()
-        except:
+        except Exception:
             pass  # Control aún no está en la página
 
         # Form
@@ -273,7 +271,7 @@ class FamilyMembersView:
             self.age_input.update()
             self.job_dropdown.update()
             self.notes_input.update()
-        except:
+        except Exception:
             pass  # Controles aún no están en la página
 
         self.page.update()
@@ -326,7 +324,11 @@ class FamilyMembersView:
                 icon = ft.Icons.PETS
             else:
                 parentesco_text = m.parentesco.capitalize() if m.parentesco else "Otro"
-                estado_text = m.estado_laboral.capitalize() if m.estado_laboral else "No especificado"
+                estado_text = (
+                    m.estado_laboral.capitalize()
+                    if m.estado_laboral
+                    else "No especificado"
+                )
                 info_text = f"{parentesco_text} • {edad_text} • {estado_text}"
                 icon = ft.Icons.PERSON
 
@@ -395,7 +397,7 @@ class FamilyMembersView:
 
     def _on_edit(self, member: FamilyMember):
         self.state["editing_id"] = member.id
-        self.state["selected_id"] = str(member.id)  # Convertir a str para compatibilidad
+        self.state["selected_id"] = str(member.id)
 
         self._sync_ui()
 
