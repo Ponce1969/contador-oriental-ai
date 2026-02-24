@@ -13,6 +13,7 @@ from controllers.expense_controller import ExpenseController
 from controllers.income_controller import IncomeController
 from core.session import SessionManager
 from core.state import AppState
+from utils.formatters import format_currency
 from views.components.summary_renderer import SummaryRenderer
 from views.layouts.main_layout import MainLayout
 
@@ -56,9 +57,9 @@ class DashboardView:
         balance = total_ingresos - total_gastos
         
         # Formatear montos
-        ingresos_fmt = f"{total_ingresos:,.0f}".replace(",", ".")
-        gastos_fmt = f"{total_gastos:,.0f}".replace(",", ".")
-        balance_fmt = f"{balance:,.0f}".replace(",", ".")
+        ingresos_fmt = format_currency(total_ingresos)
+        gastos_fmt = format_currency(total_gastos)
+        balance_fmt = format_currency(balance)
         
         # Determinar color y mensaje del balance
         if balance > 0:

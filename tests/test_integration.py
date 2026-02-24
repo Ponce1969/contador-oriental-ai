@@ -4,13 +4,11 @@ Integration tests for complete user flows.
 
 from datetime import date
 
-import pytest
 from result import Ok
 
 from models.categories import ExpenseCategory
-from models.income_model import IncomeCategory
 from models.expense_model import Expense
-from models.income_model import Income
+from models.income_model import Income, IncomeCategory
 from models.user_model import UserCreate
 
 

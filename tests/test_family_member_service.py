@@ -4,8 +4,8 @@ Tests for FamilyMemberService.
 import pytest
 from result import Err, Ok
 
-from models.family_member_model import FamilyMember
 from models.errors import ValidationError
+from models.family_member_model import FamilyMember
 
 
 class TestFamilyMemberService:

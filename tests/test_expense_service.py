@@ -7,7 +7,7 @@ from datetime import date
 import pytest
 from result import Err, Ok
 
-from models.categories import ExpenseCategory, PaymentMethod, RecurrenceFrequency
+from models.categories import ExpenseCategory
 from models.errors import ValidationError
 from models.expense_model import Expense
 from services.expense_service import ExpenseService

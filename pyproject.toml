@@ -26,7 +26,16 @@ dev = [
     "ty",
     "pytest",
     "pytest-cov",
+    "flet>=0.80.4",
+    "types-pyyaml>=6.0.12.20250915",
+    "result>=0.17.0",
 ]
+
+[tool.ty.analysis]
+# Permitir imports no resueltos de Flet
+allowed-unresolved-imports = ["flet", "flet.*"]
+# Reemplazar imports de Flet con any
+replace-imports-with-any = ["flet", "flet.*"]
 
 [tool.mypy]
 python_version = "3.12"

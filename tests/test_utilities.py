@@ -40,9 +40,10 @@ class TestMappers:
 
     def test_expense_to_domain(self):
         """Test expense table to domain conversion."""
+        from datetime import date
+
         from database.tables import ExpenseTable
         from repositories.mappers import to_domain
-        from datetime import date
 
         table_row = ExpenseTable(
             id=1,
@@ -62,10 +63,11 @@ class TestMappers:
 
     def test_expense_to_table(self):
         """Test expense domain to table conversion."""
-        from models.expense_model import Expense
-        from models.categories import ExpenseCategory, PaymentMethod
-        from repositories.mappers import to_table
         from datetime import date
+
+        from models.categories import ExpenseCategory, PaymentMethod
+        from models.expense_model import Expense
+        from repositories.mappers import to_table
 
         expense = Expense(
             monto=150.00,

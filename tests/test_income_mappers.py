@@ -4,8 +4,8 @@ Tests for income_mappers.
 from datetime import date
 
 from database.tables import IncomeTable
-from models.income_model import Income, IncomeCategory
 from models.categories import RecurrenceFrequency
+from models.income_model import Income, IncomeCategory
 from repositories.income_mappers import income_to_domain, income_to_table
 
 

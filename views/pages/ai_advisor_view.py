@@ -84,7 +84,7 @@ class AIAdvisorView:
             icon_color=ft.Colors.BLUE_700,
             tooltip="Ver informe formal",
             visible=False,
-            on_click=lambda e: self.page.run_task(self._exportar_pdf),  # type: ignore
+            on_click=lambda e: self.page.run_task(self._exportar_pdf),
         )
 
         # Quick chips
@@ -113,7 +113,7 @@ class AIAdvisorView:
 
     async def _animate_typing(self) -> None:
         """Animación cíclica de opacidad para los tres puntos (efecto onda)"""
-        dots = self.typing_indicator.content.controls  # type: ignore[union-attr]
+        dots = self.typing_indicator.content.controls
         for i, dot in enumerate(dots):
             dot.opacity = 0.3 + (i * 0.2)
 

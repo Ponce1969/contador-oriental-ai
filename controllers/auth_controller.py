@@ -2,7 +2,7 @@
 Controlador de autenticación - Manejo de login y usuarios
 """
 import flet as ft
-from result import Err, Ok, Result
+from result import Err, Result
 
 from models.errors import AppError, DatabaseError, ValidationError
 from models.user_model import User, UserLogin

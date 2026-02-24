@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError as PydanticError
 from result import Err, Ok
 
-from models.categories import ExpenseCategory, PaymentMethod
+from models.categories import ExpenseCategory
 from models.expense_model import Expense
 from models.income_model import Income, IncomeCategory
 from models.user_model import UserCreate

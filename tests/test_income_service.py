@@ -5,10 +5,9 @@ Tests for IncomeService.
 from datetime import date
 
 import pytest
-from result import Err, Ok
+from result import Ok
 
-from models.errors import ValidationError
-from models.income_model import Income, IncomeCategory, RecurrenceFrequency
+from models.income_model import Income, IncomeCategory
 from services.income_service import IncomeService
 
 

@@ -11,14 +11,10 @@ from result import Err, Ok
 
 from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
-
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
-from models.categories import (
-    ExpenseCategory,
-    PaymentMethod
-)
+from models.categories import ExpenseCategory, PaymentMethod
 from models.errors import AppError
 from models.expense_model import Expense
 from views.layouts.main_layout import MainLayout
@@ -420,6 +416,9 @@ class ExpensesView:
     
     def _on_delete_expense(self, expense: Expense) -> None:
         """Eliminar un gasto"""
+        if expense.id is None:
+            self._show_error("El gasto no tiene ID válido")
+            return
         result = self.controller.delete_expense(expense.id)
         
         match result:

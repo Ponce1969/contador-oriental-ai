@@ -1,7 +1,6 @@
 """
 Tests for FamilyMember model.
 """
-import pytest
 
 from models.family_member_model import FamilyMember
 

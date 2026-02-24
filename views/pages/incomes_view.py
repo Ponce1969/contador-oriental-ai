@@ -17,6 +17,7 @@ from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
 from models.income_model import Income, IncomeCategory
+from utils.formatters import format_currency
 from views.layouts.main_layout import MainLayout
 
 
@@ -315,7 +316,7 @@ class IncomesView:
                 recurrente_text = ""
                 
                 # Formatear monto con separador de miles
-                monto_formateado = f"{income.monto:,.0f}".replace(",", ".")
+                monto_formateado = format_currency(income.monto)
                 
                 self.incomes_column.controls.append(
                     ft.Container(
@@ -395,7 +396,7 @@ class IncomesView:
             total = sum(summary.values())
             
             # Formatear total con separador de miles
-            total_formateado = f"{total:,.0f}".replace(",", ".")
+            total_formateado = format_currency(total)
             
             # Agregar total general
             self.summary_column.controls.append(
@@ -416,7 +417,7 @@ class IncomesView:
                 porcentaje = (monto / total * 100) if total > 0 else 0
                 
                 # Formatear monto con separador de miles
-                monto_formateado = f"{monto:,.0f}".replace(",", ".")
+                monto_formateado = format_currency(monto)
                 
                 self.summary_column.controls.append(
                     ft.Column(

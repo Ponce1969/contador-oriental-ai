@@ -170,13 +170,13 @@ class LoginView:
         SessionManager.login(self.page, user)
         
         # Mostrar mensaje de bienvenida
-        self.page.snack_bar = ft.SnackBar(  # type: ignore
+        self.page.snack_bar = ft.SnackBar(
             content=ft.Text(
                 value=f"¡Bienvenido, {user.nombre_completo or user.username}!"
             ),
             bgcolor=ft.Colors.GREEN_400
         )
-        self.page.snack_bar.open = True  # type: ignore
+        self.page.snack_bar.open = True
         
         # Redirigir al dashboard
         from core.router import Router

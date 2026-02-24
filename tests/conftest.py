@@ -6,11 +6,10 @@ from __future__ import annotations
 
 import os
 import tempfile
-from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
 from database.tables import Base
 
@@ -86,6 +85,7 @@ def db_session(db_engine) -> Session:
 def sample_expense_data():
     """Provide sample expense data for tests."""
     from datetime import date
+
     from models.categories import ExpenseCategory, PaymentMethod
     
     return {
@@ -105,6 +105,7 @@ def sample_expense_data():
 def sample_income_data():
     """Provide sample income data for tests."""
     from datetime import date
+
     from models.income_model import IncomeCategory
     
     return {

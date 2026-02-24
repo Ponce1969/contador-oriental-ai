@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import flet as ft
 
+from utils.formatters import format_currency
+
 
 class SummaryRenderer:
     """Renderiza un resumen de categorías con barra de progreso."""
@@ -42,7 +44,7 @@ class SummaryRenderer:
         controls = []
         for categoria, monto in sorted_items:
             porcentaje = (monto / total * 100) if total > 0 else 0
-            monto_fmt = f"{monto:,.0f}".replace(",", ".")
+            monto_fmt = format_currency(monto)
 
             controls.append(
                 ft.Column(

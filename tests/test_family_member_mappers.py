@@ -1,7 +1,6 @@
 """
 Tests for family_member_mappers.
 """
-from datetime import date
 
 from database.tables import FamilyMemberTable
 from models.family_member_model import FamilyMember, IncomeType
