@@ -8,7 +8,6 @@ import asyncio
 from datetime import datetime
 
 import flet as ft
-from result import Err, Ok
 
 from controllers.ai_controller import AIController
 from core.session import SessionManager
@@ -249,7 +248,7 @@ class AIAdvisorView:
         self._render_chat()
 
     async def _on_consultar(self, e) -> None:
-        """Manejar consulta al contador (async: no bloquea la UI)"""
+        """Manejar consulta al contador con streaming token a token."""
         if not self.pregunta_input.value or not self.pregunta_input.value.strip():
             self._show_error("Por favor escribí una pregunta")
             return
@@ -264,36 +263,113 @@ class AIAdvisorView:
         self.typing_indicator.visible = True
         self.page.update()
 
-        asyncio.create_task(self._animate_typing())
+        anim_task = asyncio.create_task(self._animate_typing())
 
         incluir_gastos = self.incluir_gastos_checkbox.value or False
+        respuesta_acumulada = ""
+        stream_bubble: ft.Markdown | None = None
 
-        result = await self.controller.consultar_contador(
-            pregunta=pregunta,
-            incluir_gastos=incluir_gastos,
-        )
+        # Buffer: acumular N tokens antes de actualizar la UI
+        # Evita saturar el WebSocket de Flet con un update por cada letra
+        _BUFFER_SIZE = 4
+        _buffer_count = 0
+
+        try:
+            async for token in self.controller.consultar_contador_stream(
+                pregunta=pregunta,
+                incluir_gastos=incluir_gastos,
+            ):
+                respuesta_acumulada += token
+                _buffer_count += 1
+
+                if stream_bubble is None:
+                    # Primer token: ocultar typing indicator y crear burbuja
+                    self.typing_indicator.visible = False
+                    anim_task.cancel()
+                    stream_bubble = ft.Markdown(
+                        value=respuesta_acumulada,
+                        selectable=True,
+                        extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+                        on_tap_link=lambda e: self.page.launch_url(e.data),
+                    )
+                    self._agregar_burbuja_stream(stream_bubble)
+                    self.page.update()
+                    _buffer_count = 0
+                elif _buffer_count >= _BUFFER_SIZE:
+                    stream_bubble.value = respuesta_acumulada
+                    self.page.update()
+                    _buffer_count = 0
+
+            # Stream completado: guardar en historial
+            self._last_respuesta = respuesta_acumulada
+            self.pdf_button.visible = True
+            self.chat_history.append(
+                ChatMessage(role="assistant", content=respuesta_acumulada)
+            )
+
+        except Exception as err:
+            self.typing_indicator.visible = False
+            anim_task.cancel()
+            msg = str(err)
+            self.chat_history.append(
+                ChatMessage(role="assistant", content=f"❌ Error: {msg}")
+            )
+            self._show_error(msg)
+            self._render_chat()
 
         self.typing_indicator.visible = False
-
-        match result:
-            case Ok(response):
-                self._last_respuesta = response.respuesta
-                self.pdf_button.visible = True
-                self.chat_history.append(
-                    ChatMessage(role="assistant", content=response.respuesta)
-                )
-            case Err(error):
-                self.chat_history.append(
-                    ChatMessage(
-                        role="assistant",
-                        content=f"❌ Error: {error.message}",
-                    )
-                )
-                self._show_error(error.message)
-
         self.pregunta_input.disabled = False
-        self._render_chat()
+        self.chat_column.scroll_to(offset=-1, duration=400)
         self.page.update()
+
+    def _agregar_burbuja_stream(self, markdown_widget: ft.Markdown) -> None:
+        """Inserta en el chat una burbuja del asistente con el widget Markdown dado."""
+        bubble = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(
+                                ft.Icons.AUTO_AWESOME,
+                                size=12,
+                                color=ft.Colors.BLUE_GREY_400,
+                            ),
+                            ft.Text(
+                                "CONTADOR ORIENTAL",
+                                size=10,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.BLUE_GREY_400,
+                            ),
+                        ],
+                        spacing=5,
+                    ),
+                    markdown_widget,
+                ],
+                spacing=8,
+                tight=True,
+            ),
+            padding=15,
+            bgcolor=ft.Colors.WHITE,
+            border=ft.border.all(1, ft.Colors.GREY_200),
+            border_radius=ft.border_radius.only(
+                top_left=15,
+                top_right=15,
+                bottom_left=2,
+                bottom_right=15,
+            ),
+            width=None if AppState.device == "mobile" else 500,
+            shadow=ft.BoxShadow(
+                blur_radius=5,
+                color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK),
+                offset=ft.Offset(0, 2),
+            ),
+        )
+        self.chat_column.controls.append(
+            ft.Row(
+                controls=[bubble],
+                alignment=ft.MainAxisAlignment.START,
+            )
+        )
 
     def _render_chat(self) -> None:
         """Renderizado premium con Markdown y anchos controlados"""

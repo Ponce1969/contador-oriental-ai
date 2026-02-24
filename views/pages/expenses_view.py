@@ -81,14 +81,6 @@ class ExpensesView:
             read_only=True,
         )
 
-        self.notas_input = ft.TextField(
-            label="Notas (opcional)",
-            hint_text="Ej: Mensual, Quincenal, Pago recurrente, etc.",
-            multiline=True,
-            min_lines=2,
-            max_lines=3,
-            expand=True,
-        )
         
         # Lista de gastos
         self.expenses_column = ft.Column(spacing=10)
@@ -153,7 +145,6 @@ class ExpensesView:
                                 spacing=10,
                                 run_spacing=10,
                             ),
-                            self.notas_input,
                             CorrectElevatedButton(
                                 "💾 Guardar gasto",
                                 on_click=self._on_add_expense,
@@ -263,7 +254,7 @@ class ExpensesView:
                 metodo_pago=selected_metodo,
                 es_recurrente=False,
                 frecuencia_recurrencia=None,
-                notas=self.notas_input.value if self.notas_input.value else None,
+                notas=None,
             )
             
             # Decidir si crear o actualizar
@@ -425,8 +416,6 @@ class ExpensesView:
         self.monto_input.value = str(expense.monto)
         self.categoria_dropdown.value = expense.categoria.value
         self.metodo_pago_dropdown.value = expense.metodo_pago.value
-        self.notas_input.value = expense.notas if expense.notas else ""
-        
         self.page.update()
     
     def _on_delete_expense(self, expense: Expense) -> None:
@@ -448,7 +437,6 @@ class ExpensesView:
         self.monto_input.value = ""
         self.categoria_dropdown.value = None
         self.metodo_pago_dropdown.value = PaymentMethod.EFECTIVO.value
-        self.notas_input.value = ""
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

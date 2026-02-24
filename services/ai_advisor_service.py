@@ -130,19 +130,47 @@ class AIAdvisorService:
             f"SUBTOTAL CONSULTADO: ${total_filtrado:,.0f}"
             f" ({ctx.total_gastos_count} transacciones)"
         )
-        
-        es_consulta_general = (
-            ctx.miembros_count > 0
-            and abs(total_filtrado - ctx.total_gastos_mes) < 1.0
-        )
-        if es_consulta_general:
-            gasto_per_capita: float = ctx.total_gastos_mes / ctx.miembros_count
-            lineas.append(
-                f"GASTO PER CÁPITA (mes completo): ${gasto_per_capita:,.0f}"
-            )
-        
+
         return "\n".join(lineas)
-    
+
+    def _formatear_comparativa(self, ctx: AIContext) -> str:
+        """
+        Convierte CategoryMetric en hechos contables narrativos para el prompt.
+        Python pre-calcula todo; Gemma solo lee y narra.
+        """
+        if not ctx.comparativa_meses:
+            return ""
+
+        lineas: list[str] = [
+            "",
+            "### COMPARATIVA VS MES ANTERIOR ###",
+        ]
+
+        for m in ctx.comparativa_meses:
+            vt = m.variacion_total_pct
+            vtk = m.variacion_ticket_pct
+            diag = m.diagnostico
+
+            if vt is None:
+                lineas.append(
+                    f"- {m.categoria}: ${m.total_actual:,.0f} este mes"
+                    f" (sin datos del mes anterior para comparar)."
+                )
+                continue
+
+            signo_t = "+" if vt >= 0 else ""
+            signo_tk = "+" if (vtk or 0) >= 0 else ""
+            lineas.append(
+                f"- {m.categoria}:"
+                f" gasto total {signo_t}{vt:.1f}%"
+                f" (${m.total_anterior:,.0f} → ${m.total_actual:,.0f}),"
+                f" ticket promedio {signo_tk}{vtk:.1f}%"
+                f" (${m.ticket_anterior:,.0f} → ${m.ticket_actual:,.0f})."
+                f" {diag}"
+            )
+
+        return "\n".join(lineas)
+
     def _construir_prompt(
         self,
         pregunta: str,
@@ -162,7 +190,7 @@ class AIAdvisorService:
             f"{gastos_formateados}\n"
             if gastos_formateados else ""
         )
-        
+
         datos_reales = bool(seccion_gastos)
         prioridad = (
             "- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier"
@@ -175,16 +203,66 @@ class AIAdvisorService:
 TU ROL:
 - Leer los datos que te da el sistema y narrarlos en español rioplatense.
 - Dar consejos contables basados en la normativa uruguaya si te la preguntan.
-- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA dividir ni derivar valores.
 - Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- Si un dato no aparece explícitamente en los datos, NO lo menciones ni lo calcules.
 {prioridad}- Máximo 4 líneas de respuesta.
 
 {seccion_rag}{seccion_gastos}PREGUNTA: {pregunta}
 
 RESPUESTA:"""
-        
+
         return prompt
     
+    async def consultar_stream(
+        self,
+        request: AIRequest,
+        ctx: AIContext | None = None,
+    ):
+        """
+        Versión streaming de consultar().
+        Yield tokens a medida que Gemma los genera.
+        El caller acumula y actualiza la UI token a token.
+
+        Yields:
+            str — fragmento de texto generado por el modelo.
+
+        Raises:
+            AppError — si hay error de conexión o de modelo.
+        """
+        from core.logger import get_logger
+        ai_logger = get_logger("AIAdvisor.stream")
+
+        contexto, _ = self._seleccionar_contexto(request.pregunta)
+
+        gastos_formateados = ""
+        if request.incluir_gastos_recientes and ctx and ctx.resumen_gastos:
+            gastos_formateados = self._formatear_datos_financieros(ctx)
+            comparativa_str = self._formatear_comparativa(ctx)
+            if comparativa_str:
+                gastos_formateados += comparativa_str
+
+        prompt = self._construir_prompt(request.pregunta, contexto, gastos_formateados)
+
+        ai_logger.info("🔴 STREAM iniciado (%s chars prompt)", len(prompt))
+
+        try:
+            from ollama import AsyncClient
+        except ImportError:
+            raise AppError(message="Dependencia 'ollama' no encontrada.")
+
+        client = AsyncClient(host="http://host.docker.internal:11434")
+        async for part in await client.generate(
+            model="contador-oriental",
+            prompt=prompt,
+            stream=True,
+        ):
+            token: str = part.get("response", "")
+            if token:
+                yield token
+
+        ai_logger.info("✅ STREAM completado")
+
     async def consultar(
         self,
         request: AIRequest,
@@ -213,12 +291,15 @@ RESPUESTA:"""
             
             if request.incluir_gastos_recientes and ctx and ctx.resumen_gastos:
                 gastos_formateados = self._formatear_datos_financieros(ctx)
-            
+                comparativa_str = self._formatear_comparativa(ctx)
+                if comparativa_str:
+                    gastos_formateados += comparativa_str
+
             # 3. Construir prompt
             prompt = self._construir_prompt(
                 request.pregunta,
                 contexto,
-                gastos_formateados
+                gastos_formateados,
             )
             
             # Log del contexto para debugging
@@ -251,15 +332,10 @@ RESPUESTA:"""
                 ai_logger.info("🔌 Conectando con Ollama en host.docker.internal:11434")
                 client = AsyncClient(host='http://host.docker.internal:11434')
                 
-                ai_logger.info("🤖 Generando respuesta con gemma2:2b (async)")
+                ai_logger.info("🤖 Generando respuesta con contador-oriental (async)")
                 response = await client.generate(
-                    model='gemma2:2b',
+                    model="contador-oriental",
                     prompt=prompt,
-                    options={
-                        'temperature': 0.3,  # Contador serio, no inventa números
-                        'top_p': 0.9,
-                        'num_predict': 200,
-                    }
                 )
                 
                 respuesta_texto: str = response['response'].strip()

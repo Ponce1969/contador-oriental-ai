@@ -6526,3 +6526,724 @@ AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'c
 2026-02-21 04:56:34,755 | INFO | flet | Flet app has started...
 2026-02-21 04:56:35,119 | INFO | flet_web.fastapi | Starting up Flet App Manager
 2026-02-21 04:56:35,119 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-21 04:56:36,947 | INFO | flet_web.fastapi | New FletApp: LPWOZNXo
+2026-02-21 04:56:37,024 | INFO | flet_web.fastapi | New session created (1 total): _0FvhExneGkaRoAzg_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 04:56:37,027 | INFO | flet_web.fastapi | Start session: 0FvhExneGkaRoAzg
+2026-02-21 04:56:37,247 | INFO | App | Base de datos inicializada
+2026-02-21 04:56:37,312 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-21 04:56:37,313 | INFO | Router | Navigating to: /login
+2026-02-21 04:56:37,362 | INFO | App | Aplicação iniciada com sucesso
+2026-02-21 04:57:52,004 | INFO | Router | Navigating to: /
+2026-02-21 04:58:29,700 | INFO | Router | Navigating to: /login
+2026-02-21 04:58:52,094 | INFO | Router | Navigating to: /
+2026-02-21 04:59:49,970 | INFO | Router | Navigating to: /family
+2026-02-21 05:00:07,107 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:00:47,321 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:01:18,454 | INFO | Router | Navigating to: /
+2026-02-21 05:01:26,430 | INFO | Router | Navigating to: /family
+2026-02-21 05:01:32,644 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:01:42,231 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:02:00,702 | INFO | Router | Navigating to: /login
+2026-02-21 05:03:33,279 | INFO | Router | Navigating to: /login
+2026-02-21 05:04:08,456 | INFO | Router | Navigating to: /
+2026-02-21 05:04:36,122 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:04:41,736 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:04:47,598 | INFO | Router | Navigating to: /family
+2026-02-21 05:04:51,288 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:04:56,113 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:05:04,929 | INFO | Router | Navigating to: /
+2026-02-21 05:05:09,515 | INFO | Router | Navigating to: /family
+2026-02-21 05:05:14,046 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:05:18,367 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:05:27,548 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:05:37,270 | INFO | Router | Navigating to: /ai-contador
+2026-02-21 05:06:26,168 | INFO | controllers.ai_controller | Consulta recibida: 'hola puedes decirme cuanto fue el gasto de vehiculo este mes ?'
+2026-02-21 05:06:26,230 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-21 05:06:26,235 | INFO | controllers.ai_controller | Categorías detectadas en 'hola puedes decirme cuanto fue el gasto de vehiculo este mes ?': ['🚗 Vehículos']
+2026-02-21 05:06:26,236 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '🚗 Vehículos', '👕 Ropa', '🛒 Almacén'}
+2026-02-21 05:06:26,236 | INFO | controllers.ai_controller | Filtrado por categorías ['🚗 Vehículos']: 1 gastos de 7 totales
+2026-02-21 05:06:26,277 | INFO | AIAdvisor | ================================================================================
+2026-02-21 05:06:26,278 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-21 05:06:26,278 | INFO | AIAdvisor |   - Pregunta: hola puedes decirme cuanto fue el gasto de vehiculo este mes ?
+2026-02-21 05:06:26,279 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-21 05:06:26,279 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-21 05:06:26,280 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-21 05:06:26,280 | INFO | AIAdvisor |   - Prompt completo (1125 chars):
+2026-02-21 05:06:26,281 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-21 05:06:26,281 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $16,000 (1 transacciones)
+PREGUNTA: hola puedes decirme cuanto fue el gasto de vehiculo este mes ?
+
+RESPUESTA:
+2026-02-21 05:06:26,282 | INFO | AIAdvisor | ================================================================================
+2026-02-21 05:06:26,793 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-21 05:06:26,802 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-21 05:06:33,336 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-21 05:06:33,346 | INFO | AIAdvisor | ✅ Respuesta generada: 46 chars
+2026-02-21 05:07:22,989 | INFO | Router | Navigating to: /login
+2026-02-21 05:07:24,684 | INFO | Router | Navigating to: /login
+2026-02-21 05:08:22,899 | INFO | Router | Navigating to: /
+2026-02-21 05:08:43,080 | INFO | Router | Navigating to: /family
+2026-02-21 05:08:47,302 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:08:49,368 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:08:58,769 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:09:30,593 | INFO | Router | Navigating to: /login
+2026-02-21 05:12:02,241 | INFO | Router | Navigating to: /login
+2026-02-21 05:12:36,099 | INFO | Router | Navigating to: /login
+2026-02-21 05:13:21,683 | INFO | Router | Navigating to: /login
+2026-02-21 05:13:36,272 | INFO | Router | Navigating to: /
+2026-02-21 05:13:43,876 | INFO | Router | Navigating to: /incomes
+2026-02-21 05:13:45,688 | INFO | Router | Navigating to: /expenses
+2026-02-21 05:16:20,314 | INFO | Router | Navigating to: /login
+2026-02-21 05:24:14,004 | INFO | flet_web.fastapi | Session disconnected: _0FvhExneGkaRoAzg_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-21 05:24:14,080 | INFO | flet_web.fastapi | Disposing FletApp: LPWOZNXo
+2026-02-21 05:24:14,164 | INFO | flet_web.fastapi | FletApp was garbage collected: LPWOZNXo
+2026-02-21 05:24:31,509 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-21 05:24:31,540 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-21 05:24:31,718 | INFO | flet | Session was garbage collected: 0FvhExneGkaRoAzg
+2026-02-22 04:31:18,970 | INFO | flet | Assets path configured: /app/assets
+2026-02-22 04:31:19,969 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-22 04:31:19,972 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-22 04:31:19,973 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-22 04:31:19,974 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-22 04:31:19,975 | INFO | flet | Flet app has started...
+2026-02-22 04:31:20,095 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-22 04:31:20,096 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-22 04:31:55,648 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmp_8pxh5wj
+2026-02-22 04:31:55,659 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-22 04:31:55,661 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-22 04:31:57,949 | INFO | flet_web.fastapi | New FletApp: OnwsHMps
+2026-02-22 04:31:58,342 | INFO | flet_web.fastapi | New session created (1 total): _3RE4eM3g6CSqO3Ay_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 04:31:58,372 | INFO | flet_web.fastapi | Start session: 3RE4eM3g6CSqO3Ay
+2026-02-22 04:31:58,828 | INFO | App | Base de datos inicializada
+2026-02-22 04:31:58,893 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-22 04:31:58,894 | INFO | Router | Navigating to: /login
+2026-02-22 04:31:58,972 | INFO | App | Aplicação iniciada com sucesso
+2026-02-22 04:32:19,202 | INFO | Router | Navigating to: /
+2026-02-22 04:36:54,283 | INFO | Router | Navigating to: /expenses
+2026-02-22 04:37:09,038 | INFO | Router | Navigating to: /ai-contador
+2026-02-22 04:40:40,286 | INFO | controllers.ai_controller | Consulta recibida: 'cuanto gaste este mes en carniceria?'
+2026-02-22 04:40:40,536 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-22 04:40:40,548 | INFO | controllers.ai_controller | Categorías detectadas en 'cuanto gaste este mes en carniceria?': ['🛒 Almacén']
+2026-02-22 04:40:40,550 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🚗 Vehículos', '🛒 Almacén'}
+2026-02-22 04:40:40,551 | INFO | controllers.ai_controller | Filtrado por categorías ['🛒 Almacén']: 4 gastos de 7 totales
+2026-02-22 04:40:40,650 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:40:40,650 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-22 04:40:40,651 | INFO | AIAdvisor |   - Pregunta: cuanto gaste este mes en carniceria?
+2026-02-22 04:40:40,652 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-22 04:40:40,652 | INFO | AIAdvisor |   - Transacciones: 4
+2026-02-22 04:40:40,653 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-22 04:40:40,653 | INFO | AIAdvisor |   - Prompt completo (1217 chars):
+2026-02-22 04:40:40,653 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-22 04:40:40,654 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+SUBTOTAL CONSULTADO: $12,000 (4 transacciones)
+PREGUNTA: cuanto gaste este mes en carniceria?
+
+RESPUESTA:
+2026-02-22 04:40:40,655 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:40:41,753 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-22 04:40:41,769 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-22 04:41:00,543 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 500 Internal Server Error"
+2026-02-22 04:41:00,585 | ERROR | AIAdvisor | ❌ Error inesperado en Ollama: ResponseError: llama runner process has terminated: error loading model: unable to allocate CUDA0 buffer (status code: 500)
+2026-02-22 04:43:05,033 | INFO | flet_web.fastapi | Session disconnected: _3RE4eM3g6CSqO3Ay_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 04:43:05,056 | INFO | flet_web.fastapi | Disposing FletApp: OnwsHMps
+2026-02-22 04:43:05,096 | INFO | flet_web.fastapi | FletApp was garbage collected: OnwsHMps
+2026-02-22 04:43:05,125 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-22 04:43:05,126 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmp_8pxh5wj
+2026-02-22 04:43:05,177 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-22 04:43:05,347 | INFO | flet | Session was garbage collected: 3RE4eM3g6CSqO3Ay
+2026-02-22 04:43:38,576 | INFO | flet | Assets path configured: /app/assets
+2026-02-22 04:43:39,954 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-22 04:43:39,957 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-22 04:43:39,958 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-22 04:43:39,958 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-22 04:43:39,966 | INFO | flet | Flet app has started...
+2026-02-22 04:43:40,279 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-22 04:43:40,280 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-22 04:43:48,101 | INFO | flet_web.fastapi | New FletApp: v4S5CCpg
+2026-02-22 04:43:48,123 | INFO | flet_web.fastapi | New session created (1 total): _hqBsT13Fi7EoZUp6_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 04:43:48,127 | INFO | flet_web.fastapi | Start session: hqBsT13Fi7EoZUp6
+2026-02-22 04:43:48,358 | INFO | App | Base de datos inicializada
+2026-02-22 04:43:48,387 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-22 04:43:48,387 | INFO | Router | Navigating to: /login
+2026-02-22 04:43:48,427 | INFO | App | Aplicação iniciada com sucesso
+2026-02-22 04:44:12,101 | INFO | Router | Navigating to: /
+2026-02-22 04:44:32,401 | INFO | Router | Navigating to: /login
+2026-02-22 04:44:43,061 | INFO | Router | Navigating to: /
+2026-02-22 04:44:49,857 | INFO | Router | Navigating to: /ai-contador
+2026-02-22 04:44:59,555 | INFO | controllers.ai_controller | Consulta recibida: '¿Débito o Crédito?'
+2026-02-22 04:44:59,562 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-22 04:44:59,565 | INFO | controllers.ai_controller | Consulta general detectada: '¿Débito o Crédito?'
+2026-02-22 04:44:59,566 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🛒 Almacén', '🚗 Vehículos'}
+2026-02-22 04:44:59,566 | INFO | controllers.ai_controller | Consulta general: enviando totalidad de 7 gastos del mes
+2026-02-22 04:44:59,578 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:44:59,578 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-22 04:44:59,579 | INFO | AIAdvisor |   - Pregunta: ¿Débito o Crédito?
+2026-02-22 04:44:59,580 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-22 04:44:59,580 | INFO | AIAdvisor |   - Transacciones: 7
+2026-02-22 04:44:59,581 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-22 04:44:59,581 | INFO | AIAdvisor |   - Prompt completo (1560 chars):
+2026-02-22 04:44:59,582 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-22 04:44:59,582 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+📂 👕 Ropa → TOTAL: $4,000 (1 compras):
+  • Compra de vestimenta deportiva: $4,000 (1 veces, Efectivo(1x))
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $72,000 (7 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: ¿Débito o Crédito?
+
+RESPUESTA:
+2026-02-22 04:44:59,583 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:44:59,873 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-22 04:44:59,881 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-22 04:45:07,941 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-22 04:45:07,950 | INFO | AIAdvisor | ✅ Respuesta generada: 196 chars
+2026-02-22 04:45:54,168 | INFO | controllers.ai_controller | Consulta recibida: 'cuanto gaste en lo que va del mes en almacen ?'
+2026-02-22 04:45:54,235 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-22 04:45:54,242 | INFO | controllers.ai_controller | Categorías detectadas en 'cuanto gaste en lo que va del mes en almacen ?': ['🛒 Almacén']
+2026-02-22 04:45:54,244 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🛒 Almacén', '🚗 Vehículos'}
+2026-02-22 04:45:54,245 | INFO | controllers.ai_controller | Filtrado por categorías ['🛒 Almacén']: 4 gastos de 7 totales
+2026-02-22 04:45:54,260 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:45:54,261 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-22 04:45:54,261 | INFO | AIAdvisor |   - Pregunta: cuanto gaste en lo que va del mes en almacen ?
+2026-02-22 04:45:54,262 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-22 04:45:54,262 | INFO | AIAdvisor |   - Transacciones: 4
+2026-02-22 04:45:54,263 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-22 04:45:54,264 | INFO | AIAdvisor |   - Prompt completo (1227 chars):
+2026-02-22 04:45:54,265 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-22 04:45:54,265 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+SUBTOTAL CONSULTADO: $12,000 (4 transacciones)
+PREGUNTA: cuanto gaste en lo que va del mes en almacen ?
+
+RESPUESTA:
+2026-02-22 04:45:54,266 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:45:54,267 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-22 04:45:54,301 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-22 04:45:55,814 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-22 04:45:55,816 | INFO | AIAdvisor | ✅ Respuesta generada: 138 chars
+2026-02-22 04:46:49,360 | INFO | Router | Navigating to: /expenses
+2026-02-22 04:47:34,571 | INFO | Router | Navigating to: /ai-contador
+2026-02-22 04:48:05,355 | INFO | controllers.ai_controller | Consulta recibida: 'cuanto gaste  en vehiculo este mes ?'
+2026-02-22 04:48:05,389 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-22 04:48:05,394 | INFO | controllers.ai_controller | Categorías detectadas en 'cuanto gaste  en vehiculo este mes ?': ['🚗 Vehículos']
+2026-02-22 04:48:05,395 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🛒 Almacén', '🚗 Vehículos'}
+2026-02-22 04:48:05,396 | INFO | controllers.ai_controller | Filtrado por categorías ['🚗 Vehículos']: 1 gastos de 7 totales
+2026-02-22 04:48:05,416 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:48:05,417 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-22 04:48:05,418 | INFO | AIAdvisor |   - Pregunta: cuanto gaste  en vehiculo este mes ?
+2026-02-22 04:48:05,418 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-22 04:48:05,419 | INFO | AIAdvisor |   - Transacciones: 1
+2026-02-22 04:48:05,420 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-22 04:48:05,421 | INFO | AIAdvisor |   - Prompt completo (1099 chars):
+2026-02-22 04:48:05,422 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-22 04:48:05,422 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $16,000 (1 transacciones)
+PREGUNTA: cuanto gaste  en vehiculo este mes ?
+
+RESPUESTA:
+2026-02-22 04:48:05,422 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:48:05,423 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-22 04:48:05,522 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-22 04:48:07,029 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-22 04:48:07,036 | INFO | AIAdvisor | ✅ Respuesta generada: 133 chars
+2026-02-22 04:49:01,271 | INFO | Router | Navigating to: /family
+2026-02-22 04:50:15,832 | INFO | Router | Navigating to: /login
+2026-02-22 04:50:24,599 | INFO | Router | Navigating to: /login
+2026-02-22 04:50:36,264 | INFO | Router | Navigating to: /login
+2026-02-22 04:51:03,385 | INFO | Router | Navigating to: /
+2026-02-22 04:51:30,264 | INFO | Router | Navigating to: /login
+2026-02-22 04:51:45,361 | INFO | Router | Navigating to: /
+2026-02-22 04:52:57,029 | INFO | Router | Navigating to: /
+2026-02-22 04:53:46,110 | INFO | Router | Navigating to: /incomes
+2026-02-22 04:54:38,985 | INFO | Router | Navigating to: /expenses
+2026-02-22 04:55:45,709 | INFO | Router | Navigating to: /ai-contador
+2026-02-22 04:55:53,097 | INFO | controllers.ai_controller | Consulta recibida: 'Resumen de Gastos'
+2026-02-22 04:55:53,107 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-22 04:55:53,111 | INFO | controllers.ai_controller | Consulta general detectada: 'Resumen de Gastos'
+2026-02-22 04:55:53,113 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🛒 Almacén', '🚗 Vehículos'}
+2026-02-22 04:55:53,114 | INFO | controllers.ai_controller | Consulta general: enviando totalidad de 7 gastos del mes
+2026-02-22 04:55:53,127 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:55:53,128 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-22 04:55:53,128 | INFO | AIAdvisor |   - Pregunta: Resumen de Gastos
+2026-02-22 04:55:53,129 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-22 04:55:53,129 | INFO | AIAdvisor |   - Transacciones: 7
+2026-02-22 04:55:53,130 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-22 04:55:53,130 | INFO | AIAdvisor |   - Prompt completo (1559 chars):
+2026-02-22 04:55:53,131 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-22 04:55:53,131 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+📂 👕 Ropa → TOTAL: $4,000 (1 compras):
+  • Compra de vestimenta deportiva: $4,000 (1 veces, Efectivo(1x))
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $72,000 (7 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: Resumen de Gastos
+
+RESPUESTA:
+2026-02-22 04:55:53,131 | INFO | AIAdvisor | ================================================================================
+2026-02-22 04:55:53,133 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-22 04:55:53,219 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-22 04:56:00,065 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-22 04:56:00,078 | INFO | AIAdvisor | ✅ Respuesta generada: 205 chars
+2026-02-22 05:36:55,866 | INFO | controllers.ai_controller | Consulta recibida: 'el gasto total ,  cuanto fue contado , credito o debito ? puedes decirme ?'
+2026-02-22 05:36:56,038 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-22 05:36:56,045 | INFO | controllers.ai_controller | Consulta general detectada: 'el gasto total ,  cuanto fue contado , credito o debito ? puedes decirme ?'
+2026-02-22 05:36:56,046 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'🏠 Hogar', '👕 Ropa', '🛒 Almacén', '🚗 Vehículos'}
+2026-02-22 05:36:56,046 | INFO | controllers.ai_controller | Consulta general: enviando totalidad de 7 gastos del mes
+2026-02-22 05:36:56,077 | INFO | AIAdvisor | ================================================================================
+2026-02-22 05:36:56,077 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-22 05:36:56,077 | INFO | AIAdvisor |   - Pregunta: el gasto total ,  cuanto fue contado , credito o debito ? puedes decirme ?
+2026-02-22 05:36:56,078 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-22 05:36:56,078 | INFO | AIAdvisor |   - Transacciones: 7
+2026-02-22 05:36:56,079 | INFO | AIAdvisor |   - Contexto legal: Sí
+2026-02-22 05:36:56,079 | INFO | AIAdvisor |   - Prompt completo (2994 chars):
+2026-02-22 05:36:56,079 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-22 05:36:56,079 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA consultar bases de datos.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+NORMATIVA URUGUAYA RELEVANTE:
+# Ley de Inclusión Financiera - Uruguay
+
+## Reducción de IVA en Compras
+
+**Tarjetas de Débito y Dinero Electrónico:**
+- Reducción de 2 puntos de IVA en compras generales
+- Tasa básica: 22% → 20%
+- Tasa mínima: 10% → 8%
+
+**Tarjetas de Crédito:**
+- NO aplican para reducción general de 2 puntos
+- Excepto en rubros gastronómicos y turísticos
+
+## Beneficios en Restaurantes y Turismo
+
+**Descuento de 9 puntos de IVA:**
+- Aplica en restaurantes, bares, cafeterías
+- Válido con débito, crédito o dinero electrónico
+- Incluye servicios de catering
+
+## Pagos de Servicios
+
+**Débitos Automáticos:**
+- Bonificaciones anuales por buen pagador
+- Aplica para UTE, OSE, ANTEL
+- Varía según el ente
+
+## Consejos del Contador Oriental
+
+1. **Supermercado y Farmacia:** Usar siempre débito = 2% ahorro inmediato
+2. **Restaurantes:** Cualquier tarjeta sirve = 9% descuento
+3. **Alquileres mayores a 40 BPC/año:** Pagar por transferencia bancaria para deducir en IRPF
+
+## Ejemplos Prácticos
+
+**Compra en supermercado de $10.000:**
+- Con efectivo: $10.000
+- Con débito: $9.800 (ahorro de $200)
+
+**Cena en restaurante de $5.000:**
+- Con efectivo: $5.000
+- Con tarjeta: $4.550 (ahorro de $450)
+
+**Ahorro anual estimado para familia promedio:**
+- Usando débito en supermercado: $2.400/año
+- Usando tarjeta en restaurantes: $1.800/año
+- Total: $4.200/año aproximadamente
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+📂 👕 Ropa → TOTAL: $4,000 (1 compras):
+  • Compra de vestimenta deportiva: $4,000 (1 veces, Efectivo(1x))
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $72,000 (7 transacciones)
+GASTO PER CÁPITA (mes completo): $24,000
+PREGUNTA: el gasto total ,  cuanto fue contado , credito o debito ? puedes decirme ?
+
+RESPUESTA:
+2026-02-22 05:36:56,081 | INFO | AIAdvisor | ================================================================================
+2026-02-22 05:36:56,081 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-22 05:36:56,145 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-22 05:37:03,025 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-22 05:37:03,038 | INFO | AIAdvisor | ✅ Respuesta generada: 133 chars
+2026-02-22 05:41:19,991 | INFO | flet_web.fastapi | Session disconnected: _hqBsT13Fi7EoZUp6_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 05:41:20,044 | INFO | flet_web.fastapi | Disposing FletApp: v4S5CCpg
+2026-02-22 05:41:20,141 | INFO | flet_web.fastapi | FletApp was garbage collected: v4S5CCpg
+2026-02-22 05:41:20,191 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-22 05:41:20,265 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-22 05:41:20,473 | INFO | flet | Session was garbage collected: hqBsT13Fi7EoZUp6
+2026-02-22 05:41:29,841 | INFO | flet | Assets path configured: /app/assets
+2026-02-22 05:41:30,839 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-22 05:41:30,842 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-22 05:41:30,843 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-22 05:41:30,843 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-22 05:41:30,846 | INFO | flet | Flet app has started...
+2026-02-22 05:41:31,081 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-22 05:41:31,082 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-22 05:41:33,389 | INFO | flet_web.fastapi | New FletApp: E32gxgFY
+2026-02-22 05:41:33,423 | INFO | flet_web.fastapi | New session created (1 total): _JccUAWSHatxPX8WI_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 05:41:33,428 | INFO | flet_web.fastapi | Start session: JccUAWSHatxPX8WI
+2026-02-22 05:41:33,659 | INFO | App | Base de datos inicializada
+2026-02-22 05:41:33,701 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-22 05:41:33,701 | INFO | Router | Navigating to: /login
+2026-02-22 05:41:33,820 | INFO | App | Aplicação iniciada com sucesso
+2026-02-22 05:42:42,873 | INFO | Router | Navigating to: /
+2026-02-22 05:42:52,029 | INFO | Router | Navigating to: /ai-contador
+2026-02-22 05:43:01,597 | INFO | controllers.ai_controller | Consulta recibida: 'Resumen de Gastos'
+2026-02-22 05:43:01,602 | INFO | controllers.ai_controller | Gastos del mes actual: 7
+2026-02-22 05:43:01,605 | INFO | controllers.ai_controller | Consulta general detectada: 'Resumen de Gastos'
+2026-02-22 05:43:01,605 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'👕 Ropa', '🏠 Hogar', '🚗 Vehículos', '🛒 Almacén'}
+2026-02-22 05:43:01,606 | INFO | controllers.ai_controller | Consulta general: enviando totalidad de 7 gastos del mes
+2026-02-22 05:43:01,616 | INFO | AIAdvisor | ================================================================================
+2026-02-22 05:43:01,617 | INFO | AIAdvisor | 📊 CONTEXTO ENVIADO AL MODELO:
+2026-02-22 05:43:01,618 | INFO | AIAdvisor |   - Pregunta: Resumen de Gastos
+2026-02-22 05:43:01,618 | INFO | AIAdvisor |   - Incluir gastos: True
+2026-02-22 05:43:01,618 | INFO | AIAdvisor |   - Transacciones: 7
+2026-02-22 05:43:01,619 | INFO | AIAdvisor |   - Contexto legal: No
+2026-02-22 05:43:01,619 | INFO | AIAdvisor |   - Prompt completo (1605 chars):
+2026-02-22 05:43:01,619 | INFO | AIAdvisor | --------------------------------------------------------------------------------
+2026-02-22 05:43:01,620 | INFO | AIAdvisor | Sos el Contador Oriental, un contador público uruguayo.
+
+TU ROL:
+- Leer los datos que te da el sistema y narrarlos en español rioplatense.
+- Dar consejos contables basados en la normativa uruguaya si te la preguntan.
+- NUNCA inventar números. NUNCA hacer cálculos. NUNCA dividir ni derivar valores.
+- Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
+- Si un dato no aparece explícitamente en los datos, NO lo menciones ni lo calcules.
+- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier normativa general. Respondé basándote en esos datos primero.
+- Máximo 4 líneas de respuesta.
+
+### ESTADO DE LA HACIENDA FAMILIAR ###
+- Miembros en el hogar: 3
+- Ingresos totales del mes: $178,000
+- TOTAL gastos del mes (todas las categorías): $72,000
+- BALANCE DEL MES (Ingresos - Gastos totales): $106,000
+- Métodos de pago usados este mes: Efectivo: 6 compras (85%), Tarjeta débito: 1 compras (14%)
+
+DETALLE DE GASTOS CONSULTADOS:
+
+📂 🛒 Almacén → TOTAL: $12,000 (4 compras):
+  • Compras de almacen: $5,000 (2 veces, Efectivo(2x))
+  • Compra de carniceria: $2,000 (1 veces, Efectivo(1x))
+  • Compra en supermercado: $5,000 (1 veces, Tarjeta débito(1x))
+
+📂 🚗 Vehículos → TOTAL: $16,000 (1 compras):
+  • Gastos de cubiertas: $16,000 (1 veces, Efectivo(1x))
+
+📂 👕 Ropa → TOTAL: $4,000 (1 compras):
+  • Compra de vestimenta deportiva: $4,000 (1 veces, Efectivo(1x))
+
+📂 🏠 Hogar → TOTAL: $40,000 (1 compras):
+  • Compra de articulos para el hogar: $40,000 (1 veces, Efectivo(1x))
+
+SUBTOTAL CONSULTADO: $72,000 (7 transacciones)
+PREGUNTA: Resumen de Gastos
+
+RESPUESTA:
+2026-02-22 05:43:01,620 | INFO | AIAdvisor | ================================================================================
+2026-02-22 05:43:01,911 | INFO | AIAdvisor | 🔌 Conectando con Ollama en host.docker.internal:11434
+2026-02-22 05:43:01,917 | INFO | AIAdvisor | 🤖 Generando respuesta con gemma2:2b (async)
+2026-02-22 05:43:09,135 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-22 05:43:09,140 | INFO | AIAdvisor | ✅ Respuesta generada: 310 chars
+2026-02-22 05:52:27,135 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet/messaging/session.py", line 198, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "/app/views/pages/ai_advisor_view.py", line 386, in copiar
+    self.page.set_clipboard(reporte)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'clipboard'?
+2026-02-22 05:53:02,732 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet/messaging/session.py", line 198, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "/app/views/pages/ai_advisor_view.py", line 386, in copiar
+    self.page.set_clipboard(reporte)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'clipboard'?
+2026-02-22 05:53:03,490 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet/messaging/session.py", line 198, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "/app/views/pages/ai_advisor_view.py", line 386, in copiar
+    self.page.set_clipboard(reporte)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'clipboard'?
+2026-02-22 05:53:04,160 | ERROR | flet | Unhandled error in 'on_click' handler
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/flet/messaging/session.py", line 198, in dispatch_event
+    await control._trigger_event(event_name, event_data)
+  File "/usr/local/lib/python3.12/site-packages/flet/controls/base_control.py", line 344, in _trigger_event
+    event_handler(e)
+  File "/app/views/pages/ai_advisor_view.py", line 386, in copiar
+    self.page.set_clipboard(reporte)
+    ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Page' object has no attribute 'set_clipboard'. Did you mean: 'clipboard'?
+2026-02-22 05:53:30,826 | INFO | flet_web.fastapi | Session disconnected: _JccUAWSHatxPX8WI_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 05:53:30,829 | INFO | flet_web.fastapi | Disposing FletApp: E32gxgFY
+2026-02-22 05:53:30,831 | INFO | flet_web.fastapi | FletApp was garbage collected: E32gxgFY
+2026-02-22 06:00:54,808 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmp1c7djh8p
+2026-02-22 06:00:54,844 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-22 06:00:54,848 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-22 06:00:56,384 | INFO | flet_web.fastapi | New FletApp: ZlGXGCYL
+2026-02-22 06:00:56,821 | INFO | flet_web.fastapi | Session reconnected: _JccUAWSHatxPX8WI_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 06:01:15,402 | INFO | flet_web.fastapi | Session disconnected: _JccUAWSHatxPX8WI_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-22 06:01:15,404 | INFO | flet_web.fastapi | Disposing FletApp: ZlGXGCYL
+2026-02-22 06:01:15,405 | INFO | flet_web.fastapi | FletApp was garbage collected: ZlGXGCYL
+2026-02-22 06:01:15,509 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-22 06:01:15,511 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmp1c7djh8p
+2026-02-22 06:01:15,536 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-22 06:01:15,685 | INFO | flet | Session was garbage collected: JccUAWSHatxPX8WI
+2026-02-24 00:21:02,052 | INFO | flet | Assets path configured: /app/assets
+2026-02-24 00:21:02,691 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-24 00:21:02,693 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-24 00:21:02,694 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-24 00:21:02,694 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-24 00:21:02,696 | INFO | flet | Flet app has started...
+2026-02-24 00:21:02,782 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-24 00:21:02,783 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-24 01:00:17,791 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-24 01:00:17,934 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-24 01:00:26,293 | INFO | flet | Assets path configured: /app/assets
+2026-02-24 01:00:27,131 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-24 01:00:27,133 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-24 01:00:27,133 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-24 01:00:27,134 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-24 01:00:27,136 | INFO | flet | Flet app has started...
+2026-02-24 01:00:27,276 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-24 01:00:27,278 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-24 01:12:35,649 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-24 01:12:35,758 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-24 01:12:44,410 | INFO | flet | Assets path configured: /app/assets
+2026-02-24 01:12:45,922 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-24 01:12:45,928 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-24 01:12:45,930 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-24 01:12:45,931 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-24 01:12:45,936 | INFO | flet | Flet app has started...
+2026-02-24 01:12:46,116 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-24 01:12:46,116 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-24 01:21:53,071 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-24 01:21:53,152 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-24 01:22:01,953 | INFO | flet | Assets path configured: /app/assets
+2026-02-24 01:22:02,983 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-24 01:22:02,986 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-24 01:22:02,987 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-24 01:22:02,988 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-24 01:22:02,992 | INFO | flet | Flet app has started...
+2026-02-24 01:22:03,113 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-24 01:22:03,113 | INFO | flet | App URL: http://0.0.0.0:8550
+2026-02-24 01:50:37,517 | INFO | flet_web.fastapi | Temp dir created for patched index and manifest: /tmp/tmpyp3lszrl
+2026-02-24 01:50:37,552 | INFO | flet_web.fastapi | Web root: /usr/local/lib/python3.12/site-packages/flet_web/web
+2026-02-24 01:50:37,557 | INFO | flet_web.fastapi | Assets dir: /app/assets
+2026-02-24 01:50:40,047 | INFO | flet_web.fastapi | New FletApp: 3aUAD1Z0
+2026-02-24 01:50:40,336 | INFO | flet_web.fastapi | New session created (1 total): _WwbGe4xFMJrtktZY_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-24 01:50:40,396 | INFO | flet_web.fastapi | Start session: WwbGe4xFMJrtktZY
+2026-02-24 01:50:41,189 | INFO | App | Base de datos inicializada
+2026-02-24 01:50:41,343 | INFO | configs.routes | Rutas configuradas: 11 rutas cargadas
+2026-02-24 01:50:41,345 | INFO | Router | Navigating to: /login
+2026-02-24 01:50:41,484 | INFO | App | Aplicação iniciada com sucesso
+2026-02-24 01:55:40,347 | INFO | Router | Navigating to: /
+2026-02-24 01:55:58,046 | INFO | Router | Navigating to: /expenses
+2026-02-24 01:58:01,641 | INFO | Router | Navigating to: /ai-contador
+2026-02-24 01:58:16,383 | INFO | Router | Navigating to: /expenses
+2026-02-24 01:58:25,101 | INFO | Router | Navigating to: /ai-contador
+2026-02-24 01:58:48,695 | INFO | controllers.ai_controller | Stream consulta: 'Hola puedes decirme los gastos de Educacion que tengo en este mes ?'
+2026-02-24 01:58:48,704 | INFO | controllers.ai_controller | Categorías detectadas en 'Hola puedes decirme los gastos de Educacion que tengo en este mes ?': ['📚 Educación']
+2026-02-24 01:58:48,706 | INFO | controllers.ai_controller | Categorías encontradas en BD: {'📚 Educación', '🏠 Hogar', '👕 Ropa', '🚗 Vehículos', '🛒 Almacén'}
+2026-02-24 01:58:48,707 | INFO | controllers.ai_controller | Filtrado por categorías ['📚 Educación']: 1 gastos de 8 totales
+2026-02-24 01:58:48,775 | INFO | repositories.monthly_snapshot_repository | Snapshot upsert: familia=3 2/2026 → 5 categorías
+2026-02-24 01:58:48,792 | INFO | repositories.monthly_snapshot_repository | Comparativa mensual: familia=3 2/2026 → 5 categorías
+2026-02-24 01:58:48,796 | INFO | AIAdvisor.stream | 🔴 STREAM iniciado (1622 chars prompt)
+2026-02-24 01:58:57,217 | INFO | httpx | HTTP Request: POST http://host.docker.internal:11434/api/generate "HTTP/1.1 200 OK"
+2026-02-24 01:58:57,678 | INFO | AIAdvisor.stream | ✅ STREAM completado
+2026-02-24 02:01:07,423 | INFO | Router | Navigating to: /expenses
+2026-02-24 02:08:23,048 | INFO | flet_web.fastapi | Session disconnected: _WwbGe4xFMJrtktZY_ff78074a3d1edf44e8df29e5e053342230db5414
+2026-02-24 02:08:23,103 | INFO | flet_web.fastapi | Disposing FletApp: 3aUAD1Z0
+2026-02-24 02:08:23,214 | INFO | flet_web.fastapi | FletApp was garbage collected: 3aUAD1Z0
+2026-02-24 02:08:23,279 | INFO | flet_web.fastapi | Shutting down Flet App Manager
+2026-02-24 02:08:23,283 | INFO | flet_web.fastapi | Deleting temp dir: /tmp/tmpyp3lszrl
+2026-02-24 02:08:23,365 | INFO | flet_web.fastapi | Closing Flet web server...
+2026-02-24 02:08:23,595 | INFO | flet | Session was garbage collected: WwbGe4xFMJrtktZY
+2026-02-24 02:08:37,673 | INFO | flet | Assets path configured: /app/assets
+2026-02-24 02:08:38,858 | INFO | flet | Starting Flet web server on port 8550...
+2026-02-24 02:08:38,861 | INFO | flet_web.fastapi | Web renderer configured: WebRenderer.AUTO
+2026-02-24 02:08:38,862 | INFO | flet_web.fastapi | Route URL strategy configured: RouteUrlStrategy.PATH
+2026-02-24 02:08:38,862 | INFO | flet_web.fastapi | No CDN configured: False
+2026-02-24 02:08:38,865 | INFO | flet | Flet app has started...
+2026-02-24 02:08:39,011 | INFO | flet_web.fastapi | Starting up Flet App Manager
+2026-02-24 02:08:39,012 | INFO | flet | App URL: http://0.0.0.0:8550

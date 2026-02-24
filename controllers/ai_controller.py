@@ -18,6 +18,7 @@ from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
 from repositories.family_member_repository import FamilyMemberRepository
 from repositories.income_repository import IncomeRepository
+from repositories.monthly_snapshot_repository import MonthlySnapshotRepository
 from services.ai_advisor_service import AIAdvisorService
 from services.expense_service import ExpenseService
 from services.family_member_service import FamilyMemberService
@@ -198,7 +199,7 @@ class AIController:
                 }
             }
         """
-        resumen = {}
+        resumen: dict[str, dict[str, dict]] = {}
         for gasto in gastos:
             cat = gasto.categoria.value
             desc = gasto.descripcion.strip().capitalize()
@@ -319,13 +320,25 @@ class AIController:
                 member_service = FamilyMemberService(member_repo)
                 miembros = member_service.list_members()
                 
+                # Upsert snapshot del mes actual y obtener comparativa
+                snapshot_repo = MonthlySnapshotRepository(session, self.familia_id)
+                comparativa = []
+                try:
+                    snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)
+                    comparativa = snapshot_repo.obtener_comparativa_mensual(
+                        anio_actual, mes_actual
+                    )
+                except Exception as snap_err:
+                    logger.warning("No se pudo obtener comparativa mensual: %s", snap_err)
+
                 ctx = AIContext(
                     resumen_gastos=resumen_gastos,
                     total_gastos_count=total_gastos_count,
                     total_gastos_mes=total_gastos_mes,
                     ingresos_total=ingresos_total,
                     miembros_count=len(miembros),
-                    resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes)
+                    resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes),
+                    comparativa_meses=comparativa,
                 )
         
         # Guardar contexto para exportación PDF
@@ -334,6 +347,95 @@ class AIController:
 
         # Consultar al servicio de IA (await = no bloquea el event loop)
         return await self.ai_service.consultar(request, ctx=ctx)
+
+    async def consultar_contador_stream(
+        self,
+        pregunta: str,
+        incluir_gastos: bool = True,
+    ):
+        """
+        Versión streaming de consultar_contador().
+        Prepara el mismo AIContext y yield tokens a medida que Gemma responde.
+        La vista actualiza la burbuja token a token.
+
+        Yields:
+            str — fragmento de texto del modelo.
+        """
+        logger.info("Stream consulta: '%s'", pregunta)
+
+        request = AIRequest(
+            pregunta=pregunta,
+            familia_id=self.familia_id,
+            incluir_gastos_recientes=incluir_gastos,
+        )
+
+        ctx = AIContext()
+
+        if incluir_gastos:
+            with self._get_session() as session:
+                from datetime import datetime
+
+                expense_repo = ExpenseRepository(session, self.familia_id)
+                expense_service = ExpenseService(expense_repo)
+                gastos_mes = expense_service.list_expenses()
+
+                mes_actual = datetime.now().month
+                anio_actual = datetime.now().year
+                gastos_mes = [
+                    g for g in gastos_mes
+                    if g.fecha.month == mes_actual and g.fecha.year == anio_actual
+                ]
+
+                categorias_relevantes = self._detectar_categorias_relevantes(pregunta)
+                gastos_filtrados = self._filtrar_gastos_por_contexto(
+                    gastos_mes, categorias_relevantes
+                )
+
+                total_gastos_mes = sum(g.monto for g in gastos_mes)
+                resumen_gastos: dict[str, dict[str, dict]] = {}
+                total_gastos_count = 0
+                if gastos_filtrados:
+                    resumen_gastos = self._agrupar_gastos(gastos_filtrados)
+                    total_gastos_count = len(gastos_filtrados)
+
+                income_repo = IncomeRepository(session, self.familia_id)
+                income_service = IncomeService(income_repo)
+                ingresos = income_service.list_incomes()
+                ingresos = [
+                    i for i in ingresos
+                    if i.fecha.month == mes_actual and i.fecha.year == anio_actual
+                ]
+                ingresos_total = sum(i.monto for i in ingresos)
+
+                member_repo = FamilyMemberRepository(session, self.familia_id)
+                member_service = FamilyMemberService(member_repo)
+                miembros = member_service.list_members()
+
+                snapshot_repo = MonthlySnapshotRepository(session, self.familia_id)
+                comparativa = []
+                try:
+                    snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)
+                    comparativa = snapshot_repo.obtener_comparativa_mensual(
+                        anio_actual, mes_actual
+                    )
+                except Exception as snap_err:
+                    logger.warning("Comparativa no disponible: %s", snap_err)
+
+                ctx = AIContext(
+                    resumen_gastos=resumen_gastos,
+                    total_gastos_count=total_gastos_count,
+                    total_gastos_mes=total_gastos_mes,
+                    ingresos_total=ingresos_total,
+                    miembros_count=len(miembros),
+                    resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes),
+                    comparativa_meses=comparativa,
+                )
+
+        self.last_context = ctx
+        self.last_pregunta = pregunta
+
+        async for token in self.ai_service.consultar_stream(request, ctx=ctx):
+            yield token
     
     def get_title(self) -> str:
         """Título de la vista"""

@@ -43,6 +43,54 @@ class AIRequest(BaseModel):
         )
 
 
+class CategoryMetric(BaseModel):
+    """Métrica de una categoría para comparativa mensual.
+    Todos los valores son pre-calculados por Python — Gemma solo narra.
+    """
+    categoria: str
+    mes_actual: int
+    anio_actual: int
+    total_actual: float
+    cantidad_actual: int
+    ticket_actual: float
+    total_anterior: float | None = None
+    cantidad_anterior: int | None = None
+    ticket_anterior: float | None = None
+
+    @property
+    def variacion_total_pct(self) -> float | None:
+        """Variación porcentual del gasto total vs mes anterior."""
+        if self.total_anterior and self.total_anterior > 0:
+            return ((self.total_actual - self.total_anterior) / self.total_anterior) * 100
+        return None
+
+    @property
+    def variacion_ticket_pct(self) -> float | None:
+        """Variación porcentual del ticket promedio vs mes anterior."""
+        if self.ticket_anterior and self.ticket_anterior > 0:
+            return ((self.ticket_actual - self.ticket_anterior) / self.ticket_anterior) * 100
+        return None
+
+    @property
+    def diagnostico(self) -> str | None:
+        """
+        Diagnóstico contable pre-calculado.
+        Si ticket sube más que consumo → inflación.
+        Si consumo sube más que ticket → mayor gasto voluntario.
+        """
+        vt = self.variacion_total_pct
+        vtk = self.variacion_ticket_pct
+        if vt is None or vtk is None:
+            return None
+        if vtk > 5 and (vt is None or vt <= vtk + 2):
+            return "Inflación/costo de vida: compraste similar pero salió más caro."
+        if vt is not None and vt > 10 and vtk < 5:
+            return "Mayor consumo: el precio es similar pero compraste más."
+        if vt is not None and vt < -5:
+            return "Reducción de gasto en esta categoría."
+        return "Sin cambios significativos respecto al mes anterior."
+
+
 class AIContext(BaseModel):
     """Contexto financiero pre-calculado por Python para el Contador Oriental.
     Gemma solo lee estos valores, nunca los calcula.
@@ -69,7 +117,11 @@ class AIContext(BaseModel):
     )
     resumen_metodos_pago: str = Field(
         default="",
-        description="Resumen de métodos de pago usados en el mes (ej: Efectivo: 6, Tarjeta débito: 1)"
+        description="Resumen de métodos de pago usados en el mes"
+    )
+    comparativa_meses: list[CategoryMetric] = Field(
+        default_factory=list,
+        description="Comparativa ticket promedio vs mes anterior por categoría"
     )
 
 
