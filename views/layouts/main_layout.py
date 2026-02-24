@@ -117,7 +117,7 @@ class MainLayout(ft.Column):
             if r.get("show_in_bottom"):
                 destinations.append(
                     ft.NavigationBarDestination(
-                        icon=r["icon"],  # type: ignore
+                        icon=r["icon"],
                         label=I18n.t(r["label"]),
                     )
                 )

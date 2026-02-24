@@ -76,7 +76,8 @@ class RegisterView:
             """Callback ejecutado después de registro exitoso"""
             import time
             time.sleep(1)
-            self.router.navigate("/login")
+            if self.router:
+                self.router.navigate("/login")
         
         self.controller.handle_register(
             familia_nombre=self.familia_nombre_field.value or "",
@@ -91,7 +92,8 @@ class RegisterView:
     
     def _on_login_click(self, e):
         """Navega a la página de login"""
-        self.router.navigate("/login")
+        if self.router:
+            self.router.navigate("/login")
     
     def render(self):
         """Renderiza la vista de registro"""
