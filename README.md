@@ -226,7 +226,7 @@ MIT License — Ver archivo [LICENSE](LICENSE) para detalles.
 
 - 🐛 **Issues**: [GitHub Issues](https://github.com/tu-usuario/contador-oriental/issues)
 - 💬 **Discusiones**: [GitHub Discussions](https://github.com/tu-usuario/contador-oriental/discussions)
-- 📧 **Email**: tu-email@ejemplo.com
+- 📧 **Email**: gompatri@gmail.com
 
 ---
 
