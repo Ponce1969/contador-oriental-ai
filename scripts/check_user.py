@@ -1,9 +1,10 @@
 """Check if admin user exists and verify password"""
-from database.engine import engine
-from sqlalchemy import text
-from services.auth_service import AuthService
-from repositories.user_repository import UserRepository
 import argon2
+from sqlalchemy import text
+
+from database.engine import engine
+from repositories.user_repository import UserRepository
+from services.auth_service import AuthService
 
 # Check user exists
 with engine.connect() as conn:
@@ -26,6 +27,7 @@ repo = UserRepository()
 auth = AuthService(repo)
 
 from models.user_model import UserLogin
+
 creds = UserLogin(username="admin", password="admin123")
 result = auth.login(creds)
 

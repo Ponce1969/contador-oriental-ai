@@ -1,7 +1,7 @@
 """Diagnostic login issue"""
+from models.user_model import UserLogin
 from repositories.user_repository import UserRepository
 from services.auth_service import AuthService
-from models.user_model import UserLogin
 
 print("=== DIAGNÓSTICO DE LOGIN ===")
 print()

@@ -1,7 +1,8 @@
 """Fix admin password"""
 import argon2
-from database.engine import engine
 from sqlalchemy import text
+
+from database.engine import engine
 
 ph = argon2.PasswordHasher()
 
