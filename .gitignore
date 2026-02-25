@@ -80,6 +80,9 @@ uv.lock
 # Logs (development only)
 logs/
 
+# Scripts (development/maintenance only)
+scripts/
+
 # Temporary files
 ty_errors.txt
 *.sql.tmp
