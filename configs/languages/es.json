@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Smart-Shopping"
+    "name": "Contador Oriental"
   },
   "menu": {
     "home": "Inicio",
@@ -8,7 +8,7 @@
     "help": "Ayuda"
   },
   "home": {
-    "title": "Bienvenido a Smart-Shopping"
+    "title": "Bienvenido al Contador Oriental"
   },
   "settings": {
     "title": "Configuración",
