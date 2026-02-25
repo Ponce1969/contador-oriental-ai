@@ -83,6 +83,9 @@ logs/
 # Scripts (development/maintenance only)
 scripts/
 
+# Documentation (development only)
+docs/
+
 # Temporary files
 ty_errors.txt
 *.sql.tmp
