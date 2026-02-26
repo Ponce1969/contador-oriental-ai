@@ -1,5 +1,29 @@
 # 🧠 Plan de Memoria Permanente - Contador Oriental AI
 
+## 🔍 Estructura de Base de Datos (VERIFICADA)
+
+### **Tablas Actuales en PostgreSQL (Gallinal2218/auditor_familiar)**
+```sql
+-- 7 tablas principales + control de migraciones
+_fleting_migrations       -- Control de versiones
+familias                  -- Multi-tenant principal
+├── usuarios              -- Login y autenticación
+├── family_members        -- Miembros de familia
+├── incomes               -- Ingresos con FK a family_members
+├── expenses              -- Gastos con campos OCR futuros
+└── monthly_expense_snapshots -- Snapshots mensuales
+```
+
+### **Campos Clave para Memoria IA**
+- **`familia_id`** ✅ — Presente en TODAS las tablas (multitenancy perfecto)
+- **`descripcion`** ✅ — En expenses e incomes (texto para embeddings)
+- **`categoria`** ✅ — Para contexto semántico
+- **`monto`** ✅ — Datos numéricos importantes
+- **`fecha`** ✅ — Contexto temporal
+- **Campos OCR** ✅ — `name, price, category, purchased, purchase_date` (futuro)
+
+---
+
 ## 🎯 Visión General
 
 Implementar un sistema de memoria vectorial RAG (Retrieval-Augmented Generation) para que el Contador Oriental tenga "memoria permanente" de los datos financieros, permitiendo búsquedas semánticas inteligentes y respuestas contextuales precisas.
@@ -66,13 +90,13 @@ Migración 006 - Memoria Vectorial del Contador
 Habilita pgvector y crea la tabla para almacenamiento semántico.
 Permite al Contador Oriental realizar búsquedas por contexto (RAG).
 
-Integra con estructura existente:
-- familias (id, nombre, email, activo)
-- usuarios (id, familia_id, email, password_hash)
+Integra con estructura existente (VERIFICADA):
+- familias (id, nombre, email, activo, created_at)
+- usuarios (id, familia_id, username, password_hash, nombre_completo, activo, created_at, last_login)
 - family_members (id, familia_id, nombre, ...)
-- incomes (id, familia_id, monto, fecha, ...)
-- expenses (id, familia_id, monto, categoria, ...)
-- monthly_expense_snapshots (id, familia_id, anio, mes, ...)
+- incomes (id, familia_id, family_member_id, monto, fecha, descripcion, categoria, es_recurrente, frecuencia, notas, tipo_ingreso)
+- expenses (id, familia_id, monto, fecha, descripcion, categoria, subcategoria, metodo_pago, es_recurrente, frecuencia, notas, name, price, category, purchased, purchase_date)
+- monthly_expense_snapshots (id, familia_id, anio, mes, categoria, total_dinero, cantidad_compras, ticket_promedio, created_at)
 """
 from sqlalchemy import text
 from configs.database_config import DatabaseConfig
@@ -804,6 +828,34 @@ class AppConfig:
 - **Multitenancy** — `familia_id` aísla datos
 - **Millones de registros** — PostgreSQL maneja volumen
 - **OCR futuro** — Flujo idéntico para tickets
+
+---
+
+## ✅ Validación Final con Datos Reales
+
+### **🎯 Credenciales Verificadas**
+```bash
+POSTGRES_DB=auditor_familiar
+POSTGRES_USER=Gallinal2218
+POSTGRES_PASSWORD=Ponce2218**
+```
+
+### **📊 Comandos de Verificación Usados**
+```bash
+# Listar todas las tablas
+docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\dt"
+
+# Ver estructura específica
+docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\d familias"
+docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\d expenses"
+docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\d incomes"
+```
+
+### **🔍 Resultados Clave**
+- **7 tablas principales** ✅ — Estructura completa
+- **FKs funcionando** ✅ — `familia_id` referenciado correctamente
+- **Índices existentes** ✅ — `idx_snapshots_familia_periodo` presente
+- **Campos OCR listos** ✅ — Para futura integración de tickets
 
 ---
 
