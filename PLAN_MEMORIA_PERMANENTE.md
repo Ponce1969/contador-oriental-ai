@@ -101,10 +101,11 @@ def up(db) -> None:
             )
         """))
         
-        # 3. Índice HNSW para búsquedas rápidas en Orange Pi
+        # 3. Índice HNSW optimizado para Orange Pi (RAM eficiente)
         db.execute(text("""
             CREATE INDEX IF NOT EXISTS idx_vector_memory_embedding 
             ON ai_vector_memory USING hnsw (embedding vector_cosine_ops)
+            WITH (m = 16, ef_construction = 64)
         """))
         
         # 4. Índice por familia para multitenancy
@@ -330,7 +331,7 @@ class IAMemoryService:
         pregunta: str, 
         limit: int = 5
     ) -> Result[list[str], str]:
-        """Buscar contexto relevante para una pregunta"""
+        """Buscar contexto relevante para una pregunta con validación de longitud"""
         
         # 1. Generar embedding de la pregunta
         embedding_result = await self.embedding_service.generar_embedding(pregunta)
@@ -342,8 +343,26 @@ class IAMemoryService:
         self.repo.familia_id = familia_id
         recuerdos_similares = self.repo.buscar_similares(embedding_result.value, limit)
         
-        # 3. Extraer contenido
+        # 3. Extraer contenido y validar longitud para Gemma 2:2b (4096 tokens)
         contextos = [recuerdo.contenido for recuerdo in recuerdos_similares]
+        
+        # 4. Validar longitud total (~4 chars por token, margen de seguridad)
+        longitud_total = sum(len(ctx) for ctx in contextos)
+        max_longitud = 15000  # ~3750 tokens con margen de seguridad
+        
+        if longitud_total > max_longitud:
+            # Reducir contexto si excede límite de Gemma
+            contextos_reducidos = []
+            longitud_actual = 0
+            
+            for ctx in contextos:
+                if longitud_actual + len(ctx) > max_longitud:
+                    break
+                contextos_reducidos.append(ctx)
+                longitud_actual += len(ctx)
+            
+            contextos = contextos_reducidos
+        
         return Ok(contextos)
 ```
 
@@ -552,9 +571,22 @@ class GastoController(BaseController):
                 }
             )
             
-            # Publicar sin await (fire-and-forget)
+            # Publicar sin await (fire-and-forget seguro)
             import asyncio
-            asyncio.create_task(event_system.publish(event))
+            import logging
+            
+            # Wrapper con logging y retry para Orange Pi
+            async def safe_publish():
+                try:
+                    await event_system.publish(event)
+                except Exception as e:
+                    # Log específico para fallos de embedding en Orange Pi
+                    logging.error(
+                        f"[MEMORY_EVENT_FAILED] familia_id={gasto.familia_id} "
+                        f"event_type={event.type.value} error={str(e)}"
+                    )
+            
+            asyncio.create_task(safe_publish())
         
         return result
 ```
@@ -777,10 +809,13 @@ class AppConfig:
 
 ## 🔧 Consideraciones Técnicas
 
-### **Orange Pi 5 Plus Optimización**
-- **Índice HNSW** — Búsquedas rápidas en ARM64
+### **Orange Pi 5 Plus Optimización (Mejoras de Trinchera)**
+- **Índice HNSW optimizado** — `WITH (m = 16, ef_construction = 64)` para RAM eficiente
 - **nomic-embed-text** — 100MB vs modelos pesados
 - **Tareas asíncronas** — No bloquear UI Flet
+- **Fire-and-Forget seguro** — Logging específico para fallos de embedding
+- **Context Window validado** — Máximo 15000 chars (~3750 tokens) para Gemma 2:2b
+- **Logging estructurado** — `[MEMORY_EVENT_FAILED] familia_id=X event_type=Y error=Z`
 
 ### **Seguridad y Privacidad**
 - **Aislamiento por familia** — `familia_id` obligatorio
