@@ -842,16 +842,29 @@ POSTGRES_USER=[TU_USUARIO_POSTGRES]
 POSTGRES_PASSWORD=[TU_PASSWORD_POSTGRES]
 ```
 
-### **📊 Comandos de Verificación Usados**
+### **📊 Comandos de Verificación Usados (Fleting CLI)**
 ```bash
-# ⚠️ REEMPLAZAR [USUARIO_POSTGRES] con tu .env local
+# ✅ SIN HARDCODEO - Usa .env automáticamente
+# Status de migraciones
+uv run python migrations/migrate.py status
+
 # Listar todas las tablas
-docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\dt"
+uv run python -c "
+from database.engine import engine
+from sqlalchemy import text
+with engine.connect() as conn:
+    result = conn.execute(text('SELECT tablename FROM pg_tables WHERE schemaname = \'public\' ORDER BY tablename'))
+    for row in result: print(f'📋 {row[0]}')
+"
 
 # Ver estructura específica
-docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\d familias"
-docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\d expenses"
-docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\d incomes"
+uv run python -c "
+from database.engine import engine
+from sqlalchemy import text
+with engine.connect() as conn:
+    result = conn.execute(text('SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = \'expenses\' ORDER BY ordinal_position'))
+    for row in result: print(f'🔹 {row[0]}: {row[1]} ({row[2]})')
+"
 ```
 
 ### **🔍 Resultados Clave**
