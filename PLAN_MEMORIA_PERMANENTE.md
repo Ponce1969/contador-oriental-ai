@@ -835,20 +835,23 @@ class AppConfig:
 
 ### **🎯 Credenciales Verificadas**
 ```bash
+# ⚠️ USAR .env LOCAL - NUNCA HARDCODEAR EN COMMIT
+# Verificar credenciales en archivo .env local antes de usar comandos
 POSTGRES_DB=auditor_familiar
-POSTGRES_USER=Gallinal2218
-POSTGRES_PASSWORD=Ponce2218**
+POSTGRES_USER=[TU_USUARIO_POSTGRES]
+POSTGRES_PASSWORD=[TU_PASSWORD_POSTGRES]
 ```
 
 ### **📊 Comandos de Verificación Usados**
 ```bash
+# ⚠️ REEMPLAZAR [USUARIO_POSTGRES] con tu .env local
 # Listar todas las tablas
-docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\dt"
+docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\dt"
 
 # Ver estructura específica
-docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\d familias"
-docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\d expenses"
-docker exec -it auditor_familiar_db psql -U Gallinal2218 -d auditor_familiar -c "\d incomes"
+docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\d familias"
+docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\d expenses"
+docker exec -it auditor_familiar_db psql -U [USUARIO_POSTGRES] -d auditor_familiar -c "\d incomes"
 ```
 
 ### **🔍 Resultados Clave**
