@@ -409,7 +409,81 @@ class ExpenseController(BaseController):
 
 ---
 
-### **Fase 6: Integración con Controllers (Background Tasks)**
+### **Fase 6: Patrón Observer - El Pegamento Invisible**
+
+#### **6.1 ¿Por Qué el Observer es Fundamental?**
+
+El Patrón Observer es el "pegamento" que hace que todo este sistema sea automático y no tengas que estar llamando a la IA a mano cada vez que guardas un gasto.
+
+**El Observer es el despachante de aduana**: se queda esperando a que pase algo en la base de datos para avisarle al AI_Service que tiene trabajo nuevo.
+
+#### **6.2 Flujo de Ejecución "Invisible"**
+
+```
+Usuario pulsa "Guardar Gasto" 
+    ↓
+ExpenseController guarda en PostgreSQL 
+    ↓
+EVENT_EXPENSE_CREATED (Notificación)
+    ↓
+AI_Service (Observador) se activa solo 
+    ↓
+Background: Embedding + ai_vector_memory
+```
+
+#### **6.3 Implementación en ExpenseController**
+**Archivo**: `controllers/expense_controller.py`
+
+```python
+from core.events import event_system  # Motor de Observer
+
+class ExpenseController(BaseController):
+    async def save_expense(self, expense_data):
+        """Guardar gasto y notificar automáticamente al Observer"""
+        
+        # 1. Guardar el gasto en la DB real (Postgres)
+        result = await self.repository.save(expense_data)
+        
+        if result.is_ok():
+            # 2. DISPARAR EL EVENTO (Aquí actúa el Observer)
+            # El controlador no sabe qué hace la IA, solo avisa que hubo un gasto.
+            event_system.emit("expense_created", result.unwrap())
+            
+        return result
+```
+
+#### **6.4 Suscripción del AI_Service**
+**Archivo**: `main.py` (inicialización del sistema)
+
+```python
+# Suscribimos al Contador Oriental al evento
+event_system.subscribe("expense_created", ai_service.memorize_expense)
+
+# También podemos suscribir otros observadores sin tocar el controller
+event_system.subscribe("expense_created", telegram_service.notify_high_expense)
+event_system.subscribe("expense_created", analytics_service.update_dashboard)
+```
+
+#### **6.5 Ventajas Clave para Orange Pi**
+
+**🚀 No bloquea la UI:**
+- Usuario ve "Gasto guardado" al instante
+- IA trabaja en segundo plano procesando vectores
+- Experiencia fluida sin esperas
+
+**🔧 Desacoplamiento Total:**
+- Controller no sabe qué hace la IA
+- Agregar nuevos observadores sin tocar código existente
+- Testing independiente de cada componente
+
+**⚡ Escalabilidad:**
+- Múltiples observadores para el mismo evento
+- Orden de ejecución controlable
+- Failover automático si un observador falla
+
+---
+
+### **Fase 7: Servicios de Memoria IA**
 **Archivo**: `services/ia_memory_service.py`
 
 ```python
