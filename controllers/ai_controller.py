@@ -231,12 +231,24 @@ class AIController(BaseController):
             (subtotal, label) — subtotal=0.0 y label="" si no hay match.
         """
         palabras = re.findall(r'\w+', pregunta.lower())
-        # Palabras cortas o interrogativas no aportan al match
         stop = {
-            "cuanto", "cuánto", "gaste", "gasté", "tengo", "puedes", "puede",
-            "decir", "ver", "dame", "mostrar", "mostrame", "muéstrame",
-            "los", "las", "del", "este", "mes", "en", "de", "un", "una",
-            "que", "y", "o", "a", "la", "el", "me", "por", "con", "es",
+            "hola", "buenas", "como", "cómo",
+            "cuanto", "cuánto", "cuantos", "cuántos",
+            "gaste", "gasté", "tengo", "tenes", "tenés",
+            "puedes", "podés", "puede", "podes",
+            "decir", "decirme", "dime", "dame",
+            "mostrar", "mostrame", "muéstrame",
+            "quiero", "saber", "necesito",
+            "gastos", "gasto", "compras", "compra",
+            "total", "resumen", "lista",
+            "favor", "gracias",
+            "este", "esta", "estos", "estas",
+            "mes", "meses", "año", "anio",
+            "los", "las", "del", "dess",
+            "para", "sobre", "hasta", "desde",
+            "en", "de", "un", "una", "unos", "unas",
+            "que", "qué", "y", "o", "a", "la", "el",
+            "me", "por", "con", "es", "son", "fue",
         }
         terminos = [p for p in palabras if len(p) > 3 and p not in stop]
 

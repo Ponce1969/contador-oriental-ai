@@ -94,6 +94,12 @@ class AIAdvisorService:
                 f"- Métodos de pago usados este mes: {ctx.resumen_metodos_pago}"
             )
 
+        if ctx.subtotal_descripcion and ctx.terminos_buscados:
+            lineas.append(
+                f"- *** RESPUESTA DIRECTA: '{ctx.terminos_buscados}'"
+                f" este mes = ${ctx.subtotal_descripcion:,.0f} ***"
+            )
+
         lineas += [
             "",
             "DETALLE DE GASTOS CONSULTADOS (cada línea = una transacción real):"
@@ -135,12 +141,6 @@ class AIAdvisorService:
             f"SUBTOTAL CONSULTADO: ${total_filtrado:,.0f}"
             f" ({ctx.total_gastos_count} transacciones)"
         )
-
-        if ctx.subtotal_descripcion and ctx.terminos_buscados:
-            lineas.append(
-                f"\nTOTAL EXACTO '{ctx.terminos_buscados}' (calculado por sistema):"
-                f" ${ctx.subtotal_descripcion:,.0f}"
-            )
 
         return "\n".join(lineas)
 
