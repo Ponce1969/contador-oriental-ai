@@ -82,13 +82,13 @@ ollama pull nomic-embed-text
 ### **Fase 2: Base de Datos - Migración 006**
 
 #### 2.1 Crear Archivo de Migración
-**Archivo**: `migrations/006_vector_memory.py`
+**Archivo**: `migrations/006_add_ai_vector_memory.py`
 
 ```python
 """
-Migración 006 - Memoria Vectorial del Contador
-Habilita pgvector y crea la tabla para almacenamiento semántico.
-Permite al Contador Oriental realizar búsquedas por contexto (RAG).
+Migración 006: add_ai_vector_memory
+Despierta las capacidades vectoriales de PostgreSQL para el Contador Oriental.
+Crea la infraestructura para búsqueda semántica con pgvector y HNSW.
 
 Integra con estructura existente (VERIFICADA):
 - familias (id, nombre, email, activo, created_at)
@@ -99,111 +99,95 @@ Integra con estructura existente (VERIFICADA):
 - monthly_expense_snapshots (id, familia_id, anio, mes, categoria, total_dinero, cantidad_compras, ticket_promedio, created_at)
 """
 from sqlalchemy import text
-from configs.database_config import DatabaseConfig
 
 
-def up(db) -> None:
-    """Crear tabla de memoria vectorial con tipado estricto"""
-    is_postgres: bool = DatabaseConfig.is_postgresql()
-
-    if is_postgres:
-        # 1. Habilitar la extensión vectorial
-        db.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+def upgrade(engine):
+    """Crear tabla de memoria vectorial con pgvector y HNSW optimizado"""
+    with engine.connect() as conn:
+        print("🧠 Preparando cerebro vectorial en PostgreSQL...")
         
-        # 2. Crear tabla con soporte de vectores (768 para nomic-embed-text)
-        db.execute(text("""
+        # 1. Habilitar la extensión pgvector (necesita privilegios de superusuario)
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+        
+        # 2. Crear la tabla de memoria IA
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS ai_vector_memory (
-                id           SERIAL PRIMARY KEY,
-                familia_id   INTEGER NOT NULL REFERENCES familias(id),
-                contenido    TEXT NOT NULL,
-                embedding    VECTOR(768),
-                metadata     JSONB,
-                source_type  VARCHAR(50) NOT NULL, -- 'gasto', 'ingreso', 'snapshot', 'ocr'
-                source_id    INTEGER, -- ID del registro original
-                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
-        
-        # 3. Índice HNSW optimizado para Orange Pi (RAM eficiente)
-        db.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_vector_memory_embedding 
-            ON ai_vector_memory USING hnsw (embedding vector_cosine_ops)
-            WITH (m = 16, ef_construction = 64)
-        """))
-        
-        # 4. Índice por familia para multitenancy
-        db.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_vector_memory_familia 
-            ON ai_vector_memory (familia_id)
-        """))
-        
-        # 5. Índice compuesto para búsquedas eficientes
-        db.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_vector_memory_familia_source 
-            ON ai_vector_memory (familia_id, source_type)
-        """))
-    else:
-        # Fallback para SQLite (Desarrollo local)
-        db.execute(text("""
-            CREATE TABLE IF NOT EXISTS ai_vector_memory (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                familia_id   INTEGER NOT NULL,
-                contenido    TEXT NOT NULL,
-                embedding    TEXT, -- En SQLite guardamos el vector como string/json
-                metadata     TEXT,
-                source_type  TEXT NOT NULL,
-                source_id    INTEGER,
-                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+                id SERIAL PRIMARY KEY,
+                familia_id INTEGER NOT NULL REFERENCES familias(id) ON DELETE CASCADE,
+                content TEXT NOT NULL,                -- El texto legible (ej: "Gasto en UTE $3500")
+                embedding vector(768),               -- Vector para nomic-embed-text (768 dimensiones)
+                source_type VARCHAR(50),             -- 'expense', 'income', 'snapshot', 'document'
+                source_id INTEGER,                   -- ID del registro original (opcional)
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
         """))
 
-    print("✅ Tabla ai_vector_memory creada")
-    if is_postgres:
-        print("   - Extensión pgvector habilitada")
-        print("   - Índice HNSW configurado para búsquedas rápidas")
-        print("   - FK a familias(id) para integridad referencial")
-        print("   - Índices optimizados para multitenancy")
+        # 3. Crear índice HNSW para búsquedas ultra rápidas en la Orange Pi
+        # Usamos cosine distance (<=>) que es ideal para texto
+        conn.execute(text("""
+            CREATE INDEX ON ai_vector_memory 
+            USING hnsw (embedding vector_cosine_ops);
+        """))
+        
+        conn.commit()
+        print("✅ Migración 006 completada: pgvector y tablas listas.")
 
 
-def down(db) -> None:
+def downgrade(engine):
     """Eliminar tabla de memoria vectorial"""
-    db.execute(text("DROP TABLE IF EXISTS ai_vector_memory"))
-    print("↩️ Tabla ai_vector_memory eliminada")
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS ai_vector_memory;"))
+        conn.commit()
+        print("🗑️ Memoria IA eliminada.")
+```
+
+#### 2.2 Comandos de Ejecución
+```bash
+# Verificar estado actual
+uv run python migrations/migrate.py status
+
+# Ejecutar la migración
+uv run python migrations/migrate.py up
+
+# Verificar la nueva tabla
+uv run python -c "
+from database.engine import engine
+from sqlalchemy import text
+print([r[0] for r in engine.connect().execute(text(
+    \"SELECT table_name FROM information_schema.tables WHERE table_schema='public'\"
+))])
+"
 ```
 
 ---
 
 ### **Fase 3: Modelos de Datos**
 
-#### 3.1 Modelo de Memoria (Tipado Estricto)
+#### 3.1 Modelo de Memoria (Alineado con Migración)
 **Archivo**: `models/memoria_model.py`
 
 ```python
 from __future__ import annotations
 
-from typing import Optional, Dict, Any
+from typing import Optional
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Text, JSONB, Integer, String, TIMESTAMP
+from sqlalchemy import Text, Integer, String, TIMESTAMP
 from database.base import Base
 
 
 class MemoriaContable(Base):
-    """Modelo de memoria vectorial con tipado estricto"""
+    """Modelo de memoria vectorial alineado con migración 006"""
     __tablename__ = "ai_vector_memory"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     familia_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    contenido: Mapped[str] = mapped_column(Text, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)  # Renombrado de 'contenido' a 'content'
     # nomic-embed-text usa 768 dimensiones
     embedding: Mapped[list[float]] = mapped_column(Vector(768))
-    metadata_json: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
-    source_type: Mapped[str] = mapped_column(String(50), nullable=False)  # 'gasto', 'ingreso', 'snapshot', 'ocr'
+    source_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # 'expense', 'income', 'snapshot', 'document'
     source_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[str] = mapped_column(TIMESTAMP, default="CURRENT_TIMESTAMP")
-    updated_at: Mapped[str] = mapped_column(TIMESTAMP, default="CURRENT_TIMESTAMP")
+    created_at: Mapped[str] = mapped_column(TIMESTAMP(timezone=True), default="CURRENT_TIMESTAMP")
     
     def __repr__(self) -> str:
         return f"MemoriaContable(id={self.id}, familia_id={self.familia_id}, source_type={self.source_type})"
@@ -237,7 +221,7 @@ class MemoriaRepository(BaseTableRepository[MemoriaContable]):
         embedding_consulta: List[float], 
         limit: int = 3
     ) -> List[MemoriaContable]:
-        """Buscar registros semánticamente similares usando cosine distance"""
+        """Buscar registros semánticamente similares usando cosine distance (<=>)"""
         query = (
             select(MemoriaContable)
             .where(MemoriaContable.familia_id == self.familia_id)
@@ -368,7 +352,7 @@ class IAMemoryService:
         recuerdos_similares = self.repo.buscar_similares(embedding_result.value, limit)
         
         # 3. Extraer contenido y validar longitud para Gemma 2:2b (4096 tokens)
-        contextos = [recuerdo.contenido for recuerdo in recuerdos_similares]
+        contextos = [recuerdo.content for recuerdo in recuerdos_similares]
         
         # 4. Validar longitud total (~4 chars por token, margen de seguridad)
         longitud_total = sum(len(ctx) for ctx in contextos)
