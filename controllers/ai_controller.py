@@ -345,26 +345,35 @@ class AIController(BaseController):
         self.last_context = ctx
         self.last_pregunta = pregunta
 
-        # Buscar memoria vectorial (RAG) - no bloquea si Ollama está apagado
+        # Buscar memoria vectorial (RAG) solo si NO hay datos reales del mes.
+        # Si hay gastos del mes actual en ctx, esos datos son la fuente de verdad
+        # y la memoria vectorial solo confundiría al modelo.
         memoria_str = ""
-        try:
-            with self._get_session() as session:
-                memory_service = self._get_memory_service(session)
-                if memory_service.tiene_memoria():
-                    mem_result = await memory_service.buscar_contexto_para_pregunta(
-                        pregunta=pregunta, limit=5
-                    )
-                    from result import Ok as MemOk
-                    if isinstance(mem_result, MemOk) and mem_result.ok():
-                        memoria_str = "\n".join(
-                            f"- {c}" for c in mem_result.ok()
+        hay_datos_mes = bool(ctx.resumen_gastos)
+        if not hay_datos_mes:
+            try:
+                with self._get_session() as session:
+                    memory_service = self._get_memory_service(session)
+                    if memory_service.tiene_memoria():
+                        mem_result = await memory_service.buscar_contexto_para_pregunta(
+                            pregunta=pregunta, limit=5
                         )
-                        logger.info(
-                            "Memoria vectorial: %d recuerdos recuperados",
-                            len(mem_result.ok()),
-                        )
-        except Exception as mem_err:
-            logger.warning("[MEMORY] No se pudo recuperar contexto: %s", mem_err)
+                        from result import Ok as MemOk
+                        if isinstance(mem_result, MemOk) and mem_result.ok():
+                            memoria_str = "\n".join(
+                                f"- {c}" for c in mem_result.ok()
+                            )
+                            logger.info(
+                                "Memoria vectorial: %d recuerdos recuperados",
+                                len(mem_result.ok()),
+                            )
+            except Exception as mem_err:
+                logger.warning("[MEMORY] No se pudo recuperar contexto: %s", mem_err)
+        else:
+            logger.info(
+                "[MEMORY] Omitiendo memoria vectorial: hay %d gastos reales del mes.",
+                ctx.total_gastos_count,
+            )
 
         # Consultar al servicio de IA (await = no bloquea el event loop)
         return await self.ai_service.consultar(
@@ -457,22 +466,31 @@ class AIController(BaseController):
         self.last_context = ctx
         self.last_pregunta = pregunta
 
-        # Buscar memoria vectorial (RAG) - no bloquea si Ollama está apagado
+        # Buscar memoria vectorial (RAG) solo si NO hay datos reales del mes.
         memoria_str = ""
-        try:
-            with self._get_session() as session:
-                memory_service = self._get_memory_service(session)
-                if memory_service.tiene_memoria():
-                    mem_result = await memory_service.buscar_contexto_para_pregunta(
-                        pregunta=pregunta, limit=5
-                    )
-                    from result import Ok as MemOk
-                    if isinstance(mem_result, MemOk) and mem_result.ok():
-                        memoria_str = "\n".join(
-                            f"- {c}" for c in mem_result.ok()
+        hay_datos_mes = bool(ctx.resumen_gastos)
+        if not hay_datos_mes:
+            try:
+                with self._get_session() as session:
+                    memory_service = self._get_memory_service(session)
+                    if memory_service.tiene_memoria():
+                        mem_result = await memory_service.buscar_contexto_para_pregunta(
+                            pregunta=pregunta, limit=5
                         )
-        except Exception as mem_err:
-            logger.warning("[MEMORY] Stream: no se pudo recuperar contexto: %s", mem_err)
+                        from result import Ok as MemOk
+                        if isinstance(mem_result, MemOk) and mem_result.ok():
+                            memoria_str = "\n".join(
+                                f"- {c}" for c in mem_result.ok()
+                            )
+            except Exception as mem_err:
+                logger.warning(
+                    "[MEMORY] Stream: no se pudo recuperar contexto: %s", mem_err
+                )
+        else:
+            logger.info(
+                "[MEMORY] Stream: omitiendo memoria vectorial: %d gastos reales del mes.",
+                ctx.total_gastos_count,
+            )
 
         async for token in self.ai_service.consultar_stream(
             request, ctx=ctx, memoria_vectorial=memoria_str

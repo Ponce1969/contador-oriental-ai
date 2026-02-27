@@ -96,11 +96,11 @@ class AIAdvisorService:
 
         lineas += [
             "",
-            "DETALLE DE GASTOS CONSULTADOS:"
+            "DETALLE DE GASTOS CONSULTADOS (cada línea = una transacción real):"
         ]
-        
+
         total_filtrado = 0.0
-        
+
         if not ctx.resumen_gastos:
             lineas.append("- No hay gastos registrados en este contexto.")
         else:
@@ -108,10 +108,10 @@ class AIAdvisorService:
                 total_categoria = sum(d["total"] for d in items.values())
                 cant_categoria = sum(d["cantidad"] for d in items.values())
                 total_filtrado += total_categoria
-                
+
                 lineas.append(
                     f"\n📂 {categoria}"
-                    f" → TOTAL: ${total_categoria:,.0f} ({cant_categoria} compras):"
+                    f" → SUBTOTAL: ${total_categoria:,.0f} ({cant_categoria} transacciones):"
                 )
                 for descripcion, datos in items.items():
                     monto = datos["total"]
@@ -120,10 +120,15 @@ class AIAdvisorService:
                     metodo_str = ", ".join(
                         f"{m}({c}x)" for m, c in metodos.items()
                     )
-                    lineas.append(
-                        f"  • {descripcion}: ${monto:,.0f}"
-                        f" ({cantidad} veces, {metodo_str})"
-                    )
+                    if cantidad > 1:
+                        lineas.append(
+                            f"  • {descripcion}: ${monto:,.0f} total"
+                            f" ({cantidad} transacciones separadas, {metodo_str})"
+                        )
+                    else:
+                        lineas.append(
+                            f"  • {descripcion}: ${monto:,.0f} ({metodo_str})"
+                        )
         
         lineas.append("")
         lineas.append(
@@ -188,8 +193,10 @@ class AIAdvisorService:
         )
 
         seccion_memoria = (
-            f"REGISTROS HISTÓRICOS RELEVANTES (memoria vectorial):\n"
+            f"CONTEXTO HISTÓRICO (meses anteriores, solo referencia):\n"
             f"{memoria_vectorial}\n"
+            f"IMPORTANTE: estos registros históricos son de meses anteriores."
+            f" Los datos reales del mes actual están abajo.\n"
             if memoria_vectorial else ""
         )
 
