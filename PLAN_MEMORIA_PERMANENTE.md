@@ -760,9 +760,122 @@ Responde basándote en los datos proporcionados. Si no hay datos relevantes, ind
 
 ---
 
-### **Fase 7: Actualización de Vistas**
+### **Fase 7: Modelfile Optimizado para RAG**
 
-#### 7.1 Modificar AIAdvisorView
+#### **7.1 Modelfile del Contador Oriental (Definitivo)**
+**Archivo**: `Modelfile`
+
+```dockerfile
+FROM gemma2:2b
+
+PARAMETER temperature 0.2  # Más preciso para cálculos
+PARAMETER num_ctx 4096
+PARAMETER num_predict 250
+PARAMETER repeat_penalty 1.2
+
+SYSTEM """
+Sos el Contador Oriental, contador público uruguayo. 
+
+REGLAS DE ORO:
+1. Recibirás un bloque llamado 'CONTEXTO FINANCIERO'. Usalo como tu única base de datos.
+2. Si el CONTEXTO está vacío, decí que no tenés registros sobre eso todavía.
+3. Priorizá siempre los diagnósticos pre-calculados que el sistema te envía (Inflación, Mayor Consumo, etc.).
+4. Tu tono es profesional, de confianza, pero directo (rioplatense).
+
+ESTRUCTURA DE RESPUESTA:
+- Directa al punto.
+- Si detectás un problema, sugerí una acción (ej: 'Habría que cuidar el gasto en nafta').
+- Máximo 4 líneas.
+"""
+```
+
+#### **7.2 PromptBuilder - El Puente RAG**
+**Archivo**: `services/prompt_builder.py`
+
+```python
+from models.advisor_model import AIContext
+from datetime import datetime
+
+class PromptBuilder:
+    @staticmethod
+    def build_rag_prompt(pregunta_usuario: str, contexto: AIContext, memoria_vectorial: str) -> str:
+        """
+        Une la pregunta, los cálculos de Python y los recuerdos de la DB de vectores.
+        """
+        fecha_actual = datetime.now().strftime("%d/%m/%Y")
+        
+        prompt = f"""
+DATOS DEL SISTEMA (Fecha: {fecha_actual})
+=========================================
+[CONTEXTO GENERAL]
+- Miembros de familia: {contexto.miembros_count}
+- Ingresos del mes: ${contexto.ingresos_total:.2f}
+- Gastos totales del mes: ${contexto.total_gastos_mes:.2f}
+
+[MÉTRICAS POR CATEGORÍA]
+"""
+        # Añadimos las métricas pre-calculadas (Donde Gemma no tiene que sumar nada)
+        for metrica in contexto.comparativa_meses:
+            prompt += f"- {metrica.categoria}: total ${metrica.total_actual:.2f}. "
+            if metrica.diagnostico:
+                prompt += f"Diagnóstico: {metrica.diagnostico}\n"
+
+        # Añadimos la memoria semántica (lo que trajimos de pgvector)
+        if memoria_vectorial:
+            prompt += f"\n[REGISTROS RELEVANTES ENCONTRADOS]\n{memoria_vectorial}\n"
+
+        prompt += f"""
+=========================================
+PREGUNTA DEL USUARIO: "{pregunta_usuario}"
+
+Responda siguiendo sus reglas de Contador Oriental:
+"""
+        return prompt
+```
+
+#### **7.3 Flujo RAG Completo en AdvisorController**
+**Archivo**: `controllers/advisor_controller.py`
+
+```python
+from services.ai_service import AIService
+from services.prompt_builder import PromptBuilder
+from services.stats_service import StatsService
+
+class AdvisorController(BaseController):
+    def __init__(self, familia_id: int, ai_service: AIService, stats_service: StatsService):
+        super().__init__(familia_id)
+        self.ai_service = ai_service
+        self.stats_service = stats_service
+    
+    async def ask_advisor(self, pregunta: str) -> str:
+        """Consulta completa con RAG y contexto financiero"""
+        
+        # 1. Buscar en la memoria de vectores (RAG)
+        recuerdos = await self.ai_service.get_relevant_context(
+            self.familia_id, pregunta, limit=5
+        )
+        
+        # 2. Calcular métricas en tiempo real (Python)
+        contexto_financiero = await self.stats_service.get_current_context(self.familia_id)
+        
+        # 3. Armar el Super Prompt
+        prompt_final = PromptBuilder.build_rag_prompt(
+            pregunta, 
+            contexto_financiero, 
+            recuerdos
+        )
+        
+        # 4. Pedirle la respuesta a Ollama
+        respuesta = await self.ai_service.ask_gemma(prompt_final)
+        
+        return respuesta
+```
+
+---
+
+### **Fase 8: Actualización de Vistas**
+
+#### 8.1 Modificar AIAdvisorView
 **Archivo**: `views/pages/ai_advisor_view.py`
 
 ```python
@@ -787,9 +900,9 @@ async def _on_consultar(self, e):
 
 ---
 
-### **Fase 8: Testing**
+### **Fase 9: Testing**
 
-#### 8.1 Tests de Memoria
+#### 9.1 Tests de Memoria
 **Archivo**: `tests/test_memoria_service.py`
 
 ```python
