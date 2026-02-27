@@ -265,32 +265,151 @@ class MemoriaRepository(BaseTableRepository[MemoriaContable]):
 
 ### **Fase 5: Servicios de IA**
 
-#### 5.1 Servicio de Embeddings
-**Archivo**: `services/embedding_service.py`
+#### 5.1 AIService - El Cerebro del Contador (Enterprise-Level)
+**Archivo**: `services/ai_service.py`
 
 ```python
 import httpx
+from sqlalchemy import text
+from models.expense import Expense
+from models.error import DatabaseError, AppError
 from result import Ok, Err, Result
 
-class EmbeddingService:
-    def __init__(self, ollama_url: str = "http://localhost:11434"):
-        self.ollama_url = ollama_url
+
+class AIService:
+    """Cerebro del Contador - Circuitos cerrados de IA"""
     
-    async def generar_embedding(self, texto: str) -> Result[list[float], str]:
-        """Generar embedding usando nomic-embed-text"""
+    def __init__(self, db_engine, ollama_url: str):
+        self.engine = db_engine
+        self.ollama_url = ollama_url
+
+    async def generate_embedding(self, text_content: str) -> Result[list[float], AppError]:
+        """Llama a Ollama para convertir texto en vector de 768 dimensiones"""
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.ollama_url}/api/embeddings",
-                    json={"model": "nomic-embed-text", "prompt": texto}
+                    json={"model": "nomic-embed-text", "prompt": text_content},
+                    timeout=30.0
                 )
-                response.raise_for_status()
-                return Ok(response.json()["embedding"])
+                if response.status_code == 200:
+                    return Ok(response.json()["embedding"])
+                return Err(AppError("Ollama no pudo generar el embedding"))
         except Exception as e:
-            return Err(f"Error al generar embedding: {str(e)}")
+            return Err(AppError(f"Error de conexión con Ollama: {str(e)}"))
+
+    async def memorize_expense(self, expense: Expense, familia_id: int) -> Result[bool, AppError]:
+        """Toma un gasto, lo vectoriza y lo guarda en memoria de largo plazo"""
+        # 1. Crear narrativa enriquecida
+        narrative = (
+            f"Gasto de ${expense.monto} en {expense.categoria_nombre} "
+            f"({expense.subcategoria}). Descripción: {expense.descripcion}. "
+            f"Fecha: {expense.fecha}. Pago: {expense.metodo_pago.value}."
+        )
+
+        # 2. Generar embedding
+        embedding_res = await self.generate_embedding(narrative)
+        if embedding_res.is_err():
+            return embedding_res
+
+        # 3. Guardar en PostgreSQL con pgvector
+        try:
+            async with self.engine.begin() as conn:
+                await conn.execute(
+                    text("""
+                        INSERT INTO ai_vector_memory 
+                        (familia_id, content, embedding, source_type, source_id)
+                        VALUES (:fam_id, :cont, :emb, 'expense', :s_id)
+                    """),
+                    {
+                        "fam_id": familia_id,
+                        "cont": narrative,
+                        "emb": embedding_res.unwrap(),
+                        "s_id": expense.id
+                    }
+                )
+            return Ok(True)
+        except Exception as e:
+            return Err(DatabaseError(f"No se pudo guardar en memoria vectorial: {e}"))
+
+    async def get_relevant_context(self, familia_id: int, query: str, limit: int = 5) -> str:
+        """Busca recuerdos semanticamente similares usando HNSW"""
+        query_emb_res = await self.generate_embedding(query)
+        if query_emb_res.is_err():
+            return ""
+
+        async with self.engine.connect() as conn:
+            # Búsqueda por similitud de coseno con índice HNSW
+            result = await conn.execute(
+                text("""
+                    SELECT content FROM ai_vector_memory
+                    WHERE familia_id = :fam_id
+                    ORDER BY embedding <=> :emb
+                    LIMIT :lim
+                """),
+                {"fam_id": familia_id, "emb": str(query_emb_res.unwrap()), "lim": limit}
+            )
+            context = "\n".join([row[0] for row in result])
+            return context
 ```
 
-#### 5.2 Servicio de Memoria IA
+#### 5.2 Ventajas Enterprise del AIService
+
+**🎯 Búsqueda Semántica Real:**
+- **Pregunta**: "¿Cuánto gasté en comida?"
+- **Encuentra**: "Carnicería", "Supermercado", "Feria" 
+- **Sin hardcodeo**: Aprende de los datos reales
+
+**🛡️ Aislamiento de Errores:**
+- Si Ollama está apagado → El gasto se guarda igual
+- Result[T, E] controla fallos sin romper UX
+- Logging específico para debugging
+
+**⚡ HNSW Optimizado:**
+- Usa automáticamente el índice de migración 006
+- Búsquedas instantáneas en Orange Pi 5 Plus
+- Cosine distance (<=>) ideal para texto
+
+**🔄 Background Tasks:**
+```python
+# En ExpenseController - No bloquear UI
+import asyncio
+asyncio.create_task(ai_service.memorize_expense(expense, familia_id))
+```
+
+---
+
+#### 5.3 Integración con Controller (Background Tasks)
+**Archivo**: `controllers/expense_controller.py`
+
+```python
+from services.ai_service import AIService
+
+class ExpenseController(BaseController):
+    def __init__(self, familia_id: int, ai_service: AIService = None):
+        super().__init__(familia_id)
+        self.ai_service = ai_service
+    
+    async def create_expense(self, expense_data):
+        """Crear gasto y memorizar en background (non-blocking)"""
+        
+        # 1. Guardar gasto normal
+        result = await self.expense_service.save(expense_data)
+        
+        if isinstance(result, Ok) and self.ai_service:
+            # 2. Memoria en background (no bloquea UI)
+            expense = result.value
+            import asyncio
+            asyncio.create_task(
+                self.ai_service.memorize_expense(expense, self.familia_id)
+            )
+        
+        return result
+```
+
+---
+
+### **Fase 6: Integración con Controllers (Background Tasks)**
 **Archivo**: `services/ia_memory_service.py`
 
 ```python
