@@ -136,6 +136,12 @@ class AIAdvisorService:
             f" ({ctx.total_gastos_count} transacciones)"
         )
 
+        if ctx.subtotal_descripcion and ctx.terminos_buscados:
+            lineas.append(
+                f"\nTOTAL EXACTO '{ctx.terminos_buscados}' (calculado por sistema):"
+                f" ${ctx.subtotal_descripcion:,.0f}"
+            )
+
         return "\n".join(lineas)
 
     def _formatear_comparativa(self, ctx: AIContext) -> str:

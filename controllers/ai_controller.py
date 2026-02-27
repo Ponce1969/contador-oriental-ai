@@ -218,6 +218,48 @@ class AIController(BaseController):
             
         return resumen
 
+    def _calcular_subtotal_por_descripcion(
+        self,
+        gastos: list[Expense],
+        pregunta: str,
+    ) -> tuple[float, str]:
+        """
+        Busca términos de la pregunta en las descripciones de los gastos
+        y calcula el subtotal en Python (para que Gemma no tenga que sumar).
+
+        Returns:
+            (subtotal, label) — subtotal=0.0 y label="" si no hay match.
+        """
+        palabras = re.findall(r'\w+', pregunta.lower())
+        # Palabras cortas o interrogativas no aportan al match
+        stop = {
+            "cuanto", "cuánto", "gaste", "gasté", "tengo", "puedes", "puede",
+            "decir", "ver", "dame", "mostrar", "mostrame", "muéstrame",
+            "los", "las", "del", "este", "mes", "en", "de", "un", "una",
+            "que", "y", "o", "a", "la", "el", "me", "por", "con", "es",
+        }
+        terminos = [p for p in palabras if len(p) > 3 and p not in stop]
+
+        if not terminos:
+            return 0.0, ""
+
+        gastos_match: list[Expense] = []
+        for gasto in gastos:
+            desc = gasto.descripcion.lower()
+            if any(t in desc for t in terminos):
+                gastos_match.append(gasto)
+
+        if not gastos_match:
+            return 0.0, ""
+
+        subtotal = sum(g.monto for g in gastos_match)
+        label = "/".join(sorted(set(terminos)))
+        logger.info(
+            "[SUBTOTAL] Términos %s → %d gastos → $%.0f",
+            terminos, len(gastos_match), subtotal,
+        )
+        return subtotal, label
+
     def _resumir_metodos_pago(self, gastos: list[Expense]) -> str:
         """
         Genera un resumen de métodos de pago usados en el mes.
@@ -304,7 +346,12 @@ class AIController(BaseController):
                 if gastos_filtrados:
                     resumen_gastos = self._agrupar_gastos(gastos_filtrados)
                     total_gastos_count = len(gastos_filtrados)
-                
+
+                # Subtotal por términos en descripción (Python pre-calcula, Gemma no suma)
+                subtotal_desc, label_desc = self._calcular_subtotal_por_descripcion(
+                    gastos_mes, pregunta
+                )
+
                 # Obtener ingresos del mes actual
                 income_repo = IncomeRepository(session, self._familia_id)
                 income_service = IncomeService(income_repo)
@@ -314,12 +361,12 @@ class AIController(BaseController):
                     if i.fecha.month == mes_actual and i.fecha.year == anio_actual
                 ]
                 ingresos_total = sum(i.monto for i in ingresos)
-                
+
                 # Obtener miembros de la familia
                 member_repo = FamilyMemberRepository(session, self._familia_id)
                 member_service = FamilyMemberService(member_repo)
                 miembros = member_service.list_members()
-                
+
                 # Upsert snapshot del mes actual y obtener comparativa
                 snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
                 comparativa = []
@@ -329,7 +376,9 @@ class AIController(BaseController):
                         anio_actual, mes_actual
                     )
                 except Exception as snap_err:
-                    logger.warning("No se pudo obtener comparativa mensual: %s", snap_err)
+                    logger.warning(
+                        "No se pudo obtener comparativa mensual: %s", snap_err
+                    )
 
                 ctx = AIContext(
                     resumen_gastos=resumen_gastos,
@@ -339,6 +388,8 @@ class AIController(BaseController):
                     miembros_count=len(miembros),
                     resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes),
                     comparativa_meses=comparativa,
+                    subtotal_descripcion=subtotal_desc if subtotal_desc else None,
+                    terminos_buscados=label_desc,
                 )
         
         # Guardar contexto para exportación PDF
@@ -430,6 +481,11 @@ class AIController(BaseController):
                     resumen_gastos = self._agrupar_gastos(gastos_filtrados)
                     total_gastos_count = len(gastos_filtrados)
 
+                # Subtotal por términos en descripción (Python pre-calcula, Gemma no suma)
+                subtotal_desc, label_desc = self._calcular_subtotal_por_descripcion(
+                    gastos_mes, pregunta
+                )
+
                 income_repo = IncomeRepository(session, self._familia_id)
                 income_service = IncomeService(income_repo)
                 ingresos = income_service.list_incomes()
@@ -461,6 +517,8 @@ class AIController(BaseController):
                     miembros_count=len(miembros),
                     resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes),
                     comparativa_meses=comparativa,
+                    subtotal_descripcion=subtotal_desc if subtotal_desc else None,
+                    terminos_buscados=label_desc,
                 )
 
         self.last_context = ctx
