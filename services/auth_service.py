@@ -1,13 +1,18 @@
 """
 Servicio de autenticación - Login, logout, gestión de usuarios
 """
+import logging
+
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from result import Err, Ok, Result
 
+from core.security import rate_limiter
 from models.errors import DatabaseError, ValidationError
 from models.user_model import User, UserCreate, UserLogin
 from repositories.user_repository import UserRepository
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -25,32 +30,60 @@ class AuthService:
         self, credentials: UserLogin
     ) -> Result[User, ValidationError | DatabaseError]:
         """
-        Autenticar usuario
-        Retorna el usuario si las credenciales son correctas
+        Autenticar usuario con rate limiting.
+        Retorna el usuario si las credenciales son correctas.
         """
-        # Buscar usuario por username
-        result = self._user_repo.get_by_username(credentials.username)
-        
+        username = credentials.username
+
+        # 1. Verificar si el usuario está bloqueado por demasiados fallos
+        bloqueado, segundos = rate_limiter.esta_bloqueado(username)
+        if bloqueado:
+            minutos = segundos // 60 + 1
+            return Err(ValidationError(
+                message=(
+                    f"Demasiados intentos fallidos. "
+                    f"Intentá de nuevo en {minutos} minuto(s)."
+                )
+            ))
+
+        # 2. Buscar usuario por username
+        result = self._user_repo.get_by_username(username)
         if result.is_err():
+            rate_limiter.registrar_fallo(username)
             return Err(ValidationError(message="Usuario o contraseña incorrectos"))
-        
+
         user = result.ok_value
-        
-        # Verificar que el usuario esté activo
+
+        # 3. Verificar que el usuario esté activo
         if not user.activo:
             return Err(ValidationError(message="Usuario inactivo"))
-        
-        # Verificar contraseña
-        if not self._verify_password(
-            credentials.password,
-            user.password_hash
-        ):
-            return Err(ValidationError(message="Usuario o contraseña incorrectos"))
-        
-        # Actualizar último login
+
+        # 4. Verificar contraseña
+        if not self._verify_password(credentials.password, user.password_hash):
+            bloqueado_ahora, seg_bloqueo = rate_limiter.registrar_fallo(username)
+            if bloqueado_ahora:
+                minutos = seg_bloqueo // 60 + 1
+                return Err(ValidationError(
+                    message=(
+                        f"Demasiados intentos fallidos. "
+                        f"Cuenta bloqueada por {minutos} minuto(s)."
+                    )
+                ))
+            restantes = rate_limiter.intentos_restantes(username)
+            return Err(ValidationError(
+                message=(
+                    f"Usuario o contraseña incorrectos. "
+                    f"Intentos restantes: {restantes}."
+                )
+            ))
+
+        # 5. Login exitoso — limpiar contador de fallos
+        rate_limiter.registrar_exito(username)
+
+        # 6. Actualizar último login
         if user.id is not None:
             self._user_repo.update_last_login(user.id)
-        
+
         return Ok(user)
     
     def create_user(
