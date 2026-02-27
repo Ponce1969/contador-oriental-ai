@@ -175,7 +175,8 @@ class AIAdvisorService:
         self,
         pregunta: str,
         contexto_legal: str,
-        gastos_formateados: str
+        gastos_formateados: str,
+        memoria_vectorial: str = "",
     ) -> str:
         """
         Construye el prompt optimizado para gemma2:2b
@@ -185,13 +186,19 @@ class AIAdvisorService:
             f"NORMATIVA URUGUAYA RELEVANTE:\n{contexto_legal}\n"
             if contexto_legal else ""
         )
-        
+
+        seccion_memoria = (
+            f"REGISTROS HISTÓRICOS RELEVANTES (memoria vectorial):\n"
+            f"{memoria_vectorial}\n"
+            if memoria_vectorial else ""
+        )
+
         seccion_gastos = (
             f"{gastos_formateados}\n"
             if gastos_formateados else ""
         )
 
-        datos_reales = bool(seccion_gastos)
+        datos_reales = bool(seccion_gastos or seccion_memoria)
         prioridad = (
             "- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier"
             " normativa general. Respondé basándote en esos datos primero.\n"
@@ -208,7 +215,7 @@ TU ROL:
 - Si un dato no aparece explícitamente en los datos, NO lo menciones ni lo calcules.
 {prioridad}- Máximo 4 líneas de respuesta.
 
-{seccion_rag}{seccion_gastos}PREGUNTA: {pregunta}
+{seccion_rag}{seccion_memoria}{seccion_gastos}PREGUNTA: {pregunta}
 
 RESPUESTA:"""
 
@@ -218,6 +225,7 @@ RESPUESTA:"""
         self,
         request: AIRequest,
         ctx: AIContext | None = None,
+        memoria_vectorial: str = "",
     ):
         """
         Versión streaming de consultar().
@@ -242,7 +250,9 @@ RESPUESTA:"""
             if comparativa_str:
                 gastos_formateados += comparativa_str
 
-        prompt = self._construir_prompt(request.pregunta, contexto, gastos_formateados)
+        prompt = self._construir_prompt(
+            request.pregunta, contexto, gastos_formateados, memoria_vectorial
+        )
 
         ai_logger.info("🔴 STREAM iniciado (%s chars prompt)", len(prompt))
 
@@ -266,7 +276,8 @@ RESPUESTA:"""
     async def consultar(
         self,
         request: AIRequest,
-        ctx: AIContext | None = None
+        ctx: AIContext | None = None,
+        memoria_vectorial: str = "",
     ) -> Result[AIResponse, AppError]:
         """
         Consulta al Contador Oriental (asíncrono)
@@ -274,6 +285,7 @@ RESPUESTA:"""
         Args:
             request: Datos de la consulta
             ctx: Contexto financiero pre-calculado por Python (opcional)
+            memoria_vectorial: Contexto RAG de pgvector (opcional)
             
         Returns:
             Result con la respuesta o error
@@ -295,11 +307,12 @@ RESPUESTA:"""
                 if comparativa_str:
                     gastos_formateados += comparativa_str
 
-            # 3. Construir prompt
+            # 3. Construir prompt (con memoria vectorial si está disponible)
             prompt = self._construir_prompt(
                 request.pregunta,
                 contexto,
                 gastos_formateados,
+                memoria_vectorial,
             )
             
             # Log del contexto para debugging

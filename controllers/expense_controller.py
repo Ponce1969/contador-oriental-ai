@@ -4,13 +4,18 @@ Controller para gestión de gastos familiares
 
 from __future__ import annotations
 
-from result import Result
+import logging
+
+from result import Ok, Result
 
 from controllers.base_controller import BaseController
+from core.events import Event, EventType, event_system
 from models.errors import AppError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
 from services.expense_service import ExpenseService
+
+logger = logging.getLogger(__name__)
 
 
 class ExpenseController(BaseController):
@@ -22,11 +27,30 @@ class ExpenseController(BaseController):
         return "Gastos Familiares"
 
     def add_expense(self, expense: Expense) -> Result[Expense, AppError]:
-        """Agregar un nuevo gasto"""
+        """Agregar un nuevo gasto y publicar evento para memoria vectorial (fire-and-forget)"""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
-            return service.create_expense(expense)
+            result = service.create_expense(expense)
+
+        if isinstance(result, Ok):
+            gasto = result.ok()
+            event = Event(
+                type=EventType.GASTO_CREADO,
+                familia_id=self._familia_id or 0,
+                source_id=gasto.id,
+                data={
+                    "descripcion": gasto.descripcion,
+                    "monto": float(gasto.monto),
+                    "categoria": gasto.categoria.value,
+                    "metodo_pago": gasto.metodo_pago.value,
+                    "fecha": str(gasto.fecha),
+                    "recurrente": gasto.es_recurrente,
+                },
+            )
+            event_system.fire_and_forget(event)
+
+        return result
 
     def list_expenses(self) -> list[Expense]:
         """Listar todos los gastos"""

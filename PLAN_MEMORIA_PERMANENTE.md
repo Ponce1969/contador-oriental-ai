@@ -74,7 +74,7 @@ docker exec -it auditor_familiar_db psql -U postgres -d postgres -c "CREATE EXTE
 #### 1.3 Modelo de Embeddings
 ```bash
 # Descargar modelo especializado
-ollama pull nomic-embed-text
+ollama pull nomic-embed-text   # este modelo ya esta 
 ```
 
 ---

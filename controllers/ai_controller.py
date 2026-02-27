@@ -15,10 +15,13 @@ from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
 from repositories.family_member_repository import FamilyMemberRepository
 from repositories.income_repository import IncomeRepository
+from repositories.memoria_repository import MemoriaRepository
 from repositories.monthly_snapshot_repository import MonthlySnapshotRepository
 from services.ai_advisor_service import AIAdvisorService
+from services.embedding_service import EmbeddingService
 from services.expense_service import ExpenseService
 from services.family_member_service import FamilyMemberService
+from services.ia_memory_service import IAMemoryService
 from services.income_service import IncomeService
 
 logger = logging.getLogger(__name__)
@@ -70,8 +73,14 @@ class AIController(BaseController):
     def __init__(self, familia_id: int):
         super().__init__(familia_id=familia_id)
         self.ai_service = AIAdvisorService()
+        self.embedding_service = EmbeddingService()
         self.last_context: AIContext = AIContext()
         self.last_pregunta: str = ""
+
+    def _get_memory_service(self, session) -> IAMemoryService:
+        """Crear IAMemoryService con sesión activa."""
+        repo = MemoriaRepository(session, self._familia_id or 0)
+        return IAMemoryService(repo, self.embedding_service)
     
     def _detectar_categorias_relevantes(self, pregunta: str) -> list[str]:
         """
@@ -336,8 +345,31 @@ class AIController(BaseController):
         self.last_context = ctx
         self.last_pregunta = pregunta
 
+        # Buscar memoria vectorial (RAG) - no bloquea si Ollama está apagado
+        memoria_str = ""
+        try:
+            with self._get_session() as session:
+                memory_service = self._get_memory_service(session)
+                if memory_service.tiene_memoria():
+                    mem_result = await memory_service.buscar_contexto_para_pregunta(
+                        pregunta=pregunta, limit=5
+                    )
+                    from result import Ok as MemOk
+                    if isinstance(mem_result, MemOk) and mem_result.ok():
+                        memoria_str = "\n".join(
+                            f"- {c}" for c in mem_result.ok()
+                        )
+                        logger.info(
+                            "Memoria vectorial: %d recuerdos recuperados",
+                            len(mem_result.ok()),
+                        )
+        except Exception as mem_err:
+            logger.warning("[MEMORY] No se pudo recuperar contexto: %s", mem_err)
+
         # Consultar al servicio de IA (await = no bloquea el event loop)
-        return await self.ai_service.consultar(request, ctx=ctx)
+        return await self.ai_service.consultar(
+            request, ctx=ctx, memoria_vectorial=memoria_str
+        )
 
     async def consultar_contador_stream(
         self,
@@ -425,7 +457,26 @@ class AIController(BaseController):
         self.last_context = ctx
         self.last_pregunta = pregunta
 
-        async for token in self.ai_service.consultar_stream(request, ctx=ctx):
+        # Buscar memoria vectorial (RAG) - no bloquea si Ollama está apagado
+        memoria_str = ""
+        try:
+            with self._get_session() as session:
+                memory_service = self._get_memory_service(session)
+                if memory_service.tiene_memoria():
+                    mem_result = await memory_service.buscar_contexto_para_pregunta(
+                        pregunta=pregunta, limit=5
+                    )
+                    from result import Ok as MemOk
+                    if isinstance(mem_result, MemOk) and mem_result.ok():
+                        memoria_str = "\n".join(
+                            f"- {c}" for c in mem_result.ok()
+                        )
+        except Exception as mem_err:
+            logger.warning("[MEMORY] Stream: no se pudo recuperar contexto: %s", mem_err)
+
+        async for token in self.ai_service.consultar_stream(
+            request, ctx=ctx, memoria_vectorial=memoria_str
+        ):
             yield token
     
     def get_title(self) -> str:
