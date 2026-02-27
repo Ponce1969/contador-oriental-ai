@@ -218,6 +218,83 @@ class AIController(BaseController):
             
         return resumen
 
+    # Diccionario de sinónimos para búsqueda semántica en descripciones
+    _SINONIMOS: dict[str, list[str]] = {
+        "carniceria": [
+            "carne", "carnes", "carniceria", "carnicería",
+            "asado", "vacio", "vacío", "picada", "bife", "churrasco",
+            "costilla", "costillas", "milanesa", "milanesas",
+            "pollo", "cerdo", "cordero", "chivito", "chorizo",
+            "morcilla", "salchicha", "hamburguesa", "hamburguesas",
+        ],
+        "verduleria": [
+            "verdura", "verduras", "verduleria", "verdulería",
+            "fruta", "frutas", "fruteria", "frutería",
+            "tomate", "lechuga", "cebolla", "papa", "papas",
+            "zapallo", "zanahoria", "manzana", "naranja", "banana",
+        ],
+        "supermercado": [
+            "supermercado", "super", "almacen", "almacén",
+            "mercado", "despensa", "abasto",
+        ],
+        "farmacia": [
+            "farmacia", "medicamento", "medicamentos", "remedio",
+            "remedios", "drogueria", "drogería",
+        ],
+        "panaderia": [
+            "panaderia", "panadería", "pan", "facturas",
+            "medialunas", "bizcochos", "torta", "pasteleria",
+        ],
+        "combustible": [
+            "combustible", "nafta", "gasoil", "gasolina",
+            "ancap", "shell", "ypf", "petrobras",
+        ],
+        "limpieza": [
+            "limpieza", "detergente", "jabon", "jabón",
+            "lavandina", "desinfectante", "escoba",
+        ],
+    }
+
+    @classmethod
+    def _expandir_con_sinonimos(cls, terminos: list[str]) -> list[str]:
+        """Expande los términos con sinónimos del diccionario."""
+        expandidos = list(terminos)
+        for termino in terminos:
+            for grupo in cls._SINONIMOS.values():
+                if termino in grupo:
+                    expandidos.extend(grupo)
+                    break
+                # Fuzzy: si el término es similar a alguna clave del grupo
+                mejores = difflib.get_close_matches(
+                    termino, grupo, n=1, cutoff=0.82
+                )
+                if mejores:
+                    expandidos.extend(grupo)
+                    break
+        return list(set(expandidos))
+
+    @classmethod
+    def _descripcion_matchea(
+        cls, desc: str, terminos_expandidos: list[str]
+    ) -> bool:
+        """
+        Retorna True si la descripción contiene algún término exacto
+        o tiene similitud fuzzy >= 0.82 con alguna palabra de la descripción.
+        """
+        palabras_desc = re.findall(r'\w+', desc)
+        for termino in terminos_expandidos:
+            # Coincidencia exacta (substring)
+            if termino in desc:
+                return True
+            # Fuzzy sobre cada palabra de la descripción
+            for palabra in palabras_desc:
+                ratio = difflib.SequenceMatcher(
+                    None, termino, palabra
+                ).ratio()
+                if ratio >= 0.82:
+                    return True
+        return False
+
     def _calcular_subtotal_por_descripcion(
         self,
         gastos: list[Expense],
@@ -225,7 +302,7 @@ class AIController(BaseController):
     ) -> tuple[float, str]:
         """
         Busca términos de la pregunta en las descripciones de los gastos
-        y calcula el subtotal en Python (para que Gemma no tenga que sumar).
+        usando fuzzy matching y sinónimos, y calcula el subtotal en Python.
 
         Returns:
             (subtotal, label) — subtotal=0.0 y label="" si no hay match.
@@ -255,20 +332,26 @@ class AIController(BaseController):
         if not terminos:
             return 0.0, ""
 
+        terminos_expandidos = self._expandir_con_sinonimos(terminos)
+        logger.info(
+            "[SUBTOTAL] Términos originales: %s → expandidos: %s",
+            terminos, terminos_expandidos,
+        )
+
         gastos_match: list[Expense] = []
         for gasto in gastos:
             desc = gasto.descripcion.lower()
-            if any(t in desc for t in terminos):
+            if self._descripcion_matchea(desc, terminos_expandidos):
                 gastos_match.append(gasto)
 
         if not gastos_match:
             return 0.0, ""
 
         subtotal = sum(g.monto for g in gastos_match)
-        label = "/".join(sorted(set(terminos)))
+        label = terminos[0] if len(terminos) == 1 else "/".join(sorted(set(terminos)))
         logger.info(
-            "[SUBTOTAL] Términos %s → %d gastos → $%.0f",
-            terminos, len(gastos_match), subtotal,
+            "[SUBTOTAL] %d gastos encontrados → $%.0f (label: %s)",
+            len(gastos_match), subtotal, label,
         )
         return subtotal, label
 
