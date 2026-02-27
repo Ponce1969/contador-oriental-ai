@@ -116,9 +116,9 @@ class AIController(BaseController):
                         break
                     
                     # Fuzzy matching (typos)
-                    # cutoff=0.8 permite pequeños errores (ej: alamcen -> almacen)
+                    # cutoff=0.88 evita falsos positivos (ej: 'pasado' != 'asado')
                     matches = difflib.get_close_matches(
-                        keyword, palabras_pregunta, n=1, cutoff=0.8
+                        keyword, palabras_pregunta, n=1, cutoff=0.88
                     )
                     if matches:
                         logger.info(
@@ -326,6 +326,11 @@ class AIController(BaseController):
             "en", "de", "un", "una", "unos", "unas",
             "que", "qué", "y", "o", "a", "la", "el",
             "me", "por", "con", "es", "son", "fue",
+            # Términos temporales que no son de búsqueda
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+            "pasado", "anterior", "ultimo", "último", "semana", "ayer",
+            "gastamos", "gastaron", "gastaste", "gastó",
         }
         terminos = [p for p in palabras if len(p) > 3 and p not in stop]
 
