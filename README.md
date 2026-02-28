@@ -13,6 +13,8 @@ Sistema de gestión financiera familiar con **Python 3.12 + Flet + PostgreSQL + 
 - **📊 Dashboard** — Balance mensual automático, comparativa vs mes anterior por categoría
 - **🤖 Contador Oriental** — Asistente IA local (Gemma 2:2b), streaming token a token, RAG con normativa uruguaya
 - **🧠 Memoria Vectorial** — Cada gasto se vectoriza automáticamente; el Contador recuerda el historial completo con búsqueda semántica (pgvector + HNSW)
+- **🔍 Búsqueda Semántica** — `expenses.embedding` vector(768): el subtotal se calcula por similitud cosine, no por keywords. "supermercado" encuentra "almacén", "verdulería", "delivery"
+- **📅 Consultas Históricas** — Detecta automáticamente meses específicos ("octubre"), "mes pasado" y "últimos N meses" y carga los gastos reales de BD
 
 ---
 
@@ -29,7 +31,9 @@ Services             MemoryEventHandler
     │                   │
 Repositories      EmbeddingService (nomic-embed-text)
     │                   │
-PostgreSQL + pgvector (ai_vector_memory)
+PostgreSQL + pgvector
+    ├── ai_vector_memory  (RAG: recuerdos de gastos)
+    └── expenses.embedding (búsqueda cosine por descripción)
 ```
 
 ### Patrones y decisiones de diseño
@@ -41,7 +45,7 @@ PostgreSQL + pgvector (ai_vector_memory)
 - **RAG (Retrieval-Augmented Generation)** — Cada consulta al Contador busca contexto semántico en pgvector antes de llamar a Gemma
 - **Fire-and-forget** — La vectorización de gastos corre en background, nunca bloquea la UI
 
-### Flujo de memoria vectorial
+### Flujo de memoria vectorial y búsqueda semántica
 
 ```
 Usuario guarda un gasto
@@ -49,13 +53,17 @@ Usuario guarda un gasto
             └─→ event_system.fire_and_forget(GASTO_CREADO)
                     └─→ [background] MemoryEventHandler
                                 └─→ EmbeddingService → nomic-embed-text (768d)
-                                        └─→ MemoriaRepository → ai_vector_memory (pgvector)
+                                        ├─→ MemoriaRepository → ai_vector_memory (RAG)
+                                        └─→ ExpenseRepository → expenses.embedding
 
 Usuario pregunta al Contador
     └─→ AIController
-            ├─→ buscar_contexto_para_pregunta() → HNSW cosine search
-            └─→ AIAdvisorService → prompt enriquecido con historial relevante
-                    └─→ Gemma 2:2b → respuesta contextual
+            ├─→ _detectar_rango_meses() → mes específico / últimos N / mes pasado
+            ├─→ ExpenseRepository.get_by_month() → gastos históricos reales
+            ├─→ _calcular_subtotal_semantico() → cosine search en expenses.embedding
+            ├─→ buscar_contexto_para_pregunta() → HNSW cosine en ai_vector_memory
+            └─→ AIAdvisorService → prompt enriquecido con contexto real
+                    └─→ Gemma 2:2b → respuesta contextual sin alucinar números
 ```
 
 ---
@@ -93,8 +101,12 @@ ollama pull nomic-embed-text
 ```bash
 docker compose up -d
 
-# Ejecutar migraciones (incluye creación de tabla vectorial)
-uv run python migrations/migrate.py migrate
+# Ejecutar migraciones (incluye tabla vectorial y columna embedding)
+uv run fleting db migrate
+
+# Poblar datos de ejemplo (solo en APP_ENV=development)
+$env:OLLAMA_BASE_URL="http://localhost:11434"
+uv run fleting db seed
 
 # Abrir aplicación
 # http://localhost:8550
@@ -105,7 +117,7 @@ uv run python migrations/migrate.py migrate
 ```bash
 uv sync
 # Levantar PostgreSQL con pgvector aparte, luego:
-uv run python migrations/migrate.py migrate
+uv run fleting db migrate
 uv run python main.py
 ```
 
@@ -121,22 +133,25 @@ uv run python main.py
 | `usuarios` | Login y autenticación |
 | `family_members` | Miembros de la familia (personas y mascotas) |
 | `incomes` | Ingresos por miembro |
-| `expenses` | Gastos con categorías uruguayas |
+| `expenses` | Gastos + columna `embedding vector(768)` para búsqueda semántica |
 | `monthly_expense_snapshots` | Snapshots mensuales para comparativas |
-| `ai_vector_memory` | Memoria vectorial RAG (pgvector, 768 dimensiones) |
+| `ai_vector_memory` | Memoria vectorial RAG (pgvector, 768 dimensiones, índice HNSW) |
 | `_fleting_migrations` | Control de versiones de migraciones |
 
 ### Migraciones
 
 ```bash
 # Ver estado actual
-uv run python migrations/migrate.py status
+uv run fleting db status
 
 # Aplicar migraciones pendientes
-uv run python migrations/migrate.py migrate
+uv run fleting db migrate
 
 # Revertir última migración
-uv run python migrations/migrate.py rollback
+uv run fleting db rollback
+
+# Nueva migración
+uv run fleting db make <nombre>
 ```
 
 > **Importante:** La imagen Docker usa `pgvector/pgvector:pg16` (no `postgres:16-alpine`) para tener la extensión `vector` disponible.
@@ -154,15 +169,25 @@ uv run python migrations/migrate.py rollback
 
 ### Cómo responde el Contador
 
-El prompt que recibe Gemma tiene tres secciones opcionales:
+El prompt que recibe Gemma tiene cuatro secciones opcionales:
 
 ```
-1. NORMATIVA URUGUAYA RELEVANTE   ← RAG con archivos .md de knowledge/
-2. REGISTROS HISTÓRICOS RELEVANTES ← RAG con pgvector (memoria de transacciones)
-3. ESTADO DE LA HACIENDA FAMILIAR  ← Datos calculados por Python del mes actual
+1. NORMATIVA URUGUAYA RELEVANTE    ← RAG con archivos .md de knowledge/
+2. REGISTROS HISTÓRICOS RELEVANTES ← RAG con pgvector (ai_vector_memory)
+3. SUBTOTAL SEMÁNTICO              ← cosine search en expenses.embedding
+4. ESTADO DE LA HACIENDA FAMILIAR  ← gastos reales del período calculados por Python
 ```
 
 Gemma **nunca calcula** — solo narra los datos que Python le prepara. Esto evita alucinaciones numéricas.
+
+### Detección de períodos históricos
+
+```python
+# El Contador entiende automáticamente:
+"¿Cuánto gasté en supermercado el mes pasado?"   → carga gastos de enero/2026
+"¿Cuál fue mi gasto más alto en octubre?"         → carga gastos de octubre/2025
+"¿Cuánto gasté en salud en los últimos 3 meses?"  → carga dic/2025 + ene/2026 + feb/2026
+```
 
 ### Configuración del modelo (`Modelfile`)
 
@@ -207,10 +232,16 @@ contador-oriental/
 │   ├── router.py
 │   ├── sqlalchemy_session.py
 │   └── logger.py
+├── 📁 seeds/
+│   ├── initial.py                # Orquestador: essential_data siempre, dev-only el resto
+│   ├── essential_data.py         # Datos críticos (familia base, idempotente)
+│   ├── 001_gastos_ficticios.py   # 48 gastos de ejemplo en 4 meses
+│   ├── 002_memoria_vectorial.py  # Embeddings en ai_vector_memory
+│   └── 003_expense_embeddings.py # Embeddings en expenses.embedding
 ├── 📁 migrations/
-│   ├── migrate.py                # CLI de migraciones
 │   ├── 001_initial.py … 005_*    # Migraciones previas
-│   └── 006_add_ai_vector_memory.py  # pgvector + HNSW
+│   ├── 006_add_ai_vector_memory.py  # tabla ai_vector_memory + HNSW
+│   └── 007_add_expense_embedding.py # columna expenses.embedding vector(768)
 ├── 📁 knowledge/
 │   ├── irpf_familia_uy.md        # Normativa IRPF Uruguay
 │   ├── inclusion_financiera_uy.md
@@ -282,7 +313,9 @@ uv run ty check .
 uv run ruff check .
 ```
 
-**Cobertura actual:** 51 tests — memoria vectorial, validators, formatters, servicios y repositorios.
+**Cobertura actual:** 223 tests — memoria vectorial, búsqueda semántica, repositorios, servicios, validators, formatters, controllers e integración.
+
+> Los tests de BD usan **PostgreSQL real** con transacciones revertidas por test (aislamiento sin contaminar datos).
 
 ---
 
@@ -303,7 +336,7 @@ docker compose build --no-cache app
 docker compose up -d
 
 # 4. Ejecutar migraciones
-docker compose exec app uv run python migrations/migrate.py migrate
+docker compose exec app uv run fleting db migrate
 ```
 
 > La imagen `pgvector/pgvector:pg16` tiene builds para ARM64 — funciona nativamente en Orange Pi 5 Plus.
@@ -319,6 +352,7 @@ docker compose exec app uv run python migrations/migrate.py migrate
 | **Resiliencia IA** | Si Ollama está apagado, los gastos se guardan igual |
 | **Multitenancy** | `familia_id` obligatorio en todas las tablas y queries |
 | **Sin bloqueos UI** | Toda la vectorización corre async en background |
+| **Seeds seguros** | `APP_ENV=production` bloquea seeds de prueba automáticamente |
 | **Code Quality** | Ruff, pre-commit hooks, imports ordenados |
 
 ---
