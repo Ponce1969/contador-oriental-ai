@@ -5,6 +5,7 @@ from __future__ import annotations
 import difflib
 import logging
 import re
+from datetime import datetime
 
 from result import Result
 
@@ -29,7 +30,25 @@ logger = logging.getLogger(__name__)
 
 class AIController(BaseController):
     """Controlador para interactuar con el Contador Oriental"""
-    
+
+    # Palabras temporales/comunes que NO deben hacer fuzzy match con keywords de categorías
+    _PALABRAS_TEMPORALES = frozenset([
+        "pasado", "pasada", "anterior", "anteriores", "previo", "previa",
+        "ultimo", "última", "ultimos", "últimas", "actual", "reciente",
+        "meses", "semana", "semanas", "dias", "años", "año",
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        "cuanto", "cuánto", "cual", "cuál", "como", "cómo", "cuando", "cuándo",
+        "gaste", "gasté", "total", "resumen", "gasto", "gastos",
+    ])
+
+    # Meses en español → número
+    _MESES_ES = {
+        "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
+        "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
+        "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
+    }
+
     # Diccionario de palabras clave mapeadas a valores reales de ExpenseCategory
     # Las keys son los valores EXACTOS de la BD (con emojis)
     CATEGORY_KEYWORDS: dict[str, list[str]] = {
@@ -115,10 +134,13 @@ class AIController(BaseController):
                         match_encontrado = True
                         break
                     
-                    # Fuzzy matching (typos)
-                    # cutoff=0.88 evita falsos positivos (ej: 'pasado' != 'asado')
+                    # Fuzzy matching (typos) — excluye palabras temporales/comunes
+                    candidatos = [
+                        p for p in palabras_pregunta
+                        if p not in self._PALABRAS_TEMPORALES
+                    ]
                     matches = difflib.get_close_matches(
-                        keyword, palabras_pregunta, n=1, cutoff=0.88
+                        keyword, candidatos, n=1, cutoff=0.88
                     )
                     if matches:
                         logger.info(
@@ -139,6 +161,50 @@ class AIController(BaseController):
         
         return categorias_detectadas
     
+    def _detectar_rango_meses(self, pregunta: str) -> tuple[int, int, int, int] | None:
+        """
+        Detecta si la pregunta pide datos de un mes específico o rango de meses.
+        Retorna (mes_inicio, anio_inicio, mes_fin, anio_fin) o None si es mes actual.
+
+        Ejemplos:
+            'gasto en octubre'       -> (10, año_actual, 10, año_actual)
+            'últimos 3 meses'        -> (mes-2, año, mes_actual, año_actual)
+            'mes pasado'             -> (mes-1, año, mes-1, año)
+        """
+        ahora = datetime.now()
+        mes_actual = ahora.month
+        anio_actual = ahora.year
+        query = pregunta.lower()
+
+        # Detectar mes nombrado explícitamente (ej: 'octubre', 'en marzo')
+        for nombre, num in self._MESES_ES.items():
+            if nombre in query:
+                anio = anio_actual if num <= mes_actual else anio_actual - 1
+                logger.info("[RANGO] Mes detectado: %s (%d/%d)", nombre, num, anio)
+                return (num, anio, num, anio)
+
+        # Detectar 'mes pasado' o 'el mes anterior'
+        if re.search(r'mes\s+pasado|mes\s+anterior', query):
+            mes = mes_actual - 1 if mes_actual > 1 else 12
+            anio = anio_actual if mes_actual > 1 else anio_actual - 1
+            logger.info("[RANGO] Mes pasado: %d/%d", mes, anio)
+            return (mes, anio, mes, anio)
+
+        # Detectar 'últimos N meses'
+        m = re.search(r'[uú]ltimos?\s+(\d+)\s+meses?', query)
+        if m:
+            n = int(m.group(1))
+            mes_ini = mes_actual - n + 1
+            anio_ini = anio_actual
+            while mes_ini < 1:
+                mes_ini += 12
+                anio_ini -= 1
+            logger.info("[RANGO] Últimos %d meses: %d/%d -> %d/%d",
+                        n, mes_ini, anio_ini, mes_actual, anio_actual)
+            return (mes_ini, anio_ini, mes_actual, anio_actual)
+
+        return None
+
     def _filtrar_gastos_por_contexto(
         self,
         gastos: list[Expense],
@@ -302,20 +368,36 @@ class AIController(BaseController):
         
         if incluir_gastos:
             with self._get_session() as session:
-                from datetime import datetime
-                
-                # Obtener gastos del mes actual
+                ahora = datetime.now()
+                mes_actual = ahora.month
+                anio_actual = ahora.year
+
                 expense_repo = ExpenseRepository(session, self._familia_id)
                 expense_service = ExpenseService(expense_repo)
-                gastos_mes = expense_service.list_expenses()
-                
-                # Filtrar por mes actual
-                mes_actual = datetime.now().month
-                anio_actual = datetime.now().year
-                gastos_mes = [
-                    g for g in gastos_mes
-                    if g.fecha.month == mes_actual and g.fecha.year == anio_actual
-                ]
+
+                # Detectar si la pregunta pide un mes/rango histórico
+                rango = self._detectar_rango_meses(pregunta)
+                if rango:
+                    mes_ini, anio_ini, mes_fin, anio_fin = rango
+                    gastos_mes = []
+                    # Iterar meses del rango
+                    m, a = mes_ini, anio_ini
+                    while (a, m) <= (anio_fin, mes_fin):
+                        gastos_mes += list(expense_repo.get_by_month(a, m))
+                        m += 1
+                        if m > 12:
+                            m = 1
+                            a += 1
+                    logger.info(
+                        "[RANGO] %d gastos históricos cargados (%d/%d→%d/%d)",
+                        len(gastos_mes), mes_ini, anio_ini, mes_fin, anio_fin,
+                    )
+                else:
+                    # Mes actual por defecto
+                    gastos_mes = [
+                        g for g in expense_service.list_expenses()
+                        if g.fecha.month == mes_actual and g.fecha.year == anio_actual
+                    ]
                 
                 logger.info(f"Gastos del mes actual: {len(gastos_mes)}")
                 
@@ -448,18 +530,34 @@ class AIController(BaseController):
 
         if incluir_gastos:
             with self._get_session() as session:
-                from datetime import datetime
+                ahora = datetime.now()
+                mes_actual = ahora.month
+                anio_actual = ahora.year
 
                 expense_repo = ExpenseRepository(session, self._familia_id)
                 expense_service = ExpenseService(expense_repo)
-                gastos_mes = expense_service.list_expenses()
 
-                mes_actual = datetime.now().month
-                anio_actual = datetime.now().year
-                gastos_mes = [
-                    g for g in gastos_mes
-                    if g.fecha.month == mes_actual and g.fecha.year == anio_actual
-                ]
+                # Detectar si la pregunta pide un mes/rango histórico
+                rango = self._detectar_rango_meses(pregunta)
+                if rango:
+                    mes_ini, anio_ini, mes_fin, anio_fin = rango
+                    gastos_mes = []
+                    m, a = mes_ini, anio_ini
+                    while (a, m) <= (anio_fin, mes_fin):
+                        gastos_mes += list(expense_repo.get_by_month(a, m))
+                        m += 1
+                        if m > 12:
+                            m = 1
+                            a += 1
+                    logger.info(
+                        "[RANGO] %d gastos históricos cargados (%d/%d→%d/%d)",
+                        len(gastos_mes), mes_ini, anio_ini, mes_fin, anio_fin,
+                    )
+                else:
+                    gastos_mes = [
+                        g for g in expense_service.list_expenses()
+                        if g.fecha.month == mes_actual and g.fecha.year == anio_actual
+                    ]
 
                 categorias_relevantes = self._detectar_categorias_relevantes(pregunta)
                 gastos_filtrados = self._filtrar_gastos_por_contexto(
