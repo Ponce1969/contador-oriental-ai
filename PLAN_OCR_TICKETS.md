@@ -154,6 +154,14 @@ class OCRService:
         Mejora la imagen antes de pasarla a Tesseract:
         escala de grises → contraste → nitidez.
         Mejora la tasa de acierto en tickets de papel térmico.
+
+        🇺🇾 Tip Uruguay: los tickets locales suelen tener el RUT del comercio
+        al principio o al final. Gemma los ignora bien con el prompt actual.
+        Si en el futuro Gemma se confunde con el RUT (ej. lo interpreta como monto),
+        se puede recortar los márgenes superior/inferior aquí antes de pasar a Tesseract:
+            ancho, alto = imagen.size
+            imagen = imagen.crop((0, 50, ancho, alto - 50))  # recortar 50px arriba y abajo
+        Por ahora NO se recorta — el contraste + nitidez es suficiente para papel térmico.
         """
         imagen = imagen.convert("L")                        # Escala de grises
         imagen = ImageEnhance.Contrast(imagen).enhance(2.0) # Más contraste
