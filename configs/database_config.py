@@ -1,6 +1,6 @@
 """
 Configuración de base de datos
-Soporta SQLite (desarrollo) y PostgreSQL (producción)
+Usa PostgreSQL exclusivamente. SQLite deshabilitado.
 """
 import os
 from pathlib import Path
@@ -18,10 +18,10 @@ class DatabaseConfig:
     """Configuración de base de datos"""
     
     # Tipo de base de datos desde variable de entorno
-    DB_TYPE: DatabaseType = os.getenv("DB_TYPE", "sqlite")  # type: ignore
-    
-    # Configuración SQLite (desarrollo)
-    SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "shopping.db")
+    DB_TYPE: DatabaseType = os.getenv("DB_TYPE", "postgresql")  # type: ignore
+
+    # SQLite deshabilitado — el proyecto usa PostgreSQL exclusivamente
+    # SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "shopping.db")
     
     # Configuración PostgreSQL (producción)
     POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
@@ -34,7 +34,8 @@ class DatabaseConfig:
     def get_database_url(cls) -> str:
         """Obtener URL de conexión según el tipo de BD configurado"""
         if cls.DB_TYPE == "sqlite":
-            return f"sqlite:///{cls.SQLITE_DB_PATH}"
+            sqlite_path = os.getenv("SQLITE_DB_PATH", "shopping.db")
+            return f"sqlite:///{sqlite_path}"
         else:
             return (
                 f"postgresql://{cls.POSTGRES_USER}:{cls.POSTGRES_PASSWORD}"
