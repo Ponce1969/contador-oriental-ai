@@ -1,84 +1,58 @@
 """
 Pytest configuration and fixtures for Fleting tests.
+
+Los tests que requieren BD usan PostgreSQL real (la misma del proyecto).
+Cada test opera dentro de una transacción que se revierte al terminar,
+asegurando aislamiento sin contaminar datos de producción/desarrollo.
 """
 
 from __future__ import annotations
 
-import os
-import tempfile
-
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from database.tables import Base
+from database.engine import engine
 
 
-@pytest.fixture
-def temp_db_path():
-    """Provide a temporary database file path."""
-    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
-        path = f.name
-    yield path
-    # Cleanup
-    if os.path.exists(path):
-        os.unlink(path)
+@pytest.fixture(scope="function")
+def db_engine():
+    """Engine de PostgreSQL real (reutiliza el del proyecto)."""
+    return engine
 
 
-@pytest.fixture
-def db_engine(temp_db_path):
-    """Create a test database engine with all required tables."""
-    engine = create_engine(f"sqlite:///{temp_db_path}")
-    
-    # Create familias table FIRST (before other tables with FKs)
-    with engine.connect() as conn:
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS familias (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL,
-                email TEXT UNIQUE,
-                activo BOOLEAN DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """))
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                familia_id INTEGER NOT NULL,
-                username TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                nombre_completo TEXT,
-                activo BOOLEAN DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP,
-                FOREIGN KEY (familia_id) REFERENCES familias (id)
-            )
-        """))
-        conn.execute(text("""
-            INSERT INTO familias (id, nombre, email, activo)
-            VALUES (1, 'Familia Test', 'test@test.com', 1)
-        """))
-        conn.commit()
-    
-    # Create base tables (they have FKs to familias)
-    Base.metadata.create_all(engine)
-    
-    yield engine
-    engine.dispose()
-
-
-@pytest.fixture
+@pytest.fixture(scope="function")
 def db_session(db_engine) -> Session:
-    """Provide a database session for tests."""
+    """
+    Sesión de BD dentro de una transacción que se revierte al finalizar.
+    Garantiza aislamiento entre tests sin tocar datos reales.
+    """
     connection = db_engine.connect()
     transaction = connection.begin()
     session = Session(bind=connection)
-    
+
     yield session
-    
+
     session.close()
     transaction.rollback()
     connection.close()
+
+
+@pytest.fixture
+def setup_test_data(db_session):
+    """Asegurar que familia_id=1 y familia_id=2 existen para tests de aislamiento."""
+    db_session.execute(text(
+        "INSERT INTO familias (id, nombre, email, activo, created_at) "
+        "VALUES (999901, 'Test Familia 1', 'test1_fixture@test.com', true, NOW()) "
+        "ON CONFLICT (id) DO NOTHING"
+    ))
+    db_session.execute(text(
+        "INSERT INTO familias (id, nombre, email, activo, created_at) "
+        "VALUES (999902, 'Test Familia 2', 'test2_fixture@test.com', true, NOW()) "
+        "ON CONFLICT (id) DO NOTHING"
+    ))
+    db_session.flush()
+    return {"familia_id_1": 999901, "familia_id_2": 999902}
 
 
 @pytest.fixture

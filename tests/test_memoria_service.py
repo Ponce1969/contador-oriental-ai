@@ -137,7 +137,7 @@ class TestMemoryEventHandler:
             },
         )
         await handler.handle(event)
-        mock_embedding_service.generar_embedding.assert_called_once()
+        assert mock_embedding_service.generar_embedding.call_count == 2
         mock_memoria_repo.guardar.assert_called_once()
 
     @pytest.mark.asyncio

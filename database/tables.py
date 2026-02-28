@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -135,6 +136,9 @@ class ExpenseTable(Base):
     # Información adicional
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)
     
+    # Embedding semántico para búsqueda cosine via pgvector
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(768), nullable=True)
+
     # Campos legacy de ShoppingItem (para migración)
     name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     price: Mapped[float | None] = mapped_column(Float, nullable=True)

@@ -27,6 +27,17 @@ class MemoryEventHandler:
         try:
             if event.type == EventType.GASTO_CREADO:
                 texto = self._formatear_gasto(event.data)
+                await self.memory_service.registrar_evento_contable(
+                    texto_plano=texto,
+                    source_type=event.type.value,
+                    source_id=event.source_id,
+                )
+                await self._guardar_embedding_en_gasto(
+                    texto=texto,
+                    expense_id=event.source_id,
+                    familia_id=event.familia_id,
+                )
+                return
             elif event.type == EventType.INGRESO_CREADO:
                 texto = self._formatear_ingreso(event.data)
             elif event.type == EventType.SNAPSHOT_CREADO:
@@ -49,6 +60,37 @@ class MemoryEventHandler:
                 event.type.value,
                 str(e),
             )
+
+    async def _guardar_embedding_en_gasto(
+        self,
+        texto: str,
+        expense_id: int | None,
+        familia_id: int,
+    ) -> None:
+        """Genera el embedding y lo guarda en expenses.embedding (fire-and-forget)."""
+        if expense_id is None:
+            return
+        from result import Err
+        from database.engine import get_session
+        from repositories.expense_repository import ExpenseRepository
+
+        embedding_result = await self.memory_service.embedding_service.generar_embedding(texto)
+        if isinstance(embedding_result, Err):
+            logger.warning(
+                "[MEMORY_HANDLER] No se pudo generar embedding para gasto id=%s", expense_id
+            )
+            return
+
+        session = get_session()
+        try:
+            repo = ExpenseRepository(session, familia_id)
+            repo.guardar_embedding(expense_id, embedding_result.ok())
+            logger.info("[MEMORY_HANDLER] Embedding guardado en expenses id=%s", expense_id)
+        except Exception as e:
+            session.rollback()
+            logger.error("[MEMORY_HANDLER] Error guardando embedding gasto id=%s: %s", expense_id, e)
+        finally:
+            session.close()
 
     def _formatear_gasto(self, data: dict[str, Any]) -> str:
         return (

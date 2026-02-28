@@ -218,145 +218,37 @@ class AIController(BaseController):
             
         return resumen
 
-    # Diccionario de sinónimos para búsqueda semántica en descripciones
-    _SINONIMOS: dict[str, list[str]] = {
-        "carniceria": [
-            "carne", "carnes", "carniceria", "carnicería",
-            "asado", "vacio", "vacío", "picada", "bife", "churrasco",
-            "costilla", "costillas", "milanesa", "milanesas",
-            "pollo", "cerdo", "cordero", "chivito", "chorizo",
-            "morcilla", "salchicha", "hamburguesa", "hamburguesas",
-        ],
-        "verduleria": [
-            "verdura", "verduras", "verduleria", "verdulería",
-            "fruta", "frutas", "fruteria", "frutería",
-            "tomate", "lechuga", "cebolla", "papa", "papas",
-            "zapallo", "zanahoria", "manzana", "naranja", "banana",
-        ],
-        "supermercado": [
-            "supermercado", "super", "almacen", "almacén",
-            "mercado", "despensa", "abasto",
-        ],
-        "farmacia": [
-            "farmacia", "medicamento", "medicamentos", "remedio",
-            "remedios", "drogueria", "drogería",
-        ],
-        "panaderia": [
-            "panaderia", "panadería", "pan", "facturas",
-            "medialunas", "bizcochos", "torta", "pasteleria",
-        ],
-        "combustible": [
-            "combustible", "nafta", "gasoil", "gasolina",
-            "ancap", "shell", "ypf", "petrobras",
-        ],
-        "limpieza": [
-            "limpieza", "detergente", "jabon", "jabón",
-            "lavandina", "desinfectante", "escoba",
-        ],
-    }
-
-    @classmethod
-    def _expandir_con_sinonimos(cls, terminos: list[str]) -> list[str]:
-        """Expande los términos con sinónimos del diccionario."""
-        expandidos = list(terminos)
-        for termino in terminos:
-            for grupo in cls._SINONIMOS.values():
-                if termino in grupo:
-                    expandidos.extend(grupo)
-                    break
-                # Fuzzy: si el término es similar a alguna clave del grupo
-                mejores = difflib.get_close_matches(
-                    termino, grupo, n=1, cutoff=0.82
-                )
-                if mejores:
-                    expandidos.extend(grupo)
-                    break
-        return list(set(expandidos))
-
-    @classmethod
-    def _descripcion_matchea(
-        cls, desc: str, terminos_expandidos: list[str]
-    ) -> bool:
-        """
-        Retorna True si la descripción contiene algún término exacto
-        o tiene similitud fuzzy >= 0.82 con alguna palabra de la descripción.
-        """
-        palabras_desc = re.findall(r'\w+', desc)
-        for termino in terminos_expandidos:
-            # Coincidencia exacta (substring)
-            if termino in desc:
-                return True
-            # Fuzzy sobre cada palabra de la descripción
-            for palabra in palabras_desc:
-                ratio = difflib.SequenceMatcher(
-                    None, termino, palabra
-                ).ratio()
-                if ratio >= 0.82:
-                    return True
-        return False
-
-    def _calcular_subtotal_por_descripcion(
+    async def _calcular_subtotal_semantico(
         self,
-        gastos: list[Expense],
         pregunta: str,
+        session,
+        umbral_cosine: float = 0.30,
     ) -> tuple[float, str]:
         """
-        Busca términos de la pregunta en las descripciones de los gastos
-        usando fuzzy matching y sinónimos, y calcula el subtotal en Python.
-
-        Returns:
-            (subtotal, label) — subtotal=0.0 y label="" si no hay match.
+        Busca gastos semánticamente similares a la pregunta usando
+        pgvector cosine distance sobre expenses.embedding.
+        Retorna (subtotal, label) — (0.0, '') si no hay resultados.
         """
-        palabras = re.findall(r'\w+', pregunta.lower())
-        stop = {
-            "hola", "buenas", "como", "cómo",
-            "cuanto", "cuánto", "cuantos", "cuántos",
-            "gaste", "gasté", "tengo", "tenes", "tenés",
-            "puedes", "podés", "puede", "podes",
-            "decir", "decirme", "dime", "dame",
-            "mostrar", "mostrame", "muéstrame",
-            "quiero", "saber", "necesito",
-            "gastos", "gasto", "compras", "compra",
-            "total", "resumen", "lista",
-            "favor", "gracias",
-            "este", "esta", "estos", "estas",
-            "mes", "meses", "año", "anio",
-            "los", "las", "del", "dess",
-            "para", "sobre", "hasta", "desde",
-            "en", "de", "un", "una", "unos", "unas",
-            "que", "qué", "y", "o", "a", "la", "el",
-            "me", "por", "con", "es", "son", "fue",
-            # Términos temporales que no son de búsqueda
-            "enero", "febrero", "marzo", "abril", "mayo", "junio",
-            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-            "pasado", "anterior", "ultimo", "último", "semana", "ayer",
-            "gastamos", "gastaron", "gastaste", "gastó",
-        }
-        terminos = [p for p in palabras if len(p) > 3 and p not in stop]
+        from result import Err
 
-        if not terminos:
+        embedding_result = await self.embedding_service.generar_embedding(pregunta)
+        if isinstance(embedding_result, Err):
+            logger.warning("[SUBTOTAL] No se pudo generar embedding: %s", embedding_result.err())
             return 0.0, ""
 
-        terminos_expandidos = self._expandir_con_sinonimos(terminos)
-        logger.info(
-            "[SUBTOTAL] Términos originales: %s → expandidos: %s",
-            terminos, terminos_expandidos,
-        )
+        emb = embedding_result.ok()
+        repo = ExpenseRepository(session, self._familia_id)
+        resultados = repo.buscar_por_similitud(emb, umbral_cosine=umbral_cosine)
 
-        gastos_match: list[Expense] = []
-        for gasto in gastos:
-            desc = gasto.descripcion.lower()
-            if self._descripcion_matchea(desc, terminos_expandidos):
-                gastos_match.append(gasto)
-
-        if not gastos_match:
+        if not resultados:
+            logger.info("[SUBTOTAL] Sin resultados cosine para: %s", pregunta)
             return 0.0, ""
 
-        subtotal = sum(g.monto for g in gastos_match)
-        label = terminos[0] if len(terminos) == 1 else "/".join(sorted(set(terminos)))
+        subtotal = sum(g.monto for g, _ in resultados)
+        label = pregunta.strip()[:40]
         logger.info(
-            "[SUBTOTAL] %d gastos encontrados → $%.0f (label: %s)",
-            len(gastos_match), subtotal, label,
+            "[SUBTOTAL] %d gastos cosine (umbral=%.2f) → $%.0f",
+            len(resultados), umbral_cosine, subtotal,
         )
         return subtotal, label
 
@@ -447,9 +339,9 @@ class AIController(BaseController):
                     resumen_gastos = self._agrupar_gastos(gastos_filtrados)
                     total_gastos_count = len(gastos_filtrados)
 
-                # Subtotal por términos en descripción (Python pre-calcula, Gemma no suma)
-                subtotal_desc, label_desc = self._calcular_subtotal_por_descripcion(
-                    gastos_mes, pregunta
+                # Subtotal semántico via pgvector cosine (Gemma no suma)
+                subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
+                    pregunta, session
                 )
 
                 # Obtener ingresos del mes actual
@@ -581,9 +473,9 @@ class AIController(BaseController):
                     resumen_gastos = self._agrupar_gastos(gastos_filtrados)
                     total_gastos_count = len(gastos_filtrados)
 
-                # Subtotal por términos en descripción (Python pre-calcula, Gemma no suma)
-                subtotal_desc, label_desc = self._calcular_subtotal_por_descripcion(
-                    gastos_mes, pregunta
+                # Subtotal semántico via pgvector cosine (Gemma no suma)
+                subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
+                    pregunta, session
                 )
 
                 income_repo = IncomeRepository(session, self._familia_id)
