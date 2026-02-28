@@ -3,7 +3,7 @@ Modelo SQLAlchemy para la tabla ai_vector_memory (memoria vectorial RAG)
 """
 from __future__ import annotations
 
-from sqlalchemy import Integer, String, TIMESTAMP, Text
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.base import Base
@@ -16,7 +16,7 @@ class MemoriaVectorial(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     familia_id: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    embedding: Mapped[list | None] = mapped_column(nullable=True)
+    embedding = Column(Text, nullable=True)
     source_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     source_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[str | None] = mapped_column(
