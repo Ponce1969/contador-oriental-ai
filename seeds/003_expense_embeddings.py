@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from database.engine import get_session
 from database.tables import ExpenseTable
@@ -67,6 +68,9 @@ async def _poblar(session) -> int:
 
 
 def run(db):
+    if os.getenv("APP_ENV") == "production":
+        print("  ⛔ Seeds deshabilitados en APP_ENV=production. Abortando.")
+        return
     session = get_session()
     try:
         total = asyncio.run(_poblar(session))

@@ -6,6 +6,7 @@ Idempotente: borra solo los gastos con notas='seed_test' antes de insertar.
 
 from __future__ import annotations
 
+import os
 from datetime import date
 
 from database.engine import get_session
@@ -77,6 +78,9 @@ GASTOS = [
 
 def run(db):
     """Seed idempotente: elimina seeds anteriores e inserta frescos."""
+    if os.getenv("APP_ENV") == "production":
+        print("  ⛔ Seeds deshabilitados en APP_ENV=production. Abortando.")
+        return
     session = get_session()
     try:
         # Eliminar seeds previos de este archivo (idempotente)
