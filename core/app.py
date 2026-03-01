@@ -20,13 +20,11 @@ class FletingApp:
 
     def _register_file_picker(self):
         """Registrar FilePicker antes del primer navigate().
-        page.data es per-sesion, no compartido entre usuarios.
+        page no tiene __slots__, acepta atributos Python dinamicos per-sesion.
         """
-        if not isinstance(self.page.data, dict):
-            self.page.data = {}
         picker = ft.FilePicker()
         self.page.overlay.append(picker)
-        self.page.data["file_picker"] = picker
+        self.page._file_picker = picker
     
     def build_topbar(self):
         menu_items = []
