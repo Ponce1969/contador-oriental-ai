@@ -16,13 +16,13 @@ def get_file_picker(page: ft.Page) -> ft.FilePicker:
     Se crea una sola vez y persiste entre navegaciones.
     Las vistas asignan on_result antes de llamar pick_files().
     """
-    existing = page.session.get(_FILEPICKER_KEY)
+    existing = getattr(page, _FILEPICKER_KEY, None)
     if existing is not None:
         return existing
 
     picker = ft.FilePicker()
     page.overlay.append(picker)
-    page.session.set(_FILEPICKER_KEY, picker)
+    setattr(page, _FILEPICKER_KEY, picker)
     return picker
 
 
