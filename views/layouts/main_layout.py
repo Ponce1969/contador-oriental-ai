@@ -7,22 +7,18 @@ from core.session import SessionManager
 from core.state import AppState
 
 
-_FILEPICKER_KEY = "_fleting_file_picker"
-
-
 def get_file_picker(page: ft.Page) -> ft.FilePicker:
     """
     Retorna el FilePicker global registrado en page.overlay.
-    Se crea una sola vez y persiste entre navegaciones.
+    Se crea una sola vez en AppState y persiste entre navegaciones.
     Las vistas asignan on_result antes de llamar pick_files().
     """
-    existing = getattr(page, _FILEPICKER_KEY, None)
-    if existing is not None:
-        return existing
+    if AppState.file_picker is not None:
+        return AppState.file_picker
 
     picker = ft.FilePicker()
     page.overlay.append(picker)
-    setattr(page, _FILEPICKER_KEY, picker)
+    AppState.file_picker = picker
     return picker
 
 

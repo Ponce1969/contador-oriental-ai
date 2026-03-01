@@ -5,3 +5,4 @@ class AppState:
     language = "pt"
     initialized = False
     current_route = "/"
+    file_picker = None  # ft.FilePicker global, registrado por MainLayout
