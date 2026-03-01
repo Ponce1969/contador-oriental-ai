@@ -148,8 +148,14 @@ class TicketUploadView:
                 ),
                 ft.Container(height=16),
                 ft.ElevatedButton(
-                    "Seleccionar foto del ticket",
-                    icon=ft.Icons.UPLOAD_FILE,
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.UPLOAD_FILE),
+                            ft.Text("Seleccionar foto del ticket"),
+                        ],
+                        spacing=8,
+                        tight=True,
+                    ),
                     on_click=lambda _: self._file_picker.pick_files(
                         allow_multiple=False,
                         allowed_extensions=["jpg", "jpeg", "png", "webp"],
@@ -299,13 +305,25 @@ class TicketUploadView:
                 ft.Row(
                     controls=[
                         ft.ElevatedButton(
-                            "Guardar gasto",
-                            icon=ft.Icons.SAVE,
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(ft.Icons.SAVE),
+                                    ft.Text("Guardar gasto"),
+                                ],
+                                spacing=8,
+                                tight=True,
+                            ),
                             on_click=self._on_confirmar,
                         ),
                         ft.OutlinedButton(
-                            "Descartar",
-                            icon=ft.Icons.DELETE,
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(ft.Icons.DELETE),
+                                    ft.Text("Descartar"),
+                                ],
+                                spacing=8,
+                                tight=True,
+                            ),
                             on_click=lambda _: self._cambiar_estado(_Estado.IDLE),
                         ),
                     ]
@@ -339,15 +357,25 @@ class TicketUploadView:
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.ElevatedButton(
-                            "Intentar de nuevo",
-                            icon=ft.Icons.REFRESH,
-                            on_click=lambda _: self._cambiar_estado(
-                                _Estado.IDLE
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(ft.Icons.REFRESH),
+                                    ft.Text("Intentar de nuevo"),
+                                ],
+                                spacing=8,
+                                tight=True,
                             ),
+                            on_click=lambda _: self._cambiar_estado(_Estado.IDLE),
                         ),
                         ft.OutlinedButton(
-                            "Cargar manualmente",
-                            icon=ft.Icons.EDIT,
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(ft.Icons.EDIT),
+                                    ft.Text("Cargar manualmente"),
+                                ],
+                                spacing=8,
+                                tight=True,
+                            ),
                             on_click=lambda _: self.router.navigate("/expenses"),
                         ),
                     ],
