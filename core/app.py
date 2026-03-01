@@ -13,16 +13,9 @@ class FletingApp:
         self.page.on_resize = self.on_resize
         I18n.load(AppState.language)
         self.page.appbar = self.build_topbar()
-        self._init_services()
         from core.router import Router
         self.router = Router(page)
         self.router.navigate("/")
-
-    def _init_services(self):
-        """Registrar servicios globales en page.overlay al inicio de la sesion."""
-        file_picker = ft.FilePicker()
-        self.page.overlay.append(file_picker)
-        AppState.file_picker = file_picker
     
     def build_topbar(self):
         menu_items = []

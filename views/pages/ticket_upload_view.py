@@ -16,7 +16,6 @@ from result import Ok
 from controllers.expense_controller import ExpenseController
 from controllers.ocr_controller import OCRController
 from core.session import SessionManager
-from core.state import AppState
 from models.categories import ExpenseCategory, PaymentMethod
 from models.expense_model import Expense
 from models.ticket_model import PartialExpense
@@ -62,9 +61,6 @@ class TicketUploadView:
             size=13,
             color=ft.Colors.GREY_500,
         )
-
-        self._file_picker = AppState.file_picker
-        self._file_picker.on_result = self._on_file_picked
 
         # Contenedor principal — se reconstruye al cambiar estado
         self._body = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
@@ -153,9 +149,8 @@ class TicketUploadView:
                         spacing=8,
                         tight=True,
                     ),
-                    on_click=lambda _: self._file_picker.pick_files(
-                        allow_multiple=False,
-                        allowed_extensions=["jpg", "jpeg", "png", "webp"],
+                    on_click=lambda _: asyncio.create_task(
+                        self._abrir_selector()
                     ),
                     style=ft.ButtonStyle(
                         padding=ft.padding.symmetric(horizontal=32, vertical=16)
@@ -388,12 +383,25 @@ class TicketUploadView:
         self._estado = nuevo
         self._renderizar()
 
-    def _on_file_picked(self, e: ft.FilePickerResultEvent):
-        if not e.files:
-            return
-        self._imagen_path = e.files[0].path
-        self._cambiar_estado(_Estado.LOADING)
-        asyncio.create_task(self._procesar_imagen())
+    async def _abrir_selector(self):
+        """Abre el selector de archivos con la API async de Flet 0.81."""
+        picker = ft.FilePicker()
+        self.page.overlay.append(picker)
+        self.page.update()
+        try:
+            files = await picker.pick_files(
+                allow_multiple=False,
+                allowed_extensions=["jpg", "jpeg", "png", "webp"],
+            )
+            if not files:
+                return
+            self._imagen_path = files[0].path
+            self._cambiar_estado(_Estado.LOADING)
+            await self._procesar_imagen()
+        finally:
+            if picker in self.page.overlay:
+                self.page.overlay.remove(picker)
+            self.page.update()
 
     async def _procesar_imagen(self):
         if not self._imagen_path:
