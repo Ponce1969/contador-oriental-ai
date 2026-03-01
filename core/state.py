@@ -5,3 +5,4 @@ class AppState:
     language = "pt"
     initialized = False
     current_route = "/"
+    file_picker = None  # ft.FilePicker registrado al inicio de la sesion

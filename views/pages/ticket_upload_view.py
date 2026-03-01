@@ -16,6 +16,7 @@ from result import Ok
 from controllers.expense_controller import ExpenseController
 from controllers.ocr_controller import OCRController
 from core.session import SessionManager
+from core.state import AppState
 from models.categories import ExpenseCategory, PaymentMethod
 from models.expense_model import Expense
 from models.ticket_model import PartialExpense
@@ -62,7 +63,7 @@ class TicketUploadView:
             color=ft.Colors.GREY_500,
         )
 
-        self._file_picker = ft.FilePicker()
+        self._file_picker = AppState.file_picker
         self._file_picker.on_result = self._on_file_picked
 
         # Contenedor principal — se reconstruye al cambiar estado
@@ -75,8 +76,6 @@ class TicketUploadView:
     # ------------------------------------------------------------------
 
     def render(self) -> ft.Control:
-        if self._file_picker not in self.page.overlay:
-            self.page.overlay.append(self._file_picker)
         return MainLayout(
             page=self.page,
             content=self._body,
