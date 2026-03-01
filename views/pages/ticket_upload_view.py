@@ -19,7 +19,7 @@ from core.session import SessionManager
 from models.categories import ExpenseCategory, PaymentMethod
 from models.expense_model import Expense
 from models.ticket_model import PartialExpense
-from views.layouts.main_layout import MainLayout
+from views.layouts.main_layout import MainLayout, get_file_picker
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +62,8 @@ class TicketUploadView:
             color=ft.Colors.GREY_500,
         )
 
-        # FilePicker — dentro del árbol de controles (no page.overlay)
-        # Flet 0.81 + Fleting: overlay causa 'Unknown control' al navegar
-        self._file_picker = ft.FilePicker()
+        # FilePicker global — registrado en MainLayout, persiste entre navegaciones
+        self._file_picker = get_file_picker(page)
         self._file_picker.on_result = self._on_file_picked
 
         # Contenedor principal — se reconstruye al cambiar estado
@@ -79,13 +78,7 @@ class TicketUploadView:
     def render(self) -> ft.Control:
         return MainLayout(
             page=self.page,
-            content=ft.Stack(
-                controls=[
-                    self._body,
-                    self._file_picker,
-                ],
-                expand=True,
-            ),
+            content=self._body,
             router=self.router,
         )
 
