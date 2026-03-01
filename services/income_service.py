@@ -89,13 +89,18 @@ class IncomeService:
         incomes = self.list_by_member(member_id)
         return sum(income.monto for income in incomes)
 
-    def get_summary_by_categories(self) -> dict[str, float]:
-        """Obtener resumen de ingresos por categoría"""
-        incomes = self.list_incomes()
+    def get_summary_by_categories(
+        self,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, float]:
+        """Obtener resumen de ingresos por categoría, opcionalmente filtrado por mes."""
+        if year is not None and month is not None:
+            incomes = self.list_by_month(year, month)
+        else:
+            incomes = self.list_incomes()
         summary: dict[str, float] = {}
-        
         for income in incomes:
             categoria = income.categoria.value
             summary[categoria] = summary.get(categoria, 0.0) + income.monto
-        
         return summary

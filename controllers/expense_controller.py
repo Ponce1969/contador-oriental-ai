@@ -53,11 +53,18 @@ class ExpenseController(BaseController):
         return result
 
     def list_expenses(self) -> list[Expense]:
-        """Listar todos los gastos"""
+        """Listar todos los gastos (sin filtro)"""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.list_expenses()
+
+    def list_expenses_by_month(self, year: int, month: int) -> list[Expense]:
+        """Listar gastos de un mes específico"""
+        with self._get_session() as session:
+            repo = ExpenseRepository(session, self._familia_id)
+            service = ExpenseService(repo)
+            return service.list_by_month(year, month)
 
     def list_by_category(self, categoria: str) -> list[Expense]:
         """Listar gastos por categoría"""
@@ -66,12 +73,16 @@ class ExpenseController(BaseController):
             service = ExpenseService(repo)
             return service.list_by_category(categoria)
 
-    def get_summary_by_categories(self) -> dict[str, float]:
-        """Obtener resumen de gastos por categoría"""
+    def get_summary_by_categories(
+        self,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, float]:
+        """Obtener resumen de gastos por categoría del mes indicado."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
-            return service.get_summary_by_categories()
+            return service.get_summary_by_categories(year=year, month=month)
 
     def update_expense(self, expense: Expense) -> Result[Expense, AppError]:
         """Actualizar un gasto existente"""

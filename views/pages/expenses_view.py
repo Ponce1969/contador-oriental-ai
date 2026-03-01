@@ -286,10 +286,10 @@ class ExpensesView:
             self._show_error(AppError(message="El monto debe ser un número válido"))
 
     def _render_expenses(self) -> None:
-        """Renderizar lista de gastos"""
+        """Renderizar lista de gastos del mes actual"""
         self.expenses_column.controls.clear()
-        
-        expenses = self.controller.list_expenses()
+        today = date.today()
+        expenses = self.controller.list_expenses_by_month(today.year, today.month)
         
         if not expenses:
             self.expenses_column.controls.append(
@@ -358,10 +358,12 @@ class ExpensesView:
         self.page.update()
 
     def _render_summary(self) -> None:
-        """Renderizar resumen por categorías"""
+        """Renderizar resumen por categorías del mes actual"""
         self.summary_column.controls.clear()
-        
-        summary = self.controller.get_summary_by_categories()
+        today = date.today()
+        summary = self.controller.get_summary_by_categories(
+            year=today.year, month=today.month
+        )
         
         if not summary:
             self.summary_column.controls.append(

@@ -40,12 +40,16 @@ class IncomeController(BaseController):
             service = IncomeService(repo)
             return service.list_by_member(member_id)
 
-    def get_summary_by_categories(self) -> dict[str, float]:
-        """Obtener resumen de ingresos por categoría"""
+    def get_summary_by_categories(
+        self,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, float]:
+        """Obtener resumen de ingresos por categoría del mes indicado."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
-            return service.get_summary_by_categories()
+            return service.get_summary_by_categories(year=year, month=month)
 
     def get_total_by_month(self, year: int, month: int) -> float:
         """Obtener total de ingresos del mes"""

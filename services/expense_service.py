@@ -87,13 +87,18 @@ class ExpenseService:
         expenses = self.list_by_month(year, month)
         return sum(expense.monto for expense in expenses)
 
-    def get_summary_by_categories(self) -> dict[str, float]:
-        """Obtener resumen de gastos por categoría"""
-        expenses = self.list_expenses()
+    def get_summary_by_categories(
+        self,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, float]:
+        """Obtener resumen de gastos por categoría, opcionalmente filtrado por mes."""
+        if year is not None and month is not None:
+            expenses = self.list_by_month(year, month)
+        else:
+            expenses = self.list_expenses()
         summary: dict[str, float] = {}
-        
         for expense in expenses:
             categoria = expense.categoria.value
             summary[categoria] = summary.get(categoria, 0.0) + expense.monto
-        
         return summary
