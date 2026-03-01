@@ -7,21 +7,6 @@ from core.session import SessionManager
 from core.state import AppState
 
 
-def get_file_picker(page: ft.Page) -> ft.FilePicker:
-    """
-    Retorna el FilePicker global registrado en page.overlay.
-    Se crea una sola vez en AppState y persiste entre navegaciones.
-    Las vistas asignan on_result antes de llamar pick_files().
-    """
-    if AppState.file_picker is not None:
-        return AppState.file_picker
-
-    picker = ft.FilePicker()
-    page.overlay.append(picker)
-    AppState.file_picker = picker
-    return picker
-
-
 class MainLayout(ft.Column):
     def __init__(self, page, content, router):
         super().__init__(expand=True, spacing=0)
@@ -29,7 +14,6 @@ class MainLayout(ft.Column):
         self.router = router
         self.content = content
 
-        get_file_picker(page)
         self._build()
 
     @property

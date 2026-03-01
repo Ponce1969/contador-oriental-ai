@@ -19,7 +19,7 @@ from core.session import SessionManager
 from models.categories import ExpenseCategory, PaymentMethod
 from models.expense_model import Expense
 from models.ticket_model import PartialExpense
-from views.layouts.main_layout import MainLayout, get_file_picker
+from views.layouts.main_layout import MainLayout
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +62,8 @@ class TicketUploadView:
             color=ft.Colors.GREY_500,
         )
 
-        # FilePicker global — registrado en MainLayout, persiste entre navegaciones
-        self._file_picker = get_file_picker(page)
+        # FilePicker local — dentro del Stack de la vista, sin page.overlay
+        self._file_picker = ft.FilePicker()
         self._file_picker.on_result = self._on_file_picked
 
         # Contenedor principal — se reconstruye al cambiar estado
@@ -78,7 +78,10 @@ class TicketUploadView:
     def render(self) -> ft.Control:
         return MainLayout(
             page=self.page,
-            content=self._body,
+            content=ft.Stack(
+                controls=[self._body, self._file_picker],
+                expand=True,
+            ),
             router=self.router,
         )
 
