@@ -384,20 +384,38 @@ class TicketUploadView:
         self._renderizar()
 
     async def _abrir_selector(self):
-        """Usa el FilePicker registrado en page._internals por app.py."""
-        picker = self.page._internals.get("file_picker")
-        if picker is None:
-            logger.error("[OCR] FilePicker no en page._internals keys=%s", list(self.page._internals.keys()))
-            return
-        files = await picker.pick_files(
-            allow_multiple=False,
-            allowed_extensions=["jpg", "jpeg", "png", "webp"],
-        )
-        if not files:
-            return
-        self._imagen_path = files[0].path
-        self._cambiar_estado(_Estado.LOADING)
-        await self._procesar_imagen()
+        """FilePicker per-click con handshake JS correcto para Flet 0.81 web."""
+        picker = ft.FilePicker()
+        self.page.overlay.append(picker)
+        self.page.update()
+        await asyncio.sleep(0.3)  # esperar handshake JS
+        try:
+            files = await picker.pick_files(
+                allow_multiple=False,
+                file_type=ft.FilePickerFileType.CUSTOM,
+                allowed_extensions=["jpg", "jpeg", "png", "webp"],
+                with_data=True,
+            )
+            if not files:
+                return
+            # En web no hay path local — guardar bytes temporalmente
+            f = files[0]
+            if f.bytes:
+                tmp_path = f"/tmp/ticket_{f.name}"
+                with open(tmp_path, "wb") as fp:
+                    fp.write(f.bytes)
+                self._imagen_path = tmp_path
+            elif f.path:
+                self._imagen_path = f.path
+            else:
+                logger.error("[OCR] Archivo sin bytes ni path")
+                return
+            self._cambiar_estado(_Estado.LOADING)
+            await self._procesar_imagen()
+        finally:
+            if picker in self.page.overlay:
+                self.page.overlay.remove(picker)
+            self.page.update()
 
     async def _procesar_imagen(self):
         if not self._imagen_path:

@@ -120,12 +120,6 @@ def main(page: ft.Page):
 
         router = Router(page)
 
-        # Registrar FilePicker antes del primer navigate() para el handshake JS
-        _file_picker = ft.FilePicker()
-        page.overlay.append(_file_picker)
-        page._file_picker = _file_picker  # accesible desde las vistas via page
-        logger.info("[OCR] FilePicker registrado en overlay (id=%s)", id(_file_picker))
-
         def on_resize(e: object) -> None:
             new_device = get_device_type(page.width)
             if new_device != AppState.device:
