@@ -65,7 +65,8 @@ class TicketUploadView:
         # Contenedor principal — se reconstruye al cambiar estado
         self._body = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
 
-        self._file_picker = ft.FilePicker(on_result=self._on_file_picked)
+        self._file_picker = ft.FilePicker()
+        self._file_picker.on_result = self._on_file_picked
         self.page.overlay.append(self._file_picker)
 
         self._renderizar()
