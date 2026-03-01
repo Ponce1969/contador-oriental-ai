@@ -62,7 +62,6 @@ class TicketUploadView:
             color=ft.Colors.GREY_500,
         )
 
-        # FilePicker local — dentro del Stack de la vista, sin page.overlay
         self._file_picker = ft.FilePicker()
         self._file_picker.on_result = self._on_file_picked
 
@@ -76,12 +75,11 @@ class TicketUploadView:
     # ------------------------------------------------------------------
 
     def render(self) -> ft.Control:
+        if self._file_picker not in self.page.overlay:
+            self.page.overlay.append(self._file_picker)
         return MainLayout(
             page=self.page,
-            content=ft.Stack(
-                controls=[self._body, self._file_picker],
-                expand=True,
-            ),
+            content=self._body,
             router=self.router,
         )
 
