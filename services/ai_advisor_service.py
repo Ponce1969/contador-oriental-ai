@@ -286,6 +286,24 @@ RESPUESTA:"""
 
         ai_logger.info("✅ STREAM completado")
 
+    async def llamada_directa(self, prompt: str) -> str:
+        """
+        Llama a Gemma con un prompt directo, sin contexto financiero.
+        Usado por TicketService para parsear texto crudo de tickets OCR.
+        Retorna el texto de la respuesta o string vacío si falla.
+        """
+        try:
+            from ollama import AsyncClient
+            client = AsyncClient(host="http://host.docker.internal:11434")
+            response = await client.generate(
+                model="contador-oriental",
+                prompt=prompt,
+            )
+            return response.get("response", "").strip()
+        except Exception as e:
+            logger.warning("[AI] llamada_directa falló: %s", e)
+            return ""
+
     async def consultar(
         self,
         request: AIRequest,
