@@ -5,6 +5,7 @@ de tickets fotográficos. Delega toda la lógica a TicketService.
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 
 from result import Result
 
@@ -31,11 +32,14 @@ class OCRController(BaseController):
         return "Cargar Ticket"
 
     async def procesar_ticket(
-        self, imagen_path: str
+        self,
+        imagen_path: str,
+        on_progreso: Callable[[str, str], Awaitable[None]] | None = None,
     ) -> Result[PartialExpense, AppError]:
         """
         Procesa una imagen de ticket y retorna un PartialExpense
         pre-llenado para que el usuario confirme antes de guardar.
+        on_progreso(titulo, subtitulo) — callback async para feedback dinámico.
         """
         with self._get_session() as session:
             expense_repo = ExpenseRepository(session, self._familia_id)
@@ -45,7 +49,10 @@ class OCRController(BaseController):
                 expense_repo=expense_repo,
                 ai_service=AIAdvisorService(),
             )
-            resultado = await ticket_service.procesar_ticket(imagen_path)
+            resultado = await ticket_service.procesar_ticket(
+                imagen_path,
+                on_progreso=on_progreso,
+            )
 
         logger.info(
             "[OCR] Ticket procesado: %s",

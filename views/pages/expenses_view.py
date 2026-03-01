@@ -200,6 +200,17 @@ class ExpensesView:
         self._render_expenses()
         self._render_summary()
 
+        # FAB para escanear ticket con OCR
+        self.page.floating_action_button = ft.FloatingActionButton(
+            icon=ft.Icons.CAMERA_ALT_ROUNDED,
+            tooltip="Escanear ticket con IA",
+            bgcolor=ft.Colors.ORANGE_700,
+            foreground_color=ft.Colors.WHITE,
+            shape=ft.RoundedRectangleBorder(radius=16),
+            elevation=6,
+            on_click=lambda _: self.router.navigate("/ticket-ocr"),
+        )
+
         return MainLayout(
             page=self.page,
             content=content,

@@ -11,6 +11,7 @@ import json
 import logging
 import re
 from collections import Counter
+from collections.abc import Awaitable, Callable
 from datetime import date
 
 from result import Err, Ok, Result
@@ -61,11 +62,18 @@ class TicketService:
         self.ai_service = ai_service
 
     async def procesar_ticket(
-        self, imagen_path: str
+        self,
+        imagen_path: str,
+        on_progreso: Callable[[str, str], Awaitable[None]] | None = None,
     ) -> Result[PartialExpense, AppError]:
         """Flujo completo: imagen → PartialExpense con categoría sugerida."""
 
+        async def progreso(titulo: str, sub: str = ""):
+            if on_progreso:
+                await on_progreso(titulo, sub)
+
         # 1. Extraer texto con Tesseract
+        await progreso("Extrayendo texto...", "Tesseract OCR con preprocesado PIL")
         ocr_result = await self.ocr.extraer_texto(imagen_path)
         if isinstance(ocr_result, Err):
             return ocr_result
@@ -79,6 +87,10 @@ class TicketService:
             )
 
         # 2. Parsear con Gemma
+        await progreso(
+            "Gemma está analizando los datos...",
+            f"{len(partial.texto_crudo)} caracteres detectados",
+        )
         parsed = await self._parsear_con_gemma(partial.texto_crudo)
         if parsed:
             partial.monto = parsed.get("monto")
@@ -94,6 +106,10 @@ class TicketService:
                     partial.fecha = None
 
         # 3. Sugerir categoría via cosine search
+        await progreso(
+            "Buscando categoría...",
+            "Similitud cosine sobre gastos históricos",
+        )
         termino = partial.comercio or " ".join(partial.items[:3])
         if termino:
             partial.categoria_sugerida = await self._sugerir_categoria(termino)

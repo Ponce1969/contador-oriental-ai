@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from datetime import date
 from enum import Enum, auto
 
@@ -48,6 +49,18 @@ class TicketUploadView:
         self._estado = _Estado.IDLE
         self._partial: PartialExpense | None = None
         self._imagen_path: str | None = None
+
+        # Texto de feedback dinámico durante el procesamiento
+        self._loading_text = ft.Text(
+            "Preparando...",
+            size=18,
+            weight=ft.FontWeight.W_500,
+        )
+        self._loading_sub = ft.Text(
+            "",
+            size=13,
+            color=ft.Colors.GREY_500,
+        )
 
         # Contenedor principal — se reconstruye al cambiar estado
         self._body = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
@@ -155,13 +168,42 @@ class TicketUploadView:
                 ft.Container(height=40),
                 ft.ProgressRing(width=60, height=60, stroke_width=4),
                 ft.Container(height=16),
-                ft.Text("Leyendo tu ticket...", size=18, weight=ft.FontWeight.W_500),
-                ft.Text(
-                    "Tesseract extrae el texto • Gemma interpreta los datos",
-                    size=13,
-                    color=ft.Colors.GREY_500,
+                self._loading_text,
+                self._loading_sub,
+                ft.Container(height=24),
+                ft.Container(
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.START,
+                        controls=[
+                            self._paso_item("1", "Preprocesando imagen"),
+                            self._paso_item("2", "Tesseract extrae el texto"),
+                            self._paso_item("3", "Gemma analiza montos y fechas"),
+                            self._paso_item("4", "Buscando categoría por similitud"),
+                        ],
+                    ),
+                    padding=ft.padding.symmetric(horizontal=32),
                 ),
             ],
+        )
+
+    @staticmethod
+    def _paso_item(num: str, texto: str) -> ft.Control:
+        return ft.Row(
+            controls=[
+                ft.Container(
+                    content=ft.Text(
+                        num, size=11, color=ft.Colors.WHITE,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    width=22,
+                    height=22,
+                    border_radius=11,
+                    bgcolor=ft.Colors.ORANGE_400,
+                    alignment=ft.alignment.center,
+                ),
+                ft.Text(texto, size=13, color=ft.Colors.GREY_600),
+            ],
+            spacing=10,
         )
 
     # ------------------------------------------------------------------
@@ -328,13 +370,42 @@ class TicketUploadView:
         if not self._imagen_path:
             self._cambiar_estado(_Estado.ERROR)
             return
-        resultado = await self.ocr_controller.procesar_ticket(self._imagen_path)
+
+        await self._actualizar_loading(
+            "Preprocesando imagen...",
+            "Escala de grises → contraste → nitidez",
+        )
+        await asyncio.sleep(0.1)  # cede el event loop para que se pinte
+
+        resultado = await self.ocr_controller.procesar_ticket(
+            self._imagen_path,
+            on_progreso=self._actualizar_loading,
+        )
+
         if isinstance(resultado, Ok):
             self._partial = resultado.ok()
             self._cambiar_estado(_Estado.CONFIRM)
         else:
             logger.error("[VISTA] Error OCR: %s", resultado.err().message)
             self._cambiar_estado(_Estado.ERROR)
+
+    async def _actualizar_loading(self, titulo: str, subtitulo: str = ""):
+        """Actualiza el texto del spinner sin reconstruir toda la vista."""
+        self._loading_text.value = titulo
+        self._loading_sub.value = subtitulo
+        if hasattr(self.page, "update"):
+            self.page.update()
+
+    def _limpiar_imagen_temporal(self):
+        """Borra la imagen si APP_ENV=production (privacidad + espacio)."""
+        if os.getenv("APP_ENV") != "production":
+            return
+        if self._imagen_path and os.path.exists(self._imagen_path):
+            try:
+                os.remove(self._imagen_path)
+                logger.info("[OCR] Imagen temporal eliminada: %s", self._imagen_path)
+            except OSError as e:
+                logger.warning("[OCR] No se pudo borrar imagen: %s", e)
 
     def _on_confirmar(self, _):
         """Guarda el gasto con los datos confirmados/editados por el usuario."""
@@ -381,6 +452,7 @@ class TicketUploadView:
 
             resultado = self.expense_controller.add_expense(gasto)
             if isinstance(resultado, Ok):
+                self._limpiar_imagen_temporal()
                 self.page.snack_bar = ft.SnackBar(
                     ft.Text("✅ Gasto guardado correctamente"), open=True
                 )
