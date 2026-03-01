@@ -81,15 +81,6 @@ class IncomesView:
             expand=True,
         )
 
-        self.notas_input = ft.TextField(
-            label="Notas (opcional)",
-            hint_text="Ej: Mensual, Quincenal, Jornal diario, etc.",
-            multiline=True,
-            min_lines=2,
-            max_lines=3,
-            expand=True,
-        )
-
         self.recurrente_checkbox = ft.Checkbox(
             label="Ingreso recurrente (sueldo, alquiler, etc.)",
             value=False,
@@ -165,7 +156,6 @@ class IncomesView:
                                 run_spacing=10,
                             ),
                             self.descripcion_input,
-                            self.notas_input,
                             self.recurrente_checkbox,
                             self.frecuencia_dropdown,
                             ft.Row(
@@ -300,7 +290,7 @@ class IncomesView:
                 categoria=categoria,
                 es_recurrente=es_recurrente,
                 frecuencia=frecuencia,
-                notas=self.notas_input.value if self.notas_input.value else None,
+                notas=None,
             )
             
             if self.editing_income_id:
@@ -512,7 +502,6 @@ class IncomesView:
         self.descripcion_input.value = income.descripcion
         self.categoria_dropdown.value = income.categoria.name
         self.fecha_input.value = str(income.fecha)
-        self.notas_input.value = income.notas if income.notas else ""
         self.recurrente_checkbox.value = income.es_recurrente
         self.frecuencia_dropdown.visible = income.es_recurrente
         self.frecuencia_dropdown.value = (
@@ -545,7 +534,6 @@ class IncomesView:
         self.descripcion_input.value = ""
         self.categoria_dropdown.value = None
         self.fecha_input.value = str(date.today())
-        self.notas_input.value = ""
         self.recurrente_checkbox.value = False
         self.frecuencia_dropdown.value = None
         self.frecuencia_dropdown.visible = False
