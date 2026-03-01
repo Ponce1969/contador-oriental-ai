@@ -412,11 +412,11 @@ RUN apt-get update && apt-get install -y \
 ### Dependencias Python (`pyproject.toml`)
 
 ```toml
-# Agregar en [project.dependencies]
-"pytesseract>=0.3.13",
-"pillow>=11.0.0",
+# Agregar en [project.dependencies] 
+# "pytesseract>=0.3.13",
+# "pillow>=11.0.0",
 ```
-
+# ya esta agregado a pyproject.toml
 ---
 
 ## 🧪 Fase 6: Tests
