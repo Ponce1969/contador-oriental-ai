@@ -148,7 +148,7 @@ class TicketUploadView:
                 ),
                 ft.Container(height=16),
                 ft.ElevatedButton(
-                    text="Seleccionar foto del ticket",
+                    "Seleccionar foto del ticket",
                     icon=ft.Icons.UPLOAD_FILE,
                     on_click=lambda _: self._file_picker.pick_files(
                         allow_multiple=False,
@@ -203,7 +203,7 @@ class TicketUploadView:
                     height=22,
                     border_radius=11,
                     bgcolor=ft.Colors.ORANGE_400,
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),
                 ),
                 ft.Text(texto, size=13, color=ft.Colors.GREY_600),
             ],
@@ -299,12 +299,12 @@ class TicketUploadView:
                 ft.Row(
                     controls=[
                         ft.ElevatedButton(
-                            text="Guardar gasto",
+                            "Guardar gasto",
                             icon=ft.Icons.SAVE,
                             on_click=self._on_confirmar,
                         ),
                         ft.OutlinedButton(
-                            text="Descartar",
+                            "Descartar",
                             icon=ft.Icons.DELETE,
                             on_click=lambda _: self._cambiar_estado(_Estado.IDLE),
                         ),
@@ -339,14 +339,14 @@ class TicketUploadView:
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                         ft.ElevatedButton(
-                            text="Intentar de nuevo",
+                            "Intentar de nuevo",
                             icon=ft.Icons.REFRESH,
                             on_click=lambda _: self._cambiar_estado(
                                 _Estado.IDLE
                             ),
                         ),
                         ft.OutlinedButton(
-                            text="Cargar manualmente",
+                            "Cargar manualmente",
                             icon=ft.Icons.EDIT,
                             on_click=lambda _: self.router.navigate("/expenses"),
                         ),
@@ -416,8 +416,8 @@ class TicketUploadView:
         try:
             monto = float(self._monto_field.value or "0")
             if monto <= 0:
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text("El monto debe ser mayor a 0"), open=True
+                self.page.overlay.append(
+                    ft.SnackBar(ft.Text("El monto debe ser mayor a 0"), open=True)
                 )
                 self.page.update()
                 return
@@ -430,8 +430,8 @@ class TicketUploadView:
 
             categoria_val = self._categoria_dropdown.value
             if not categoria_val:
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text("Seleccioná una categoría"), open=True
+                self.page.overlay.append(
+                    ft.SnackBar(ft.Text("Seleccioná una categoría"), open=True)
                 )
                 self.page.update()
                 return
@@ -457,20 +457,22 @@ class TicketUploadView:
             resultado = self.expense_controller.add_expense(gasto)
             if isinstance(resultado, Ok):
                 self._limpiar_imagen_temporal()
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text("✅ Gasto guardado correctamente"), open=True
+                self.page.overlay.append(
+                    ft.SnackBar(ft.Text("✅ Gasto guardado correctamente"), open=True)
                 )
                 self.page.update()
                 self.router.navigate("/expenses")
             else:
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text(f"Error: {resultado.err().message}"), open=True
+                self.page.overlay.append(
+                    ft.SnackBar(
+                        ft.Text(f"Error: {resultado.err().message}"), open=True
+                    )
                 )
                 self.page.update()
 
         except Exception as ex:
             logger.error("[VISTA] Error al confirmar ticket: %s", ex)
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("Error al guardar el gasto"), open=True
+            self.page.overlay.append(
+                ft.SnackBar(ft.Text("Error al guardar el gasto"), open=True)
             )
             self.page.update()
