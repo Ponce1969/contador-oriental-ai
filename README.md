@@ -389,4 +389,37 @@ MIT License — Ver archivo [LICENSE](LICENSE) para detalles.
 
 ---
 
+## 🚧 Problema Pendiente: FilePicker en Flet 0.81 Web
+
+### Contexto
+La vista `/ticket-ocr` permite cargar una foto de ticket para procesamiento OCR. El botón "Seleccionar foto del ticket" usa `ft.FilePicker` para abrir el diálogo de archivos del browser. **En modo desktop (local) funciona. En modo web (Docker) falla.**
+
+### Síntomas observados
+- **"Unknown control: FilePicker"** (barra roja en todas las vistas): ocurre cuando el `FilePicker` se agrega a `page.overlay` antes del primer `page.update()` global, es decir, en `main.py`, `MainLayout`, o `app.py`. El cliente JS no reconoce el control porque el árbol de controles aún no está sincronizado.
+- **`TimeoutException after 10s: Timeout waiting for invoke method listener`**: ocurre cuando el `FilePicker` se crea per-click (dentro del handler del botón). Se agrega al overlay + `page.update()`, pero `pick_files()` se llama antes de que el cliente JS haya registrado el listener. Agregar `asyncio.sleep(0.3)` no fue suficiente.
+
+### Lo que se intentó (sin éxito)
+1. `FilePicker` global en `AppState` → rompe multi-sesión web (AppState es global por proceso)
+2. `FilePicker` en `MainLayout.did_mount()` → "Unknown control" en todas las vistas
+3. `FilePicker` per-click con `page.overlay.append()` + `page.update()` → `TimeoutException`
+4. `FilePicker` en `main.py` antes del `navigate()` → "Unknown control" en login
+5. `page._internals["file_picker"]` → `_internals` se resetea en cada navegación
+6. `page._file_picker` (atributo dinámico) → Flet recrea el objeto `page` en reconexiones WS
+7. Per-click con `asyncio.sleep(0.3)` + `with_data=True` → `TimeoutException` igual
+
+### Hipótesis para explorar
+La solución del reporte del Contador Oriental que genera un bloque de texto copiable/imprimible **no usa FilePicker** — usa texto plano renderizado en la UI con un botón de copiar. Una alternativa similar para el OCR sería:
+
+- **Opción A — Upload HTML nativo**: usar `page.run_javascript()` para crear un `<input type="file">` invisible en el DOM del browser, activarlo con `.click()`, leer el archivo con `FileReader` y enviar los bytes al servidor via WebSocket custom. Evita `ft.FilePicker` completamente.
+- **Opción B — Campo de URL/path**: en lugar de seleccionar archivo, el usuario pega una URL de imagen pública o un path absoluto del servidor, y el OCR procesa desde ahí.
+- **Opción C — Drag & drop**: Flet 0.81 puede tener soporte de drag-and-drop (`on_accept`) que no depende del mismo listener que `FilePicker`.
+- **Opción D — Actualizar Flet**: verificar si versiones > 0.81 corrigen el bug del listener JS en modo web.
+
+### Archivos relevantes
+- `views/pages/ticket_upload_view.py` — vista OCR, método `_abrir_selector()`
+- `main.py` — entry point real (no `core/app.py` que no se usa)
+- `core/router.py` — navegación, llama `page.controls.clear()` en cada ruta
+
+---
+
 **🇺🇾 Hecho con ❤️ en Uruguay para el control financiero familiar**
