@@ -385,6 +385,7 @@ class TicketUploadView:
 
     async def _abrir_selector(self):
         """Usa el FilePicker registrado en app.py antes del primer navigate."""
+        logger.info("[OCR] page_id=%s attrs=%s", id(self.page), [a for a in dir(self.page) if a.startswith('_file')])
         picker = getattr(self.page, "_file_picker", None)
         if picker is None:
             logger.error("[OCR] FilePicker no registrado en page._file_picker")
