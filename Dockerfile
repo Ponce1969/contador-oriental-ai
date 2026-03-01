@@ -15,11 +15,14 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PATH="/home/appuser/.local/bin:${PATH}"
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema (incluyendo Tesseract OCR para tickets)
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     curl \
+    tesseract-ocr \
+    tesseract-ocr-spa \
+    libtesseract-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar uv globalmente
