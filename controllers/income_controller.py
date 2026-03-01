@@ -40,6 +40,13 @@ class IncomeController(BaseController):
             service = IncomeService(repo)
             return service.list_by_member(member_id)
 
+    def list_for_month(self, year: int, month: int) -> list[Income]:
+        """Ingresos del mes: recurrentes siempre + no-recurrentes solo del mes."""
+        with self._get_session() as session:
+            repo = IncomeRepository(session, self._familia_id)
+            service = IncomeService(repo)
+            return service.list_for_month(year, month)
+
     def get_summary_by_categories(
         self,
         year: int | None = None,

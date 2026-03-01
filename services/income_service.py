@@ -58,9 +58,24 @@ class IncomeService:
         return list(incomes)
 
     def list_by_month(self, year: int, month: int) -> list[Income]:
-        """Listar ingresos de un mes específico"""
+        """Listar ingresos de un mes específico (solo los registrados ese mes)"""
         incomes = self._repo.get_by_month(year, month)
         return list(incomes)
+
+    def list_for_month(self, year: int, month: int) -> list[Income]:
+        """
+        Ingresos relevantes para un mes dado:
+        - Recurrentes: siempre se muestran (sueldo, alquiler cobrado, etc.)
+        - No recurrentes: solo los registrados en ese mes específico
+        """
+        todos = self.list_incomes()
+        resultado = []
+        for inc in todos:
+            if inc.es_recurrente:
+                resultado.append(inc)
+            elif inc.fecha.year == year and inc.fecha.month == month:
+                resultado.append(inc)
+        return resultado
 
     def delete_income(self, income_id: int) -> Result[None, DatabaseError]:
         """Eliminar un ingreso"""
@@ -80,8 +95,8 @@ class IncomeService:
         return self._repo.update(income)
 
     def get_total_by_month(self, year: int, month: int) -> float:
-        """Calcular total de ingresos en un mes"""
-        incomes = self.list_by_month(year, month)
+        """Total de ingresos del mes (recurrentes + no-recurrentes del mes)."""
+        incomes = self.list_for_month(year, month)
         return sum(income.monto for income in incomes)
 
     def get_total_by_member(self, member_id: int) -> float:
@@ -94,9 +109,9 @@ class IncomeService:
         year: int | None = None,
         month: int | None = None,
     ) -> dict[str, float]:
-        """Obtener resumen de ingresos por categoría, opcionalmente filtrado por mes."""
+        """Resumen de ingresos por categoría (recurrentes + no-recurrentes del mes)."""
         if year is not None and month is not None:
-            incomes = self.list_by_month(year, month)
+            incomes = self.list_for_month(year, month)
         else:
             incomes = self.list_incomes()
         summary: dict[str, float] = {}

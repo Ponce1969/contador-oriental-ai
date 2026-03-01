@@ -16,7 +16,7 @@ from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
-from models.income_model import Income, IncomeCategory
+from models.income_model import Income, IncomeCategory, RecurrenceFrequency
 from utils.formatters import format_currency
 from views.layouts.main_layout import MainLayout
 
@@ -89,7 +89,23 @@ class IncomesView:
             max_lines=3,
             expand=True,
         )
-        
+
+        self.recurrente_checkbox = ft.Checkbox(
+            label="Ingreso recurrente (sueldo, alquiler, etc.)",
+            value=False,
+            on_change=self._on_recurrente_changed,
+        )
+
+        self.frecuencia_dropdown = ft.Dropdown(
+            label="Frecuencia de cobro",
+            expand=True,
+            visible=False,
+            options=[
+                ft.dropdown.Option(key=f.name, text=f.value)
+                for f in RecurrenceFrequency
+            ],
+        )
+
         # Lista de ingresos
         self.incomes_column = ft.Column(spacing=10)
         
@@ -150,6 +166,8 @@ class IncomesView:
                             ),
                             self.descripcion_input,
                             self.notas_input,
+                            self.recurrente_checkbox,
+                            self.frecuencia_dropdown,
                             ft.Row(
                                 controls=[
                                     CorrectElevatedButton(
@@ -211,6 +229,11 @@ class IncomesView:
             router=self.router,
         )
 
+    def _on_recurrente_changed(self, e: ft.ControlEvent) -> None:
+        """Mostrar/ocultar dropdown de frecuencia según checkbox."""
+        self.frecuencia_dropdown.visible = bool(e.control.value)
+        self.page.update()
+
     def _on_save_income(self, _: ft.ControlEvent) -> None:
         """Guardar ingreso (crear o actualizar)"""
         try:
@@ -258,6 +281,16 @@ class IncomesView:
                 return
             
             # Crear o actualizar el ingreso
+            es_recurrente = bool(self.recurrente_checkbox.value)
+            frecuencia = None
+            if es_recurrente and self.frecuencia_dropdown.value:
+                try:
+                    frecuencia = RecurrenceFrequency[
+                        self.frecuencia_dropdown.value
+                    ]
+                except KeyError:
+                    pass
+
             income = Income(
                 id=self.editing_income_id,
                 family_member_id=int(self.member_dropdown.value),
@@ -265,8 +298,8 @@ class IncomesView:
                 fecha=fecha,
                 descripcion=self.descripcion_input.value,
                 categoria=categoria,
-                es_recurrente=False,
-                frecuencia=None,
+                es_recurrente=es_recurrente,
+                frecuencia=frecuencia,
                 notas=self.notas_input.value if self.notas_input.value else None,
             )
             
@@ -292,10 +325,10 @@ class IncomesView:
             self._show_error(AppError(message=f"Error inesperado: {e}"))
 
     def _render_incomes(self) -> None:
-        """Renderizar lista de ingresos"""
+        """Renderizar ingresos del mes: recurrentes siempre + no-recurrentes del mes."""
         self.incomes_column.controls.clear()
-        
-        incomes = self.income_controller.list_incomes()
+        today = date.today()
+        incomes = self.income_controller.list_for_month(today.year, today.month)
         
         if not incomes:
             self.incomes_column.controls.append(
@@ -313,11 +346,23 @@ class IncomesView:
                         member_name = member.nombre
                         break
                 
-                recurrente_text = ""
-                
-                # Formatear monto con separador de miles
                 monto_formateado = format_currency(income.monto)
-                
+                recurrente_badge = (
+                    ft.Container(
+                        content=ft.Text(
+                            "↺ Recurrente",
+                            size=10,
+                            color=ft.Colors.WHITE,
+                            weight=ft.FontWeight.BOLD,
+                        ),
+                        bgcolor=ft.Colors.TEAL_600,
+                        border_radius=8,
+                        padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                    )
+                    if income.es_recurrente
+                    else ft.Container()
+                )
+
                 self.incomes_column.controls.append(
                     ft.Container(
                         content=ft.Row(
@@ -329,19 +374,27 @@ class IncomesView:
                                 ),
                                 ft.Column(
                                     controls=[
+                                        ft.Row(
+                                            controls=[
+                                                ft.Text(
+                                                    value=(
+                                                        f"{member_name}"
+                                                        f" - {income.descripcion}"
+                                                    ),
+                                                    weight=ft.FontWeight.BOLD,
+                                                    color=ft.Colors.TEAL_900,
+                                                    expand=True,
+                                                ),
+                                                recurrente_badge,
+                                            ],
+                                            spacing=8,
+                                        ),
                                         ft.Text(
                                             value=(
-                                            f"{member_name} - {income.descripcion}"
-                                        ),
-                                            weight=ft.FontWeight.BOLD,
-                                            color=ft.Colors.TEAL_900
-                                        ),
-                                        ft.Text(
-                                            value=(
-                                            f"{income.categoria.value} • "
-                                            f"${monto_formateado} • "
-                                            f"{income.fecha}{recurrente_text}"
-                                        ),
+                                                f"{income.categoria.value} • "
+                                                f"${monto_formateado} • "
+                                                f"{income.fecha}"
+                                            ),
                                             size=12,
                                             color=ft.Colors.TEAL_700
                                         ),
@@ -383,10 +436,12 @@ class IncomesView:
         self.page.update()
 
     def _render_summary(self) -> None:
-        """Renderizar resumen por categorías"""
+        """Renderizar resumen por categorías del mes (recurrentes + no-recurrentes)."""
         self.summary_column.controls.clear()
-        
-        summary = self.income_controller.get_summary_by_categories()
+        today = date.today()
+        summary = self.income_controller.get_summary_by_categories(
+            year=today.year, month=today.month
+        )
         
         if not summary:
             self.summary_column.controls.append(
@@ -458,6 +513,11 @@ class IncomesView:
         self.categoria_dropdown.value = income.categoria.name
         self.fecha_input.value = str(income.fecha)
         self.notas_input.value = income.notas if income.notas else ""
+        self.recurrente_checkbox.value = income.es_recurrente
+        self.frecuencia_dropdown.visible = income.es_recurrente
+        self.frecuencia_dropdown.value = (
+            income.frecuencia.name if income.frecuencia else None
+        )
         self.page.update()
 
     def _on_delete_income(self, income: Income) -> None:
@@ -486,6 +546,9 @@ class IncomesView:
         self.categoria_dropdown.value = None
         self.fecha_input.value = str(date.today())
         self.notas_input.value = ""
+        self.recurrente_checkbox.value = False
+        self.frecuencia_dropdown.value = None
+        self.frecuencia_dropdown.visible = False
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""
