@@ -100,7 +100,15 @@ ROUTES = [
         "icon": ft.Icons.HELP,
         "show_in_top": True,
         "show_in_bottom": True,
-    }
+    },
+    {
+        "path": "/ticket-ocr",
+        "view": "views.pages.ticket_upload_view.TicketUploadView",
+        "label": "📷 Ticket",
+        "icon": ft.Icons.CAMERA_ALT,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
 ]
 
 def load_view_class(view_path: str) -> type | None:
