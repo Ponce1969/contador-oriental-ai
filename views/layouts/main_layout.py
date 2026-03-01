@@ -16,6 +16,16 @@ class MainLayout(ft.Column):
 
         self._build()
 
+    def did_mount(self):
+        """Hook post-montaje: registrar FilePicker en overlay si no existe."""
+        if not isinstance(self._page.data, dict):
+            self._page.data = {}
+        if "_file_picker" not in self._page.data:
+            picker = ft.FilePicker()
+            self._page.overlay.append(picker)
+            self._page.data["_file_picker"] = picker
+            self._page.update()
+
     @property
     def _is_mobile(self) -> bool:
         return AppState.device == "mobile"

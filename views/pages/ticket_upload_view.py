@@ -384,24 +384,24 @@ class TicketUploadView:
         self._renderizar()
 
     async def _abrir_selector(self):
-        """Abre el selector de archivos con la API async de Flet 0.81."""
-        picker = ft.FilePicker()
-        self.page.overlay.append(picker)
-        self.page.update()
-        try:
-            files = await picker.pick_files(
-                allow_multiple=False,
-                allowed_extensions=["jpg", "jpeg", "png", "webp"],
-            )
-            if not files:
-                return
-            self._imagen_path = files[0].path
-            self._cambiar_estado(_Estado.LOADING)
-            await self._procesar_imagen()
-        finally:
-            if picker in self.page.overlay:
-                self.page.overlay.remove(picker)
-            self.page.update()
+        """Abre el selector de archivos usando el FilePicker del MainLayout."""
+        picker = (
+            self.page.data.get("_file_picker")
+            if isinstance(self.page.data, dict)
+            else None
+        )
+        if picker is None:
+            logger.warning("[OCR] FilePicker no disponible aun, reintentando")
+            return
+        files = await picker.pick_files(
+            allow_multiple=False,
+            allowed_extensions=["jpg", "jpeg", "png", "webp"],
+        )
+        if not files:
+            return
+        self._imagen_path = files[0].path
+        self._cambiar_estado(_Estado.LOADING)
+        await self._procesar_imagen()
 
     async def _procesar_imagen(self):
         if not self._imagen_path:
