@@ -20,14 +20,14 @@ class FletingApp:
 
     def _register_file_picker(self):
         """Registrar FilePicker antes del primer navigate().
-        page no tiene __slots__, acepta atributos Python dinamicos per-sesion.
+        page._internals es un dict del dataclass que persiste toda la sesion.
         """
+        import logging
         picker = ft.FilePicker()
         self.page.overlay.append(picker)
-        self.page._file_picker = picker
-        import logging
+        self.page._internals["file_picker"] = picker
         logging.getLogger("App").info(
-            "[OCR] FilePicker registrado: id=%s page_id=%s",
+            "[OCR] FilePicker registrado en _internals: id=%s page_id=%s",
             id(picker), id(self.page)
         )
     
