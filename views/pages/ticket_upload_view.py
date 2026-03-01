@@ -62,12 +62,13 @@ class TicketUploadView:
             color=ft.Colors.GREY_500,
         )
 
-        # Contenedor principal — se reconstruye al cambiar estado
-        self._body = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
-
+        # FilePicker — dentro del árbol de controles (no page.overlay)
+        # Flet 0.81 + Fleting: overlay causa 'Unknown control' al navegar
         self._file_picker = ft.FilePicker()
         self._file_picker.on_result = self._on_file_picked
-        self.page.overlay.append(self._file_picker)
+
+        # Contenedor principal — se reconstruye al cambiar estado
+        self._body = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
 
         self._renderizar()
 
@@ -76,10 +77,16 @@ class TicketUploadView:
     # ------------------------------------------------------------------
 
     def render(self) -> ft.Control:
-        layout = MainLayout(self.page, self.router)
-        return layout.build(
-            title="📷 Cargar Ticket",
-            content=self._body,
+        return MainLayout(
+            page=self.page,
+            content=ft.Stack(
+                controls=[
+                    self._body,
+                    self._file_picker,
+                ],
+                expand=True,
+            ),
+            router=self.router,
         )
 
     def _renderizar(self):
