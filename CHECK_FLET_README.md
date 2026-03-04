@@ -1,310 +1,119 @@
-# 🔍 check_flet.py - Herramienta de Diagnóstico de Flet
+# 🔍 check_flet.py — Herramienta de Diagnóstico para Flet 0.81
 
-## 📋 Descripción
+## Descripción
 
-`check_flet.py` es una herramienta de diagnóstico interactiva para inspeccionar controles, métodos y atributos de Flet. Útil para debugging, exploración de la API y resolución de problemas.
+`check_flet.py` es una herramienta de diagnóstico para inspeccionar la API de Flet,
+verificar compatibilidad del proyecto y detectar problemas conocidos en Flet 0.81 web.
+Combina inspección estática con diagnósticos específicos del proyecto Contador Oriental.
 
-## 🚀 Uso
-
-### Modo Interactivo (Menú)
+## Uso rápido
 
 ```bash
+# Reporte de compatibilidad del proyecto (RECOMENDADO)
+python check_flet.py --compat
+
+# Versión y paquetes instalados
+python check_flet.py --version
+
+# Buscar en la API de Flet
+python check_flet.py --search upload
+
+# Inspeccionar un control o método
+python check_flet.py FilePicker
+python check_flet.py FilePicker.pick_files
+python check_flet.py UrlLauncher
+
+# Listar todos los controles disponibles
+python check_flet.py --all
+
+# Menú interactivo
 python check_flet.py
 ```
 
-Muestra un menú con opciones predefinidas:
-- Inspeccionar FilePicker
-- Inspeccionar FilePicker.pick_files
-- Inspeccionar FileUpload
-- Inspeccionar Page
-- Listar todos los controles
-- Inspeccionar control personalizado
-
-### Modo Comando Directo
+## Desde Docker (Flet real en producción)
 
 ```bash
-# Inspeccionar un control
-python check_flet.py FilePicker
-
-# Inspeccionar un método específico
-python check_flet.py FilePicker.pick_files
-
-# Otros ejemplos
-python check_flet.py TextField
-python check_flet.py Page.add
-python check_flet.py ElevatedButton.on_click
+docker cp check_flet.py auditor_familiar_app:/app/check_flet.py
+docker exec auditor_familiar_app python /app/check_flet.py --compat
+docker exec auditor_familiar_app python /app/check_flet.py FilePicker.pick_files
 ```
 
-## 📊 Información que Proporciona
+## Menú interactivo (9 opciones)
 
-### Para Controles:
-
-- ✅ Tipo y módulo
-- ✅ Documentación
-- ✅ Métodos públicos (SYNC/ASYNC)
-- ✅ Propiedades y atributos
-- ✅ Tipos de datos
-
-### Para Métodos:
-
-- ✅ Firma completa
-- ✅ Parámetros con tipos y defaults
-- ✅ Tipo de retorno
-- ✅ Documentación
-- ✅ Si es SYNC o ASYNC
-
-## 💡 Ejemplos de Uso
-
-### Ejemplo 1: Investigar FilePicker
-
-```bash
-$ python check_flet.py FilePicker
-
-🔍 ANALIZANDO CONTROL: FilePicker
-================================================================================
-
-📋 Información básica:
-   Tipo: <class 'type'>
-   Módulo: flet.core.file_picker
-
-📋 Documentación:
-   A control that allows you to use the native file explorer...
-
-📋 Métodos públicos:
-   • get_directory_path          [ASYNC]
-   • pick_files                  [ASYNC]
-   • save_file                   [ASYNC]
-   • upload                      [SYNC ]
-   ...
-
-📋 Propiedades principales:
-   • allowed_extensions          list
-   • dialog_title                str
-   • file_name                   str
-   • file_type                   FilePickerFileType
-   ...
+```
+  1  Entorno y version
+  2  Reporte compatibilidad del proyecto  [RECOMENDADO]
+  3  Inspeccionar FilePicker
+  4  Inspeccionar FilePicker.pick_files
+  5  Inspeccionar Page
+  6  Listar todos los controles
+  7  Buscar en la API de Flet
+  8  Inspeccionar control/metodo personalizado
+  9  Guia de montaje (tabla tipo/metodo/instruccion)
+  0  Salir
 ```
 
-### Ejemplo 2: Verificar si un método es async
+## Qué muestra `--compat` (Flet 0.81 Docker)
 
-```bash
-$ python check_flet.py FilePicker.pick_files
+```
+FilePicker
+  [OK]  ft.FilePicker existe
+  [OK]  pick_files() es ASYNC
+  [OK]  with_data=True disponible
+  [OK]  FilePicker.upload() existe
 
-🔍 ANALIZANDO FilePicker.pick_files()
-================================================================================
+Page.overlay
+  [OK]  page.overlay existe
 
-📋 Firma del método:
-   pick_files(self, dialog_title=None, ...)
+URL Launcher
+  [OK]  ft.UrlLauncher existe (Service — necesita overlay)
+  [!!]  page.launch_url() DEPRECADO — usar ft.UrlLauncher
 
-📋 Parámetros:
-   • dialog_title               : str | None              Default: None
-   • allowed_extensions         : list[str] | None        Default: None
-   • allow_multiple             : bool                    Default: False
+Page JavaScript
+  [!!]  page sin metodos JavaScript
 
-📋 Tipo de retorno:
-   Coroutine[Any, Any, list[FilePickerFile]]
+ElevatedButton
+  [!!]  ElevatedButton.icon= existe (pre-0.81)
+  [OK]  ElevatedButton sin text= — usar content=ft.Text(...)
 
-📋 Tipo de función:
-   ✅ ASYNC (debe usarse con await)
+Alignment
+  [OK]  ft.Alignment(x, y) existe (0.81+)
+
+SnackBar
+  [OK]  ft.SnackBar existe
+  [OK]  SnackBar.open — usar page.overlay.append(SnackBar(open=True))
 ```
 
-### Ejemplo 3: Listar todos los controles
+## Hallazgos confirmados en Flet 0.81 web
 
-```bash
-$ python check_flet.py
+| Control/Método | Estado | Nota |
+|---|---|---|
+| `ft.FilePicker` | ❌ No funciona en web | "Unknown control" / TimeoutException |
+| `ft.UrlLauncher` | ❌ No funciona en web | Mismo problema que FilePicker |
+| `page.launch_url()` | ⚠️ Deprecado | Llama a UrlLauncher internamente |
+| `page.run_javascript()` | ❌ No existe | No hay acceso al DOM desde Python |
+| `ft.Alignment(x, y)` | ✅ Correcto en 0.81 | Reemplaza `ft.alignment.center` |
+| `ElevatedButton(text=)` | ❌ No existe | Usar `content=ft.Text(...)` |
+| `page.overlay.append()` | ✅ Funciona | Para SnackBar, Dialogs |
 
-# Seleccionar opción 5
-📦 Total de controles: 150+
+## Opción 9 — Guía de montaje
 
-A:
-   • AlertDialog
-   • AnimatedSwitcher
-   • AppBar
-   ...
+Dado cualquier control, genera una tabla con:
 
-B:
-   • Banner
-   • BottomAppBar
-   • BottomSheet
-   ...
+```
+TIPO     | METODO/ATTR            | INSTRUCCION DE MONTAJE
+ASYNC    | pick_files             | result = await filepicker.pick_files()
+EVENT    | on_result              | filepicker.on_result = mi_funcion
+METHOD   | upload                 | filepicker.upload()
+ATTR     | allowed_extensions     | filepicker.allowed_extensions = valor
 ```
 
-## 🎯 Casos de Uso Reales
+## Referencias
 
-### 1. Debugging del FilePicker
-
-**Problema:** FilePicker no funciona en web
-
-```bash
-$ python check_flet.py FilePicker.pick_files
-
-# Resultado:
-📋 Tipo de función:
-   ✅ ASYNC (debe usarse con await)
-```
-
-**Solución:** Usar `await picker.pick_files()` en lugar de `picker.pick_files()`
-
-### 2. Explorar alternativas
-
-**Problema:** Necesito subir archivos en web
-
-```bash
-$ python check_flet.py FileUpload
-
-# Resultado:
-📋 Métodos públicos:
-   • upload                      [SYNC ]
-   
-📋 Propiedades principales:
-   • upload_url                  str
-   • on_upload                   callable
-```
-
-**Solución:** Usar FileUpload con un endpoint HTTP
-
-### 3. Verificar parámetros de un método
-
-**Problema:** No sé qué parámetros acepta `pick_files`
-
-```bash
-$ python check_flet.py FilePicker.pick_files
-
-# Resultado:
-📋 Parámetros:
-   • dialog_title               : str | None              Default: None
-   • allowed_extensions         : list[str] | None        Default: None
-   • allow_multiple             : bool                    Default: False
-   • initial_directory          : str | None              Default: None
-```
-
-**Solución:** Ahora sé exactamente qué parámetros usar
-
-## 🔧 Personalización
-
-### Agregar nuevas opciones al menú
-
-Edita la función `show_menu()` en `check_flet.py`:
-
-```python
-def show_menu() -> None:
-    print("\n📚 Opciones disponibles:")
-    print("   1. Inspeccionar FilePicker")
-    print("   2. Inspeccionar FilePicker.pick_files")
-    # ... agregar más opciones
-    print("   7. Inspeccionar mi control personalizado")
-```
-
-### Inspeccionar controles personalizados
-
-Si tienes controles personalizados en tu proyecto:
-
-```python
-# En check_flet.py, agregar al inicio:
-import sys
-sys.path.append("./views/components")
-from mi_control import MiControl
-
-# Luego usar:
-inspect_control("MiControl")
-```
-
-## 📚 Referencia Rápida
-
-### Comandos Útiles
-
-```bash
-# Controles comunes
-python check_flet.py TextField
-python check_flet.py ElevatedButton
-python check_flet.py Container
-python check_flet.py Row
-python check_flet.py Column
-
-# Métodos comunes
-python check_flet.py Page.add
-python check_flet.py Page.update
-python check_flet.py TextField.focus
-
-# File pickers
-python check_flet.py FilePicker
-python check_flet.py FilePicker.pick_files
-python check_flet.py FileUpload
-python check_flet.py FileUpload.upload
-
-# Navegación
-python check_flet.py Page.go
-python check_flet.py Page.route
-```
-
-## 🐛 Troubleshooting
-
-### Error: ModuleNotFoundError: No module named 'flet'
-
-```bash
-# Instalar Flet
-pip install flet
-# o
-uv pip install flet
-```
-
-### Error: Control no encontrado
-
-```bash
-# Verificar que el nombre esté correcto (case-sensitive)
-python check_flet.py FilePicker  # ✅ Correcto
-python check_flet.py filepicker  # ❌ Incorrecto
-```
-
-### No se puede instanciar el control
-
-Algunos controles requieren parámetros obligatorios. El script mostrará un warning pero seguirá funcionando.
-
-## 💡 Tips
-
-1. **Usa el modo comando directo** para scripts y automatización
-2. **Usa el modo interactivo** para exploración y aprendizaje
-3. **Combina con la documentación oficial** de Flet para mejor comprensión
-4. **Guarda la salida** para referencia futura: `python check_flet.py FilePicker > filepicker_info.txt`
-
-## 🎓 Casos de Uso Avanzados
-
-### Script de validación
-
-```bash
-#!/bin/bash
-# Verificar que todos los controles usados existen
-
-for control in FilePicker FileUpload TextField ElevatedButton; do
-    echo "Verificando $control..."
-    python check_flet.py $control > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        echo "  ✅ $control existe"
-    else
-        echo "  ❌ $control no encontrado"
-    fi
-done
-```
-
-### Generar documentación
-
-```bash
-# Generar documentación de todos los controles usados
-for control in $(grep -r "ft\." views/ | grep -oP "ft\.\K[A-Z]\w+" | sort -u); do
-    echo "## $control" >> CONTROLES_USADOS.md
-    python check_flet.py $control >> CONTROLES_USADOS.md
-    echo "" >> CONTROLES_USADOS.md
-done
-```
-
-## 🔗 Referencias
-
-- [Documentación oficial de Flet](https://flet.dev/docs/)
+- [Flet 0.81 Changelog](https://flet.dev/blog/)
 - [Flet Controls Reference](https://flet.dev/docs/controls/)
 - [Python inspect module](https://docs.python.org/3/library/inspect.html)
 
 ---
 
-**Versión:** 2.0.0  
-**Última actualización:** 2026-03-03  
-**Autor:** Herramienta de diagnóstico mejorada
+**Última actualización:** 2026-03-04 | Flet 0.81.0 | Python 3.12
