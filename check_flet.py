@@ -190,6 +190,22 @@ def check_compat() -> None:
         ok("ft.Alignment(x, y) existe (API 0.81+)")
         oks.append("ft.Alignment existe")
 
+    # --- launch_url / UrlLauncher ---
+    section("URL Launcher")
+    if hasattr(ft, "UrlLauncher"):
+        ok("ft.UrlLauncher existe (Service — necesita estar en page.overlay/services)")
+        oks.append("ft.UrlLauncher existe")
+    if hasattr(ft.Page, "launch_url"):
+        import inspect as _inspect
+        src = _inspect.getsource(ft.Page.launch_url)
+        if "deprecated" in src.lower():
+            warn("page.launch_url() esta DEPRECADO en esta version")
+            issues.append("page.launch_url() deprecado — usar ft.UrlLauncher Service")
+        else:
+            ok("page.launch_url() existe y no esta deprecado")
+    else:
+        warn("page.launch_url() no existe")
+
     # --- SnackBar via overlay ---
     section("SnackBar")
     if hasattr(ft, "SnackBar"):
