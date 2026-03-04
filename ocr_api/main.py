@@ -341,11 +341,17 @@ async def upload_form_submit(
             except (ValueError, TypeError):
                 pass
 
+        def _str_or_none(val: object) -> str | None:
+            """Convierte string 'null'/'none'/'' a None."""
+            if not val or str(val).strip().lower() in ("null", "none", "n/a", "-"):
+                return None
+            return str(val)
+
         result = {
             "success": True,
             "monto": (parsed or {}).get("monto"),
             "fecha": fecha_iso,
-            "comercio": (parsed or {}).get("comercio"),
+            "comercio": _str_or_none((parsed or {}).get("comercio")),
             "items": (parsed or {}).get("items") or [],
             "confianza_ocr": confianza,
             "texto_crudo": texto_crudo,
