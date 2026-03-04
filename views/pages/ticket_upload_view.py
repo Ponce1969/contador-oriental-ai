@@ -178,39 +178,7 @@ class TicketUploadView:
                 self._loading_text,
                 self._loading_sub,
                 ft.Container(height=24),
-                ft.Container(
-                    content=ft.Column(
-                        horizontal_alignment=ft.CrossAxisAlignment.START,
-                        controls=[
-                            self._paso_item("1", "Preprocesando imagen"),
-                            self._paso_item("2", "Tesseract extrae el texto"),
-                            self._paso_item("3", "Gemma analiza montos y fechas"),
-                            self._paso_item("4", "Buscando categoría por similitud"),
-                        ],
-                    ),
-                    padding=ft.padding.symmetric(horizontal=32),
-                ),
             ],
-        )
-
-    @staticmethod
-    def _paso_item(num: str, texto: str) -> ft.Control:
-        return ft.Row(
-            controls=[
-                ft.Container(
-                    content=ft.Text(
-                        num, size=11, color=ft.Colors.WHITE,
-                        weight=ft.FontWeight.BOLD,
-                    ),
-                    width=22,
-                    height=22,
-                    border_radius=11,
-                    bgcolor=ft.Colors.ORANGE_400,
-                    alignment=ft.Alignment(0, 0),
-                ),
-                ft.Text(texto, size=13, color=ft.Colors.GREY_600),
-            ],
-            spacing=10,
         )
 
     # ------------------------------------------------------------------
@@ -473,10 +441,6 @@ class TicketUploadView:
         if hasattr(self.page, "update"):
             self.page.update()
 
-    def _limpiar_imagen_temporal(self):
-        """Libera bytes de imagen en memoria (privacidad)."""
-        self._imagen_bytes = None
-
     def _on_confirmar(self, _):
         """Guarda el gasto con los datos confirmados/editados por el usuario."""
         try:
@@ -522,7 +486,6 @@ class TicketUploadView:
 
             resultado = self.expense_controller.add_expense(gasto)
             if isinstance(resultado, Ok):
-                self._limpiar_imagen_temporal()
                 self.page.overlay.append(
                     ft.SnackBar(ft.Text("✅ Gasto guardado correctamente"), open=True)
                 )
