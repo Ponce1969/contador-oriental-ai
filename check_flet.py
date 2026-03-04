@@ -430,6 +430,63 @@ def list_all_controls() -> None:
 # Menu interactivo
 # ---------------------------------------------------------------------------
 
+def guia_montaje(objeto_o_clase: Any) -> None:
+    """Tabla de guia de montaje deducida por tipo (estilo autor Fleting)."""
+    version = getattr(ft, "__version__", "?")
+    nombre = getattr(objeto_o_clase, "__name__", type(objeto_o_clase).__name__)
+    header(f"GUIA DE MONTAJE: {nombre}  (Flet {version})")
+
+    # Constructor
+    print(f"\n  Como crear {nombre}:")
+    try:
+        sig = inspect.signature(objeto_o_clase.__init__)
+        for pname, param in sig.parameters.items():
+            if pname == "self":
+                continue
+            req = (
+                "[OBLIGATORIO]"
+                if param.default is inspect.Parameter.empty
+                else f"[Opcional: {param.default!r}]"
+            )
+            print(f"    • {pname:<20} {req}")
+    except Exception:
+        pass
+
+    # Tabla de deduccion
+    print()
+    hr("-")
+    print(f"  {'TIPO':<8} | {'METODO/ATTR':<22} | INSTRUCCION DE MONTAJE")
+    hr("-")
+
+    obj_nom = nombre.lower()
+    for attr in sorted(dir(objeto_o_clase)):
+        if attr.startswith("_"):
+            continue
+        try:
+            val = getattr(objeto_o_clase, attr)
+            if inspect.iscoroutinefunction(val):
+                tipo = "ASYNC"
+                guia = f"result = await {obj_nom}.{attr}()  # pausa y retorna dato"
+            elif callable(val):
+                if attr.startswith("on_"):
+                    tipo = "EVENT"
+                    guia = f"{obj_nom}.{attr} = mi_funcion  # se activa al ocurrir algo"
+                else:
+                    tipo = "METHOD"
+                    guia = f"{obj_nom}.{attr}()  # accion inmediata sin espera"
+            else:
+                tipo = "ATTR"
+                guia = f"{obj_nom}.{attr} = valor  # cambia propiedad"
+            print(f"  {tipo:<8} | {attr:<22} | {guia}")
+        except Exception:
+            continue
+
+    hr("-")
+    print("  TIP: ASYNC  -> usar con await o asyncio.create_task()")
+    print("  TIP: EVENT  -> la funcion recibe un objeto 'e' (evento)")
+    print("  TIP: METHOD -> llamada normal, retorna inmediatamente")
+
+
 def show_menu() -> None:
     header("DIAGNOSTICO FLET — CONTADOR ORIENTAL")
     flet_ver = getattr(ft, "__version__", "?")
@@ -443,6 +500,7 @@ def show_menu() -> None:
     print("  6  Listar todos los controles")
     print("  7  Buscar en la API de Flet")
     print("  8  Inspeccionar control/metodo personalizado")
+    print("  9  Guia de montaje (tabla tipo/metodo/instruccion)")
     print("  0  Salir")
     print()
     hr("-")
@@ -527,6 +585,14 @@ def main() -> None:
                     err(f"'{cname}' no existe")
             elif target:
                 inspect_control(target)
+        elif choice == "9":
+            cname = input("  Control para guia de montaje [FilePicker]: ").strip()
+            cname = cname or "FilePicker"
+            if hasattr(ft, cname):
+                guia_montaje(getattr(ft, cname))
+            else:
+                err(f"'{cname}' no existe")
+                _suggest_similar(cname)
         else:
             warn("Opcion invalida")
 

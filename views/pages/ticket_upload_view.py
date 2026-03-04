@@ -54,6 +54,9 @@ class TicketUploadView:
         self._imagen_bytes: bytes | None = None
         self._imagen_nombre: str = "ticket.jpg"
 
+        # FilePicker creado una sola vez — se registra en overlay en render()
+        self._picker = ft.FilePicker()
+
         # Texto de feedback dinámico durante el procesamiento
         self._loading_text = ft.Text(
             "Preparando...",
@@ -76,6 +79,10 @@ class TicketUploadView:
     # ------------------------------------------------------------------
 
     def render(self) -> ft.Control:
+        # Registrar FilePicker en overlay si no está ya — el router llama
+        # render() antes de page.add(), así el JS lo registra junto con la vista
+        if self._picker not in self.page.overlay:
+            self.page.overlay.append(self._picker)
         return MainLayout(
             page=self.page,
             content=self._body,
@@ -388,38 +395,28 @@ class TicketUploadView:
         self._renderizar()
 
     async def _abrir_selector(self):
-        """Abre FilePicker, lee bytes y los envía al microservicio OCR."""
-        picker = ft.FilePicker()
-        self.page.overlay.append(picker)
-        self.page.update()
-        await asyncio.sleep(0.3)
-        try:
-            files = await picker.pick_files(
-                allow_multiple=False,
-                file_type=ft.FilePickerFileType.CUSTOM,
-                allowed_extensions=["jpg", "jpeg", "png", "webp"],
-                with_data=True,
-            )
-            if not files:
-                return
-            f = files[0]
-            # Priorizar bytes (modo web) sobre path (modo desktop)
-            if f.bytes:
-                self._imagen_bytes = bytes(f.bytes)
-                self._imagen_nombre = f.name
-            elif f.path:
-                with open(f.path, "rb") as fp:
-                    self._imagen_bytes = fp.read()
-                self._imagen_nombre = os.path.basename(f.path)
-            else:
-                logger.error("[OCR] Archivo sin bytes ni path")
-                return
-            self._cambiar_estado(_Estado.LOADING)
-            await self._procesar_imagen()
-        finally:
-            if picker in self.page.overlay:
-                self.page.overlay.remove(picker)
-            self.page.update()
+        """Abre el FilePicker registrado en render() — el JS ya lo conoce."""
+        files = await self._picker.pick_files(
+            allow_multiple=False,
+            file_type=ft.FilePickerFileType.CUSTOM,
+            allowed_extensions=["jpg", "jpeg", "png", "webp"],
+            with_data=True,
+        )
+        if not files:
+            return
+        f = files[0]
+        if f.bytes:
+            self._imagen_bytes = bytes(f.bytes)
+            self._imagen_nombre = f.name
+        elif f.path:
+            with open(f.path, "rb") as fp:
+                self._imagen_bytes = fp.read()
+            self._imagen_nombre = os.path.basename(f.path)
+        else:
+            logger.error("[OCR] Archivo sin bytes ni path")
+            return
+        self._cambiar_estado(_Estado.LOADING)
+        await self._procesar_imagen()
 
     async def _procesar_imagen(self):
         if not self._imagen_bytes:
