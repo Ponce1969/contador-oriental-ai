@@ -102,6 +102,7 @@ class TicketUploadView:
     # ------------------------------------------------------------------
 
     def _build_idle(self) -> ft.Control:
+        url = self._preparar_sesion()
         return ft.Column(
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
@@ -117,49 +118,83 @@ class TicketUploadView:
                     color=ft.Colors.GREY_600,
                     text_align=ft.TextAlign.CENTER,
                 ),
-                ft.Container(height=8),
+                ft.Container(height=16),
                 ft.Card(
                     content=ft.Container(
-                        padding=16,
+                        padding=20,
                         content=ft.Column(
+                            spacing=8,
                             controls=[
-                                ft.ListTile(
-                                    leading=ft.Icon(
-                                        ft.Icons.LIGHTBULB,
-                                        color=ft.Colors.AMBER,
+                                ft.Text(
+                                    "Paso 1 — Abrí el formulario de carga",
+                                    weight=ft.FontWeight.BOLD,
+                                    size=14,
+                                ),
+                                ft.Text(
+                                    "Copía este link en el browser o tocá el botón:",
+                                    size=13,
+                                    color=ft.Colors.GREY_600,
+                                ),
+                                ft.TextField(
+                                    value=url,
+                                    read_only=True,
+                                    dense=True,
+                                    text_size=11,
+                                    bgcolor=ft.Colors.GREY_100,
+                                ),
+                                ft.ElevatedButton(
+                                    content=ft.Row(
+                                        controls=[
+                                            ft.Icon(ft.Icons.OPEN_IN_NEW),
+                                            ft.Text("Abrir formulario de carga"),
+                                        ],
+                                        spacing=8,
+                                        tight=True,
                                     ),
-                                    title=ft.Text("Consejos para mejor resultado"),
+                                    on_click=lambda _: self.page.launch_url(url),
                                 ),
-                                ft.Text(
-                                    "• Fotografiá el ticket sobre superficie plana",
-                                    size=13,
-                                ),
-                                ft.Text("• Buena iluminación, evitá sombras", size=13),
-                                ft.Text(
-                                    "• Encuadrá todo el ticket en la foto",
-                                    size=13,
-                                ),
-                                ft.Text("• El total debe ser visible", size=13),
-                            ]
+                            ],
                         ),
                     )
                 ),
-                ft.Container(height=16),
-                ft.ElevatedButton(
-                    content=ft.Row(
-                        controls=[
-                            ft.Icon(ft.Icons.UPLOAD_FILE),
-                            ft.Text("Seleccionar foto del ticket"),
-                        ],
-                        spacing=8,
-                        tight=True,
-                    ),
-                    on_click=lambda _: asyncio.create_task(
-                        self._abrir_selector()
-                    ),
-                    style=ft.ButtonStyle(
-                        padding=ft.padding.symmetric(horizontal=32, vertical=16)
-                    ),
+                ft.Container(height=8),
+                ft.Card(
+                    content=ft.Container(
+                        padding=20,
+                        content=ft.Column(
+                            spacing=8,
+                            controls=[
+                                ft.Text(
+                                    "Paso 2 — Después de subir la foto",
+                                    weight=ft.FontWeight.BOLD,
+                                    size=14,
+                                ),
+                                ft.Text(
+                                    "Una vez que la página diga \u2705 Listo, "
+                                    "tocá el botón para procesar:",
+                                    size=13,
+                                    color=ft.Colors.GREY_600,
+                                ),
+                                ft.ElevatedButton(
+                                    content=ft.Row(
+                                        controls=[
+                                            ft.Icon(ft.Icons.ANALYTICS),
+                                            ft.Text("Ya subí la foto, procesar OCR"),
+                                        ],
+                                        spacing=8,
+                                        tight=True,
+                                    ),
+                                    on_click=lambda e: asyncio.create_task(
+                                        self._iniciar_polling(e)
+                                    ),
+                                    style=ft.ButtonStyle(
+                                        bgcolor=ft.Colors.ORANGE_400,
+                                        color=ft.Colors.WHITE,
+                                    ),
+                                ),
+                            ],
+                        ),
+                    )
                 ),
             ],
         )
@@ -356,20 +391,19 @@ class TicketUploadView:
         self._estado = nuevo
         self._renderizar()
 
-    async def _abrir_selector(self):
-        """Abre el formulario HTML del microservicio via launch_url.
-
-        Sin FilePicker — el browser abre una pagina HTML nativa en el
-        microservicio (puerto 8551) con <input type=file> que siempre funciona.
-        Flet hace polling hasta obtener el resultado OCR.
-        """
+    def _preparar_sesion(self) -> str:
+        """Genera un session_id y retorna la URL publica del formulario."""
         self._session_id = str(uuid.uuid4())
-        url = (
+        return (
             f"{_OCR_PUBLIC}/upload-form"
             f"?session_id={self._session_id}"
             f"&familia_id={self._familia_id}"
         )
-        self.page.launch_url(url)
+
+    async def _iniciar_polling(self, _):
+        """Cambia a LOADING y arranca el polling. Se llama despues de que
+        el usuario confirma que ya subio la foto en el formulario HTML.
+        """
         self._cambiar_estado(_Estado.LOADING)
         await self._esperar_resultado()
 
