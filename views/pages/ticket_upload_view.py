@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import uuid
 from datetime import date
 from enum import Enum, auto
 
@@ -18,11 +19,12 @@ from controllers.expense_controller import ExpenseController
 from core.session import SessionManager
 from models.categories import ExpenseCategory, PaymentMethod
 from models.expense_model import Expense
-from models.ticket_model import PartialExpense  # noqa: F401 usado en type hint
+from models.ticket_model import PartialExpense
 from views.layouts.main_layout import MainLayout
 
-# URL del microservicio OCR — ocr_api en red Docker, localhost fuera
-_OCR_API_URL = os.getenv("OCR_API_URL", "http://ocr_api:8551")
+# URL interna Docker (Python->microservicio) y publica (browser->microservicio)
+_OCR_INTERNAL = os.getenv("OCR_API_URL", "http://ocr_api:8551")
+_OCR_PUBLIC = os.getenv("OCR_API_PUBLIC_URL", "http://localhost:8551")
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +53,7 @@ class TicketUploadView:
 
         self._estado = _Estado.IDLE
         self._partial: PartialExpense | None = None
-        self._imagen_bytes: bytes | None = None
-        self._imagen_nombre: str = "ticket.jpg"
-
-        # FilePicker creado una sola vez — se registra en overlay en render()
-        self._picker = ft.FilePicker()
+        self._session_id: str | None = None
 
         # Texto de feedback dinámico durante el procesamiento
         self._loading_text = ft.Text(
@@ -79,10 +77,6 @@ class TicketUploadView:
     # ------------------------------------------------------------------
 
     def render(self) -> ft.Control:
-        # Registrar FilePicker en overlay si no está ya — el router llama
-        # render() antes de page.add(), así el JS lo registra junto con la vista
-        if self._picker not in self.page.overlay:
-            self.page.overlay.append(self._picker)
         return MainLayout(
             page=self.page,
             content=self._body,
@@ -395,81 +389,82 @@ class TicketUploadView:
         self._renderizar()
 
     async def _abrir_selector(self):
-        """Abre el FilePicker registrado en render() — el JS ya lo conoce."""
-        files = await self._picker.pick_files(
-            allow_multiple=False,
-            file_type=ft.FilePickerFileType.CUSTOM,
-            allowed_extensions=["jpg", "jpeg", "png", "webp"],
-            with_data=True,
+        """Abre el formulario HTML del microservicio via launch_url.
+
+        Sin FilePicker — el browser abre una pagina HTML nativa en el
+        microservicio (puerto 8551) con <input type=file> que siempre funciona.
+        Flet hace polling hasta obtener el resultado OCR.
+        """
+        self._session_id = str(uuid.uuid4())
+        url = (
+            f"{_OCR_PUBLIC}/upload-form"
+            f"?session_id={self._session_id}"
+            f"&familia_id={self._familia_id}"
         )
-        if not files:
-            return
-        f = files[0]
-        if f.bytes:
-            self._imagen_bytes = bytes(f.bytes)
-            self._imagen_nombre = f.name
-        elif f.path:
-            with open(f.path, "rb") as fp:
-                self._imagen_bytes = fp.read()
-            self._imagen_nombre = os.path.basename(f.path)
-        else:
-            logger.error("[OCR] Archivo sin bytes ni path")
-            return
+        self.page.launch_url(url)
         self._cambiar_estado(_Estado.LOADING)
-        await self._procesar_imagen()
+        await self._esperar_resultado()
 
-    async def _procesar_imagen(self):
-        if not self._imagen_bytes:
-            self._cambiar_estado(_Estado.ERROR)
-            return
-
+    async def _esperar_resultado(self):
+        """Polling al microservicio hasta que el resultado OCR este listo."""
         await self._actualizar_loading(
-            "Enviando imagen al servicio OCR...",
-            "Tesseract + Gemma2 analizando el ticket",
+            "Esperando foto del ticket...",
+            "Selecciona la imagen en la ventana que se abrio",
         )
-        await asyncio.sleep(0.1)
 
-        try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    f"{_OCR_API_URL}/upload-ocr",
-                    files={"file": (self._imagen_nombre, self._imagen_bytes, "image/jpeg")},
-                    data={"familia_id": str(self._familia_id)},
-                )
-                response.raise_for_status()
-                data = response.json()
-        except httpx.HTTPError as e:
-            logger.error("[OCR] Error HTTP al microservicio: %s", e)
-            self._cambiar_estado(_Estado.ERROR)
-            return
-        except Exception as e:
-            logger.error("[OCR] Error inesperado: %s", e)
-            self._cambiar_estado(_Estado.ERROR)
-            return
+        max_espera = 120  # segundos maximos esperando
+        intervalo = 2    # segundos entre cada polling
+        intentos = max_espera // intervalo
 
-        if not data.get("success"):
-            logger.error("[OCR] Microservicio error: %s", data.get("error"))
-            self._cambiar_estado(_Estado.ERROR)
-            return
-
-        # Construir PartialExpense desde la respuesta del microservicio
-        fecha_val = None
-        if data.get("fecha"):
+        for i in range(intentos):
+            await asyncio.sleep(intervalo)
             try:
-                fecha_val = date.fromisoformat(data["fecha"])
-            except (ValueError, TypeError):
-                pass
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.get(
+                        f"{_OCR_INTERNAL}/resultado/{self._session_id}"
+                    )
+                    data = resp.json()
+            except Exception as e:
+                logger.warning("[OCR] Polling error intento %d: %s", i, e)
+                continue
 
-        self._partial = PartialExpense(
-            monto=data.get("monto"),
-            fecha=fecha_val,
-            comercio=data.get("comercio"),
-            items=data.get("items") or [],
-            categoria_sugerida=data.get("categoria_sugerida"),
-            confianza_ocr=data.get("confianza_ocr", 0.0),
-            texto_crudo=data.get("texto_crudo", ""),
-        )
-        self._cambiar_estado(_Estado.CONFIRM)
+            if not data.get("ready"):
+                # Actualizar mensaje cada 10 segundos
+                if i > 0 and i % 5 == 0:
+                    await self._actualizar_loading(
+                        "Procesando con OCR...",
+                        "Tesseract + Gemma2 analizando el ticket",
+                    )
+                continue
+
+            # Resultado recibido
+            if not data.get("success"):
+                logger.error("[OCR] Error: %s", data.get("error"))
+                self._cambiar_estado(_Estado.ERROR)
+                return
+
+            fecha_val = None
+            if data.get("fecha"):
+                try:
+                    fecha_val = date.fromisoformat(data["fecha"])
+                except (ValueError, TypeError):
+                    pass
+
+            self._partial = PartialExpense(
+                monto=data.get("monto"),
+                fecha=fecha_val,
+                comercio=data.get("comercio"),
+                items=data.get("items") or [],
+                categoria_sugerida=data.get("categoria_sugerida"),
+                confianza_ocr=data.get("confianza_ocr", 0.0),
+                texto_crudo=data.get("texto_crudo", ""),
+            )
+            self._cambiar_estado(_Estado.CONFIRM)
+            return
+
+        # Timeout — el usuario no subio foto en 2 minutos
+        logger.warning("[OCR] Timeout esperando foto session=%s", self._session_id)
+        self._cambiar_estado(_Estado.ERROR)
 
     async def _actualizar_loading(self, titulo: str, subtitulo: str = ""):
         """Actualiza el texto del spinner sin reconstruir toda la vista."""
