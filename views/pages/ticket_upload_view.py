@@ -11,15 +11,18 @@ from datetime import date
 from enum import Enum, auto
 
 import flet as ft
+import httpx
 from result import Ok
 
 from controllers.expense_controller import ExpenseController
-from controllers.ocr_controller import OCRController
 from core.session import SessionManager
 from models.categories import ExpenseCategory, PaymentMethod
 from models.expense_model import Expense
-from models.ticket_model import PartialExpense
+from models.ticket_model import PartialExpense  # noqa: F401 usado en type hint
 from views.layouts.main_layout import MainLayout
+
+# URL del microservicio OCR — ocr_api en red Docker, localhost fuera
+_OCR_API_URL = os.getenv("OCR_API_URL", "http://ocr_api:8551")
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +46,13 @@ class TicketUploadView:
             return
 
         familia_id = SessionManager.get_familia_id(page)
-        self.ocr_controller = OCRController(familia_id=familia_id)
+        self._familia_id = familia_id
         self.expense_controller = ExpenseController(familia_id=familia_id)
 
         self._estado = _Estado.IDLE
         self._partial: PartialExpense | None = None
-        self._imagen_path: str | None = None
+        self._imagen_bytes: bytes | None = None
+        self._imagen_nombre: str = "ticket.jpg"
 
         # Texto de feedback dinámico durante el procesamiento
         self._loading_text = ft.Text(
@@ -384,11 +388,11 @@ class TicketUploadView:
         self._renderizar()
 
     async def _abrir_selector(self):
-        """FilePicker per-click con handshake JS correcto para Flet 0.81 web."""
+        """Abre FilePicker, lee bytes y los envía al microservicio OCR."""
         picker = ft.FilePicker()
         self.page.overlay.append(picker)
         self.page.update()
-        await asyncio.sleep(0.3)  # esperar handshake JS
+        await asyncio.sleep(0.3)
         try:
             files = await picker.pick_files(
                 allow_multiple=False,
@@ -398,15 +402,15 @@ class TicketUploadView:
             )
             if not files:
                 return
-            # En web no hay path local — guardar bytes temporalmente
             f = files[0]
+            # Priorizar bytes (modo web) sobre path (modo desktop)
             if f.bytes:
-                tmp_path = f"/tmp/ticket_{f.name}"
-                with open(tmp_path, "wb") as fp:
-                    fp.write(f.bytes)
-                self._imagen_path = tmp_path
+                self._imagen_bytes = bytes(f.bytes)
+                self._imagen_nombre = f.name
             elif f.path:
-                self._imagen_path = f.path
+                with open(f.path, "rb") as fp:
+                    self._imagen_bytes = fp.read()
+                self._imagen_nombre = os.path.basename(f.path)
             else:
                 logger.error("[OCR] Archivo sin bytes ni path")
                 return
@@ -418,27 +422,57 @@ class TicketUploadView:
             self.page.update()
 
     async def _procesar_imagen(self):
-        if not self._imagen_path:
+        if not self._imagen_bytes:
             self._cambiar_estado(_Estado.ERROR)
             return
 
         await self._actualizar_loading(
-            "Preprocesando imagen...",
-            "Escala de grises → contraste → nitidez",
+            "Enviando imagen al servicio OCR...",
+            "Tesseract + Gemma2 analizando el ticket",
         )
-        await asyncio.sleep(0.1)  # cede el event loop para que se pinte
+        await asyncio.sleep(0.1)
 
-        resultado = await self.ocr_controller.procesar_ticket(
-            self._imagen_path,
-            on_progreso=self._actualizar_loading,
-        )
-
-        if isinstance(resultado, Ok):
-            self._partial = resultado.ok()
-            self._cambiar_estado(_Estado.CONFIRM)
-        else:
-            logger.error("[VISTA] Error OCR: %s", resultado.err().message)
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{_OCR_API_URL}/upload-ocr",
+                    files={"file": (self._imagen_nombre, self._imagen_bytes, "image/jpeg")},
+                    data={"familia_id": str(self._familia_id)},
+                )
+                response.raise_for_status()
+                data = response.json()
+        except httpx.HTTPError as e:
+            logger.error("[OCR] Error HTTP al microservicio: %s", e)
             self._cambiar_estado(_Estado.ERROR)
+            return
+        except Exception as e:
+            logger.error("[OCR] Error inesperado: %s", e)
+            self._cambiar_estado(_Estado.ERROR)
+            return
+
+        if not data.get("success"):
+            logger.error("[OCR] Microservicio error: %s", data.get("error"))
+            self._cambiar_estado(_Estado.ERROR)
+            return
+
+        # Construir PartialExpense desde la respuesta del microservicio
+        fecha_val = None
+        if data.get("fecha"):
+            try:
+                fecha_val = date.fromisoformat(data["fecha"])
+            except (ValueError, TypeError):
+                pass
+
+        self._partial = PartialExpense(
+            monto=data.get("monto"),
+            fecha=fecha_val,
+            comercio=data.get("comercio"),
+            items=data.get("items") or [],
+            categoria_sugerida=data.get("categoria_sugerida"),
+            confianza_ocr=data.get("confianza_ocr", 0.0),
+            texto_crudo=data.get("texto_crudo", ""),
+        )
+        self._cambiar_estado(_Estado.CONFIRM)
 
     async def _actualizar_loading(self, titulo: str, subtitulo: str = ""):
         """Actualiza el texto del spinner sin reconstruir toda la vista."""
@@ -448,15 +482,8 @@ class TicketUploadView:
             self.page.update()
 
     def _limpiar_imagen_temporal(self):
-        """Borra la imagen si APP_ENV=production (privacidad + espacio)."""
-        if os.getenv("APP_ENV") != "production":
-            return
-        if self._imagen_path and os.path.exists(self._imagen_path):
-            try:
-                os.remove(self._imagen_path)
-                logger.info("[OCR] Imagen temporal eliminada: %s", self._imagen_path)
-            except OSError as e:
-                logger.warning("[OCR] No se pudo borrar imagen: %s", e)
+        """Libera bytes de imagen en memoria (privacidad)."""
+        self._imagen_bytes = None
 
     def _on_confirmar(self, _):
         """Guarda el gasto con los datos confirmados/editados por el usuario."""
