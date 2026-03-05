@@ -489,3 +489,19 @@ event_system.fire_and_forget(event)
 - Vector memory stored in `ai_vector_memory` table
 - Use `nomic-embed-text` for embeddings (768 dimensions)
 - Use `gemma2:2b` for chat responses
+
+### Flet UI — Versión instalada (0.80+)
+- **`ft.ElevatedButton` está DEPRECADO** desde v0.80.0 — usar `ft.Button`
+- **`ft.OutlinedButton` está DEPRECADO** — usar `ft.Button` con estilo
+- **`page.launch_url()` NO funciona en modo web** — usar `ft.Url` nativo en el botón
+- **Abrir URL en nueva pestaña**: `ft.Button(url=ft.Url(url, target=ft.UrlTarget.BLANK))`
+- **Link clickeable en texto**: `ft.Text(spans=[ft.TextSpan(text, url=url, style=ft.TextStyle(decoration=ft.TextDecoration.UNDERLINE))])`
+- **`url_target` NO existe** como parámetro directo — encapsular en `ft.Url(url, target=...)`
+- Siempre verificar API con `check_flet.py` antes de usar parámetros nuevos:
+  ```bash
+  # Local
+  uv run python check_flet.py ElevatedButton
+  uv run python check_flet.py --search url
+  # En Docker
+  docker exec auditor_familiar_app python check_flet.py --compat
+  ```
