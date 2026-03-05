@@ -2,6 +2,7 @@
 Vista para carga y confirmación de tickets OCR.
 Estados: IDLE → LOADING → CONFIRM → ERROR
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -101,101 +102,140 @@ class TicketUploadView:
     # Estado IDLE
     # ------------------------------------------------------------------
 
+    def _generar_qr_code(self, url: str, session_id: str) -> ft.Control:
+        return ft.Container(
+            content=ft.Column(
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Text(
+                        "📋 URL del formulario:",
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    ft.Container(height=8),
+                    ft.Container(
+                        content=ft.Text(
+                            spans=[
+                                ft.TextSpan(
+                                    url,
+                                    style=ft.TextStyle(
+                                        size=11,
+                                        color=ft.Colors.BLUE_700,
+                                        decoration=ft.TextDecoration.UNDERLINE,
+                                    ),
+                                    url=url,
+                                )
+                            ]
+                        ),
+                        padding=10,
+                        bgcolor=ft.Colors.BLUE_50,
+                        border_radius=8,
+                    ),
+                ],
+            ),
+            padding=20,
+            border_radius=10,
+            bgcolor=ft.Colors.GREY_100,
+        )
+
     def _build_idle(self) -> ft.Control:
         url = self._preparar_sesion()
+
         return ft.Column(
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                ft.Icon(ft.Icons.CAMERA_ALT, size=80, color=ft.Colors.BLUE_400),
+                ft.Container(height=24),
+                ft.Icon(ft.Icons.CAMERA_ALT, size=60, color=ft.Colors.BLUE_400),
+                ft.Container(height=8),
                 ft.Text(
                     "Cargar ticket de compra",
                     size=22,
                     weight=ft.FontWeight.BOLD,
                 ),
-                ft.Text(
-                    "El sistema leerá el monto, fecha y comercio automáticamente.",
-                    size=14,
-                    color=ft.Colors.GREY_600,
-                    text_align=ft.TextAlign.CENTER,
+                ft.Container(height=20),
+                ft.Button(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.OPEN_IN_NEW),
+                            ft.Text("Abrir formulario en nueva pestaña"),
+                        ],
+                        spacing=8,
+                        tight=True,
+                    ),
+                    url=ft.Url(url, target=ft.UrlTarget.BLANK),
+                    style=ft.ButtonStyle(
+                        bgcolor=ft.Colors.BLUE_600,
+                        color=ft.Colors.WHITE,
+                    ),
                 ),
-                ft.Container(height=16),
-                ft.Card(
-                    content=ft.Container(
-                        padding=20,
-                        content=ft.Column(
-                            spacing=8,
-                            controls=[
-                                ft.Text(
-                                    "Paso 1 — Abrí el formulario de carga",
-                                    weight=ft.FontWeight.BOLD,
-                                    size=14,
-                                ),
-                                ft.Text(
-                                    "Copía este link en el browser o tocá el botón:",
-                                    size=13,
-                                    color=ft.Colors.GREY_600,
-                                ),
-                                ft.TextField(
-                                    value=url,
-                                    read_only=True,
-                                    dense=True,
-                                    text_size=11,
-                                    bgcolor=ft.Colors.GREY_100,
-                                ),
-                                ft.ElevatedButton(
-                                    content=ft.Row(
-                                        controls=[
-                                            ft.Icon(ft.Icons.OPEN_IN_NEW),
-                                            ft.Text("Abrir formulario de carga"),
-                                        ],
-                                        spacing=8,
-                                        tight=True,
-                                    ),
-                                    on_click=lambda _: self.page.launch_url(url),
-                                ),
-                            ],
-                        ),
-                    )
-                ),
+                ft.Container(height=20),
+                ft.Divider(),
                 ft.Container(height=8),
                 ft.Card(
                     content=ft.Container(
-                        padding=20,
+                        bgcolor=ft.Colors.AMBER_50,
+                        padding=16,
                         content=ft.Column(
                             spacing=8,
                             controls=[
-                                ft.Text(
-                                    "Paso 2 — Después de subir la foto",
-                                    weight=ft.FontWeight.BOLD,
-                                    size=14,
+                                ft.Row(
+                                    controls=[
+                                        ft.Icon(
+                                            ft.Icons.LIGHTBULB,
+                                            color=ft.Colors.AMBER_700,
+                                            size=20,
+                                        ),
+                                        ft.Text(
+                                            "📋 Cómo funciona",
+                                            weight=ft.FontWeight.BOLD,
+                                            size=14,
+                                            color=ft.Colors.AMBER_900,
+                                        ),
+                                    ]
                                 ),
                                 ft.Text(
-                                    "Una vez que la página diga \u2705 Listo, "
-                                    "tocá el botón para procesar:",
-                                    size=13,
-                                    color=ft.Colors.GREY_600,
+                                    "1. Tocá el botón de arriba — abre el formulario",
+                                    size=12,
+                                    color=ft.Colors.GREY_700,
                                 ),
-                                ft.ElevatedButton(
-                                    content=ft.Row(
-                                        controls=[
-                                            ft.Icon(ft.Icons.ANALYTICS),
-                                            ft.Text("Ya subí la foto, procesar OCR"),
-                                        ],
-                                        spacing=8,
-                                        tight=True,
-                                    ),
-                                    on_click=lambda e: asyncio.create_task(
-                                        self._iniciar_polling(e)
-                                    ),
-                                    style=ft.ButtonStyle(
-                                        bgcolor=ft.Colors.ORANGE_400,
-                                        color=ft.Colors.WHITE,
-                                    ),
+                                ft.Text(
+                                    "2. Subí la foto del ticket en el formulario",
+                                    size=12,
+                                    color=ft.Colors.GREY_700,
+                                ),
+                                ft.Text(
+                                    "3. Cuando diga ✅ Listo, volvé aquí",
+                                    size=12,
+                                    color=ft.Colors.GREY_700,
+                                ),
+                                ft.Text(
+                                    "4. Tocá el botón de abajo para procesar",
+                                    size=12,
+                                    color=ft.Colors.GREY_700,
                                 ),
                             ],
                         ),
-                    )
+                    ),
                 ),
+                ft.Container(height=16),
+                ft.Button(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.ANALYTICS),
+                            ft.Text("Ya subí la foto, procesar OCR"),
+                        ],
+                        spacing=8,
+                        tight=True,
+                    ),
+                    on_click=lambda e: asyncio.create_task(self._iniciar_polling(e)),
+                    style=ft.ButtonStyle(
+                        bgcolor=ft.Colors.ORANGE_500,
+                        color=ft.Colors.WHITE,
+                        padding=20,
+                    ),
+                    width=300,
+                ),
+                ft.Container(height=30),
             ],
         )
 
@@ -257,8 +297,7 @@ class TicketUploadView:
         self._fecha_field = ft.TextField(
             label="Fecha",
             value=(
-                partial.fecha.isoformat() if partial.fecha
-                else date.today().isoformat()
+                partial.fecha.isoformat() if partial.fecha else date.today().isoformat()
             ),
             expand=True,
         )
@@ -415,7 +454,7 @@ class TicketUploadView:
         )
 
         max_espera = 120  # segundos maximos esperando
-        intervalo = 2    # segundos entre cada polling
+        intervalo = 2  # segundos entre cada polling
         intentos = max_espera // intervalo
 
         for i in range(intentos):
@@ -527,9 +566,7 @@ class TicketUploadView:
                 self.router.navigate("/expenses")
             else:
                 self.page.overlay.append(
-                    ft.SnackBar(
-                        ft.Text(f"Error: {resultado.err().message}"), open=True
-                    )
+                    ft.SnackBar(ft.Text(f"Error: {resultado.err().message}"), open=True)
                 )
                 self.page.update()
 
