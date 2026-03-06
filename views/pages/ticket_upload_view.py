@@ -140,6 +140,7 @@ class TicketUploadView:
 
     def _build_idle(self) -> ft.Control:
         url = self._preparar_sesion()
+        asyncio.create_task(self._iniciar_polling(None))
 
         return ft.Column(
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -169,8 +170,6 @@ class TicketUploadView:
                     ),
                 ),
                 ft.Container(height=20),
-                ft.Divider(),
-                ft.Container(height=8),
                 ft.Card(
                     content=ft.Container(
                         bgcolor=ft.Colors.AMBER_50,
@@ -194,46 +193,23 @@ class TicketUploadView:
                                     ]
                                 ),
                                 ft.Text(
-                                    "1. Tocá el botón de arriba — abre el formulario",
+                                    "1. Tocá el botón — se abre el formulario",
                                     size=12,
                                     color=ft.Colors.GREY_700,
                                 ),
                                 ft.Text(
-                                    "2. Subí la foto del ticket en el formulario",
+                                    "2. Subí la foto del ticket",
                                     size=12,
                                     color=ft.Colors.GREY_700,
                                 ),
                                 ft.Text(
-                                    "3. Cuando diga ✅ Listo, volvé aquí",
-                                    size=12,
-                                    color=ft.Colors.GREY_700,
-                                ),
-                                ft.Text(
-                                    "4. Tocá el botón de abajo para procesar",
+                                    "3. Esta pantalla avanza sola ✅",
                                     size=12,
                                     color=ft.Colors.GREY_700,
                                 ),
                             ],
                         ),
                     ),
-                ),
-                ft.Container(height=16),
-                ft.Button(
-                    content=ft.Row(
-                        controls=[
-                            ft.Icon(ft.Icons.ANALYTICS),
-                            ft.Text("Ya subí la foto, procesar OCR"),
-                        ],
-                        spacing=8,
-                        tight=True,
-                    ),
-                    on_click=lambda e: asyncio.create_task(self._iniciar_polling(e)),
-                    style=ft.ButtonStyle(
-                        bgcolor=ft.Colors.ORANGE_500,
-                        color=ft.Colors.WHITE,
-                        padding=20,
-                    ),
-                    width=300,
                 ),
                 ft.Container(height=30),
             ],
@@ -343,7 +319,7 @@ class TicketUploadView:
                 ft.Container(height=8),
                 ft.Row(
                     controls=[
-                        ft.ElevatedButton(
+                        ft.Button(
                             content=ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.SAVE),
@@ -353,8 +329,12 @@ class TicketUploadView:
                                 tight=True,
                             ),
                             on_click=self._on_confirmar,
+                            style=ft.ButtonStyle(
+                                bgcolor=ft.Colors.GREEN_600,
+                                color=ft.Colors.WHITE,
+                            ),
                         ),
-                        ft.OutlinedButton(
+                        ft.Button(
                             content=ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.DELETE),
@@ -364,6 +344,9 @@ class TicketUploadView:
                                 tight=True,
                             ),
                             on_click=lambda _: self._cambiar_estado(_Estado.IDLE),
+                            style=ft.ButtonStyle(
+                                side=ft.BorderSide(1, ft.Colors.GREY_400),
+                            ),
                         ),
                     ]
                 ),
@@ -395,7 +378,7 @@ class TicketUploadView:
                 ft.Row(
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
-                        ft.ElevatedButton(
+                        ft.Button(
                             content=ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.REFRESH),
@@ -405,8 +388,12 @@ class TicketUploadView:
                                 tight=True,
                             ),
                             on_click=lambda _: self._cambiar_estado(_Estado.IDLE),
+                            style=ft.ButtonStyle(
+                                bgcolor=ft.Colors.ORANGE_500,
+                                color=ft.Colors.WHITE,
+                            ),
                         ),
-                        ft.OutlinedButton(
+                        ft.Button(
                             content=ft.Row(
                                 controls=[
                                     ft.Icon(ft.Icons.EDIT),
@@ -416,6 +403,9 @@ class TicketUploadView:
                                 tight=True,
                             ),
                             on_click=lambda _: self.router.navigate("/expenses"),
+                            style=ft.ButtonStyle(
+                                side=ft.BorderSide(1, ft.Colors.GREY_400),
+                            ),
                         ),
                     ],
                 ),
@@ -440,9 +430,7 @@ class TicketUploadView:
         )
 
     async def _iniciar_polling(self, _):
-        """Cambia a LOADING y arranca el polling. Se llama despues de que
-        el usuario confirma que ya subio la foto en el formulario HTML.
-        """
+        """Cambia a LOADING y arranca el polling automaticamente."""
         self._cambiar_estado(_Estado.LOADING)
         await self._esperar_resultado()
 
@@ -450,7 +438,7 @@ class TicketUploadView:
         """Polling al microservicio hasta que el resultado OCR este listo."""
         await self._actualizar_loading(
             "Esperando foto del ticket...",
-            "Selecciona la imagen en la ventana que se abrio",
+            "Subí la imagen en la pestaña del formulario",
         )
 
         max_espera = 120  # segundos maximos esperando

@@ -301,16 +301,17 @@ class TestExpenseService:
 ### Manual Upload Protocol (The app4 <-> app5 Bridge)
 When implementing or modifying ticket upload features:
 
-**Flow Overview:**
+**Flow Overview (Opción A — polling automático, implementado 2026-03-05):**
 ```
-1. IDLE     → User clicks "Cargar ticket" → generates session_id (UUID)
-2. IDLE     → Shows URL to user: {OCR_PUBLIC}/upload-form?session_id={uuid}
-3. IDLE     → User opens URL in browser (or taps button to launch_url)
-4. External  → HTML form uploads image → /upload-form-submit processes it
-5. LOADING  → User clicks "Ya subí la foto" → starts polling
-6. POLLING  → Flet polls every 2s: GET /resultado/{session_id}
-7. CONFIRM  → Result received → user confirms and saves expense
+1. IDLE     → Vista carga → genera session_id (UUID) → arranca polling inmediatamente
+2. IDLE     → Muestra botón "Abrir formulario en nueva pestaña"
+3. LOADING  → Polling activo: GET /resultado/{session_id} cada 2s (hasta 120s)
+4. External → Usuario abre formulario, sube foto → OCR procesa
+5. CONFIRM  → Resultado detectado → UI avanza sola (sin botón manual)
+6. CONFIRM  → Usuario revisa/edita datos y confirma → gasto guardado
 ```
+
+**IMPORTANTE**: No hay botón "Ya subí la foto" — la pantalla avanza automáticamente.
 
 **Implementation Details:**
 
@@ -594,10 +595,52 @@ async def _limpiar_resultados_expirados():
 
 ---
 
-### TD-5 — Polling OCR (NOTA INFORMATIVA)
-**Archivo**: `views/pages/ticket_upload_view.py`
+### TD-5 — Polling OCR → SSE (MEJORA FUTURA)
+**Archivo**: `views/pages/ticket_upload_view.py` + `ocr_api/main.py`
 
-Polling cada 2s a `GET /resultado/{session_id}` es correcto para el caso de uso (app familiar, baja concurrencia). WebSocket sería over-engineering. No requiere acción.
+Polling cada 2s es correcto para el caso de uso actual (app familiar, baja concurrencia). Cuando el proyecto escale, migrar a **Server-Sent Events (SSE)** — sin WebSocket, sin JS extra, HTTP estándar soportado por FastAPI y httpx.
+
+**Implementación SSE cuando se decida migrar:**
+
+FastAPI (`ocr_api/main.py`):
+```python
+from fastapi.responses import StreamingResponse
+
+async def _resultado_stream(session_id: str):
+    while True:
+        if session_id in _resultados:
+            data = json.dumps(_resultados.pop(session_id))
+            yield f"data: {data}\n\n"
+            break
+        await asyncio.sleep(1)
+
+@app.get("/resultado-stream/{session_id}")
+async def stream_resultado(session_id: str):
+    return StreamingResponse(
+        _resultado_stream(session_id),
+        media_type="text/event-stream",
+    )
+```
+
+Flet (`ticket_upload_view.py`):
+```python
+async def _esperar_resultado_sse(self):
+    async with httpx.AsyncClient(timeout=130.0) as client:
+        async with client.stream(
+            "GET",
+            f"{_OCR_INTERNAL}/resultado-stream/{self._session_id}",
+        ) as response:
+            async for line in response.aiter_lines():
+                if line.startswith("data:"):
+                    data = json.loads(line[5:])
+                    self._procesar_resultado(data)
+                    break
+```
+
+| Opción | Complejidad | Elegancia | Estado |
+|--------|------------|-----------|--------|
+| A — Polling 2s | ⭐ | ⭐ | **Implementado** |
+| C — SSE | ⭐⭐ | ⭐⭐⭐⭐ | Pendiente (futuro) |
 
 ---
 
