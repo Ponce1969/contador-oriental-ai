@@ -430,23 +430,20 @@ class TicketUploadView:
         )
 
     async def _iniciar_polling(self, _):
-        """Cambia a LOADING y arranca el polling automaticamente."""
-        self._cambiar_estado(_Estado.LOADING)
-        await self._esperar_resultado()
-
-    async def _esperar_resultado(self):
-        """Polling al microservicio hasta que el resultado OCR este listo."""
-        await self._actualizar_loading(
-            "Esperando foto del ticket...",
-            "Subí la imagen en la pestaña del formulario",
-        )
-
+        """Polling en background: espera el resultado OCR y avanza solo.
+        Permanece en IDLE hasta recibir el resultado; solo entonces
+        cambia a LOADING brevemente antes de pasar a CONFIRM o ERROR.
+        """
         max_espera = 120  # segundos maximos esperando
         intervalo = 2  # segundos entre cada polling
         intentos = max_espera // intervalo
 
         for i in range(intentos):
             await asyncio.sleep(intervalo)
+
+            if self._estado != _Estado.IDLE:
+                return
+
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     resp = await client.get(
@@ -458,42 +455,43 @@ class TicketUploadView:
                 continue
 
             if not data.get("ready"):
-                # Actualizar mensaje cada 10 segundos
-                if i > 0 and i % 5 == 0:
-                    await self._actualizar_loading(
-                        "Procesando con OCR...",
-                        "Tesseract + Gemma2 analizando el ticket",
-                    )
                 continue
 
-            # Resultado recibido
-            if not data.get("success"):
-                logger.error("[OCR] Error: %s", data.get("error"))
-                self._cambiar_estado(_Estado.ERROR)
-                return
-
-            fecha_val = None
-            if data.get("fecha"):
-                try:
-                    fecha_val = date.fromisoformat(data["fecha"])
-                except (ValueError, TypeError):
-                    pass
-
-            self._partial = PartialExpense(
-                monto=data.get("monto"),
-                fecha=fecha_val,
-                comercio=data.get("comercio"),
-                items=data.get("items") or [],
-                categoria_sugerida=data.get("categoria_sugerida"),
-                confianza_ocr=data.get("confianza_ocr", 0.0),
-                texto_crudo=data.get("texto_crudo", ""),
-            )
-            self._cambiar_estado(_Estado.CONFIRM)
+            self._cambiar_estado(_Estado.LOADING)
+            await self._procesar_resultado_ocr(data)
             return
 
-        # Timeout — el usuario no subio foto en 2 minutos
         logger.warning("[OCR] Timeout esperando foto session=%s", self._session_id)
-        self._cambiar_estado(_Estado.ERROR)
+
+    async def _procesar_resultado_ocr(self, data: dict) -> None:
+        """Procesa el resultado OCR ya recibido y cambia al estado final."""
+        await self._actualizar_loading(
+            "Procesando con OCR...",
+            "Tesseract + Gemma2 analizando el ticket",
+        )
+
+        if not data.get("success"):
+            logger.error("[OCR] Error: %s", data.get("error"))
+            self._cambiar_estado(_Estado.ERROR)
+            return
+
+        fecha_val = None
+        if data.get("fecha"):
+            try:
+                fecha_val = date.fromisoformat(data["fecha"])
+            except (ValueError, TypeError):
+                pass
+
+        self._partial = PartialExpense(
+            monto=data.get("monto"),
+            fecha=fecha_val,
+            comercio=data.get("comercio"),
+            items=data.get("items") or [],
+            categoria_sugerida=data.get("categoria_sugerida"),
+            confianza_ocr=data.get("confianza_ocr", 0.0),
+            texto_crudo=data.get("texto_crudo", ""),
+        )
+        self._cambiar_estado(_Estado.CONFIRM)
 
     async def _actualizar_loading(self, titulo: str, subtitulo: str = ""):
         """Actualiza el texto del spinner sin reconstruir toda la vista."""
