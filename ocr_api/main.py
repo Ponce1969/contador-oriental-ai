@@ -7,7 +7,7 @@ import logging
 import re
 import tempfile
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -20,15 +20,13 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from PIL import Image
+from sqlalchemy import delete, select
 
 from ocr_api.config import settings
-from ocr_api.models import HealthResponse, OCRResponse
+from ocr_api.models import HealthResponse, OCRResponse, OCRSession, get_engine, init_db
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
-
-# Almacenamiento en memoria: session_id -> OCRResponse (TTL implicito por restart)
-_resultados: dict[str, dict] = {}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,11 +56,34 @@ _PROMPT_PARSEO = (
 )
 
 
+async def _cleanup_sesiones_expiradas() -> None:
+    """Elimina sesiones OCR expiradas cada 5 minutos."""
+    import asyncio
+    engine = get_engine(settings.database_url)
+    while True:
+        await asyncio.sleep(300)
+        try:
+            from sqlalchemy.orm import Session as SyncSession
+            with SyncSession(engine) as session:
+                ahora = datetime.now(UTC)
+                session.execute(
+                    delete(OCRSession).where(OCRSession.expires_at < ahora)
+                )
+                session.commit()
+                logger.debug("[DB] Sesiones OCR expiradas eliminadas")
+        except Exception as e:
+            logger.warning("[DB] Error en cleanup: %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifecycle."""
+    import asyncio
+    init_db(settings.database_url)
     logger.info("🚀 OCR Service iniciado en puerto %d", settings.api_port)
+    task = asyncio.create_task(_cleanup_sesiones_expiradas())
     yield
+    task.cancel()
     logger.info("👋 OCR Service detenido")
 
 
@@ -357,7 +378,7 @@ async def upload_form_submit(
         if not texto_crudo or len(texto_crudo) < 20:
             result = {"success": False, "error": "No se pudo extraer texto",
                       "confianza_ocr": confianza}
-            _resultados[session_id] = result
+            _guardar_resultado_db(session_id, familia_id, result)
             return JSONResponse(result)
 
         parsed = await parsear_con_ollama(texto_crudo)
@@ -385,14 +406,14 @@ async def upload_form_submit(
             "confianza_ocr": confianza,
             "texto_crudo": texto_crudo,
         }
-        _resultados[session_id] = result
+        _guardar_resultado_db(session_id, familia_id, result)
         logger.info("[FORM] Resultado guardado session=%s", session_id)
         return JSONResponse(result)
 
     except Exception as e:
         logger.error("[FORM] Error: %s", e)
         result = {"success": False, "error": str(e)}
-        _resultados[session_id] = result
+        _guardar_resultado_db(session_id, familia_id, result)
         return JSONResponse(result, status_code=500)
     finally:
         try:
@@ -401,13 +422,44 @@ async def upload_form_submit(
             pass
 
 
+def _guardar_resultado_db(session_id: str, familia_id: int, result: dict) -> None:
+    """Persiste el resultado OCR en PostgreSQL con TTL de 10 minutos."""
+    try:
+        from sqlalchemy.orm import Session as SyncSession
+        engine = get_engine(settings.database_url)
+        ahora = datetime.now(UTC)
+        with SyncSession(engine) as db:
+            db.merge(OCRSession(
+                session_id=session_id,
+                familia_id=familia_id,
+                resultado_json=json.dumps(result),
+                created_at=ahora,
+                expires_at=ahora + timedelta(minutes=10),
+            ))
+            db.commit()
+    except Exception as e:
+        logger.error("[DB] Error guardando sesión OCR: %s", e)
+
+
 @app.get("/resultado/{session_id}")
 async def get_resultado(session_id: str) -> JSONResponse:
     """Polling desde Flet: retorna el resultado OCR cuando esté listo."""
-    if session_id not in _resultados:
+    try:
+        from sqlalchemy.orm import Session as SyncSession
+        engine = get_engine(settings.database_url)
+        with SyncSession(engine) as db:
+            row = db.execute(
+                select(OCRSession).where(OCRSession.session_id == session_id)
+            ).scalar_one_or_none()
+            if row is None or row.resultado_json is None:
+                return JSONResponse({"ready": False})
+            data = json.loads(row.resultado_json)
+            db.delete(row)
+            db.commit()
+        return JSONResponse({"ready": True, **data})
+    except Exception as e:
+        logger.error("[DB] Error leyendo sesión OCR: %s", e)
         return JSONResponse({"ready": False})
-    data = _resultados.pop(session_id)  # consume una sola vez
-    return JSONResponse({"ready": True, **data})
 
 
 @app.post("/upload-ocr", response_model=OCRResponse)
