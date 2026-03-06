@@ -557,28 +557,29 @@ services/
 
 ---
 
-### TD-3 — _resultados en RAM sin TTL (PRIORIDAD MEDIA)
-**Archivo**: `ocr_api/main.py` línea 31
+### TD-3 — _resultados en RAM sin TTL ✅ RESUELTO 2026-03-05
+**Archivo**: `ocr_api/main.py` + `ocr_api/models.py`
 
-**Problema**: `_resultados: dict[str, dict] = {}` acumula resultados de sesiones abandonadas (usuario sube foto pero nunca hace polling). El `.pop()` en `/resultado/{session_id}` limpia solo las sesiones consumidas.
+**Solución implementada**: Tabla `ocr_sessions` en PostgreSQL — sin Redis, sin infra nueva.
 
-**Riesgos**:
-- Memory leak en uso continuo
-- Restart del contenedor borra resultados pendientes
-
-**Fix simple (20 min)**: Background task con `asyncio` que limpie entradas con más de 10 minutos:
+**Tabla**:
 ```python
-async def _limpiar_resultados_expirados():
-    while True:
-        await asyncio.sleep(300)  # cada 5 min
-        ahora = time.time()
-        expirados = [k for k, v in _resultados.items()
-                     if ahora - v.get("_ts", ahora) > 600]
-        for k in expirados:
-            _resultados.pop(k, None)
+class OCRSession(Base):
+    __tablename__ = "ocr_sessions"
+    session_id: Mapped[str]      # PK
+    familia_id: Mapped[int]
+    resultado_json: Mapped[str | None]
+    created_at: Mapped[datetime]
+    expires_at: Mapped[datetime]  # TTL: created_at + 10 min
 ```
 
-**Alternativa futura**: Redis o tabla PostgreSQL temporal (solo si se escala a múltiples instancias).
+**Flujo**:
+- `init_db()` en lifespan crea la tabla automáticamente al arrancar
+- `_guardar_resultado_db()` persiste con `expires_at = now + 10min`
+- `GET /resultado/{session_id}` lee y borra en una transacción (consume una sola vez)
+- Background task `_cleanup_sesiones_expiradas()` limpia expiradas cada 5 min
+
+**Ventajas vs dict en RAM**: persistente ante restart, TTL real, sin memory leak, escalable a múltiples workers.
 
 ---
 
