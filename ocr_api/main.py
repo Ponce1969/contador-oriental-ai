@@ -11,13 +11,15 @@ from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import cv2
 import httpx
+import numpy as np
 import pytesseract
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image
 
 from ocr_api.config import settings
 from ocr_api.models import HealthResponse, OCRResponse
@@ -79,28 +81,55 @@ app.add_middleware(
 )
 
 
+def _deskew(img: np.ndarray) -> np.ndarray:
+    coords = np.column_stack(np.where(img > 0))
+    if len(coords) == 0:
+        return img
+    angle = cv2.minAreaRect(coords)[-1]
+    if angle < -45:
+        angle = 90 + angle
+    (h, w) = img.shape[:2]
+    M = cv2.getRotationMatrix2D((w // 2, h // 2), angle, 1.0)
+    return cv2.warpAffine(
+        img, M, (w, h),
+        flags=cv2.INTER_CUBIC,
+        borderMode=cv2.BORDER_REPLICATE,
+    )
+
+
 def preprocesar_imagen(imagen: Image.Image) -> Image.Image:
-    """Mejora la imagen antes de OCR."""
-    imagen = imagen.convert("L")
-    imagen = ImageEnhance.Contrast(imagen).enhance(2.0)
-    imagen = imagen.filter(ImageFilter.SHARPEN)
-    return imagen
+    img = np.array(imagen)
+    if img.ndim == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    img = clahe.apply(img)
+    img = cv2.GaussianBlur(img, (3, 3), 0)
+    img = cv2.adaptiveThreshold(
+        img, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        31, 2,
+    )
+    img = _deskew(img)
+    return Image.fromarray(img)
 
 
 async def extraer_texto_tesseract(imagen_path: Path) -> tuple[str, float]:
     """Extrae texto con Tesseract y retorna (texto, confianza)."""
     try:
-        imagen = Image.open(imagen_path)
-        imagen = preprocesar_imagen(imagen)
+        with Image.open(imagen_path) as img:
+            imagen = preprocesar_imagen(img)
 
         datos = pytesseract.image_to_data(
             imagen,
             lang="spa",
+            config="--psm 6 --oem 3",
             output_type=pytesseract.Output.DICT,
         )
 
         texto_crudo = " ".join(w for w in datos["text"] if w.strip())
-        confs = [c for c in datos["conf"] if c > 0]
+        confs = [int(c) for c in datos["conf"] if str(c).strip() not in ("-1", "")]
         confianza = round(sum(confs) / len(confs) / 100, 2) if confs else 0.0
 
         logger.info(

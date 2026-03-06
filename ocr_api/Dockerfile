@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y \
     gcc libpq-dev curl \
     tesseract-ocr tesseract-ocr-spa \
+    libglib2.0-0 libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 # uv

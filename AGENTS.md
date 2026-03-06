@@ -490,6 +490,117 @@ event_system.fire_and_forget(event)
 - Use `nomic-embed-text` for embeddings (768 dimensions)
 - Use `gemma2:2b` for chat responses
 
+---
+
+## 4. Deuda Técnica — Auditoría 2026-03-05
+
+Evaluación general: **8.5/10**. Arquitectura sólida con separación de capas, RAG, pgvector, observer pattern, Result[T,E] y tests. Los puntos siguientes son mejoras, no emergencias.
+
+### TD-1 — AIController con lógica duplicada (PRIORIDAD ALTA)
+**Archivo**: `controllers/ai_controller.py` (604 líneas, 27KB)
+
+**Problema**: El bloque de construcción del `AIContext` (~90 líneas) está duplicado palabra por palabra entre `consultar_contador()` y `consultar_contador_stream()`. Bug corregido en un lugar no se corrige en el otro.
+
+**Responsabilidades que no deberían estar en el controller:**
+- `_detectar_rango_meses()` → parser NLP, debería ir en `services/`
+- `_detectar_categorias_relevantes()` → NLP + fuzzy matching, debería ir en `services/`
+- `_filtrar_gastos_por_contexto()` → lógica de negocio, debería ir en `services/`
+- `_agrupar_gastos()` → transformación de datos, debería ir en `services/`
+- `_calcular_subtotal_semantico()` → RAG + pgvector, debería ir en `services/`
+- `_resumir_metodos_pago()` → lógica de negocio, debería ir en `services/`
+- `CATEGORY_KEYWORDS` → 90 líneas de datos estáticos en el controller
+
+**Fix mínimo (30 min)**: Extraer `_construir_contexto(pregunta, session) -> AIContext` y llamarlo desde ambos métodos públicos.
+
+**Refactor completo (media sesión)**:
+```
+AIController
+   ↓
+AIQueryService
+   ├─ PeriodDetector       (_detectar_rango_meses)
+   ├─ CategoryDetector     (_detectar_categorias_relevantes)
+   ├─ ExpenseAggregator    (_agrupar_gastos, _filtrar_gastos_por_contexto)
+   └─ ContextBuilder       (construcción del AIContext)
+```
+
+---
+
+### TD-2 — services/ sin separación de responsabilidades (PRIORIDAD MEDIA)
+**Directorio**: `services/` (13 archivos mezclados)
+
+**Problema**: Servicios de dominio, IA e infraestructura conviven en el mismo flat folder.
+
+**Clasificación actual:**
+- **Dominio**: `expense_service.py`, `income_service.py`, `family_member_service.py`, `shopping_service.py`, `auth_service.py`, `registration_service.py`, `validators.py`
+- **IA/ML**: `ai_advisor_service.py` (15KB), `ia_memory_service.py`, `embedding_service.py`, `memory_event_handler.py`
+- **Infraestructura**: `ocr_service.py`, `ticket_service.py`, `report_service.py`
+
+**Estructura propuesta:**
+```
+services/
+   domain/
+       expense_service.py
+       income_service.py
+       ...
+   ai/
+       ai_advisor_service.py
+       embedding_service.py
+       ia_memory_service.py
+       memory_event_handler.py
+   infrastructure/
+       ocr_service.py
+       ticket_service.py
+       report_service.py
+```
+**Nota**: Requiere actualizar todos los imports del proyecto. Hacer en una sola sesión con búsqueda/reemplazo global.
+
+---
+
+### TD-3 — _resultados en RAM sin TTL (PRIORIDAD MEDIA)
+**Archivo**: `ocr_api/main.py` línea 31
+
+**Problema**: `_resultados: dict[str, dict] = {}` acumula resultados de sesiones abandonadas (usuario sube foto pero nunca hace polling). El `.pop()` en `/resultado/{session_id}` limpia solo las sesiones consumidas.
+
+**Riesgos**:
+- Memory leak en uso continuo
+- Restart del contenedor borra resultados pendientes
+
+**Fix simple (20 min)**: Background task con `asyncio` que limpie entradas con más de 10 minutos:
+```python
+async def _limpiar_resultados_expirados():
+    while True:
+        await asyncio.sleep(300)  # cada 5 min
+        ahora = time.time()
+        expirados = [k for k, v in _resultados.items()
+                     if ahora - v.get("_ts", ahora) > 600]
+        for k in expirados:
+            _resultados.pop(k, None)
+```
+
+**Alternativa futura**: Redis o tabla PostgreSQL temporal (solo si se escala a múltiples instancias).
+
+---
+
+### TD-4 — EventSystem singleton (PRIORIDAD BAJA)
+**Archivo**: `core/events.py` línea 109
+
+**Problema**: `event_system = EventSystem()` es un global de módulo. Tests que importan código que usa `event_system` arrastran handlers ya suscriptos.
+
+**Mitigación existente**: `EventSystem.clear()` en línea 85 — llamar en fixtures de tests de integración.
+
+**Fix futuro**: Dependency injection — pasar `event_system` como parámetro en lugar de importarlo directamente.
+
+**Severidad actual**: Baja — los 247 tests pasan porque mockean la capa de servicios sin llegar al event system.
+
+---
+
+### TD-5 — Polling OCR (NOTA INFORMATIVA)
+**Archivo**: `views/pages/ticket_upload_view.py`
+
+Polling cada 2s a `GET /resultado/{session_id}` es correcto para el caso de uso (app familiar, baja concurrencia). WebSocket sería over-engineering. No requiere acción.
+
+---
+
 ### Flet UI — Versión instalada (0.80+)
 - **`ft.ElevatedButton` está DEPRECADO** desde v0.80.0 — usar `ft.Button`
 - **`ft.OutlinedButton` está DEPRECADO** — usar `ft.Button` con estilo
