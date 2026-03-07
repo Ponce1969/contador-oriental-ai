@@ -9,7 +9,7 @@ import logging
 from result import Ok, Result
 
 from controllers.base_controller import BaseController
-from core.events import Event, EventType, event_system
+from core.events import Event, EventType
 from models.errors import AppError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
@@ -48,7 +48,7 @@ class ExpenseController(BaseController):
                     "recurrente": gasto.es_recurrente,
                 },
             )
-            event_system.fire_and_forget(event)
+            self._event_system.fire_and_forget(event)
 
         return result
 
