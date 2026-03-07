@@ -257,7 +257,7 @@ RESPUESTA:"""
         contexto, _ = self._seleccionar_contexto(request.pregunta)
 
         gastos_formateados = ""
-        if request.incluir_gastos_recientes and ctx and ctx.resumen_gastos:
+        if request.incluir_gastos_recientes and ctx:
             gastos_formateados = self._formatear_datos_financieros(ctx)
             comparativa_str = self._formatear_comparativa(ctx)
             if comparativa_str:
@@ -332,7 +332,7 @@ RESPUESTA:"""
             # 2. Formatear gastos si están disponibles
             gastos_formateados = ""
             
-            if request.incluir_gastos_recientes and ctx and ctx.resumen_gastos:
+            if request.incluir_gastos_recientes and ctx:
                 gastos_formateados = self._formatear_datos_financieros(ctx)
                 comparativa_str = self._formatear_comparativa(ctx)
                 if comparativa_str:

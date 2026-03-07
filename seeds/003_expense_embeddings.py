@@ -19,7 +19,14 @@ from services.ai.embedding_service import EmbeddingService
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-FAMILIA_ID = 3
+def _get_familia_id(session) -> int:
+    from sqlalchemy import text
+    row = session.execute(
+        text("SELECT familia_id FROM usuarios WHERE username = 'admin' LIMIT 1")
+    ).fetchone()
+    if not row:
+        raise RuntimeError("Usuario 'admin' no encontrado.")
+    return row[0]
 
 
 def _formatear_gasto(g: ExpenseTable) -> str:
@@ -32,14 +39,15 @@ def _formatear_gasto(g: ExpenseTable) -> str:
     )
 
 
-async def _poblar(session) -> int:
+async def _poblar(session) -> tuple[int, int]:
+    familia_id = _get_familia_id(session)
     embedding_service = EmbeddingService()
-    repo = ExpenseRepository(session, FAMILIA_ID)
+    repo = ExpenseRepository(session, familia_id)
 
     gastos = (
         session.query(ExpenseTable)
         .filter(
-            ExpenseTable.familia_id == FAMILIA_ID,
+            ExpenseTable.familia_id == familia_id,
             ExpenseTable.notas == "seed_test",
             ExpenseTable.embedding.is_(None),
         )
@@ -49,7 +57,7 @@ async def _poblar(session) -> int:
 
     if not gastos:
         print("  ✓  Todos los gastos ya tienen embedding.")
-        return 0
+        return 0, familia_id
 
     print(f"  📦 Generando embeddings para {len(gastos)} gastos en expenses.embedding...")
     ok_count = 0
@@ -64,7 +72,7 @@ async def _poblar(session) -> int:
         else:
             print(f"  ❌ Error embedding: {g.descripcion} — {result}")
 
-    return ok_count
+    return ok_count, familia_id
 
 
 def run(db):
@@ -73,8 +81,8 @@ def run(db):
         return
     session = get_session()
     try:
-        total = asyncio.run(_poblar(session))
-        print(f"\n  🔍 {total} embeddings guardados en expenses.embedding para familia_id={FAMILIA_ID}")
+        total, familia_id = asyncio.run(_poblar(session))
+        print(f"\n  🔍 {total} embeddings guardados en expenses.embedding para familia_id={familia_id}")
     except Exception as e:
         session.rollback()
         print(f"  ❌ Error en seed de embeddings: {e}")

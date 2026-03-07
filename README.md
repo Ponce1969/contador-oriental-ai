@@ -113,6 +113,19 @@ uv run fleting db seed
 # http://localhost:8550
 ```
 
+### 4. Credenciales de desarrollo
+
+La migración `002_add_multiuser.py` crea automáticamente un usuario administrador:
+
+| Campo | Valor |
+|-------|-------|
+| **URL** | http://localhost:8550 |
+| **Usuario** | `admin` |
+| **Contraseña** | `admin123` |
+| **Familia** | `Familia Principal` (`familia_id=1`) |
+
+> ⚠️ **Importante para colaboradores:** Los seeds de datos ficticios (gastos de ejemplo, embeddings) se asignan siempre a la familia del usuario `admin` (`familia_id=1`). Para ver los datos del seed, iniciá sesión con `admin/admin123`. Si creás una familia nueva desde la UI, esa familia no tendrá datos de ejemplo.
+
 ### Desarrollo local (sin Docker)
 
 ```bash

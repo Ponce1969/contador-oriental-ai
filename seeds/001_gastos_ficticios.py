@@ -14,7 +14,15 @@ from database.tables import ExpenseTable
 from models.categories import ExpenseCategory as C, PaymentMethod as P
 
 
-FAMILIA_ID = 3  # Cambiá si tu familia_id es diferente
+def _get_familia_id(session) -> int:
+    """Retorna la familia_id del usuario admin, universal para cualquier entorno."""
+    from sqlalchemy import text
+    row = session.execute(
+        text("SELECT familia_id FROM usuarios WHERE username = 'admin' LIMIT 1")
+    ).fetchone()
+    if not row:
+        raise RuntimeError("Usuario 'admin' no encontrado. Ejecutá las migraciones primero.")
+    return row[0]
 
 
 GASTOS = [
@@ -83,16 +91,17 @@ def run(db):
         return
     session = get_session()
     try:
-        # Eliminar seeds previos de este archivo (idempotente)
+        familia_id = _get_familia_id(session)
+
         session.query(ExpenseTable).filter(
-            ExpenseTable.familia_id == FAMILIA_ID,
+            ExpenseTable.familia_id == familia_id,
             ExpenseTable.notas == "seed_test",
         ).delete()
         session.flush()
 
         for g in GASTOS:
             row = ExpenseTable(
-                familia_id=FAMILIA_ID,
+                familia_id=familia_id,
                 monto=g["monto"],
                 fecha=g["fecha"],
                 descripcion=g["desc"],
@@ -104,7 +113,7 @@ def run(db):
             session.add(row)
 
         session.commit()
-        print(f"  ✅ {len(GASTOS)} gastos ficticios insertados para familia_id={FAMILIA_ID}")
+        print(f"  ✅ {len(GASTOS)} gastos ficticios insertados para familia_id={familia_id}")
     except Exception as e:
         session.rollback()
         print(f"  ❌ Error en seed: {e}")

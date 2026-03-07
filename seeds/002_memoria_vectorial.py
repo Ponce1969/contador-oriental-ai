@@ -21,7 +21,14 @@ from services.ai.ia_memory_service import IAMemoryService
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-FAMILIA_ID = 3  # Cambiá si tu familia_id es diferente
+def _get_familia_id(session) -> int:
+    from sqlalchemy import text
+    row = session.execute(
+        text("SELECT familia_id FROM usuarios WHERE username = 'admin' LIMIT 1")
+    ).fetchone()
+    if not row:
+        raise RuntimeError("Usuario 'admin' no encontrado.")
+    return row[0]
 
 
 def _formatear_gasto(g: ExpenseTable) -> str:
@@ -36,26 +43,25 @@ def _formatear_gasto(g: ExpenseTable) -> str:
 
 
 async def _poblar(session) -> int:
-    memoria_repo = MemoriaRepository(session, FAMILIA_ID)
+    familia_id = _get_familia_id(session)
+    memoria_repo = MemoriaRepository(session, familia_id)
     embedding_service = EmbeddingService()
     memory_service = IAMemoryService(memoria_repo, embedding_service)
 
-    # Borrar embeddings previos del seed (idempotente)
     from sqlalchemy import text
     session.execute(
         text(
             "DELETE FROM ai_vector_memory "
             "WHERE familia_id = :fid AND source_type = 'seed'"
         ),
-        {"fid": FAMILIA_ID},
+        {"fid": familia_id},
     )
     session.commit()
 
-    # Cargar todos los gastos del seed (marcados con notas='seed_test')
     gastos = (
         session.query(ExpenseTable)
         .filter(
-            ExpenseTable.familia_id == FAMILIA_ID,
+            ExpenseTable.familia_id == familia_id,
             ExpenseTable.notas == "seed_test",
         )
         .order_by(ExpenseTable.fecha)
@@ -68,6 +74,7 @@ async def _poblar(session) -> int:
 
     print(f"  📦 Generando embeddings para {len(gastos)} gastos...")
     ok_count = 0
+    familia_id_log = familia_id
 
     for g in gastos:
         texto = _formatear_gasto(g)
@@ -82,7 +89,7 @@ async def _poblar(session) -> int:
         else:
             print(f"  ❌ Error embedding: {g.descripcion} — {result}")
 
-    return ok_count
+    return ok_count, familia_id_log
 
 
 def run(db):
@@ -92,8 +99,8 @@ def run(db):
         return
     session = get_session()
     try:
-        total = asyncio.run(_poblar(session))
-        print(f"\n  🧠 {total} embeddings guardados en ai_vector_memory para familia_id={FAMILIA_ID}")
+        total, familia_id = asyncio.run(_poblar(session))
+        print(f"\n  🧠 {total} embeddings guardados en ai_vector_memory para familia_id={familia_id}")
     except Exception as e:
         session.rollback()
         print(f"  ❌ Error en seed vectorial: {e}")
