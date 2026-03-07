@@ -85,11 +85,11 @@ class TestExpenseModel:
             descripcion="Alquiler",
             categoria=ExpenseCategory.HOGAR,
             es_recurrente=True,
-            frecuencia_recurrencia=RecurrenceFrequency.MENSUAL,
+            frecuencia=RecurrenceFrequency.MENSUAL,
         )
 
         assert expense.es_recurrente is True
-        assert expense.frecuencia_recurrencia == RecurrenceFrequency.MENSUAL
+        assert expense.frecuencia == RecurrenceFrequency.MENSUAL
 
     def test_expense_validation_monto_positivo(self):
         """Test that expense amount must be positive."""
@@ -125,7 +125,7 @@ class TestExpenseModel:
 
         assert expense.fecha == date.today()
         assert expense.es_recurrente is False
-        assert expense.frecuencia_recurrencia is None
+        assert expense.frecuencia is None
         assert expense.subcategoria is None
         assert expense.notas is None
 

@@ -54,6 +54,9 @@ class _PostgreSQLConnectionAdapter:
         self._conn = conn
 
     def execute(self, sql, params=None):
+        from sqlalchemy.sql.elements import TextClause
+        if isinstance(sql, TextClause):
+            sql = str(sql)
         cur = self._conn.cursor()
         cur.execute(sql, params or ())
         return cur

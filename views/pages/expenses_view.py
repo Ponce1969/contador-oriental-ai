@@ -260,7 +260,7 @@ class ExpensesView:
                 categoria=selected_cat,
                 metodo_pago=selected_metodo,
                 es_recurrente=False,
-                frecuencia_recurrencia=None,
+                frecuencia=None,
                 notas=None,
             )
             

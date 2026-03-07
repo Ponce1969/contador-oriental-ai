@@ -30,7 +30,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Crear usuario no-root para seguridad
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app && \
+    mkdir -p /app /app/logs && \
     chown -R appuser:appuser /app
 
 # Establecer directorio de trabajo

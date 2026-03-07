@@ -66,7 +66,7 @@ class TestExpenseService:
             descripcion="Alquiler",
             categoria=ExpenseCategory.HOGAR,
             es_recurrente=True,
-            frecuencia_recurrencia=None,
+            frecuencia=None,
         )
 
         result = service.create_expense(expense)

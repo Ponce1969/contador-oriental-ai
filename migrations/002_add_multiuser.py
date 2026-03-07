@@ -157,26 +157,28 @@ def up(db):
             )
             ON CONFLICT (username) DO NOTHING
         """))
+        db.execute(text("SELECT setval('familias_id_seq', (SELECT COALESCE(MAX(id), 0) FROM familias))"))
+        db.execute(text("SELECT setval('usuarios_id_seq', (SELECT COALESCE(MAX(id), 0) FROM usuarios))"))
     else:
         db.execute(text("""
             INSERT OR IGNORE INTO usuarios (
-                familia_id, 
-                username, 
-                password_hash, 
-                nombre_completo, 
+                familia_id,
+                username,
+                password_hash,
+                nombre_completo,
                 activo,
                 created_at
             )
             VALUES (
-                1, 
-                'admin', 
+                1,
+                'admin',
                 '$argon2id$v=19$m=65536,t=2,p=2$Vk3bdOscmtMqKykv35PY7w$1twfwGyx1SoxAV+2aLdgVL4R1ohzR5Btk4S4YjE2ohI',
                 'Administrador',
                 1,
                 CURRENT_TIMESTAMP
             )
         """))
-    
+
     print("✅ Sistema multi-usuario creado exitosamente")
     print("   - Tabla familias")
     print("   - Tabla usuarios")

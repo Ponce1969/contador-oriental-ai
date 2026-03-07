@@ -33,7 +33,7 @@ class ExpenseService:
             validate_descripcion_requerida(expense.descripcion),
             validate_recurrente_con_frecuencia(
                 expense.es_recurrente,
-                expense.frecuencia_recurrencia,
+                expense.frecuencia,
                 ValidationMessages.RECURRENTE_SIN_FRECUENCIA_GASTO,
             ),
         ):

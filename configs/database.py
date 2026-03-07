@@ -5,9 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE = {
-    # fleting shell solo soporta sqlite — se usa un archivo local de sesión.
-    # El proyecto real usa PostgreSQL via configs/database_config.py.
-    "ENGINE": "sqlite",
+    "ENGINE": os.getenv("DB_TYPE", "postgresql"),
 
     "SQLITE": {
         "PATH": "data/fleting.db"

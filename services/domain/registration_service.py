@@ -1,9 +1,13 @@
 """
 Servicio de registro de familias y usuarios
 """
+import logging
+
 from argon2 import PasswordHasher
 from result import Err, Ok, Result
 from sqlalchemy import text
+
+logger = logging.getLogger(__name__)
 
 from core.sqlalchemy_session import get_db_session
 from models.user_model import User
@@ -114,7 +118,8 @@ class RegistrationService:
                 return Ok(usuario)
                 
         except Exception as e:
-            return Err(f"Error al registrar familia: {str(e)}")
+            logger.exception("Error al registrar familia")
+            return Err("Error interno al registrar la familia. Intentá de nuevo.")
     
     def _validate_registration_data(
         self,

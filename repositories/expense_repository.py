@@ -35,9 +35,7 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
         table_row.metodo_pago = expense.metodo_pago.value
         table_row.es_recurrente = expense.es_recurrente
         table_row.frecuencia = (
-            expense.frecuencia_recurrencia.value
-            if expense.frecuencia_recurrencia
-            else None
+            expense.frecuencia.value if expense.frecuencia else None
         )
 
     def get_by_category(self, categoria: str) -> Sequence[Expense]:
