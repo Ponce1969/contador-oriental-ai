@@ -16,6 +16,7 @@ Uso:
 En Docker:
     docker exec auditor_familiar_app python check_flet.py --compat
 """
+
 from __future__ import annotations
 
 import importlib
@@ -34,6 +35,7 @@ W = 88  # ancho de linea
 # ---------------------------------------------------------------------------
 # Helpers de presentacion
 # ---------------------------------------------------------------------------
+
 
 def hr(char: str = "=") -> None:
     print(char * W)
@@ -70,6 +72,7 @@ def info(msg: str) -> None:
 # Version y entorno
 # ---------------------------------------------------------------------------
 
+
 def show_version() -> None:
     header("ENTORNO Y VERSION")
 
@@ -97,6 +100,7 @@ def show_version() -> None:
 # ---------------------------------------------------------------------------
 # Reporte de compatibilidad del proyecto
 # ---------------------------------------------------------------------------
+
 
 def check_compat() -> None:
     """Verifica compatibilidad de la API de Flet con lo que usa el proyecto."""
@@ -170,9 +174,13 @@ def check_compat() -> None:
         params = list(sig.parameters.keys())
         if "icon" in params:
             warn("ElevatedButton acepta icon= (API pre-0.81)")
-            issues.append("ElevatedButton.icon= existe (puede funcionar diferente en 0.81)")
+            issues.append(
+                "ElevatedButton.icon= existe (puede funcionar diferente en 0.81)"
+            )
         else:
-            ok("ElevatedButton NO tiene icon= — usar content=ft.Row([ft.Icon(), ft.Text()])")
+            ok(
+                "ElevatedButton NO tiene icon= — usar content=ft.Row([ft.Icon(), ft.Text()])"
+            )
             oks.append("ElevatedButton sin icon= confirmado")
         if "text" in params:
             warn("ElevatedButton acepta text= (API pre-0.81)")
@@ -181,11 +189,30 @@ def check_compat() -> None:
     except Exception as e:
         warn(f"No se pudo inspeccionar ElevatedButton: {e}")
 
+    # --- Card color= vs bgcolor ---
+    section("Card API")
+    try:
+        sig = inspect.signature(ft.Card.__init__)
+        params = list(sig.parameters.keys())
+        if "color" in params:
+            warn("Card acepta color= (API pre-0.81)")
+            issues.append("Card.color= existe — puede ser diferente en 0.81")
+        else:
+            ok("Card NO tiene color= — usar bgcolor= en el Container interno")
+            oks.append("Card sin color= confirmado (usar bgcolor en Container)")
+        if "bgcolor" in params:
+            ok("Card tiene bgcolor= (manera correcta)")
+            oks.append("Card.bgcolor= disponible")
+    except Exception as e:
+        warn(f"No se pudo inspeccionar Card: {e}")
+
     # --- ft.alignment vs ft.Alignment ---
     section("Alignment API")
     if hasattr(ft, "alignment") and hasattr(ft.alignment, "center"):
         warn("ft.alignment.center existe (API pre-0.81) — usar ft.Alignment(0,0)")
-        issues.append("ft.alignment.center disponible — posible confusion con ft.Alignment()")
+        issues.append(
+            "ft.alignment.center disponible — posible confusion con ft.Alignment()"
+        )
     if hasattr(ft, "Alignment"):
         ok("ft.Alignment(x, y) existe (API 0.81+)")
         oks.append("ft.Alignment existe")
@@ -197,6 +224,7 @@ def check_compat() -> None:
         oks.append("ft.UrlLauncher existe")
     if hasattr(ft.Page, "launch_url"):
         import inspect as _inspect
+
         src = _inspect.getsource(ft.Page.launch_url)
         if "deprecated" in src.lower():
             warn("page.launch_url() esta DEPRECADO en esta version")
@@ -234,6 +262,7 @@ def check_compat() -> None:
 # ---------------------------------------------------------------------------
 # Inspeccion de metodo
 # ---------------------------------------------------------------------------
+
 
 def inspect_method(obj: Any, method_name: str) -> None:
     if not hasattr(obj, method_name):
@@ -303,6 +332,7 @@ def inspect_method(obj: Any, method_name: str) -> None:
 # Inspeccion de control
 # ---------------------------------------------------------------------------
 
+
 def inspect_control(control_name: str) -> None:
     if not hasattr(ft, control_name):
         err(f"'{control_name}' no existe en ft")
@@ -322,7 +352,8 @@ def inspect_control(control_name: str) -> None:
     try:
         sig = inspect.signature(cls.__init__)
         params = [
-            p for p in sig.parameters.values()
+            p
+            for p in sig.parameters.values()
             if p.name not in ("self", "args", "kwargs")
         ]
         if params:
@@ -347,7 +378,8 @@ def inspect_control(control_name: str) -> None:
     try:
         instance = cls()
         methods = sorted(
-            m for m in dir(instance)
+            m
+            for m in dir(instance)
             if not m.startswith("_") and callable(getattr(instance, m))
         )
         for m in methods:
@@ -363,7 +395,8 @@ def inspect_control(control_name: str) -> None:
     try:
         instance = cls()
         attrs = sorted(
-            a for a in dir(instance)
+            a
+            for a in dir(instance)
             if not a.startswith("_") and not callable(getattr(instance, a))
         )
         for a in attrs:
@@ -389,6 +422,7 @@ def inspect_control(control_name: str) -> None:
 # Busqueda en la API
 # ---------------------------------------------------------------------------
 
+
 def search_api(keyword: str) -> None:
     header(f"BUSQUEDA: '{keyword}'")
     keyword_lower = keyword.lower()
@@ -397,7 +431,13 @@ def search_api(keyword: str) -> None:
     for name in sorted(dir(ft)):
         if keyword_lower in name.lower():
             obj = getattr(ft, name)
-            kind = "clase" if inspect.isclass(obj) else "funcion" if callable(obj) else "valor"
+            kind = (
+                "clase"
+                if inspect.isclass(obj)
+                else "funcion"
+                if callable(obj)
+                else "valor"
+            )
             matches.append((name, kind))
 
     if matches:
@@ -420,11 +460,13 @@ def _suggest_similar(name: str) -> None:
 # Listado de controles
 # ---------------------------------------------------------------------------
 
+
 def list_all_controls() -> None:
     header("TODOS LOS CONTROLES DE FLET")
 
     controls = sorted(
-        name for name in dir(ft)
+        name
+        for name in dir(ft)
         if not name.startswith("_")
         and inspect.isclass(getattr(ft, name))
         and name[0].isupper()
@@ -445,6 +487,7 @@ def list_all_controls() -> None:
 # ---------------------------------------------------------------------------
 # Menu interactivo
 # ---------------------------------------------------------------------------
+
 
 def guia_montaje(objeto_o_clase: Any) -> None:
     """Tabla de guia de montaje deducida por tipo (estilo autor Fleting)."""
