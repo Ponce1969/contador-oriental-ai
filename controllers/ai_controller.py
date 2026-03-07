@@ -337,6 +337,120 @@ class AIController(BaseController):
         ]
         return ", ".join(partes)
 
+    async def _construir_contexto(
+        self,
+        pregunta: str,
+    ) -> AIContext:
+        """Construye el AIContext con datos financieros del mes para una pregunta.
+        Extrae gastos, ingresos, miembros, snapshot comparativo y subtotal semántico.
+        Usado tanto por consultar_contador como por consultar_contador_stream.
+        """
+        with self._get_session() as session:
+            ahora = datetime.now()
+            mes_actual = ahora.month
+            anio_actual = ahora.year
+
+            expense_repo = ExpenseRepository(session, self._familia_id)
+            expense_service = ExpenseService(expense_repo)
+
+            rango = self._detectar_rango_meses(pregunta)
+            if rango:
+                mes_ini, anio_ini, mes_fin, anio_fin = rango
+                gastos_mes: list[Expense] = []
+                m, a = mes_ini, anio_ini
+                while (a, m) <= (anio_fin, mes_fin):
+                    gastos_mes += list(expense_repo.get_by_month(a, m))
+                    m += 1
+                    if m > 12:
+                        m = 1
+                        a += 1
+                logger.info(
+                    "[RANGO] %d gastos históricos cargados (%d/%d→%d/%d)",
+                    len(gastos_mes), mes_ini, anio_ini, mes_fin, anio_fin,
+                )
+            else:
+                gastos_mes = [
+                    g for g in expense_service.list_expenses()
+                    if g.fecha.month == mes_actual and g.fecha.year == anio_actual
+                ]
+
+            categorias_relevantes = self._detectar_categorias_relevantes(pregunta)
+            gastos_filtrados = self._filtrar_gastos_por_contexto(
+                gastos_mes, categorias_relevantes
+            )
+
+            total_gastos_mes = sum(g.monto for g in gastos_mes)
+            resumen_gastos: dict[str, dict[str, dict]] = {}
+            total_gastos_count = 0
+            if gastos_filtrados:
+                resumen_gastos = self._agrupar_gastos(gastos_filtrados)
+                total_gastos_count = len(gastos_filtrados)
+
+            subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
+                pregunta, session
+            )
+
+            income_repo = IncomeRepository(session, self._familia_id)
+            income_service = IncomeService(income_repo)
+            ingresos = [
+                i for i in income_service.list_incomes()
+                if i.fecha.month == mes_actual and i.fecha.year == anio_actual
+            ]
+            ingresos_total = sum(i.monto for i in ingresos)
+
+            member_repo = FamilyMemberRepository(session, self._familia_id)
+            member_service = FamilyMemberService(member_repo)
+            miembros = member_service.list_members()
+
+            snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
+            comparativa: list = []
+            try:
+                snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)
+                comparativa = snapshot_repo.obtener_comparativa_mensual(
+                    anio_actual, mes_actual
+                )
+            except Exception as snap_err:
+                logger.warning("Comparativa no disponible: %s", snap_err)
+
+            return AIContext(
+                resumen_gastos=resumen_gastos,
+                total_gastos_count=total_gastos_count,
+                total_gastos_mes=total_gastos_mes,
+                ingresos_total=ingresos_total,
+                miembros_count=len(miembros),
+                resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes),
+                comparativa_meses=comparativa,
+                subtotal_descripcion=subtotal_desc if subtotal_desc else None,
+                terminos_buscados=label_desc,
+            )
+
+    async def _buscar_memoria_vectorial(self, pregunta: str, ctx: AIContext) -> str:
+        """Recupera contexto de memoria vectorial RAG solo si no hay datos reales del mes."""
+        if bool(ctx.resumen_gastos):
+            logger.info(
+                "[MEMORY] Omitiendo memoria vectorial: hay %d gastos reales del mes.",
+                ctx.total_gastos_count,
+            )
+            return ""
+        try:
+            with self._get_session() as session:
+                memory_service = self._get_memory_service(session)
+                if not memory_service.tiene_memoria():
+                    return ""
+                from result import Ok as MemOk
+                mem_result = await memory_service.buscar_contexto_para_pregunta(
+                    pregunta=pregunta, limit=5
+                )
+                if isinstance(mem_result, MemOk) and mem_result.ok():
+                    logger.info(
+                        "Memoria vectorial: %d recuerdos recuperados",
+                        len(mem_result.ok()),
+                    )
+                    return "\n".join(f"- {c}" for c in mem_result.ok())
+        except Exception as mem_err:
+            logger.warning("[MEMORY] No se pudo recuperar contexto: %s", mem_err)
+        return ""
+
     async def consultar_contador(
         self,
         pregunta: str,
@@ -362,145 +476,15 @@ class AIController(BaseController):
             incluir_gastos_recientes=incluir_gastos
         )
         
-        # Obtener datos financieros y familiares si se solicita
-        gastos_filtrados: list[Expense] | None = None
         ctx = AIContext()
-        
         if incluir_gastos:
-            with self._get_session() as session:
-                ahora = datetime.now()
-                mes_actual = ahora.month
-                anio_actual = ahora.year
+            ctx = await self._construir_contexto(pregunta)
 
-                expense_repo = ExpenseRepository(session, self._familia_id)
-                expense_service = ExpenseService(expense_repo)
-
-                # Detectar si la pregunta pide un mes/rango histórico
-                rango = self._detectar_rango_meses(pregunta)
-                if rango:
-                    mes_ini, anio_ini, mes_fin, anio_fin = rango
-                    gastos_mes = []
-                    # Iterar meses del rango
-                    m, a = mes_ini, anio_ini
-                    while (a, m) <= (anio_fin, mes_fin):
-                        gastos_mes += list(expense_repo.get_by_month(a, m))
-                        m += 1
-                        if m > 12:
-                            m = 1
-                            a += 1
-                    logger.info(
-                        "[RANGO] %d gastos históricos cargados (%d/%d→%d/%d)",
-                        len(gastos_mes), mes_ini, anio_ini, mes_fin, anio_fin,
-                    )
-                else:
-                    # Mes actual por defecto
-                    gastos_mes = [
-                        g for g in expense_service.list_expenses()
-                        if g.fecha.month == mes_actual and g.fecha.year == anio_actual
-                    ]
-                
-                logger.info(f"Gastos del mes actual: {len(gastos_mes)}")
-                
-                # Detección inteligente de intención
-                categorias_relevantes = self._detectar_categorias_relevantes(
-                    pregunta
-                )
-                
-                # Filtrado contextual de gastos
-                gastos_filtrados = self._filtrar_gastos_por_contexto(
-                    gastos_mes, categorias_relevantes
-                )
-                
-                # Total real del mes (TODOS los gastos, sin filtrar por categoría)
-                total_gastos_mes = sum(g.monto for g in gastos_mes)
-                
-                # Agregación para el Analista Financiero
-                resumen_gastos: dict = {}
-                total_gastos_count = 0
-                if gastos_filtrados:
-                    resumen_gastos = self._agrupar_gastos(gastos_filtrados)
-                    total_gastos_count = len(gastos_filtrados)
-
-                # Subtotal semántico via pgvector cosine (Gemma no suma)
-                subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
-                    pregunta, session
-                )
-
-                # Obtener ingresos del mes actual
-                income_repo = IncomeRepository(session, self._familia_id)
-                income_service = IncomeService(income_repo)
-                ingresos = income_service.list_incomes()
-                ingresos = [
-                    i for i in ingresos
-                    if i.fecha.month == mes_actual and i.fecha.year == anio_actual
-                ]
-                ingresos_total = sum(i.monto for i in ingresos)
-
-                # Obtener miembros de la familia
-                member_repo = FamilyMemberRepository(session, self._familia_id)
-                member_service = FamilyMemberService(member_repo)
-                miembros = member_service.list_members()
-
-                # Upsert snapshot del mes actual y obtener comparativa
-                snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
-                comparativa = []
-                try:
-                    snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)
-                    comparativa = snapshot_repo.obtener_comparativa_mensual(
-                        anio_actual, mes_actual
-                    )
-                except Exception as snap_err:
-                    logger.warning(
-                        "No se pudo obtener comparativa mensual: %s", snap_err
-                    )
-
-                ctx = AIContext(
-                    resumen_gastos=resumen_gastos,
-                    total_gastos_count=total_gastos_count,
-                    total_gastos_mes=total_gastos_mes,
-                    ingresos_total=ingresos_total,
-                    miembros_count=len(miembros),
-                    resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes),
-                    comparativa_meses=comparativa,
-                    subtotal_descripcion=subtotal_desc if subtotal_desc else None,
-                    terminos_buscados=label_desc,
-                )
-        
-        # Guardar contexto para exportación PDF
         self.last_context = ctx
         self.last_pregunta = pregunta
 
-        # Buscar memoria vectorial (RAG) solo si NO hay datos reales del mes.
-        # Si hay gastos del mes actual en ctx, esos datos son la fuente de verdad
-        # y la memoria vectorial solo confundiría al modelo.
-        memoria_str = ""
-        hay_datos_mes = bool(ctx.resumen_gastos)
-        if not hay_datos_mes:
-            try:
-                with self._get_session() as session:
-                    memory_service = self._get_memory_service(session)
-                    if memory_service.tiene_memoria():
-                        mem_result = await memory_service.buscar_contexto_para_pregunta(
-                            pregunta=pregunta, limit=5
-                        )
-                        from result import Ok as MemOk
-                        if isinstance(mem_result, MemOk) and mem_result.ok():
-                            memoria_str = "\n".join(
-                                f"- {c}" for c in mem_result.ok()
-                            )
-                            logger.info(
-                                "Memoria vectorial: %d recuerdos recuperados",
-                                len(mem_result.ok()),
-                            )
-            except Exception as mem_err:
-                logger.warning("[MEMORY] No se pudo recuperar contexto: %s", mem_err)
-        else:
-            logger.info(
-                "[MEMORY] Omitiendo memoria vectorial: hay %d gastos reales del mes.",
-                ctx.total_gastos_count,
-            )
+        memoria_str = await self._buscar_memoria_vectorial(pregunta, ctx)
 
-        # Consultar al servicio de IA (await = no bloquea el event loop)
         return await self.ai_service.consultar(
             request, ctx=ctx, memoria_vectorial=memoria_str
         )
@@ -527,118 +511,13 @@ class AIController(BaseController):
         )
 
         ctx = AIContext()
-
         if incluir_gastos:
-            with self._get_session() as session:
-                ahora = datetime.now()
-                mes_actual = ahora.month
-                anio_actual = ahora.year
-
-                expense_repo = ExpenseRepository(session, self._familia_id)
-                expense_service = ExpenseService(expense_repo)
-
-                # Detectar si la pregunta pide un mes/rango histórico
-                rango = self._detectar_rango_meses(pregunta)
-                if rango:
-                    mes_ini, anio_ini, mes_fin, anio_fin = rango
-                    gastos_mes = []
-                    m, a = mes_ini, anio_ini
-                    while (a, m) <= (anio_fin, mes_fin):
-                        gastos_mes += list(expense_repo.get_by_month(a, m))
-                        m += 1
-                        if m > 12:
-                            m = 1
-                            a += 1
-                    logger.info(
-                        "[RANGO] %d gastos históricos cargados (%d/%d→%d/%d)",
-                        len(gastos_mes), mes_ini, anio_ini, mes_fin, anio_fin,
-                    )
-                else:
-                    gastos_mes = [
-                        g for g in expense_service.list_expenses()
-                        if g.fecha.month == mes_actual and g.fecha.year == anio_actual
-                    ]
-
-                categorias_relevantes = self._detectar_categorias_relevantes(pregunta)
-                gastos_filtrados = self._filtrar_gastos_por_contexto(
-                    gastos_mes, categorias_relevantes
-                )
-
-                total_gastos_mes = sum(g.monto for g in gastos_mes)
-                resumen_gastos: dict[str, dict[str, dict]] = {}
-                total_gastos_count = 0
-                if gastos_filtrados:
-                    resumen_gastos = self._agrupar_gastos(gastos_filtrados)
-                    total_gastos_count = len(gastos_filtrados)
-
-                # Subtotal semántico via pgvector cosine (Gemma no suma)
-                subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
-                    pregunta, session
-                )
-
-                income_repo = IncomeRepository(session, self._familia_id)
-                income_service = IncomeService(income_repo)
-                ingresos = income_service.list_incomes()
-                ingresos = [
-                    i for i in ingresos
-                    if i.fecha.month == mes_actual and i.fecha.year == anio_actual
-                ]
-                ingresos_total = sum(i.monto for i in ingresos)
-
-                member_repo = FamilyMemberRepository(session, self._familia_id)
-                member_service = FamilyMemberService(member_repo)
-                miembros = member_service.list_members()
-
-                snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
-                comparativa = []
-                try:
-                    snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)
-                    comparativa = snapshot_repo.obtener_comparativa_mensual(
-                        anio_actual, mes_actual
-                    )
-                except Exception as snap_err:
-                    logger.warning("Comparativa no disponible: %s", snap_err)
-
-                ctx = AIContext(
-                    resumen_gastos=resumen_gastos,
-                    total_gastos_count=total_gastos_count,
-                    total_gastos_mes=total_gastos_mes,
-                    ingresos_total=ingresos_total,
-                    miembros_count=len(miembros),
-                    resumen_metodos_pago=self._resumir_metodos_pago(gastos_mes),
-                    comparativa_meses=comparativa,
-                    subtotal_descripcion=subtotal_desc if subtotal_desc else None,
-                    terminos_buscados=label_desc,
-                )
+            ctx = await self._construir_contexto(pregunta)
 
         self.last_context = ctx
         self.last_pregunta = pregunta
 
-        # Buscar memoria vectorial (RAG) solo si NO hay datos reales del mes.
-        memoria_str = ""
-        hay_datos_mes = bool(ctx.resumen_gastos)
-        if not hay_datos_mes:
-            try:
-                with self._get_session() as session:
-                    memory_service = self._get_memory_service(session)
-                    if memory_service.tiene_memoria():
-                        mem_result = await memory_service.buscar_contexto_para_pregunta(
-                            pregunta=pregunta, limit=5
-                        )
-                        from result import Ok as MemOk
-                        if isinstance(mem_result, MemOk) and mem_result.ok():
-                            memoria_str = "\n".join(
-                                f"- {c}" for c in mem_result.ok()
-                            )
-            except Exception as mem_err:
-                logger.warning(
-                    "[MEMORY] Stream: no se pudo recuperar contexto: %s", mem_err
-                )
-        else:
-            logger.info(
-                "[MEMORY] Stream: omitiendo memoria vectorial: %d gastos reales del mes.",
-                ctx.total_gastos_count,
-            )
+        memoria_str = await self._buscar_memoria_vectorial(pregunta, ctx)
 
         async for token in self.ai_service.consultar_stream(
             request, ctx=ctx, memoria_vectorial=memoria_str
