@@ -2,8 +2,14 @@
 
 from services.ai.ai_advisor_service import AIAdvisorService
 from services.ai.embedding_service import EmbeddingService
+from services.ai.expense_formatters import (  # noqa: F401
+    agrupar_gastos,
+    filtrar_por_categorias,
+    resumir_metodos_pago,
+)
 from services.ai.ia_memory_service import IAMemoryService
 from services.ai.memory_event_handler import MemoryEventHandler
+from services.ai.query_analyzer import IntentData, QueryAnalyzer  # noqa: F401
 from services.domain.auth_service import AuthService
 from services.domain.expense_service import ExpenseService
 from services.domain.family_member_service import FamilyMemberService
