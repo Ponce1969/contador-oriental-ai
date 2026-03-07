@@ -141,12 +141,10 @@ class ExpenseTable(Base):
     # Embedding semántico para búsqueda cosine via pgvector (Vector en PG, Text en otros)
     embedding = Column(_VECTOR_TYPE, nullable=True)
 
-    # Campos legacy de ShoppingItem (para migración)
-    name: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    category: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    purchased: Mapped[bool] = mapped_column(Boolean, default=False)
-    purchase_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Campos OCR de ticket
+    ticket_image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ocr_texto_crudo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ocr_confianza: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 # Alias para compatibilidad con código existente

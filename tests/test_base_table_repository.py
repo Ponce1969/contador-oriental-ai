@@ -93,8 +93,17 @@ class TestBaseTableRepositoryCRUD:
 
     def test_add_income(self, db_session):
         """Test agregar un income usando IncomeRepository real"""
+        from sqlalchemy import text
+        db_session.execute(text(
+            "INSERT INTO family_members (familia_id, nombre, parentesco) "
+            "VALUES (1, 'Test Member', 'otro')"
+        ))
+        db_session.flush()
+        member_id = db_session.execute(
+            text("SELECT id FROM family_members WHERE familia_id=1 AND nombre='Test Member' LIMIT 1")
+        ).scalar()
         repo = IncomeRepository(db_session, familia_id=1)
-        income = _make_income(descripcion="Sueldo", monto=50000)
+        income = _make_income(descripcion="Sueldo", monto=50000, family_member_id=member_id)
         result = repo.add(income)
         assert isinstance(result, Ok)
         saved = result.ok_value
