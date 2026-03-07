@@ -42,6 +42,7 @@ PostgreSQL + pgvector
 - **`BaseController`** — Context manager de sesión SQLAlchemy centralizado
 - **`Result[T, E]`** — Manejo de errores sin excepciones en toda la capa de servicios
 - **Observer Pattern** — `EventSystem` desacopla controllers de IA; agregar nuevos listeners sin tocar código existente
+- **Dependency Injection** — `EventSystem` inyectable en `BaseController`; producción usa el singleton, tests inyectan instancias limpias
 - **RAG (Retrieval-Augmented Generation)** — Cada consulta al Contador busca contexto semántico en pgvector antes de llamar a Gemma
 - **Fire-and-forget** — La vectorización de gastos corre en background, nunca bloquea la UI
 
@@ -136,6 +137,7 @@ uv run python main.py
 | `expenses` | Gastos + columna `embedding vector(768)` para búsqueda semántica |
 | `monthly_expense_snapshots` | Snapshots mensuales para comparativas |
 | `ai_vector_memory` | Memoria vectorial RAG (pgvector, 768 dimensiones, índice HNSW) |
+| `ocr_sessions` | Sesiones OCR temporales con TTL de 10 min (reemplaza dict en RAM) |
 | `_fleting_migrations` | Control de versiones de migraciones |
 
 ### Migraciones
@@ -212,12 +214,24 @@ contador-oriental/
 │   ├── income_controller.py
 │   └── family_member_controller.py
 ├── 📁 services/
-│   ├── ai_advisor_service.py     # Prompt builder + llamada a Ollama (streaming)
-│   ├── embedding_service.py      # Genera vectores 768d con nomic-embed-text
-│   ├── ia_memory_service.py      # Orquesta embedding + búsqueda semántica
-│   ├── memory_event_handler.py   # Observer: vectoriza eventos en background
-│   ├── expense_service.py
-│   └── income_service.py
+│   ├── __init__.py               # Re-exports para compatibilidad
+│   ├── 📁 domain/                # Reglas de negocio puras
+│   │   ├── expense_service.py
+│   │   ├── income_service.py
+│   │   ├── family_member_service.py
+│   │   ├── auth_service.py
+│   │   ├── registration_service.py
+│   │   ├── shopping_service.py
+│   │   └── validators.py
+│   ├── 📁 ai/                    # Lógica de IA y embeddings
+│   │   ├── ai_advisor_service.py # Prompt builder + llamada a Ollama (streaming)
+│   │   ├── embedding_service.py  # Genera vectores 768d con nomic-embed-text
+│   │   ├── ia_memory_service.py  # Orquesta embedding + búsqueda semántica
+│   │   └── memory_event_handler.py  # Observer: vectoriza eventos en background
+│   └── 📁 infrastructure/        # Integraciones externas
+│       ├── ocr_service.py        # Tesseract + preprocesado OpenCV
+│       ├── ticket_service.py     # Parseo de tickets con Gemma
+│       └── report_service.py     # Generación de reportes PDF
 ├── 📁 repositories/
 │   ├── base_table_repository.py  # ABC + Generic con filtro por familia_id
 │   ├── memoria_repository.py     # SQL directo con pgvector cosine distance
@@ -313,7 +327,7 @@ uv run ty check .
 uv run ruff check .
 ```
 
-**Cobertura actual:** 223 tests — memoria vectorial, búsqueda semántica, repositorios, servicios, validators, formatters, controllers e integración.
+**Cobertura actual:** 247 tests — memoria vectorial, búsqueda semántica, repositorios, servicios, validators, formatters, controllers, OCR e integración.
 
 > Los tests de BD usan **PostgreSQL real** con transacciones revertidas por test (aislamiento sin contaminar datos).
 
@@ -354,6 +368,8 @@ docker compose exec app uv run fleting db migrate
 | **Sin bloqueos UI** | Toda la vectorización corre async en background |
 | **Seeds seguros** | `APP_ENV=production` bloquea seeds de prueba automáticamente |
 | **Code Quality** | Ruff, pre-commit hooks, imports ordenados |
+| **OCR persistente** | Sesiones OCR en PostgreSQL (`ocr_sessions`) — resistentes a reinicios del contenedor |
+| **EventSystem DI** | `EventSystem` inyectable en tests sin tocar el singleton global |
 
 ---
 
@@ -389,52 +405,70 @@ MIT License — Ver archivo [LICENSE](LICENSE) para detalles.
 
 ---
 
-## � Arquitectura OCR: Microservicio + Formulario HTML
+## 🏗️ Arquitectura OCR: Microservicio + Formulario HTML
 
 ### Solución implementada
 
 `ft.FilePicker` **no funciona en Flet 0.81 web** — todos los `Service` controls (FilePicker, UrlLauncher) fallan porque el handshake JS nunca completa en modo web. La solución definitiva usa un microservicio FastAPI separado con formulario HTML nativo.
 
-### Flujo completo
+### Flujo completo (auto-polling, sin botón manual)
 
 ```
-Browser (usuario)
-    │
-    │  1. Click en /ticket-ocr → ve URL del formulario
-    ▼
 App Flet :8550
-    │  ticket_upload_view.py
-    │  Muestra URL copiable de http://localhost:8551/upload-form?session_id=UUID
-    │
-    │  2. Usuario abre URL en nueva pestaña
+    │  1. Vista OCR genera session_id → arranca polling en background (cada 2s)
+    │  2. Muestra botón "Abrir formulario" → abre :8551 en nueva pestaña
     ▼
 Formulario HTML :8551/upload-form
-    │  <input type="file"> nativo del browser
-    │  Selecciona foto → POST /upload-form-submit
+    │  <input type="file" capture="environment"> nativo del browser
+    │  Usuario saca foto → POST /upload-form-submit
     ▼
 Microservicio OCR :8551
-    │  Tesseract extrae texto + confianza
-    │  Gemma2 parsea monto/fecha/comercio → JSON
-    │  Guarda resultado en _resultados[session_id]
-    │
-    │  3. Usuario vuelve a Flet y toca "Ya subí la foto"
+    │  OpenCV preprocesa imagen (resize×2, CLAHE, gaussian blur, deskew, threshold)
+    │  Tesseract extrae texto + confianza  (--psm 6 --oem 3)
+    │  Gemma2 parsea monto/fecha/comercio/items → JSON
+    │  Guarda resultado en tabla ocr_sessions (PostgreSQL, TTL 10 min)
     ▼
-App Flet (polling)
-    │  GET /resultado/{session_id} cada 2s
-    │  Recibe JSON → construye PartialExpense
+App Flet (polling detecta resultado)
+    │  GET /resultado/{session_id} → pantalla avanza SOLA a CONFIRM
+    │  No hay botón "Ya subí la foto" — es automático
     ▼
 Vista CONFIRM
     │  Campos pre-llenados editables (monto, fecha, comercio, categoría)
     │  Usuario confirma → ExpenseController.add_expense()
     ▼
 PostgreSQL :5432
-    └── gasto guardado
+    └── gasto guardado + fila ocr_sessions eliminada
 ```
+
+### Pipeline OCR (OpenCV)
+
+```python
+img → resize ×2 (INTER_CUBIC) → CLAHE → GaussianBlur(3,3)
+    → adaptiveThreshold(GAUSSIAN_C, 31, 2) → deskew → PIL → Tesseract
+```
+
+### Persistencia de sesiones OCR
+
+Las sesiones ya **no se guardan en RAM** (`_resultados: dict`). Se persisten en PostgreSQL:
+
+```sql
+ocr_sessions(
+    session_id  TEXT PRIMARY KEY,
+    familia_id  INTEGER,
+    resultado_json TEXT,
+    created_at  TIMESTAMPTZ,
+    expires_at  TIMESTAMPTZ   -- TTL: created_at + 10 min
+)
+```
+
+- Resistente a reinicios del contenedor
+- Cleanup automático cada 5 minutos
+- Sesión consumida (DELETE) en el primer polling exitoso
 
 ### Servicios Docker
 
 | Servicio | Puerto | Descripción |
-|----------|--------|-------------|
+|----------|--------|--------------|
 | `app` | 8550 | App Flet principal |
 | `ocr_api` | 8551 | Microservicio OCR FastAPI |
 | `postgres` | 5432 | Base de datos |
@@ -448,14 +482,14 @@ PostgreSQL :5432
 
 ### Limitación conocida de Flet 0.81 web
 
-`ft.FilePicker`, `ft.UrlLauncher` y `page.launch_url()` son `Service` controls que dependen de un listener JS que **no se registra correctamente en Flet 0.81 web**. Síntomas: `"Unknown control: FilePicker"` o `TimeoutException after 10s`. Ninguna variante de registro (overlay, did_mount, per-click, render()) lo resuelve. En Flet ≥ 0.90 puede estar corregido.
+`ft.FilePicker`, `ft.UrlLauncher` y `page.launch_url()` son `Service` controls que dependen de un listener JS que **no se registra correctamente en Flet 0.81 web**. En Flet ≥ 0.90 puede estar corregido.
 
 ### Archivos relevantes
 
-- `views/pages/ticket_upload_view.py` — vista OCR, flujo de 2 pasos
+- `views/pages/ticket_upload_view.py` — vista OCR, estados IDLE → LOADING → CONFIRM/ERROR
 - `ocr_api/main.py` — endpoints `/upload-form`, `/upload-form-submit`, `/resultado/{id}`
 - `ocr_api/config.py` — configuración Tesseract + Ollama
-- `ocr_api/models.py` — `OCRResponse`, `HealthResponse`
+- `ocr_api/models.py` — `OCRSession` (SQLAlchemy), `OCRResponse`, `HealthResponse`
 
 ---
 

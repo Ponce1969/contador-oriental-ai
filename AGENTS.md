@@ -493,67 +493,50 @@ event_system.fire_and_forget(event)
 
 ---
 
-## 4. Deuda Técnica — Auditoría 2026-03-05
+## 4. Deuda Técnica — Auditoría 2026-03-05 (actualizado 2026-03-06)
 
-Evaluación general: **8.5/10**. Arquitectura sólida con separación de capas, RAG, pgvector, observer pattern, Result[T,E] y tests. Los puntos siguientes son mejoras, no emergencias.
+Evaluación general: **9.2/10**. TD-1 al TD-4 resueltos. Arquitectura limpia con separación de capas, services/ organizado, OCR persistente en BD, EventSystem inyectable, RAG, pgvector, Result[T,E] y 247 tests. Pendiente solo TD-5 (SSE, mejora futura no urgente).
 
-### TD-1 — AIController con lógica duplicada (PRIORIDAD ALTA)
-**Archivo**: `controllers/ai_controller.py` (604 líneas, 27KB)
+| TD | Descripción | Estado |
+|---|---|---|
+| TD-1 | AIController duplicación `_construir_contexto` | ✅ 2026-03-06 |
+| TD-2 | `services/` reorganizado en domain/ai/infrastructure | ✅ 2026-03-06 |
+| TD-3 | OCR en RAM → `ocr_sessions` PostgreSQL con TTL | ✅ 2026-03-05 |
+| TD-4 | EventSystem singleton → DI en BaseController | ✅ 2026-03-06 |
+| TD-5 | Polling OCR → SSE (mejora futura) | ⏳ pendiente |
 
-**Problema**: El bloque de construcción del `AIContext` (~90 líneas) está duplicado palabra por palabra entre `consultar_contador()` y `consultar_contador_stream()`. Bug corregido en un lugar no se corrige en el otro.
+### TD-1 — AIController con lógica duplicada ✅ RESUELTO 2026-03-06
+**Archivo**: `controllers/ai_controller.py`
 
-**Responsabilidades que no deberían estar en el controller:**
-- `_detectar_rango_meses()` → parser NLP, debería ir en `services/`
-- `_detectar_categorias_relevantes()` → NLP + fuzzy matching, debería ir en `services/`
-- `_filtrar_gastos_por_contexto()` → lógica de negocio, debería ir en `services/`
-- `_agrupar_gastos()` → transformación de datos, debería ir en `services/`
-- `_calcular_subtotal_semantico()` → RAG + pgvector, debería ir en `services/`
-- `_resumir_metodos_pago()` → lógica de negocio, debería ir en `services/`
-- `CATEGORY_KEYWORDS` → 90 líneas de datos estáticos en el controller
+**Solución implementada**: Extraídos dos métodos privados que eliminan ~120 líneas duplicadas:
+- `_construir_contexto(pregunta) -> AIContext` — toda la lógica de BD/gastos/ingresos/snapshot
+- `_buscar_memoria_vectorial(pregunta, ctx) -> str` — RAG vectorial con skip si hay datos reales
 
-**Fix mínimo (30 min)**: Extraer `_construir_contexto(pregunta, session) -> AIContext` y llamarlo desde ambos métodos públicos.
+`consultar_contador()` y `consultar_contador_stream()` quedaron en ~10 líneas cada uno.
 
-**Refactor completo (media sesión)**:
-```
-AIController
-   ↓
-AIQueryService
-   ├─ PeriodDetector       (_detectar_rango_meses)
-   ├─ CategoryDetector     (_detectar_categorias_relevantes)
-   ├─ ExpenseAggregator    (_agrupar_gastos, _filtrar_gastos_por_contexto)
-   └─ ContextBuilder       (construcción del AIContext)
-```
+**Pendiente futuro**: Refactor completo en `AIQueryService` con `PeriodDetector`, `CategoryDetector`, `ExpenseAggregator`. No urgente — el código actual es legible y testeable.
 
 ---
 
-### TD-2 — services/ sin separación de responsabilidades (PRIORIDAD MEDIA)
-**Directorio**: `services/` (13 archivos mezclados)
+### TD-2 — services/ sin separación de responsabilidades ✅ RESUELTO 2026-03-06
+**Directorio**: `services/`
 
-**Problema**: Servicios de dominio, IA e infraestructura conviven en el mismo flat folder.
+**Solución implementada**: Reorganizado en 3 subdirectorios con `git mv` (historial preservado):
 
-**Clasificación actual:**
-- **Dominio**: `expense_service.py`, `income_service.py`, `family_member_service.py`, `shopping_service.py`, `auth_service.py`, `registration_service.py`, `validators.py`
-- **IA/ML**: `ai_advisor_service.py` (15KB), `ia_memory_service.py`, `embedding_service.py`, `memory_event_handler.py`
-- **Infraestructura**: `ocr_service.py`, `ticket_service.py`, `report_service.py`
-
-**Estructura propuesta:**
 ```
 services/
-   domain/
-       expense_service.py
-       income_service.py
-       ...
-   ai/
-       ai_advisor_service.py
-       embedding_service.py
-       ia_memory_service.py
-       memory_event_handler.py
-   infrastructure/
-       ocr_service.py
-       ticket_service.py
-       report_service.py
+   __init__.py          ← re-exports: imports existentes no cambiaron
+   domain/              ← reglas de negocio puras
+       expense_service.py, income_service.py, family_member_service.py
+       auth_service.py, registration_service.py, shopping_service.py, validators.py
+   ai/                  ← lógica de IA y embeddings
+       ai_advisor_service.py, embedding_service.py
+       ia_memory_service.py, memory_event_handler.py
+   infrastructure/      ← integraciones externas
+       ocr_service.py, ticket_service.py, report_service.py
 ```
-**Nota**: Requiere actualizar todos los imports del proyecto. Hacer en una sola sesión con búsqueda/reemplazo global.
+
+25 archivos externos actualizados con las nuevas rutas. 247/247 tests pasan.
 
 ---
 
@@ -583,16 +566,27 @@ class OCRSession(Base):
 
 ---
 
-### TD-4 — EventSystem singleton (PRIORIDAD BAJA)
-**Archivo**: `core/events.py` línea 109
+### TD-4 — EventSystem singleton ✅ RESUELTO 2026-03-06
+**Archivos**: `controllers/base_controller.py`, `controllers/expense_controller.py`
 
-**Problema**: `event_system = EventSystem()` es un global de módulo. Tests que importan código que usa `event_system` arrastran handlers ya suscriptos.
+**Solución implementada**: `BaseController.__init__` acepta ahora `event_system: EventSystem | None = None`.
 
-**Mitigación existente**: `EventSystem.clear()` en línea 85 — llamar en fixtures de tests de integración.
+```python
+class BaseController:
+    def __init__(
+        self,
+        session: Session | None = None,
+        familia_id: int | None = None,
+        event_system: EventSystem | None = None,  # ← nuevo
+    ) -> None:
+        self._event_system = (
+            event_system if event_system is not None else _default_event_system
+        )
+```
 
-**Fix futuro**: Dependency injection — pasar `event_system` como parámetro en lugar de importarlo directamente.
-
-**Severidad actual**: Baja — los 247 tests pasan porque mockean la capa de servicios sin llegar al event system.
+- **Producción**: no pasa `event_system` → usa el singleton global, sin cambios
+- **Tests**: inyectan `EventSystem()` limpio sin necesidad de `clear()`
+- `ExpenseController` usa `self._event_system.fire_and_forget()` en lugar del import directo
 
 ---
 
