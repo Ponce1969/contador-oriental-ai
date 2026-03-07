@@ -7,11 +7,11 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-import services.ocr_service as ocr_module
+import services.infrastructure.ocr_service as ocr_module
 from result import Err, Ok
 
 from models.ticket_model import PartialExpense
-from services.ocr_service import OCRService
+from services.infrastructure.ocr_service import OCRService
 
 
 @pytest.fixture
@@ -100,7 +100,7 @@ class TestOCRServiceExtraerTexto:
         imagen_path = tmp_path / "ticket.jpg"
         imagen_path.write_bytes(b"fake_image_data")
 
-        with patch("services.ocr_service._TESSERACT_DISPONIBLE", False):
+        with patch("services.infrastructure.ocr_service._TESSERACT_DISPONIBLE", False):
             resultado = await ocr_service.extraer_texto(str(imagen_path))
 
         assert isinstance(resultado, Err)

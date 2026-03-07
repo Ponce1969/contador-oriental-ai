@@ -15,8 +15,8 @@ import os
 from database.engine import get_session
 from database.tables import ExpenseTable
 from repositories.memoria_repository import MemoriaRepository
-from services.embedding_service import EmbeddingService
-from services.ia_memory_service import IAMemoryService
+from services.ai.embedding_service import EmbeddingService
+from services.ai.ia_memory_service import IAMemoryService
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)

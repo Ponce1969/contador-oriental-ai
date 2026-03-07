@@ -13,10 +13,10 @@ from controllers.base_controller import BaseController
 from models.errors import AppError
 from models.ticket_model import PartialExpense
 from repositories.expense_repository import ExpenseRepository
-from services.ai_advisor_service import AIAdvisorService
-from services.embedding_service import EmbeddingService
-from services.ocr_service import OCRService
-from services.ticket_service import TicketService
+from services.ai.ai_advisor_service import AIAdvisorService
+from services.ai.embedding_service import EmbeddingService
+from services.infrastructure.ocr_service import OCRService
+from services.infrastructure.ticket_service import TicketService
 
 logger = logging.getLogger(__name__)
 

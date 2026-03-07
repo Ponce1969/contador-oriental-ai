@@ -10,7 +10,7 @@ from constants.messages import ValidationMessages
 from models.errors import DatabaseError, ValidationError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
-from services.validators import (
+from services.domain.validators import (
     validate_descripcion_requerida,
     validate_id_requerido,
     validate_monto_positivo,

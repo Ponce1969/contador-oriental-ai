@@ -26,9 +26,9 @@ def _setup_memory_observer() -> None:
     try:
         from core.sqlalchemy_session import get_db_session
         from repositories.memoria_repository import MemoriaRepository
-        from services.embedding_service import EmbeddingService
-        from services.ia_memory_service import IAMemoryService
-        from services.memory_event_handler import MemoryEventHandler
+        from services.ai.embedding_service import EmbeddingService
+        from services.ai.ia_memory_service import IAMemoryService
+        from services.ai.memory_event_handler import MemoryEventHandler
 
         embedding_service = EmbeddingService(
             ollama_url=AppConfig.OLLAMA_BASE_URL,

@@ -10,9 +10,9 @@ import pytest
 from result import Err, Ok
 
 from core.events import Event, EventSystem, EventType
-from services.embedding_service import EmbeddingService
-from services.ia_memory_service import IAMemoryService
-from services.memory_event_handler import MemoryEventHandler
+from services.ai.embedding_service import EmbeddingService
+from services.ai.ia_memory_service import IAMemoryService
+from services.ai.memory_event_handler import MemoryEventHandler
 
 
 FAKE_EMBEDDING = [0.1] * 768

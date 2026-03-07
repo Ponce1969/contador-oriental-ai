@@ -10,7 +10,7 @@ from controllers.base_controller import BaseController
 from models.errors import AppError
 from models.family_member_model import FamilyMember
 from repositories.family_member_repository import FamilyMemberRepository
-from services.family_member_service import FamilyMemberService
+from services.domain.family_member_service import FamilyMemberService
 
 
 class FamilyMemberController(BaseController):

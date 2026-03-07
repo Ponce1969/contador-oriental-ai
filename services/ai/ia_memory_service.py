@@ -10,7 +10,7 @@ from result import Err, Ok, Result
 
 from models.errors import AppError
 from repositories.memoria_repository import MemoriaRepository
-from services.embedding_service import EmbeddingService
+from services.ai.embedding_service import EmbeddingService
 
 logger = logging.getLogger(__name__)
 

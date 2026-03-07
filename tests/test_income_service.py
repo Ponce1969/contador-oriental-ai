@@ -8,7 +8,7 @@ import pytest
 from result import Ok
 
 from models.income_model import Income, IncomeCategory
-from services.income_service import IncomeService
+from services.domain.income_service import IncomeService
 
 
 class TestIncomeService:

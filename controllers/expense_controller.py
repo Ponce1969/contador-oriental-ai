@@ -13,7 +13,7 @@ from core.events import Event, EventType, event_system
 from models.errors import AppError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
-from services.expense_service import ExpenseService
+from services.domain.expense_service import ExpenseService
 
 logger = logging.getLogger(__name__)
 

@@ -18,12 +18,12 @@ from repositories.family_member_repository import FamilyMemberRepository
 from repositories.income_repository import IncomeRepository
 from repositories.memoria_repository import MemoriaRepository
 from repositories.monthly_snapshot_repository import MonthlySnapshotRepository
-from services.ai_advisor_service import AIAdvisorService
-from services.embedding_service import EmbeddingService
-from services.expense_service import ExpenseService
-from services.family_member_service import FamilyMemberService
-from services.ia_memory_service import IAMemoryService
-from services.income_service import IncomeService
+from services.ai.ai_advisor_service import AIAdvisorService
+from services.ai.embedding_service import EmbeddingService
+from services.domain.expense_service import ExpenseService
+from services.domain.family_member_service import FamilyMemberService
+from services.ai.ia_memory_service import IAMemoryService
+from services.domain.income_service import IncomeService
 
 logger = logging.getLogger(__name__)
 

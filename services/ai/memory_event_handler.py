@@ -8,7 +8,7 @@ import logging
 from typing import Any
 
 from core.events import Event, EventType
-from services.ia_memory_service import IAMemoryService
+from services.ai.ia_memory_service import IAMemoryService
 
 logger = logging.getLogger(__name__)
 

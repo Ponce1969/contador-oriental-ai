@@ -13,7 +13,7 @@ from result import Err, Ok
 
 from models.errors import AppError
 from models.ticket_model import PartialExpense
-from services.ticket_service import TicketService
+from services.infrastructure.ticket_service import TicketService
 
 
 @pytest.fixture

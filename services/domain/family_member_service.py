@@ -10,7 +10,7 @@ from constants.messages import ValidationMessages
 from models.errors import DatabaseError, ValidationError
 from models.family_member_model import FamilyMember
 from repositories.family_member_repository import FamilyMemberRepository
-from services.validators import validate_id_requerido
+from services.domain.validators import validate_id_requerido
 
 
 class FamilyMemberService:

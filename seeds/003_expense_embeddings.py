@@ -14,7 +14,7 @@ import os
 from database.engine import get_session
 from database.tables import ExpenseTable
 from repositories.expense_repository import ExpenseRepository
-from services.embedding_service import EmbeddingService
+from services.ai.embedding_service import EmbeddingService
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)

@@ -15,7 +15,7 @@ class TestFamilyMemberService:
     def service(self, db_session):
         """Create family member service with test repository."""
         from repositories.family_member_repository import FamilyMemberRepository
-        from services.family_member_service import FamilyMemberService
+        from services.domain.family_member_service import FamilyMemberService
         repo = FamilyMemberRepository(db_session, familia_id=1)
         return FamilyMemberService(repo)
 

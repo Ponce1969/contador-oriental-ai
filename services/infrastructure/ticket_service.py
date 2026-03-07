@@ -18,8 +18,8 @@ from result import Err, Ok, Result
 
 from models.errors import AppError
 from models.ticket_model import PartialExpense
-from services.embedding_service import EmbeddingService
-from services.ocr_service import OCRService
+from services.ai.embedding_service import EmbeddingService
+from services.infrastructure.ocr_service import OCRService
 
 logger = logging.getLogger(__name__)
 

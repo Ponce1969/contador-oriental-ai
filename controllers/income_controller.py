@@ -10,7 +10,7 @@ from controllers.base_controller import BaseController
 from models.errors import AppError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
-from services.income_service import IncomeService
+from services.domain.income_service import IncomeService
 
 
 class IncomeController(BaseController):

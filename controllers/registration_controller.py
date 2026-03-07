@@ -3,7 +3,7 @@ Controlador para el registro de familias
 """
 import flet as ft
 
-from services.registration_service import RegistrationService
+from services.domain.registration_service import RegistrationService
 
 
 class RegistrationController:

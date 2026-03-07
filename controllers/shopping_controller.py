@@ -6,7 +6,7 @@ from controllers.base_controller import BaseController
 from models.errors import AppError
 from models.shopping_model import ShoppingItem
 from repositories.shopping_repository import ShoppingRepository
-from services.shopping_service import ShoppingService
+from services.domain.shopping_service import ShoppingService
 
 
 class ShoppingController(BaseController):

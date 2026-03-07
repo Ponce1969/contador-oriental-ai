@@ -141,7 +141,7 @@ class TestAuthServiceConSecurity:
     """Tests de integración AuthService + RateLimiter (mock de repo)."""
 
     def _make_service(self):
-        from services.auth_service import AuthService
+        from services.domain.auth_service import AuthService
         repo = MagicMock()
         repo.get_by_username.return_value = MagicMock(
             is_err=lambda: True
@@ -166,7 +166,7 @@ class TestAuthServiceConSecurity:
         from models.user_model import User, UserLogin
         from result import Ok
 
-        from services.auth_service import AuthService
+        from services.domain.auth_service import AuthService
 
         user_mock = MagicMock(spec=User)
         user_mock.activo = True

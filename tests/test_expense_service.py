@@ -10,7 +10,7 @@ from result import Err, Ok
 from models.categories import ExpenseCategory
 from models.errors import ValidationError
 from models.expense_model import Expense
-from services.expense_service import ExpenseService
+from services.domain.expense_service import ExpenseService
 
 
 class TestExpenseService:
