@@ -100,18 +100,24 @@ ollama pull nomic-embed-text
 ### 3. Iniciar con Docker
 
 ```bash
-docker compose up -d
+docker compose up -d --build
+```
 
-# Ejecutar migraciones (incluye tabla vectorial y columna embedding)
-uv run fleting db migrate
+> ✅ **Las migraciones se aplican automáticamente** al arrancar el contenedor `app`. No hace falta correr `fleting db migrate` a mano. Si la base ya está migrada, simplemente no hace nada.
 
+Una vez que los 3 contenedores estén `healthy`:
+
+```bash
 # Poblar datos de ejemplo (solo en APP_ENV=development)
-$env:OLLAMA_BASE_URL="http://localhost:11434"
+$env:OLLAMA_BASE_URL="http://localhost:11434"  # Windows PowerShell
+# export OLLAMA_BASE_URL=http://localhost:11434  # Linux/macOS
 uv run fleting db seed
 
 # Abrir aplicación
 # http://localhost:8550
 ```
+
+> 💡 El seed es opcional y solo funciona con `APP_ENV=development` en el `.env`. En producción no hace nada.
 
 ### 4. Credenciales de desarrollo
 
@@ -130,14 +136,37 @@ La migración `002_add_multiuser.py` crea automáticamente un usuario administra
 
 ```bash
 uv sync
-# Levantar PostgreSQL con pgvector aparte, luego:
+# Levantar PostgreSQL con pgvector aparte (ver docker-compose.yml para parámetros)
+docker compose up -d postgres
+# Migrar y arrancar:
 uv run fleting db migrate
 uv run python main.py
 ```
 
 ---
 
-## 🗄️ Base de Datos
+## 🐳 Comportamiento automático de Docker
+
+Cada vez que se levanta con `docker compose up`, los contenedores hacen lo siguiente **sin intervención manual**:
+
+| Contenedor | Qué hace al arrancar |
+|---|---|
+| `postgres` | Crea la base de datos si no existe. Healthcheck garantiza que está lista antes de que arranquen los otros. |
+| `app` | Espera a Postgres → **aplica migraciones pendientes** → arranca Flet en `:8550` |
+| `ocr_api` | Espera a Postgres → arranca FastAPI/uvicorn en `:8551` |
+
+El comportamiento de las migraciones es **idempotente**: si ya están todas aplicadas, no toca nada.
+
+```
+git clone
+   └── cp .env.example .env  (editar credenciales)
+          └── docker compose up -d --build
+                 └── ✅ App lista en http://localhost:8550
+```
+
+---
+
+## �️ Base de Datos
 
 ### Tablas
 
@@ -299,12 +328,13 @@ POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=auditor_familiar
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=tu_password_seguro
+POSTGRES_PASSWORD=tu_password_seguro   # ← cambiar siempre
 
 # Aplicación
-SECRET_KEY=genera_con_python_secrets_token_hex_32
+# ⚠️ EN SERVIDOR: production | EN LOCAL: development
 APP_ENV=production
-DEBUG=false
+SECRET_KEY=genera_con_python_secrets_token_hex_32  # ← generar nueva siempre
+DEBUG=False
 
 # IA — URL de Ollama:
 #   Dentro de Docker:  http://host.docker.internal:11434
@@ -346,27 +376,53 @@ uv run ruff check .
 
 ---
 
-## � Deploy en Orange Pi 5 Plus (ARM64)
+## 🚀 Deploy en Orange Pi 5 Plus (ARM64)
 
 ```bash
-# 1. Transferir archivos
-rsync -avz --exclude '.venv/' --exclude 'logs/' \
-  ./ user@orangepi:/opt/contador-oriental/
-
-# 2. En el servidor
+# 1. Clonar el repo en el servidor
 ssh user@orangepi
+git clone https://github.com/Ponce1969/contador-oriental-ai.git /opt/contador-oriental
 cd /opt/contador-oriental
-cp .env.example .env  # Editar con credenciales de producción
 
-# 3. Construir y levantar
-docker compose build --no-cache app
-docker compose up -d
+# 2. Configurar variables de entorno
+cp .env.example .env
+nano .env
+# Asegurate de configurar:
+#   POSTGRES_PASSWORD=tu_password_seguro
+#   SECRET_KEY=genera_con: python -c "import secrets; print(secrets.token_hex(32))"
+#   APP_ENV=production   ← MUY IMPORTANTE (ver abajo)
+#   DEBUG=False
 
-# 4. Ejecutar migraciones
-docker compose exec app uv run fleting db migrate
+# 3. Levantar todo (migraciones incluidas, automáticas)
+docker compose up -d --build
 ```
 
+> ✅ No hace falta correr `fleting db migrate` — el entrypoint lo hace solo.
+
 > La imagen `pgvector/pgvector:pg16` tiene builds para ARM64 — funciona nativamente en Orange Pi 5 Plus.
+
+### ⚠️ Variable crítica: `APP_ENV`
+
+| Valor | Cuándo usarlo | Efecto |
+|---|---|---|
+| `APP_ENV=production` | **Servidor / Orange Pi** | Bloquea `fleting db seed`. Sin datos de prueba. |
+| `APP_ENV=development` | PC de desarrollo local | Permite `fleting db seed` con gastos de ejemplo. |
+
+> 🚨 **Si dejás `APP_ENV=development` en el servidor** y alguien corre `fleting db seed` por accidente, se cargarán ~48 gastos ficticios en la base de producción. Siempre usar `production` en el servidor.
+
+También generá una `SECRET_KEY` única para producción:
+
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### Actualizar a nueva versión
+
+```bash
+git pull
+docker compose up -d --build
+# Las migraciones nuevas se aplican solas al reiniciar
+```
 
 ---
 
@@ -418,20 +474,21 @@ MIT License — Ver archivo [LICENSE](LICENSE) para detalles.
 
 ---
 
-## 🏗️ Arquitectura OCR: Microservicio + Formulario HTML
+## 🏗️ Arquitectura OCR: Microservicio + BottomSheet inline
 
 ### Solución implementada
 
-`ft.FilePicker` **no funciona en Flet 0.81 web** — todos los `Service` controls (FilePicker, UrlLauncher) fallan porque el handshake JS nunca completa en modo web. La solución definitiva usa un microservicio FastAPI separado con formulario HTML nativo.
+`ft.FilePicker` y `ft.UrlLauncher` **no funcionan en Flet 0.82 web** — son `Service` controls que dependen de un listener JS que no se registra en modo web. La solución usa un microservicio FastAPI separado con formulario HTML nativo, integrado en un **BottomSheet inline** dentro de la vista de gastos.
 
-### Flujo completo (auto-polling, sin botón manual)
+### Flujo completo (sin cambiar de página)
 
 ```
-App Flet :8550
-    │  1. Vista OCR genera session_id → arranca polling en background (cada 2s)
-    │  2. Muestra botón "Abrir formulario" → abre :8551 en nueva pestaña
+Vista Gastos :8550
+    │  1. Botón cámara (FAB) → abre BottomSheet grande (~460px)
+    │  2. BottomSheet muestra link al formulario + spinner
+    │  3. Polling en background cada 2s
     ▼
-Formulario HTML :8551/upload-form
+Formulario HTML :8551/upload-form  (nueva pestaña al tocar el link)
     │  <input type="file" capture="environment"> nativo del browser
     │  Usuario saca foto → POST /upload-form-submit
     ▼
@@ -441,16 +498,16 @@ Microservicio OCR :8551
     │  Gemma2 parsea monto/fecha/comercio/items → JSON
     │  Guarda resultado en tabla ocr_sessions (PostgreSQL, TTL 10 min)
     ▼
-App Flet (polling detecta resultado)
-    │  GET /resultado/{session_id} → pantalla avanza SOLA a CONFIRM
-    │  No hay botón "Ya subí la foto" — es automático
+BottomSheet (polling detecta resultado)
+    │  El sheet muta automáticamente: spinner → campos editables
+    │  Monto, fecha, descripción, categoría pre-llenados
+    │  Indicador de confianza OCR (alta/media/baja)
     ▼
-Vista CONFIRM
-    │  Campos pre-llenados editables (monto, fecha, comercio, categoría)
-    │  Usuario confirma → ExpenseController.add_expense()
+Botón "Guardar gasto" dentro del BottomSheet
+    │  ExpenseController.add_expense() → sin salir de la vista de gastos
     ▼
 PostgreSQL :5432
-    └── gasto guardado + fila ocr_sessions eliminada
+    └── gasto guardado + fila ocr_sessions eliminada + SnackBar ✅
 ```
 
 ### Pipeline OCR (OpenCV)
@@ -493,16 +550,19 @@ ocr_sessions(
 | `OCR_API_URL` | `http://ocr_api:8551` | URL interna Docker (Flet→microservicio) |
 | `OCR_API_PUBLIC_URL` | `http://localhost:8551` | URL pública (browser→formulario) |
 
-### Limitación conocida de Flet 0.81 web
+### Limitación conocida de Flet 0.82 web
 
-`ft.FilePicker`, `ft.UrlLauncher` y `page.launch_url()` son `Service` controls que dependen de un listener JS que **no se registra correctamente en Flet 0.81 web**. En Flet ≥ 0.90 puede estar corregido.
+`ft.FilePicker`, `ft.UrlLauncher` y `page.launch_url()` son `Service` controls que dependen de un listener JS que **no se registra correctamente en Flet 0.82 web**. Se usa `ft.TextSpan(url=...)` como alternativa que sí funciona.
 
 ### Archivos relevantes
 
-- `views/pages/ticket_upload_view.py` — vista OCR, estados IDLE → LOADING → CONFIRM/ERROR
+- `views/pages/expenses_view.py` — `_on_abrir_ocr()`, `_ocr_render_loading()`, `_ocr_render_confirm()`, `_polling_ocr()` — flujo completo embebido en BottomSheet
+- `views/pages/ticket_upload_view.py` — vista OCR standalone (accesible también desde `/ticket-ocr`)
 - `ocr_api/main.py` — endpoints `/upload-form`, `/upload-form-submit`, `/resultado/{id}`
 - `ocr_api/config.py` — configuración Tesseract + Ollama
 - `ocr_api/models.py` — `OCRSession` (SQLAlchemy), `OCRResponse`, `HealthResponse`
+- `entrypoint.sh` — espera Postgres + migraciones automáticas (app)
+- `ocr_api/entrypoint.sh` — espera Postgres (ocr_api)
 
 ---
 

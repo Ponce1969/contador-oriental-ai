@@ -45,7 +45,10 @@ RUN uv pip install --system -r pyproject.toml
 # Copiar código de la aplicación
 COPY --chown=appuser:appuser . .
 
-# Cambiar a usuario no-root
+# Dar permisos de ejecución al entrypoint (como root, antes de cambiar usuario)
+RUN chmod +x /app/entrypoint.sh
+
+# Cambiar a usuario no-root para seguridad
 USER appuser
 
 # Exponer puerto (Flet usa puerto dinámico, pero podemos configurarlo)
@@ -55,5 +58,5 @@ EXPOSE 8550
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8550/ || exit 1
 
-# Comando por defecto
-CMD ["python", "main.py"]
+# Entrypoint: migra automáticamente y luego arranca la app
+ENTRYPOINT ["/app/entrypoint.sh"]

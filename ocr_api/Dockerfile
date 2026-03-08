@@ -24,8 +24,13 @@ RUN useradd -m -u 1000 ocruser && chown -R ocruser:ocruser /app
 # Código - copiar archivos Python al directorio ocr_api
 COPY --chown=ocruser:ocruser __init__.py config.py main.py models.py ./ocr_api/
 
+# Entrypoint
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 USER ocruser
 
 EXPOSE 8551
 
-CMD ["python", "-m", "uvicorn", "ocr_api.main:app", "--host", "0.0.0.0", "--port", "8551"]
+# Espera a Postgres y luego arranca uvicorn
+ENTRYPOINT ["/app/entrypoint.sh"]
