@@ -424,6 +424,43 @@ docker compose up -d --build
 # Las migraciones nuevas se aplican solas al reiniciar
 ```
 
+### Cloudflare Tunnel (acceso público para beta testers)
+
+Si usás Cloudflare Tunnel para exponer el servidor, necesitás **dos túneles**:
+
+| Túnel | Puerto local | URL pública ejemplo |
+|---|---|---|
+| App principal | `8550` | `https://app4.loquinto.com` |
+| OCR microservicio | `8551` | `https://ocr.loquinto.com` |
+
+> PostgreSQL (5432) **NO se expone** — solo se comunica internamente entre contenedores.
+
+Configurar en el `.env` del servidor:
+
+```bash
+# URL pública del OCR — CRÍTICO para que el formulario de tickets funcione
+# Debe ser la URL que el BROWSER del usuario puede alcanzar
+OCR_API_PUBLIC_URL=https://ocr.loquinto.com
+
+# URL interna — no cambiar
+OCR_API_URL=http://ocr_api:8551
+```
+
+> ⚠️ Si `OCR_API_PUBLIC_URL` apunta a `localhost`, el link del formulario OCR
+> no funcionará para los usuarios remotos (sus browsers no llegan al `localhost` del servidor).
+
+#### Multi-tenant — aislamiento de familias
+
+Cada familia solo ve sus propios datos. El `familia_id` se filtra en **todas** las queries:
+
+```
+Familia A (amigo 1) → familia_id=2 → solo ve sus gastos/ingresos
+Familia B (amigo 2) → familia_id=3 → solo ve sus gastos/ingresos
+admin              → familia_id=1 → solo ve sus gastos/ingresos
+```
+
+Cada familia crea su cuenta desde el registro en la UI. No necesitás crear cuentas manualmente.
+
 ---
 
 ## 🛡️ Escudo Charrúa
