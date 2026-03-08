@@ -6,7 +6,7 @@ from result import Err, Ok
 
 from models.errors import ValidationError
 from models.user_model import UserCreate, UserLogin
-from services.auth_service import AuthService
+from services.domain.auth_service import AuthService
 
 
 class TestAuthService:

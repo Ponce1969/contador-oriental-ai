@@ -31,7 +31,6 @@ class IncomeRepository(BaseTableRepository[Income, IncomeTable]):
     def _update_specific_fields(self, table_row, income: Income) -> None:
         """Actualizar campos específicos de ingresos."""
         table_row.categoria = income.categoria.value
-        table_row.metodo_pago = income.metodo_pago.value
         table_row.es_recurrente = income.es_recurrente
         table_row.frecuencia = (
             income.frecuencia.value

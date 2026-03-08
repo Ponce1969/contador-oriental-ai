@@ -7,7 +7,7 @@ from result import Err, Result
 from models.errors import AppError, DatabaseError, ValidationError
 from models.user_model import User, UserLogin
 from repositories.user_repository import UserRepository
-from services.auth_service import AuthService
+from services.domain.auth_service import AuthService
 
 
 class AuthController:

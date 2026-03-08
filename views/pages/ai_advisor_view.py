@@ -14,7 +14,7 @@ from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectSnackBar
 from models.ai_model import ChatMessage
-from services.report_service import ReportService
+from services.infrastructure.report_service import ReportService
 from views.layouts.main_layout import MainLayout
 
 

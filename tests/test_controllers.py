@@ -153,11 +153,11 @@ class TestIncomeController:
         from controllers.income_controller import IncomeController
         return IncomeController(db_session, familia_id=1)
 
-    def test_add_income(self, controller):
+    def test_add_income(self, controller, family_member_id):
         """Test adding income through controller."""
         income = Income(
             familia_id=1,
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=2500.00,
             fecha=date.today(),
             descripcion="Test income",
@@ -167,11 +167,11 @@ class TestIncomeController:
         assert isinstance(result, Ok)
         assert result.ok_value.monto == 2500.00
 
-    def test_list_incomes(self, controller):
+    def test_list_incomes(self, controller, family_member_id):
         """Test listing incomes through controller."""
         income = Income(
             familia_id=1,
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=1500.00,
             fecha=date.today(),
             descripcion="Another income",
@@ -182,11 +182,11 @@ class TestIncomeController:
         incomes = controller.list_incomes()
         assert len(incomes) >= 1
 
-    def test_list_by_member(self, controller):
+    def test_list_by_member(self, controller, family_member_id):
         """Test listing incomes by member."""
         income = Income(
             familia_id=1,
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=2000.00,
             fecha=date.today(),
             descripcion="Member income",
@@ -194,14 +194,14 @@ class TestIncomeController:
         )
         controller.add_income(income)
 
-        incomes = controller.list_by_member(1)
+        incomes = controller.list_by_member(family_member_id)
         assert len(incomes) >= 1
 
-    def test_get_summary_by_categories(self, controller):
+    def test_get_summary_by_categories(self, controller, family_member_id):
         """Test getting income summary by categories."""
         income = Income(
             familia_id=1,
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=1800.00,
             fecha=date.today(),
             descripcion="Summary test",
@@ -212,11 +212,11 @@ class TestIncomeController:
         summary = controller.get_summary_by_categories()
         assert isinstance(summary, dict)
 
-    def test_get_total_by_month(self, controller):
+    def test_get_total_by_month(self, controller, family_member_id):
         """Test getting monthly total through controller."""
         income = Income(
             familia_id=1,
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=3000.00,
             fecha=date.today(),
             descripcion="Monthly income test",
@@ -227,11 +227,11 @@ class TestIncomeController:
         total = controller.get_total_by_month(date.today().year, date.today().month)
         assert total >= 3000.00
 
-    def test_delete_income(self, controller):
+    def test_delete_income(self, controller, family_member_id):
         """Test deleting income through controller."""
         income = Income(
             familia_id=1,
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=500.00,
             fecha=date.today(),
             descripcion="To delete",
@@ -244,11 +244,11 @@ class TestIncomeController:
             result = controller.delete_income(income_id)
             assert isinstance(result, Ok)
 
-    def test_update_income(self, controller):
+    def test_update_income(self, controller, family_member_id):
         """Test updating income through controller."""
         income = Income(
             familia_id=1,
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=1000.00,
             fecha=date.today(),
             descripcion="Original",

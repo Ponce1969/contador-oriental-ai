@@ -10,7 +10,7 @@ from controllers.base_controller import BaseController
 from models.errors import AppError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
-from services.income_service import IncomeService
+from services.domain.income_service import IncomeService
 
 
 class IncomeController(BaseController):
@@ -40,12 +40,23 @@ class IncomeController(BaseController):
             service = IncomeService(repo)
             return service.list_by_member(member_id)
 
-    def get_summary_by_categories(self) -> dict[str, float]:
-        """Obtener resumen de ingresos por categoría"""
+    def list_for_month(self, year: int, month: int) -> list[Income]:
+        """Ingresos del mes: recurrentes siempre + no-recurrentes solo del mes."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
-            return service.get_summary_by_categories()
+            return service.list_for_month(year, month)
+
+    def get_summary_by_categories(
+        self,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> dict[str, float]:
+        """Obtener resumen de ingresos por categoría del mes indicado."""
+        with self._get_session() as session:
+            repo = IncomeRepository(session, self._familia_id)
+            service = IncomeService(repo)
+            return service.get_summary_by_categories(year=year, month=month)
 
     def get_total_by_month(self, year: int, month: int) -> float:
         """Obtener total de ingresos del mes"""

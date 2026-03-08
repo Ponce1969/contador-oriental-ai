@@ -2,7 +2,7 @@
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: auditor_familiar_db
     restart: unless-stopped
     environment:
@@ -81,6 +81,35 @@ services:
       - auditor_network
     profiles:
       - admin
+
+  # OCR API Microservice
+  ocr_api:
+    build:
+      context: ./ocr_api
+      dockerfile: Dockerfile
+    container_name: auditor_familiar_ocr_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-auditor_familiar}
+      POSTGRES_USER: ${POSTGRES_USER:-auditor_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      API_HOST: 0.0.0.0
+      API_PORT: 8551
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    ports:
+      - "${OCR_PORT:-8551}:8551"
+    networks:
+      - auditor_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8551/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data:

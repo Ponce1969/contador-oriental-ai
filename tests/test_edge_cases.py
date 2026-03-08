@@ -134,7 +134,7 @@ class TestBusinessRules:
     def test_recurrent_expense_without_frequency(self, db_session):
         """Test that recurrent expense without frequency is handled."""
         from repositories.expense_repository import ExpenseRepository
-        from services.expense_service import ExpenseService
+        from services.domain.expense_service import ExpenseService
 
         repo = ExpenseRepository(db_session, familia_id=1)
         service = ExpenseService(repo)
@@ -146,7 +146,7 @@ class TestBusinessRules:
             descripcion="Alquiler",
             categoria=ExpenseCategory.HOGAR,
             es_recurrente=True,
-            frecuencia_recurrencia=None,
+            frecuencia=None,
         )
 
         result = service.create_expense(expense)
@@ -156,7 +156,7 @@ class TestBusinessRules:
     def test_recurrent_income_without_frequency(self, db_session):
         """Test that recurrent income without frequency is handled."""
         from repositories.income_repository import IncomeRepository
-        from services.income_service import IncomeService
+        from services.domain.income_service import IncomeService
 
         repo = IncomeRepository(db_session, familia_id=1)
         service = IncomeService(repo)
@@ -179,7 +179,7 @@ class TestBusinessRules:
     def test_duplicate_username(self, db_session):
         """Test that creating duplicate username fails."""
         from repositories.user_repository import UserRepository
-        from services.auth_service import AuthService
+        from services.domain.auth_service import AuthService
 
         repo = UserRepository(session=db_session)
         service = AuthService(repo)

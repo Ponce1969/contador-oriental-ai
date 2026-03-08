@@ -13,9 +13,23 @@ class FletingApp:
         self.page.on_resize = self.on_resize
         I18n.load(AppState.language)
         self.page.appbar = self.build_topbar()
+        self._register_file_picker()
         from core.router import Router
         self.router = Router(page)
         self.router.navigate("/")
+
+    def _register_file_picker(self):
+        """Registrar FilePicker antes del primer navigate().
+        page._internals es un dict del dataclass que persiste toda la sesion.
+        """
+        import logging
+        picker = ft.FilePicker()
+        self.page.overlay.append(picker)
+        self.page._internals["file_picker"] = picker
+        logging.getLogger("App").info(
+            "[OCR] FilePicker registrado en _internals: id=%s page_id=%s",
+            id(picker), id(self.page)
+        )
     
     def build_topbar(self):
         menu_items = []

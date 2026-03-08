@@ -4,12 +4,56 @@ import flet as ft
 
 from configs.app_config import AppConfig
 from core.error_handler import GlobalErrorHandler
+from core.events import EventType, event_system
 from core.logger import get_logger
 from core.responsive import get_device_type
 from core.sqlalchemy_session import create_tables
 from core.state import AppState
 
 logger = get_logger("App")
+
+
+def _setup_memory_observer() -> None:
+    """
+    Suscribir el MemoryEventHandler al sistema de eventos.
+    Esto activa la memoria vectorial automática al guardar gastos.
+    Se omite silenciosamente si MEMORY_SERVICE_ENABLED=false.
+    """
+    if not AppConfig.MEMORY_SERVICE_ENABLED:
+        logger.info("[MEMORY] Servicio de memoria deshabilitado (MEMORY_SERVICE_ENABLED=false)")
+        return
+
+    try:
+        from core.sqlalchemy_session import get_db_session
+        from repositories.memoria_repository import MemoriaRepository
+        from services.ai.embedding_service import EmbeddingService
+        from services.ai.ia_memory_service import IAMemoryService
+        from services.ai.memory_event_handler import MemoryEventHandler
+
+        embedding_service = EmbeddingService(
+            ollama_url=AppConfig.OLLAMA_BASE_URL,
+            model=AppConfig.OLLAMA_EMBEDDING_MODEL,
+        )
+
+        def _make_handler_for_familia(familia_id: int) -> MemoryEventHandler:
+            with get_db_session() as session:
+                repo = MemoriaRepository(session, familia_id)
+                memory_service = IAMemoryService(repo, embedding_service)
+                return MemoryEventHandler(memory_service)
+
+        async def _dispatch_gasto(event):
+            with get_db_session() as session:
+                repo = MemoriaRepository(session, event.familia_id)
+                memory_service = IAMemoryService(repo, embedding_service)
+                handler = MemoryEventHandler(memory_service)
+                await handler.handle(event)
+
+        event_system.subscribe(EventType.GASTO_CREADO, _dispatch_gasto)
+        logger.info("[MEMORY] Observer de gastos suscrito al EventSystem ✅")
+
+    except Exception as e:
+        logger.warning("[MEMORY] No se pudo inicializar el observer: %s", str(e))
+
 
 def main(page: ft.Page):
     try:
@@ -27,6 +71,9 @@ def main(page: ft.Page):
         # Inicializar base de datos
         create_tables()
         logger.info("Base de datos inicializada")
+
+        # Activar memoria vectorial (Observer Pattern)
+        _setup_memory_observer()
 
         # Banner de bienvenida
         def close_welcome_banner(e):

@@ -284,7 +284,9 @@ class DashboardView:
                                     ),
                                     ft.Divider(),
                                     SummaryRenderer.render(
-                                        self.income_controller.get_summary_by_categories(),
+                                        self.income_controller.get_summary_by_categories(
+                                            year=year, month=month
+                                        ),
                                         color=ft.Colors.GREEN,
                                         color_bg=ft.Colors.GREEN_100,
                                         empty_msg="No hay ingresos registrados",
@@ -311,7 +313,9 @@ class DashboardView:
                                     ),
                                     ft.Divider(),
                                     SummaryRenderer.render(
-                                        self.expense_controller.get_summary_by_categories(),
+                                        self.expense_controller.get_summary_by_categories(
+                                            year=year, month=month
+                                        ),
                                         color=ft.Colors.RED,
                                         color_bg=ft.Colors.RED_100,
                                         empty_msg="No hay gastos registrados",

@@ -5,7 +5,7 @@ Tests para validators.py - Primera línea de defensa del Escudo Charrúa
 import pytest
 from result import Err, Ok
 
-from services.validators import validate_monto_positivo, validate_descripcion_requerida
+from services.domain.validators import validate_monto_positivo, validate_descripcion_requerida
 
 
 class TestValidateMontoPositivo:

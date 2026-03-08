@@ -8,7 +8,7 @@ import pytest
 from result import Ok
 
 from models.income_model import Income, IncomeCategory
-from services.income_service import IncomeService
+from services.domain.income_service import IncomeService
 
 
 class TestIncomeService:
@@ -72,17 +72,17 @@ class TestIncomeService:
             result = service.delete_income(income_id)
             assert isinstance(result, Ok)
 
-    def test_get_total_by_month(self, service):
+    def test_get_total_by_month(self, service, family_member_id):
         """Test getting total by month."""
         income1 = Income(
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=2500.00,
             fecha=date.today(),
             descripcion="Sueldo 1",
             categoria=IncomeCategory.SUELDO,
         )
         income2 = Income(
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=500.00,
             fecha=date.today(),
             descripcion="Extra",
@@ -95,17 +95,17 @@ class TestIncomeService:
         total = service.get_total_by_month(date.today().year, date.today().month)
         assert total >= 3000.00
 
-    def test_get_summary_by_categories(self, service):
+    def test_get_summary_by_categories(self, service, family_member_id):
         """Test getting summary by categories."""
         income1 = Income(
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=2500.00,
             fecha=date.today(),
             descripcion="Sueldo",
             categoria=IncomeCategory.SUELDO,
         )
         income2 = Income(
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=3000.00,
             fecha=date.today(),
             descripcion="Sueldo 2",

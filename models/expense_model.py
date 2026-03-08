@@ -48,7 +48,7 @@ class Expense(BaseModel):
         default=False,
         description="Indica si es un gasto recurrente"
     )
-    frecuencia_recurrencia: RecurrenceFrequency | None = Field(
+    frecuencia: RecurrenceFrequency | None = Field(
         default=None,
         description="Frecuencia de recurrencia"
     )

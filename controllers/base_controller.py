@@ -11,6 +11,8 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
+from core.events import EventSystem
+from core.events import event_system as _default_event_system
 from core.sqlalchemy_session import get_db_session
 
 
@@ -26,9 +28,13 @@ class BaseController:
         self,
         session: Session | None = None,
         familia_id: int | None = None,
+        event_system: EventSystem | None = None,
     ) -> None:
         self._session = session
         self._familia_id = familia_id
+        self._event_system = (
+            event_system if event_system is not None else _default_event_system
+        )
 
     @contextmanager
     def _get_session(self) -> Generator[Session, None, None]:

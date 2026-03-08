@@ -18,7 +18,7 @@ class TestIntegrationFlows:
     def test_complete_user_registration_flow(self, db_session):
         """Test complete user registration and login flow."""
         from repositories.user_repository import UserRepository
-        from services.auth_service import AuthService
+        from services.domain.auth_service import AuthService
 
         # Setup
         user_repo = UserRepository(session=db_session)
@@ -37,7 +37,7 @@ class TestIntegrationFlows:
     def test_expense_tracking_flow(self, db_session):
         """Test complete expense tracking flow."""
         from repositories.expense_repository import ExpenseRepository
-        from services.expense_service import ExpenseService
+        from services.domain.expense_service import ExpenseService
 
         # Setup
         repo = ExpenseRepository(db_session, familia_id=1)
@@ -78,10 +78,10 @@ class TestIntegrationFlows:
         total = service.get_total_by_month(date.today().year, date.today().month)
         assert total >= 350.00
 
-    def test_income_tracking_flow(self, db_session):
+    def test_income_tracking_flow(self, db_session, family_member_id):
         """Test complete income tracking flow."""
         from repositories.income_repository import IncomeRepository
-        from services.income_service import IncomeService
+        from services.domain.income_service import IncomeService
 
         # Setup
         repo = IncomeRepository(db_session, familia_id=1)
@@ -90,14 +90,14 @@ class TestIntegrationFlows:
         # Add incomes
         incomes = [
             Income(
-                family_member_id=1,
+                family_member_id=family_member_id,
                 monto=2500.00,
                 fecha=date.today(),
                 descripcion="Salary",
                 categoria=IncomeCategory.SUELDO,
             ),
             Income(
-                family_member_id=1,
+                family_member_id=family_member_id,
                 monto=500.00,
                 fecha=date.today(),
                 descripcion="Freelance work",
@@ -117,12 +117,12 @@ class TestIntegrationFlows:
         total = service.get_total_by_month(date.today().year, date.today().month)
         assert total >= 3000.00
 
-    def test_budget_balance_calculation(self, db_session):
+    def test_budget_balance_calculation(self, db_session, family_member_id):
         """Test budget balance calculation (income - expenses)."""
         from repositories.expense_repository import ExpenseRepository
         from repositories.income_repository import IncomeRepository
-        from services.expense_service import ExpenseService
-        from services.income_service import IncomeService
+        from services.domain.expense_service import ExpenseService
+        from services.domain.income_service import IncomeService
 
         # Setup services
         expense_repo = ExpenseRepository(db_session, familia_id=1)
@@ -132,7 +132,7 @@ class TestIntegrationFlows:
 
         # Add income
         income = Income(
-            family_member_id=1,
+            family_member_id=family_member_id,
             monto=3000.00,
             fecha=date.today(),
             descripcion="Monthly salary",

@@ -123,6 +123,14 @@ class AIContext(BaseModel):
         default_factory=list,
         description="Comparativa ticket promedio vs mes anterior por categoría"
     )
+    subtotal_descripcion: float | None = Field(
+        default=None,
+        description="Subtotal pre-calculado para los términos buscados en descripción"
+    )
+    terminos_buscados: str = Field(
+        default="",
+        description="Términos que el usuario buscó, para armar el label del subtotal"
+    )
 
 
 class AIResponse(BaseModel):

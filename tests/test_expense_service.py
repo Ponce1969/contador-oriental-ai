@@ -10,7 +10,7 @@ from result import Err, Ok
 from models.categories import ExpenseCategory
 from models.errors import ValidationError
 from models.expense_model import Expense
-from services.expense_service import ExpenseService
+from services.domain.expense_service import ExpenseService
 
 
 class TestExpenseService:
@@ -66,7 +66,7 @@ class TestExpenseService:
             descripcion="Alquiler",
             categoria=ExpenseCategory.HOGAR,
             es_recurrente=True,
-            frecuencia_recurrencia=None,
+            frecuencia=None,
         )
 
         result = service.create_expense(expense)

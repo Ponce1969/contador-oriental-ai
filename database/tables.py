@@ -1,9 +1,12 @@
-from __future__ import annotations
-
 from datetime import date, datetime
-
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+
+try:
+    from pgvector.sqlalchemy import Vector as _Vector
+    _VECTOR_TYPE = _Vector(768)
+except Exception:
+    _VECTOR_TYPE = Text
 
 from database.base import Base
 
@@ -135,12 +138,13 @@ class ExpenseTable(Base):
     # Información adicional
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)
     
-    # Campos legacy de ShoppingItem (para migración)
-    name: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    category: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    purchased: Mapped[bool] = mapped_column(Boolean, default=False)
-    purchase_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Embedding semántico para búsqueda cosine via pgvector (Vector en PG, Text en otros)
+    embedding = Column(_VECTOR_TYPE, nullable=True)
+
+    # Campos OCR de ticket
+    ticket_image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ocr_texto_crudo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ocr_confianza: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 # Alias para compatibilidad con código existente

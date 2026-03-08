@@ -46,7 +46,7 @@ def up(db):
                 categoria VARCHAR(100) NOT NULL,
                 descripcion TEXT NOT NULL,
                 es_recurrente BOOLEAN DEFAULT FALSE,
-                frecuencia_recurrencia VARCHAR(50),
+                frecuencia VARCHAR(50),
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (family_member_id) REFERENCES family_members (id)
@@ -62,7 +62,7 @@ def up(db):
                 categoria TEXT NOT NULL,
                 descripcion TEXT NOT NULL,
                 es_recurrente BOOLEAN DEFAULT 0,
-                frecuencia_recurrencia TEXT,
+                frecuencia TEXT,
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (family_member_id) REFERENCES family_members (id)
@@ -81,7 +81,7 @@ def up(db):
                 subcategoria VARCHAR(100),
                 metodo_pago VARCHAR(50) NOT NULL,
                 es_recurrente BOOLEAN DEFAULT FALSE,
-                frecuencia_recurrencia VARCHAR(50),
+                frecuencia VARCHAR(50),
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -97,7 +97,7 @@ def up(db):
                 subcategoria TEXT,
                 metodo_pago TEXT NOT NULL,
                 es_recurrente BOOLEAN DEFAULT 0,
-                frecuencia_recurrencia TEXT,
+                frecuencia TEXT,
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
