@@ -47,6 +47,10 @@ services:
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
       DEBUG: ${DEBUG:-False}
       
+      # OCR Microservice
+      OCR_API_URL: ${OCR_API_URL:-http://ocr_api:8551}
+      OCR_API_PUBLIC_URL: ${OCR_API_PUBLIC_URL:-http://localhost:8551}
+
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_FILE: /app/logs/app.log
