@@ -274,7 +274,7 @@ RESPUESTA:"""
         except ImportError:
             raise AppError(message="Dependencia 'ollama' no encontrada.")
 
-        client = AsyncClient(host="http://host.docker.internal:11434")
+        client = AsyncClient(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
         async for part in await client.generate(
             model="contador-oriental",
             prompt=prompt,
@@ -294,7 +294,7 @@ RESPUESTA:"""
         """
         try:
             from ollama import AsyncClient
-            client = AsyncClient(host="http://host.docker.internal:11434")
+            client = AsyncClient(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
             response = await client.generate(
                 model="contador-oriental",
                 prompt=prompt,
@@ -373,8 +373,9 @@ RESPUESTA:"""
             
             try:
                 # Cliente asíncrono: no bloquea el event loop mientras Gemma genera
-                ai_logger.info("🔌 Conectando con Ollama en host.docker.internal:11434")
-                client = AsyncClient(host='http://host.docker.internal:11434')
+                _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+                ai_logger.info("🔌 Conectando con Ollama en %s", _ollama_url)
+                client = AsyncClient(host=_ollama_url)
                 
                 ai_logger.info("🤖 Generando respuesta con contador-oriental (async)")
                 response = await client.generate(
