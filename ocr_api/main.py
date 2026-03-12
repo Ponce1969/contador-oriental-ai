@@ -460,6 +460,31 @@ async def get_resultado(session_id: str) -> JSONResponse:
         return JSONResponse({"ready": False})
 
 
+@app.get("/pendiente/{familia_id}")
+async def get_pendiente(familia_id: int) -> JSONResponse:
+    """Retorna la sesión OCR más reciente con resultado listo para esta familia."""
+    try:
+        from sqlalchemy.orm import Session as SyncSession
+        engine = get_engine(settings.database_url)
+        with SyncSession(engine) as db:
+            row = db.execute(
+                select(OCRSession)
+                .where(
+                    OCRSession.familia_id == familia_id,
+                    OCRSession.resultado_json.is_not(None),
+                )
+                .order_by(OCRSession.created_at.desc())
+                .limit(1)
+            ).scalar_one_or_none()
+            if row is None:
+                return JSONResponse({"ready": False})
+            data = json.loads(row.resultado_json)
+        return JSONResponse({"ready": True, "session_id": row.session_id, **data})
+    except Exception as e:
+        logger.error("[DB] Error buscando sesión pendiente: %s", e)
+        return JSONResponse({"ready": False})
+
+
 @app.post("/upload-ocr", response_model=OCRResponse)
 async def upload_ocr(
     file: UploadFile = File(...),

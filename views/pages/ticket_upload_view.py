@@ -72,6 +72,7 @@ class TicketUploadView:
         self._body = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True)
 
         self._renderizar()
+        asyncio.create_task(self._recuperar_pendiente())
 
     # ------------------------------------------------------------------
     # Render principal
@@ -419,6 +420,22 @@ class TicketUploadView:
     def _cambiar_estado(self, nuevo: _Estado):
         self._estado = nuevo
         self._renderizar()
+
+    async def _recuperar_pendiente(self) -> None:
+        """Al inicializar, busca si hay un resultado OCR pendiente para esta familia.
+        Si existe, salta directo a CONFIRM sin necesidad de re-subir la foto.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(
+                    f"{_OCR_INTERNAL}/pendiente/{self._familia_id}"
+                )
+                data = resp.json()
+            if data.get("ready"):
+                self._session_id = data.get("session_id")
+                await self._procesar_resultado_ocr(data)
+        except Exception as e:
+            logger.debug("[OCR] Sin pendiente al iniciar: %s", e)
 
     def _preparar_sesion(self) -> str:
         """Genera un session_id y retorna la URL publica del formulario."""
