@@ -173,7 +173,7 @@ async def parsear_con_ollama(texto: str) -> dict | None:
     try:
         prompt = _PROMPT_PARSEO.format(texto=texto[:1500])
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 f"{settings.ollama_base_url}/api/generate",
                 json={
@@ -476,7 +476,7 @@ async def get_pendiente(familia_id: int) -> JSONResponse:
                 .order_by(OCRSession.created_at.desc())
                 .limit(1)
             ).scalar_one_or_none()
-            if row is None:
+            if row is None or row.resultado_json is None:
                 return JSONResponse({"ready": False})
             data = json.loads(row.resultado_json)
         return JSONResponse({"ready": True, "session_id": row.session_id, **data})
