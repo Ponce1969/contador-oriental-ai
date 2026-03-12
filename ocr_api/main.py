@@ -454,8 +454,6 @@ async def get_resultado(session_id: str) -> JSONResponse:
             if row is None or row.resultado_json is None:
                 return JSONResponse({"ready": False})
             data = json.loads(row.resultado_json)
-            db.delete(row)
-            db.commit()
         return JSONResponse({"ready": True, **data})
     except Exception as e:
         logger.error("[DB] Error leyendo sesión OCR: %s", e)
