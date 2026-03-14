@@ -319,7 +319,7 @@ class AIAdvisorView:
 
         self.typing_indicator.visible = False
         self.pregunta_input.disabled = False
-        self.chat_column.scroll_to(offset=-1, duration=400)
+        await self.chat_column.scroll_to(offset=-1, duration=400)
         self.page.update()
 
     def _agregar_burbuja_stream(self, markdown_widget: ft.Markdown) -> None:
@@ -439,7 +439,7 @@ class AIAdvisorView:
             )
 
         self.page.update()
-        self.chat_column.scroll_to(offset=-1, duration=400)
+        asyncio.create_task(self.chat_column.scroll_to(offset=-1, duration=400))
 
     async def _exportar_pdf(self) -> None:
         """Muestra el informe en un modal con opción de copiar al portapapeles."""

@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import flet as ft
@@ -139,7 +140,18 @@ def main(page: ft.Page):
             router.navigate("/login")
 
         logger.info("Aplicação iniciada com sucesso")
-        
+
+        async def _keepalive():
+            while True:
+                await asyncio.sleep(30)
+                try:
+                    page.update()
+                except Exception:
+                    break
+
+        if os.getenv("POSTGRES_HOST"):
+            page.run_task(_keepalive)
+
     except Exception as e:
         GlobalErrorHandler.handle(page, e)
 
