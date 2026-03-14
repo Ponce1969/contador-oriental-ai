@@ -56,7 +56,7 @@ def _setup_memory_observer() -> None:
         logger.warning("[MEMORY] No se pudo inicializar el observer: %s", str(e))
 
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
     try:
         page.title = "Auditor Familiar"
         page.window.width = 1000
