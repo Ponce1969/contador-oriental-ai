@@ -21,7 +21,7 @@ done
 
 echo "✅ PostgreSQL listo."
 echo "🔄 Aplicando migraciones..."
-python -m fleting db migrate
+fleting db migrate
 echo "✅ Migraciones aplicadas."
 echo "🚀 Iniciando aplicación..."
 exec python main.py
