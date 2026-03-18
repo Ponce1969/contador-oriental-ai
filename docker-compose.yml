@@ -51,9 +51,14 @@ services:
       OCR_API_URL: ${OCR_API_URL:-http://ocr_api:8551}
       OCR_API_PUBLIC_URL: ${OCR_API_PUBLIC_URL:-http://localhost:8551}
 
+      # Ollama IA
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_FILE: /app/logs/app.log
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./logs:/app/logs
       - app_data:/app/data
@@ -117,6 +122,8 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: 8551
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${OCR_PORT:-8551}:8551"
     networks:
