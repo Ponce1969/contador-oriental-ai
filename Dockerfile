@@ -14,8 +14,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PATH="/app/.venv/bin:/home/appuser/.local/bin:${PATH}" \
-    UV_PROJECT_ENVIRONMENT=/app/.venv \
-    UV_FROZEN=1
+    UV_PROJECT_ENVIRONMENT=/app/.venv
 
 # Instalar dependencias del sistema (incluyendo Tesseract OCR para tickets)
 RUN apt-get update && apt-get install -y \
@@ -39,10 +38,10 @@ RUN useradd -m -u 1000 appuser && \
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY --chown=appuser:appuser pyproject.toml uv.lock ./
+COPY --chown=appuser:appuser pyproject.toml ./
 
 # Instalar dependencias de Python en venv dedicado (cacheado por Docker layer)
-RUN uv sync --no-dev
+RUN uv venv /app/.venv && uv pip install --python /app/.venv/bin/python -r pyproject.toml
 
 # Copiar código de la aplicación
 COPY --chown=appuser:appuser . .
