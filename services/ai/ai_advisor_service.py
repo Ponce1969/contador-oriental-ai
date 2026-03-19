@@ -300,8 +300,14 @@ RESPUESTA:"""
                 prompt=prompt,
             )
             return response.get("response", "").strip()
+        except ConnectionError as e:
+            logger.error("[AI] llamada_directa — Ollama no responde (ConnectionError): %s", e)
+            return ""
+        except TimeoutError as e:
+            logger.error("[AI] llamada_directa — Timeout en Ollama: %s", e)
+            return ""
         except Exception as e:
-            logger.warning("[AI] llamada_directa falló: %s", e)
+            logger.exception("[AI] llamada_directa — Error inesperado: %s", e)
             return ""
 
     async def consultar(

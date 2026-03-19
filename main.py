@@ -13,6 +13,14 @@ from core.state import AppState
 
 logger = get_logger("App")
 
+_SECRET_KEY_DEFAULT = "CAMBIA_ESTO_genera_con_python_secrets_token_hex_32"
+_secret = os.getenv("SECRET_KEY", "")
+if _secret == _SECRET_KEY_DEFAULT or not _secret:
+    raise ValueError(
+        "SECRET_KEY no está configurado. "
+        "Generá una con: python -c 'import secrets; print(secrets.token_hex(32))'"
+    )
+
 
 def _setup_memory_observer() -> None:
     """

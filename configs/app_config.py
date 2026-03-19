@@ -25,7 +25,7 @@ class ScreenConfig:
     }
 
 class AppConfig:
-    APP_NAME = "{project_name}"
+    APP_NAME = "Contador Oriental AI"
     DEFAULT_SCREEN = ScreenConfig.MOBILE
     THEME_MODE = ft.ThemeMode.LIGHT
 

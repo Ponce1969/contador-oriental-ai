@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 try:
@@ -102,6 +102,11 @@ class IncomeTable(Base):
     # Información adicional
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    __table_args__ = (
+        Index("idx_incomes_familia_fecha", "familia_id", "fecha"),
+        Index("idx_incomes_familia_categoria", "familia_id", "categoria"),
+    )
+
 
 class ExpenseTable(Base):
     """
@@ -145,6 +150,11 @@ class ExpenseTable(Base):
     ticket_image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     ocr_texto_crudo: Mapped[str | None] = mapped_column(Text, nullable=True)
     ocr_confianza: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    __table_args__ = (
+        Index("idx_expenses_familia_fecha", "familia_id", "fecha"),
+        Index("idx_expenses_familia_categoria", "familia_id", "categoria"),
+    )
 
 
 # Alias para compatibilidad con código existente
