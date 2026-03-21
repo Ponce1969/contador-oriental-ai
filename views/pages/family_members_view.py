@@ -424,11 +424,12 @@ class FamilyMembersView:
                 self._error("Especie obligatoria para mascotas")
                 return
 
-        # Validar edad
+        # Validar edad — limpiar texto extra como "10 años" → "10"
         edad = None
         if self.age_input.value:
+            edad_str = "".join(c for c in self.age_input.value if c.isdigit())
             try:
-                edad = int(self.age_input.value)
+                edad = int(edad_str)
                 if edad < 0 or edad > 150:
                     self._error("Edad debe estar entre 0 y 150")
                     return
