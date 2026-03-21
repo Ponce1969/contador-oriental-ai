@@ -44,14 +44,14 @@ class RegistrationController:
         # Validar que las contraseñas coincidan
         if admin_password != password_confirm:
             error_text.value = "Las contraseñas no coinciden"
-            error_text.color = ft.colors.RED_400
+            error_text.color = ft.Colors.RED_400
             self.page.update()
             return
         
         # Validar campos vacíos
         if not all([familia_nombre, familia_email, admin_username, admin_password, admin_nombre_completo]):
             error_text.value = "Todos los campos son obligatorios"
-            error_text.color = ft.colors.RED_400
+            error_text.color = ft.Colors.RED_400
             self.page.update()
             return
         
