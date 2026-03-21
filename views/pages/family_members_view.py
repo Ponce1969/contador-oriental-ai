@@ -94,6 +94,7 @@ class FamilyMembersView:
 
         self.age_input = ft.TextField(
             label="Edad",
+            hint_text="ej: 10",
             width=100,
             keyboard_type=ft.KeyboardType.NUMBER,
         )
