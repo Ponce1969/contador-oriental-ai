@@ -47,7 +47,7 @@ class AIAdvisorView:
             expand=True,
             border_radius=25,
             bgcolor=ft.Colors.WHITE,
-            content_padding=ft.padding.symmetric(horizontal=20, vertical=14),
+            content_padding=ft.Padding.symmetric(horizontal=20, vertical=14),
             border_color=ft.Colors.GREY_300,
             on_submit=self._handle_submit,
         )
@@ -75,7 +75,7 @@ class AIAdvisorView:
                 spacing=4,
             ),
             visible=False,
-            padding=ft.padding.only(left=16),
+            padding=ft.Padding.only(left=16),
         )
 
         # Botón ver informe (oculto hasta recibir respuesta)
@@ -160,7 +160,7 @@ class AIAdvisorView:
                                             weight=ft.FontWeight.BOLD,
                                         ),
                                         bgcolor=ft.Colors.GREEN_600,
-                                        padding=ft.padding.symmetric(
+                                        padding=ft.Padding.symmetric(
                                             horizontal=8 if is_mobile else 10,
                                             vertical=3 if is_mobile else 4,
                                         ),
@@ -215,12 +215,12 @@ class AIAdvisorView:
                                 ),
                                 ft.Container(
                                     content=self.incluir_gastos_checkbox,
-                                    padding=ft.padding.only(left=6 if is_mobile else 10),
+                                    padding=ft.Padding.only(left=6 if is_mobile else 10),
                                 ),
                             ],
                             spacing=8 if is_mobile else 10,
                         ),
-                        padding=ft.padding.symmetric(
+                        padding=ft.Padding.symmetric(
                             horizontal=2 if is_mobile else 4,
                             vertical=6 if is_mobile else 8,
                         ),
@@ -351,7 +351,7 @@ class AIAdvisorView:
             padding=15,
             bgcolor=ft.Colors.WHITE,
             border=ft.border.all(1, ft.Colors.GREY_200),
-            border_radius=ft.border_radius.only(
+            border_radius=ft.BorderRadius.only(
                 top_left=15,
                 top_right=15,
                 bottom_left=2,
@@ -414,7 +414,7 @@ class AIAdvisorView:
                     1,
                     ft.Colors.BLUE_100 if is_user else ft.Colors.GREY_200,
                 ),
-                border_radius=ft.border_radius.only(
+                border_radius=ft.BorderRadius.only(
                     top_left=15,
                     top_right=15,
                     bottom_left=15 if is_user else 2,

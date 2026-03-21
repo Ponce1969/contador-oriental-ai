@@ -83,7 +83,7 @@ class LoginView:
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=10
                         ),
-                        margin=ft.margin.only(bottom=30)
+                        margin=ft.Margin.only(bottom=30)
                     ),
                     
                     # Formulario de login
@@ -111,7 +111,7 @@ class LoginView:
                                             color=ft.Colors.BLUE_700,
                                         )
                                     ),
-                                    margin=ft.margin.only(top=10)
+                                    margin=ft.Margin.only(top=10)
                                 ),
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,

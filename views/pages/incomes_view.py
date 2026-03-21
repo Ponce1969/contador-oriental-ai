@@ -347,7 +347,7 @@ class IncomesView:
                         ),
                         bgcolor=ft.Colors.TEAL_600,
                         border_radius=8,
-                        padding=ft.padding.symmetric(horizontal=6, vertical=2),
+                        padding=ft.Padding.symmetric(horizontal=6, vertical=2),
                     )
                     if income.es_recurrente
                     else ft.Container()

@@ -141,7 +141,7 @@ class DashboardView:
                     padding=20 if is_mobile else 30,
                     bgcolor=ft.Colors.LIGHT_BLUE_50,
                     border_radius=15,
-                    margin=ft.margin.only(bottom=16),
+                    margin=ft.Margin.only(bottom=16),
                     shadow=ft.BoxShadow(
                         spread_radius=1,
                         blur_radius=8,

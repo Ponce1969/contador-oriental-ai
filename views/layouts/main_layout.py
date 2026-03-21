@@ -31,7 +31,7 @@ class MainLayout(ft.Column):
         self.controls.append(self._top_bar())
 
         # CONTENT — padding lateral adaptativo
-        content_padding = ft.padding.symmetric(
+        content_padding = ft.Padding.symmetric(
             horizontal=8 if self._is_mobile else 24,
             vertical=8 if self._is_mobile else 16,
         )
