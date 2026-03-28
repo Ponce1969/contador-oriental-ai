@@ -20,6 +20,7 @@ class IncomeCategory(str, Enum):
     NEGOCIO = "🏪 Negocio"
     ALQUILER = "🏠 Alquiler"
     INVERSION = "📈 Inversión"
+    JUBILADO = "👴 Jubilado/a"
     OTRO = "💵 Otro"
 
 
