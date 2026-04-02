@@ -20,7 +20,7 @@ from services.domain.validators import (
 
 class IncomeService:
     """Servicio para gestión de ingresos con validaciones de negocio"""
-    
+
     def __init__(self, repo: IncomeRepository) -> None:
         self._repo = repo
 

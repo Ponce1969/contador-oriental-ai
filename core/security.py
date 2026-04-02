@@ -4,6 +4,7 @@ Seguridad de autenticación:
 - Bloqueo temporal de usuario tras N fallos consecutivos
 - Timeout de sesión inactiva
 """
+
 from __future__ import annotations
 
 import logging
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 # Configuración (sobreescribible por variables de entorno)
 # ---------------------------------------------------------------------------
 MAX_INTENTOS = int(os.getenv("AUTH_MAX_INTENTOS", "5"))
-VENTANA_SEGUNDOS = int(os.getenv("AUTH_VENTANA_SEGUNDOS", "900"))   # 15 min
-BLOQUEO_SEGUNDOS = int(os.getenv("AUTH_BLOQUEO_SEGUNDOS", "900"))   # 15 min
+VENTANA_SEGUNDOS = int(os.getenv("AUTH_VENTANA_SEGUNDOS", "900"))  # 15 min
+BLOQUEO_SEGUNDOS = int(os.getenv("AUTH_BLOQUEO_SEGUNDOS", "900"))  # 15 min
 SESSION_TIMEOUT_SEGUNDOS = int(os.getenv("SESSION_TIMEOUT_SEGUNDOS", "28800"))  # 8 h
 
 

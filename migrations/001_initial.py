@@ -1,6 +1,7 @@
 """
 Migración inicial - Crear tablas de familia, ingresos y gastos
 """
+
 from sqlalchemy import text
 
 from configs.database_config import DatabaseConfig
@@ -8,12 +9,13 @@ from configs.database_config import DatabaseConfig
 
 def up(db):
     """Crear las tablas iniciales del sistema"""
-    
+
     is_postgres = DatabaseConfig.is_postgresql()
-    
+
     # Tabla de miembros de familia
     if is_postgres:
-        db.execute(text("""
+        db.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS family_members (
                 id SERIAL PRIMARY KEY,
                 nombre VARCHAR(200) NOT NULL,
@@ -22,9 +24,11 @@ def up(db):
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """))
+        """)
+        )
     else:
-        db.execute(text("""
+        db.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS family_members (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT NOT NULL,
@@ -33,11 +37,13 @@ def up(db):
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """))
-    
+        """)
+        )
+
     # Tabla de ingresos
     if is_postgres:
-        db.execute(text("""
+        db.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS incomes (
                 id SERIAL PRIMARY KEY,
                 family_member_id INTEGER NOT NULL,
@@ -51,9 +57,11 @@ def up(db):
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (family_member_id) REFERENCES family_members (id)
             )
-        """))
+        """)
+        )
     else:
-        db.execute(text("""
+        db.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS incomes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 family_member_id INTEGER NOT NULL,
@@ -67,11 +75,13 @@ def up(db):
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (family_member_id) REFERENCES family_members (id)
             )
-        """))
-    
+        """)
+        )
+
     # Tabla de gastos
     if is_postgres:
-        db.execute(text("""
+        db.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS expenses (
                 id SERIAL PRIMARY KEY,
                 descripcion TEXT NOT NULL,
@@ -85,9 +95,11 @@ def up(db):
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """))
+        """)
+        )
     else:
-        db.execute(text("""
+        db.execute(
+            text("""
             CREATE TABLE IF NOT EXISTS expenses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 descripcion TEXT NOT NULL,
@@ -101,8 +113,9 @@ def up(db):
                 notas TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """))
-    
+        """)
+        )
+
     print("✅ Tablas creadas exitosamente")
 
 
@@ -111,5 +124,5 @@ def down(db):
     db.execute(text("DROP TABLE IF EXISTS expenses"))
     db.execute(text("DROP TABLE IF EXISTS incomes"))
     db.execute(text("DROP TABLE IF EXISTS family_members"))
-    
+
     print("↩️ Tablas eliminadas")

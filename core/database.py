@@ -1,5 +1,3 @@
-
-
 import sqlite3
 from pathlib import Path
 
@@ -8,6 +6,7 @@ from configs.database import DATABASE
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 _connection = None
+
 
 def get_connection():
     global _connection
@@ -28,17 +27,23 @@ def get_connection():
 
     return _connection
 
+
 # =========================
 # SQLITE
 # =========================
 def _connect_sqlite():
     cfg = DATABASE.get("SQLITE", {})
-    path_cfg = cfg.get("PATH", "data/fleting.db") if isinstance(cfg, dict) else "data/fleting.db"
+    path_cfg = (
+        cfg.get("PATH", "data/fleting.db")
+        if isinstance(cfg, dict)
+        else "data/fleting.db"
+    )
 
     db_path = BASE_DIR / Path(str(path_cfg))
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     return sqlite3.connect(db_path)
+
 
 # =========================
 # POSTGRESQL
@@ -55,6 +60,7 @@ class _PostgreSQLConnectionAdapter:
 
     def execute(self, sql, params=None):
         from sqlalchemy.sql.elements import TextClause
+
         if isinstance(sql, TextClause):
             sql = str(sql)
         cur = self._conn.cursor()
@@ -73,8 +79,7 @@ def _connect_postgresql():
         import psycopg2
     except ImportError:
         raise RuntimeError(
-            "PostgreSQL support requires `psycopg2`: "
-            "uv add psycopg2-binary"
+            "PostgreSQL support requires `psycopg2`: uv add psycopg2-binary"
         )
 
     cfg = DATABASE.get("POSTGRESQL", {})
@@ -112,4 +117,3 @@ def _connect_mysql():
     #     database=cfg.get("NAME"),
     #     charset=cfg.get("OPTIONS", {}).get("charset", "utf8mb4"),
     # )
-

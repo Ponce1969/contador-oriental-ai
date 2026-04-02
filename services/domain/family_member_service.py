@@ -15,7 +15,7 @@ from services.domain.validators import validate_id_requerido
 
 class FamilyMemberService:
     """Servicio para gestión de miembros de la familia con validaciones"""
-    
+
     def __init__(self, repo: FamilyMemberRepository) -> None:
         self._repo = repo
 

@@ -2,6 +2,7 @@
 MemoryEventHandler — Observer que escucha eventos contables y los vectoriza.
 Se suscribe al EventSystem y llama a IAMemoryService en background.
 """
+
 from __future__ import annotations
 
 import logging
@@ -74,10 +75,13 @@ class MemoryEventHandler:
         from database.engine import get_session
         from repositories.expense_repository import ExpenseRepository
 
-        embedding_result = await self.memory_service.embedding_service.generar_embedding(texto)
+        embedding_result = (
+            await self.memory_service.embedding_service.generar_embedding(texto)
+        )
         if isinstance(embedding_result, Err):
             logger.warning(
-                "[MEMORY_HANDLER] No se pudo generar embedding para gasto id=%s", expense_id
+                "[MEMORY_HANDLER] No se pudo generar embedding para gasto id=%s",
+                expense_id,
             )
             return
 
@@ -85,10 +89,16 @@ class MemoryEventHandler:
         try:
             repo = ExpenseRepository(session, familia_id)
             repo.guardar_embedding(expense_id, embedding_result.ok())
-            logger.info("[MEMORY_HANDLER] Embedding guardado en expenses id=%s", expense_id)
+            logger.info(
+                "[MEMORY_HANDLER] Embedding guardado en expenses id=%s", expense_id
+            )
         except Exception as e:
             session.rollback()
-            logger.error("[MEMORY_HANDLER] Error guardando embedding gasto id=%s: %s", expense_id, e)
+            logger.error(
+                "[MEMORY_HANDLER] Error guardando embedding gasto id=%s: %s",
+                expense_id,
+                e,
+            )
         finally:
             session.close()
 

@@ -2,6 +2,7 @@
 OCRController: thin controller que orquesta el flujo de procesamiento
 de tickets fotográficos. Delega toda la lógica a TicketService.
 """
+
 from __future__ import annotations
 
 import logging

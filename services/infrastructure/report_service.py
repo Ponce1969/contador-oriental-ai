@@ -105,7 +105,8 @@ class ReportService:
 
         pdf.set_font("helvetica", "", 10)
         pdf.cell(
-            0, 6,
+            0,
+            6,
             f"  Informe Mensual  |  Familia: {self._limpiar_emojis(familia_nombre)}  |  "
             f"{datetime.now().strftime('%d/%m/%Y %H:%M')}",
             align="C",
@@ -182,9 +183,7 @@ class ReportService:
                 pdf.cell(80, 7, f" {cat_limpia}", border=1, fill=True)
                 pdf.cell(60, 7, f" {desc_limpia}", border=1, fill=True)
                 pdf.cell(25, 7, str(cantidad), border=1, fill=True, align="C")
-                pdf.cell(
-                    25, 7, f"${monto:,.0f}", border=1, fill=True, align="R"
-                )
+                pdf.cell(25, 7, f"${monto:,.0f}", border=1, fill=True, align="R")
                 pdf.ln()
                 fill = not fill
 
@@ -203,7 +202,8 @@ class ReportService:
         pdf.set_font("helvetica", "I", 9)
         pdf.set_text_color(100, 100, 100)
         pdf.cell(
-            0, 6,
+            0,
+            6,
             f"  Metodos de pago: {self._limpiar_emojis(ctx.resumen_metodos_pago)}",
             new_x="LMARGIN",
             new_y="NEXT",
@@ -211,9 +211,7 @@ class ReportService:
         pdf.set_text_color(*_GRIS_OSCURO)
         pdf.ln(4)
 
-    def _seccion_consejo(
-        self, pdf: FPDF, consejo_ia: str, pregunta: str
-    ) -> None:
+    def _seccion_consejo(self, pdf: FPDF, consejo_ia: str, pregunta: str) -> None:
         """Bloque con la pregunta del usuario y el consejo del Contador Oriental."""
         self._titulo_seccion(pdf, "Analisis del Contador Oriental", _VERDE_CLARO)
 
@@ -244,7 +242,8 @@ class ReportService:
         pdf.set_font("helvetica", "I", 8)
         pdf.set_text_color(150, 150, 150)
         pdf.cell(
-            0, 8,
+            0,
+            8,
             "Generado localmente por el Contador Oriental  |  "
             "Sus datos son privados y no salen de su dispositivo.",
             align="C",

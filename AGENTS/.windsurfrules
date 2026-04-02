@@ -1,0 +1,71 @@
+# Context-Hub Integration Rules
+
+## Before writing ANY API integration code:
+
+You MUST use Context-Hub (chub) to get official, up-to-date documentation.
+
+### Workflow obligatorio:
+
+1. **Search** for the service:
+   ```bash
+   chub search <service-name>
+   ```
+
+2. **Get the docs** for the specific service:
+   ```bash
+   chub get <doc-id> --lang py   # Python projects
+   chub get <doc-id> --lang js   # JavaScript/TypeScript projects
+   chub get <doc-id> --full      # fetch all reference files
+   ```
+
+3. **Save to local context** (optional):
+   ```bash
+   chub get <doc-id> --lang py -o .context/
+   ```
+
+### Flags útiles de `chub get`:
+| Flag | Uso |
+|------|-----|
+| `--lang <py\|js\|ts>` | Variante de lenguaje |
+| `--version <ver>` | Versión específica del doc |
+| `--full` | Todos los archivos, no solo el entry point |
+| `--file <path>` | Archivo específico de referencia |
+| `-o <path>` | Guardar en archivo/directorio local |
+
+### Flags útiles de `chub search`:
+| Flag | Uso |
+|------|-----|
+| `--tags <csv>` | Filtrar por tags |
+| `--lang <language>` | Filtrar por lenguaje |
+| `--limit <n>` | Máximo de resultados (default: 20) |
+
+### IDs relevantes para este proyecto (Contador Oriental):
+
+```bash
+# FastAPI — ocr_api/main.py
+chub get fastapi/routing --lang py
+chub get fastapi/dependencies --lang py
+
+# SQLAlchemy — modelos OCR y DB
+chub get sqlalchemy/orm --lang py
+
+# httpx — polling en ticket_upload_view.py
+chub get httpx/async-client --lang py
+
+# Ollama — ai_advisor_service.py
+chub search ollama
+
+# Flet/Fleting — UI
+chub search flet
+```
+
+### Piping para agentes AI:
+```bash
+chub get <doc-id> --lang py --json   # output estructurado JSON
+```
+
+### Si `chub search` no devuelve resultados:
+1. Probar nombres alternativos: `chub search openai` vs `chub search chatgpt`
+2. Listar todo lo disponible: `chub search` (sin query)
+3. Buscar por tags: `chub search --tags http` o `chub search --tags database`
+4. Como último recurso: consultar la documentación oficial del vendor directamente

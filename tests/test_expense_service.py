@@ -20,6 +20,7 @@ class TestExpenseService:
     def service(self, db_session):
         """Create expense service with test repository."""
         from repositories.expense_repository import ExpenseRepository
+
         repo = ExpenseRepository(db_session, familia_id=1)
         return ExpenseService(repo)
 

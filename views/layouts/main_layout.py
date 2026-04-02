@@ -1,5 +1,5 @@
-
 import flet as ft
+import webbrowser
 
 from configs.routes import ROUTES
 from core.i18n import I18n
@@ -61,7 +61,9 @@ class MainLayout(ft.Column):
                         controls=[
                             ft.Icon(icon=r["icon"]),  # type: ignore
                             ft.Text(
-                                value=I18n.t(r["label"]) if "." in r["label"] else r["label"]  # type: ignore
+                                value=I18n.t(r["label"])
+                                if "." in r["label"]
+                                else r["label"]  # type: ignore
                             ),
                         ],
                         spacing=10,
@@ -69,7 +71,7 @@ class MainLayout(ft.Column):
                     on_click=lambda e, p=r["path"]: self.router.navigate(p),
                 )
             )
-        
+
         # Agregar separador y logout
         items.append(ft.Divider())
         items.append(
@@ -84,7 +86,7 @@ class MainLayout(ft.Column):
                 on_click=self._on_logout,
             )
         )
-        
+
         # Obtener nombre de usuario
         username = SessionManager.get_username(self._page) or "Usuario"
 
@@ -92,21 +94,32 @@ class MainLayout(ft.Column):
             title=ft.Text(value=I18n.t("app.name")),
             actions=[
                 ft.Text(
-                    value=f"👤 {username}",
-                    size=14,
-                    color=ft.Colors.ON_SURFACE_VARIANT
+                    value=f"👤 {username}", size=14, color=ft.Colors.ON_SURFACE_VARIANT
+                ),
+                # Botón de contacto WhatsApp
+                ft.IconButton(
+                    icon=ft.Icons.MESSAGE,
+                    tooltip="¿Necesitas ayuda? Contacta al creador",
+                    icon_color=ft.Colors.GREEN_400,
+                    on_click=self._open_whatsapp_contact,
                 ),
                 ft.PopupMenuButton(
                     icon=ft.Icons.MENU,
                     items=items,
-                )
+                ),
             ],
         )
-    
+
     def _on_logout(self, e):
         """Cerrar sesión y redirigir al login"""
         SessionManager.logout(self._page)
         self.router.navigate("/login")
+
+    def _open_whatsapp_contact(self, e):
+        """Abrir WhatsApp con contacto del creador"""
+        # Número de WhatsApp para Uruguay (sin 598, con formato internacional)
+        whatsapp_url = "https://wa.me/59899171819?text=Hola%2C%20necesito%20ayuda%20con%20Contador%20Oriental%20AI"
+        webbrowser.open(whatsapp_url)
 
     # ---------- BOTTOM BAR ----------
     def _bottom_bar(self):
@@ -129,6 +142,7 @@ class MainLayout(ft.Column):
         return ft.NavigationBar(
             destinations=destinations,
             selected_index=paths.index(AppState.current_route)
-            if AppState.current_route in paths else 0,
+            if AppState.current_route in paths
+            else 0,
             on_change=on_change,
         )

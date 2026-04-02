@@ -1,6 +1,7 @@
 """
 Tests for FamilyMemberRepository.
 """
+
 import pytest
 from result import Ok
 
@@ -14,6 +15,7 @@ class TestFamilyMemberRepository:
     def repo(self, db_session):
         """Create family member repository with test session."""
         from repositories.family_member_repository import FamilyMemberRepository
+
         return FamilyMemberRepository(db_session, familia_id=1)
 
     def test_add_family_member(self, repo):
@@ -33,8 +35,12 @@ class TestFamilyMemberRepository:
     def test_get_all_family_members(self, repo):
         """Test getting all family members."""
         # Add members
-        member1 = FamilyMember(nombre="Juan Pérez", tipo_miembro="persona", parentesco="padre")
-        member2 = FamilyMember(nombre="María Pérez", tipo_miembro="persona", parentesco="madre")
+        member1 = FamilyMember(
+            nombre="Juan Pérez", tipo_miembro="persona", parentesco="padre"
+        )
+        member2 = FamilyMember(
+            nombre="María Pérez", tipo_miembro="persona", parentesco="madre"
+        )
 
         repo.add(member1)
         repo.add(member2)
@@ -47,7 +53,9 @@ class TestFamilyMemberRepository:
 
     def test_get_by_id(self, repo):
         """Test getting family member by id."""
-        member = FamilyMember(nombre="Pedro García", tipo_miembro="persona", parentesco="hijo")
+        member = FamilyMember(
+            nombre="Pedro García", tipo_miembro="persona", parentesco="hijo"
+        )
         created = repo.add(member)
 
         if created.is_ok():
@@ -59,7 +67,9 @@ class TestFamilyMemberRepository:
 
     def test_update_family_member(self, repo):
         """Test updating family member."""
-        member = FamilyMember(nombre="Ana López", tipo_miembro="persona", parentesco="hija")
+        member = FamilyMember(
+            nombre="Ana López", tipo_miembro="persona", parentesco="hija"
+        )
         created = repo.add(member)
 
         if created.is_ok():
@@ -77,7 +87,9 @@ class TestFamilyMemberRepository:
 
     def test_delete_family_member(self, repo):
         """Test deleting family member (soft delete)."""
-        member = FamilyMember(nombre="Carlos Ruiz", tipo_miembro="persona", parentesco="tío")
+        member = FamilyMember(
+            nombre="Carlos Ruiz", tipo_miembro="persona", parentesco="tío"
+        )
         created = repo.add(member)
 
         if created.is_ok():

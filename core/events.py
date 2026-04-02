@@ -3,6 +3,7 @@ Sistema de eventos Observer para el Contador Oriental.
 Desacopla controladores de servicios de IA: el controller solo emite,
 la IA escucha en background sin bloquear la UI.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -25,6 +26,7 @@ class EventType(Enum):
 @dataclass
 class Event:
     """Evento del sistema con tipado estricto"""
+
     type: EventType
     familia_id: int
     data: dict[str, Any]
@@ -63,8 +65,7 @@ class EventSystem:
             return
 
         tasks = [
-            asyncio.create_task(_safe_handle(handler, event))
-            for handler in handlers
+            asyncio.create_task(_safe_handle(handler, event)) for handler in handlers
         ]
         await asyncio.gather(*tasks, return_exceptions=True)
 

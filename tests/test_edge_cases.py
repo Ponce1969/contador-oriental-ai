@@ -1,6 +1,7 @@
 """
 Tests for edge cases and error handling.
 """
+
 from datetime import date, timedelta
 
 import pytest

@@ -27,18 +27,12 @@ def applied_migrations():
 def apply_migration(name, up):
     db = get_connection()
     up(db)
-    db.execute(
-        f"INSERT INTO {MIGRATIONS_TABLE} (migration_name) VALUES (%s)",
-        (name,)
-    )
+    db.execute(f"INSERT INTO {MIGRATIONS_TABLE} (migration_name) VALUES (%s)", (name,))
     db.commit()
 
 
 def rollback_migration(name, down):
     db = get_connection()
     down(db)
-    db.execute(
-        f"DELETE FROM {MIGRATIONS_TABLE} WHERE migration_name = %s",
-        (name,)
-    )
+    db.execute(f"DELETE FROM {MIGRATIONS_TABLE} WHERE migration_name = %s", (name,))
     db.commit()

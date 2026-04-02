@@ -2,6 +2,7 @@
 Tests para IAMemoryService, EmbeddingService y MemoryEventHandler.
 Usa mocks para no depender de Ollama ni PostgreSQL.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -29,10 +30,24 @@ def mock_embedding_service():
 def mock_memoria_repo():
     repo = MagicMock()
     repo.guardar = MagicMock(return_value=42)
-    repo.buscar_similares = MagicMock(return_value=[
-        {"id": 1, "content": "Gasto en supermercado $1500", "source_type": "gasto_creado", "source_id": 10, "distance": 0.1},
-        {"id": 2, "content": "Compra en carnicería $800", "source_type": "gasto_creado", "source_id": 11, "distance": 0.2},
-    ])
+    repo.buscar_similares = MagicMock(
+        return_value=[
+            {
+                "id": 1,
+                "content": "Gasto en supermercado $1500",
+                "source_type": "gasto_creado",
+                "source_id": 10,
+                "distance": 0.1,
+            },
+            {
+                "id": 2,
+                "content": "Compra en carnicería $800",
+                "source_type": "gasto_creado",
+                "source_id": 11,
+                "distance": 0.2,
+            },
+        ]
+    )
     repo.count = MagicMock(return_value=2)
     return repo
 
@@ -44,7 +59,9 @@ def memory_service(mock_memoria_repo, mock_embedding_service):
 
 class TestIAMemoryService:
     @pytest.mark.asyncio
-    async def test_registrar_evento_contable_ok(self, memory_service, mock_embedding_service, mock_memoria_repo):
+    async def test_registrar_evento_contable_ok(
+        self, memory_service, mock_embedding_service, mock_memoria_repo
+    ):
         result = await memory_service.registrar_evento_contable(
             texto_plano="Gasto de $1000 en supermercado",
             source_type="gasto_creado",
@@ -74,7 +91,9 @@ class TestIAMemoryService:
         mock_memoria_repo.guardar.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_buscar_contexto_para_pregunta(self, memory_service, mock_embedding_service):
+    async def test_buscar_contexto_para_pregunta(
+        self, memory_service, mock_embedding_service
+    ):
         result = await memory_service.buscar_contexto_para_pregunta(
             pregunta="¿En qué gasté en alimentos?"
         )
@@ -85,7 +104,9 @@ class TestIAMemoryService:
         mock_embedding_service.generar_embedding.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_buscar_sin_memoria_devuelve_lista_vacia(self, mock_embedding_service):
+    async def test_buscar_sin_memoria_devuelve_lista_vacia(
+        self, mock_embedding_service
+    ):
         repo_vacio = MagicMock()
         repo_vacio.buscar_similares = MagicMock(return_value=[])
         repo_vacio.count = MagicMock(return_value=0)
@@ -98,10 +119,18 @@ class TestIAMemoryService:
     async def test_contexto_respeta_limite_chars(self, mock_embedding_service):
         texto_largo = "X" * 10000
         repo = MagicMock()
-        repo.buscar_similares = MagicMock(return_value=[
-            {"id": i, "content": texto_largo, "source_type": "gasto_creado", "source_id": i, "distance": 0.1}
-            for i in range(5)
-        ])
+        repo.buscar_similares = MagicMock(
+            return_value=[
+                {
+                    "id": i,
+                    "content": texto_largo,
+                    "source_type": "gasto_creado",
+                    "source_id": i,
+                    "distance": 0.1,
+                }
+                for i in range(5)
+            ]
+        )
         repo.count = MagicMock(return_value=5)
         svc = IAMemoryService(repo, mock_embedding_service)
         result = await svc.buscar_contexto_para_pregunta("pregunta", limit=5)
@@ -141,26 +170,42 @@ class TestMemoryEventHandler:
         mock_memoria_repo.guardar.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_handle_ingreso_creado(self, mock_memoria_repo, mock_embedding_service):
+    async def test_handle_ingreso_creado(
+        self, mock_memoria_repo, mock_embedding_service
+    ):
         memory_service = IAMemoryService(mock_memoria_repo, mock_embedding_service)
         handler = MemoryEventHandler(memory_service)
         event = Event(
             type=EventType.INGRESO_CREADO,
             familia_id=1,
             source_id=5,
-            data={"descripcion": "Sueldo", "monto": 50000.0, "categoria": "sueldo", "fecha": "2025-02-01"},
+            data={
+                "descripcion": "Sueldo",
+                "monto": 50000.0,
+                "categoria": "sueldo",
+                "fecha": "2025-02-01",
+            },
         )
         await handler.handle(event)
         mock_embedding_service.generar_embedding.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_handle_snapshot_creado_llama_embedding(self, mock_memoria_repo, mock_embedding_service):
+    async def test_handle_snapshot_creado_llama_embedding(
+        self, mock_memoria_repo, mock_embedding_service
+    ):
         memory_service = IAMemoryService(mock_memoria_repo, mock_embedding_service)
         handler = MemoryEventHandler(memory_service)
         event = Event(
             type=EventType.SNAPSHOT_CREADO,
             familia_id=1,
-            data={"categoria": "🛒 Almacén", "total_dinero": 5000, "cantidad_compras": 10, "ticket_promedio": 500, "mes": 2, "anio": 2025},
+            data={
+                "categoria": "🛒 Almacén",
+                "total_dinero": 5000,
+                "cantidad_compras": 10,
+                "ticket_promedio": 500,
+                "mes": 2,
+                "anio": 2025,
+            },
         )
         await handler.handle(event)
         mock_embedding_service.generar_embedding.assert_called_once()
@@ -171,12 +216,20 @@ class TestMemoryEventHandler:
         repo_roto = MagicMock()
         repo_roto.guardar = MagicMock(side_effect=Exception("DB explota"))
         svc_roto = MagicMock(spec=IAMemoryService)
-        svc_roto.registrar_evento_contable = AsyncMock(side_effect=Exception("Error grave"))
+        svc_roto.registrar_evento_contable = AsyncMock(
+            side_effect=Exception("Error grave")
+        )
         handler = MemoryEventHandler(svc_roto)
         event = Event(
             type=EventType.GASTO_CREADO,
             familia_id=1,
-            data={"descripcion": "test", "monto": 100.0, "categoria": "X", "metodo_pago": "efectivo", "fecha": "2025-01-01"},
+            data={
+                "descripcion": "test",
+                "monto": 100.0,
+                "categoria": "X",
+                "metodo_pago": "efectivo",
+                "fecha": "2025-01-01",
+            },
         )
         await handler.handle(event)
 
@@ -241,9 +294,9 @@ class TestEmbeddingServiceMock:
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"embedding": FAKE_EMBEDDING}
-            mock_client.return_value.__aenter__ = AsyncMock(return_value=MagicMock(
-                post=AsyncMock(return_value=mock_response)
-            ))
+            mock_client.return_value.__aenter__ = AsyncMock(
+                return_value=MagicMock(post=AsyncMock(return_value=mock_response))
+            )
             mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
             svc = EmbeddingService()
             result = await svc.generar_embedding(texto_largo)

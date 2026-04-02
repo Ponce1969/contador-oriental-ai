@@ -1,4 +1,3 @@
-
 # configs/app_config.py
 import os
 
@@ -24,6 +23,7 @@ class ScreenConfig:
         "max_content_width": None,  # no limit
     }
 
+
 class AppConfig:
     APP_NAME = "Contador Oriental AI"
     DEFAULT_SCREEN = ScreenConfig.MOBILE
@@ -31,4 +31,6 @@ class AppConfig:
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
     OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
-    MEMORY_SERVICE_ENABLED = os.getenv("MEMORY_SERVICE_ENABLED", "true").lower() == "true"
+    MEMORY_SERVICE_ENABLED = (
+        os.getenv("MEMORY_SERVICE_ENABLED", "true").lower() == "true"
+    )

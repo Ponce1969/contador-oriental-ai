@@ -17,11 +17,13 @@ from database.engine import get_session
 def run(db):
     session = get_session()
     try:
-        session.execute(text("""
+        session.execute(
+            text("""
             INSERT INTO familias (id, nombre, email, activo, created_at)
             VALUES (1, 'Familia Principal', 'admin@auditor.local', true, NOW())
             ON CONFLICT (id) DO NOTHING
-        """))
+        """)
+        )
         session.commit()
         print("  ✅  essential_data: familia base verificada (id=1).")
     except Exception as e:

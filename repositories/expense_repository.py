@@ -16,14 +16,14 @@ from repositories.mappers import to_domain, to_table
 
 class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
     """Repository para operaciones CRUD de gastos"""
-    
+
     def __init__(self, session: Session, familia_id: int | None = None) -> None:
         super().__init__(session, ExpenseTable, familia_id)
 
     def _to_domain(self, table_row):
         """Convertir tabla ExpenseTable a dominio Expense"""
         return to_domain(table_row)
-    
+
     def _to_table(self, expense):
         """Convertir dominio Expense a tabla ExpenseTable"""
         return to_table(expense)
@@ -34,9 +34,7 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
         table_row.subcategoria = expense.subcategoria
         table_row.metodo_pago = expense.metodo_pago.value
         table_row.es_recurrente = expense.es_recurrente
-        table_row.frecuencia = (
-            expense.frecuencia.value if expense.frecuencia else None
-        )
+        table_row.frecuencia = expense.frecuencia.value if expense.frecuencia else None
 
     def get_by_category(self, categoria: str) -> Sequence[Expense]:
         """Obtener gastos por categoría de la familia"""
@@ -52,8 +50,8 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
         from sqlalchemy import extract
 
         query = self.session.query(ExpenseTable).filter(
-            extract('year', ExpenseTable.fecha) == year,
-            extract('month', ExpenseTable.fecha) == month
+            extract("year", ExpenseTable.fecha) == year,
+            extract("month", ExpenseTable.fecha) == month,
         )
         query = self._filter_by_family(query)
         rows = query.all()
@@ -89,12 +87,15 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
             ORDER BY distancia ASC
             LIMIT :limite
         """)
-        rows = self.session.execute(sql, {
-            "emb": str(embedding),
-            "fid": self.familia_id,
-            "umbral": umbral_cosine,
-            "limite": limite,
-        }).fetchall()
+        rows = self.session.execute(
+            sql,
+            {
+                "emb": str(embedding),
+                "fid": self.familia_id,
+                "umbral": umbral_cosine,
+                "limite": limite,
+            },
+        ).fetchall()
 
         if not rows:
             return []
@@ -102,11 +103,8 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
         ids = [r[0] for r in rows]
         distancias = {r[0]: r[1] for r in rows}
 
-        gastos = self.session.query(ExpenseTable).filter(
-            ExpenseTable.id.in_(ids)
-        ).all()
+        gastos = self.session.query(ExpenseTable).filter(ExpenseTable.id.in_(ids)).all()
 
         result = [(to_domain(g), distancias[g.id]) for g in gastos]
         result.sort(key=lambda x: x[1])
         return result
-

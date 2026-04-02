@@ -21,8 +21,10 @@ from services.ai.ia_memory_service import IAMemoryService
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+
 def _get_familia_id(session) -> int:
     from sqlalchemy import text
+
     row = session.execute(
         text("SELECT familia_id FROM usuarios WHERE username = 'admin' LIMIT 1")
     ).fetchone()
@@ -49,6 +51,7 @@ async def _poblar(session) -> int:
     memory_service = IAMemoryService(memoria_repo, embedding_service)
 
     from sqlalchemy import text
+
     session.execute(
         text(
             "DELETE FROM ai_vector_memory "
@@ -85,7 +88,9 @@ async def _poblar(session) -> int:
         )
         if hasattr(result, "ok") and result.ok():
             ok_count += 1
-            print(f"  ✅ [{ok_count:02d}/{len(gastos)}] {g.fecha} | {g.descripcion[:45]}")
+            print(
+                f"  ✅ [{ok_count:02d}/{len(gastos)}] {g.fecha} | {g.descripcion[:45]}"
+            )
         else:
             print(f"  ❌ Error embedding: {g.descripcion} — {result}")
 
@@ -100,7 +105,9 @@ def run(db):
     session = get_session()
     try:
         total, familia_id = asyncio.run(_poblar(session))
-        print(f"\n  🧠 {total} embeddings guardados en ai_vector_memory para familia_id={familia_id}")
+        print(
+            f"\n  🧠 {total} embeddings guardados en ai_vector_memory para familia_id={familia_id}"
+        )
     except Exception as e:
         session.rollback()
         print(f"  ❌ Error en seed vectorial: {e}")

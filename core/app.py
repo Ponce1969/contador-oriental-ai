@@ -1,4 +1,3 @@
-
 import flet as ft
 
 from core.i18n import I18n
@@ -15,6 +14,7 @@ class FletingApp:
         self.page.appbar = self.build_topbar()
         self._register_file_picker()
         from core.router import Router
+
         self.router = Router(page)
         self.router.navigate("/")
 
@@ -23,14 +23,16 @@ class FletingApp:
         page._internals es un dict del dataclass que persiste toda la sesion.
         """
         import logging
+
         picker = ft.FilePicker()
         self.page.overlay.append(picker)
         self.page._internals["file_picker"] = picker
         logging.getLogger("App").info(
             "[OCR] FilePicker registrado en _internals: id=%s page_id=%s",
-            id(picker), id(self.page)
+            id(picker),
+            id(self.page),
         )
-    
+
     def build_topbar(self):
         menu_items = []
 

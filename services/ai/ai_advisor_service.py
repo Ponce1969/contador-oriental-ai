@@ -17,46 +17,69 @@ logger = logging.getLogger(__name__)
 
 class AIAdvisorService:
     """Servicio para consultar al Contador Oriental"""
-    
+
     def __init__(self, knowledge_path: str = "./knowledge"):
         self.knowledge_path = knowledge_path
         self.mapa_conocimiento = {
             "irpf_familia_uy.md": {
-                "keywords": ["irpf", "impuesto", "hijo", "alquiler", "deduccion", 
-                           "dgi", "devolucion", "hipoteca"],
-                "peso": 2
+                "keywords": [
+                    "irpf",
+                    "impuesto",
+                    "hijo",
+                    "alquiler",
+                    "deduccion",
+                    "dgi",
+                    "devolucion",
+                    "hipoteca",
+                ],
+                "peso": 2,
             },
             "inclusion_financiera_uy.md": {
-                "keywords": ["iva", "tarjeta", "debito", "credito", "descuento",
-                           "inclusion financiera", "beneficio tarjeta"],
-                "peso": 1
+                "keywords": [
+                    "iva",
+                    "tarjeta",
+                    "debito",
+                    "credito",
+                    "descuento",
+                    "inclusion financiera",
+                    "beneficio tarjeta",
+                ],
+                "peso": 1,
             },
             "ahorro_ui_uy.md": {
-                "keywords": ["ahorro", "ui", "unidad indexada", "inflacion", 
-                           "plazo fijo", "invertir", "banco"],
-                "peso": 1
-            }
+                "keywords": [
+                    "ahorro",
+                    "ui",
+                    "unidad indexada",
+                    "inflacion",
+                    "plazo fijo",
+                    "invertir",
+                    "banco",
+                ],
+                "peso": 1,
+            },
         }
-    
+
     def _seleccionar_contexto(self, pregunta: str) -> tuple[str, str | None]:
         """
         Selecciona el archivo de conocimiento más relevante
-        
+
         Returns:
             (contenido_archivo, nombre_archivo)
         """
         pregunta_lower = pregunta.lower()
         scores = {}
-        
+
         for archivo, config in self.mapa_conocimiento.items():
             score = sum(
-                config["peso"] for palabra in config["keywords"]
+                config["peso"]
+                for palabra in config["keywords"]
                 if palabra in pregunta_lower
             )
             scores[archivo] = score
-        
+
         archivo_seleccionado = max(scores, key=scores.get)
-        
+
         if scores[archivo_seleccionado] > 0:
             ruta = os.path.join(self.knowledge_path, archivo_seleccionado)
             try:
@@ -64,22 +87,22 @@ class AIAdvisorService:
                     return f.read(), archivo_seleccionado
             except FileNotFoundError:
                 return "", None
-        
+
         return "", None
-    
+
     def _formatear_datos_financieros(self, ctx: AIContext) -> str:
         """
         Prepara el bloque de datos financieros para el Prompt de Gemma 2:2b.
         Todos los valores ya vienen calculados en ctx; Gemma solo narra.
-        
+
         Args:
             ctx: Contexto financiero pre-calculado por Python
-            
+
         Returns:
             String formateado con el resumen financiero
         """
         balance_mes: float = ctx.ingresos_total - ctx.total_gastos_mes
-        
+
         lineas: list[str] = [
             "### ESTADO DE LA HACIENDA FAMILIAR ###",
             f"- Miembros en el hogar: {ctx.miembros_count}",
@@ -102,7 +125,7 @@ class AIAdvisorService:
 
         lineas += [
             "",
-            "DETALLE DE GASTOS CONSULTADOS (cada línea = una transacción real):"
+            "DETALLE DE GASTOS CONSULTADOS (cada línea = una transacción real):",
         ]
 
         total_filtrado = 0.0
@@ -123,9 +146,7 @@ class AIAdvisorService:
                     monto = datos["total"]
                     cantidad = datos["cantidad"]
                     metodos = datos.get("metodos", {})
-                    metodo_str = ", ".join(
-                        f"{m}({c}x)" for m, c in metodos.items()
-                    )
+                    metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
                     if cantidad > 1:
                         lineas.append(
                             f"  • {descripcion}: ${monto:,.0f} total"
@@ -135,7 +156,7 @@ class AIAdvisorService:
                         lineas.append(
                             f"  • {descripcion}: ${monto:,.0f} ({metodo_str})"
                         )
-        
+
         lineas.append("")
         lineas.append(
             f"SUBTOTAL CONSULTADO: ${total_filtrado:,.0f}"
@@ -195,7 +216,8 @@ class AIAdvisorService:
         """
         seccion_rag = (
             f"NORMATIVA URUGUAYA RELEVANTE:\n{contexto_legal}\n"
-            if contexto_legal else ""
+            if contexto_legal
+            else ""
         )
 
         seccion_memoria = (
@@ -203,19 +225,18 @@ class AIAdvisorService:
             f"{memoria_vectorial}\n"
             f"IMPORTANTE: estos registros históricos son de meses anteriores."
             f" Los datos reales del mes actual están abajo.\n"
-            if memoria_vectorial else ""
+            if memoria_vectorial
+            else ""
         )
 
-        seccion_gastos = (
-            f"{gastos_formateados}\n"
-            if gastos_formateados else ""
-        )
+        seccion_gastos = f"{gastos_formateados}\n" if gastos_formateados else ""
 
         datos_reales = bool(seccion_gastos or seccion_memoria)
         prioridad = (
             "- PRIORIDAD: Los datos reales del usuario (abajo) mandan sobre cualquier"
             " normativa general. Respondé basándote en esos datos primero.\n"
-            if datos_reales else ""
+            if datos_reales
+            else ""
         )
 
         prompt = f"""Sos el Contador Oriental, un contador público uruguayo.
@@ -233,7 +254,7 @@ TU ROL:
 RESPUESTA:"""
 
         return prompt
-    
+
     async def consultar_stream(
         self,
         request: AIRequest,
@@ -252,6 +273,7 @@ RESPUESTA:"""
             AppError — si hay error de conexión o de modelo.
         """
         from core.logger import get_logger
+
         ai_logger = get_logger("AIAdvisor.stream")
 
         contexto, _ = self._seleccionar_contexto(request.pregunta)
@@ -274,7 +296,9 @@ RESPUESTA:"""
         except ImportError:
             raise AppError(message="Dependencia 'ollama' no encontrada.")
 
-        client = AsyncClient(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
+        client = AsyncClient(
+            host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        )
         async for part in await client.generate(
             model="contador-oriental",
             prompt=prompt,
@@ -294,14 +318,19 @@ RESPUESTA:"""
         """
         try:
             from ollama import AsyncClient
-            client = AsyncClient(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
+
+            client = AsyncClient(
+                host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            )
             response = await client.generate(
                 model="contador-oriental",
                 prompt=prompt,
             )
             return response.get("response", "").strip()
         except ConnectionError as e:
-            logger.error("[AI] llamada_directa — Ollama no responde (ConnectionError): %s", e)
+            logger.error(
+                "[AI] llamada_directa — Ollama no responde (ConnectionError): %s", e
+            )
             return ""
         except TimeoutError as e:
             logger.error("[AI] llamada_directa — Timeout en Ollama: %s", e)
@@ -318,26 +347,27 @@ RESPUESTA:"""
     ) -> Result[AIResponse, AppError]:
         """
         Consulta al Contador Oriental (asíncrono)
-        
+
         Args:
             request: Datos de la consulta
             ctx: Contexto financiero pre-calculado por Python (opcional)
             memoria_vectorial: Contexto RAG de pgvector (opcional)
-            
+
         Returns:
             Result con la respuesta o error
         """
         # Usar nombre distinto para evitar conflicto con logger global
         from core.logger import get_logger
+
         ai_logger = get_logger("AIAdvisor")
-        
+
         try:
             # 1. Seleccionar contexto legal
             contexto, archivo = self._seleccionar_contexto(request.pregunta)
-            
+
             # 2. Formatear gastos si están disponibles
             gastos_formateados = ""
-            
+
             if request.incluir_gastos_recientes and ctx:
                 gastos_formateados = self._formatear_datos_financieros(ctx)
                 comparativa_str = self._formatear_comparativa(ctx)
@@ -351,7 +381,7 @@ RESPUESTA:"""
                 gastos_formateados,
                 memoria_vectorial,
             )
-            
+
             # Log del contexto para debugging
             ai_logger.info("=" * 80)
             ai_logger.info("📊 CONTEXTO ENVIADO AL MODELO:")
@@ -363,7 +393,7 @@ RESPUESTA:"""
             ai_logger.info("-" * 80)
             ai_logger.info(prompt)
             ai_logger.info("=" * 80)
-            
+
             # 4. Llamar a Ollama (gemma2:2b) con cliente asíncrono
             try:
                 from ollama import AsyncClient
@@ -372,50 +402,54 @@ RESPUESTA:"""
                     "❌ Librería 'ollama' no encontrada en el entorno. "
                     "Verificar que esté en requirements.txt"
                 )
-                return Err(AppError(
-                    message="El Contador Oriental no puede funcionar: "
-                    "dependencia de IA faltante (ollama)."
-                ))
-            
+                return Err(
+                    AppError(
+                        message="El Contador Oriental no puede funcionar: "
+                        "dependencia de IA faltante (ollama)."
+                    )
+                )
+
             try:
                 # Cliente asíncrono: no bloquea el event loop mientras Gemma genera
                 _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
                 ai_logger.info("🔌 Conectando con Ollama en %s", _ollama_url)
                 client = AsyncClient(host=_ollama_url)
-                
+
                 ai_logger.info("🤖 Generando respuesta con contador-oriental (async)")
                 response = await client.generate(
                     model="contador-oriental",
                     prompt=prompt,
                 )
-                
-                respuesta_texto: str = response['response'].strip()
+
+                respuesta_texto: str = response["response"].strip()
                 ai_logger.info(f"✅ Respuesta generada: {len(respuesta_texto)} chars")
-                
+
             except ConnectionError as e:
                 ai_logger.error(f"❌ Error de conexión con Ollama: {str(e)}")
-                return Err(AppError(
-                    message="El Contador Oriental no puede conectarse al servidor "
-                    "de IA. Verificar que Ollama esté corriendo en el host."
-                ))
+                return Err(
+                    AppError(
+                        message="El Contador Oriental no puede conectarse al servidor "
+                        "de IA. Verificar que Ollama esté corriendo en el host."
+                    )
+                )
             except Exception as e:
                 ai_logger.error(
                     f"❌ Error inesperado en Ollama: {type(e).__name__}: {str(e)}"
                 )
-                return Err(AppError(
-                    message=f"Error al consultar al Contador Oriental: {str(e)}"
-                ))
-            
+                return Err(
+                    AppError(
+                        message=f"Error al consultar al Contador Oriental: {str(e)}"
+                    )
+                )
+
             # 5. Construir respuesta
             ai_response = AIResponse(
                 respuesta=respuesta_texto,
                 archivo_usado=archivo,
-                gastos_incluidos=ctx.total_gastos_count if ctx else 0
+                gastos_incluidos=ctx.total_gastos_count if ctx else 0,
             )
-            
+
             return Ok(ai_response)
-            
+
         except Exception as e:
-            return Err(AppError(
-                message=f"Error en el Contador Oriental: {str(e)}"
-            ))
+            return Err(AppError(message=f"Error en el Contador Oriental: {str(e)}"))

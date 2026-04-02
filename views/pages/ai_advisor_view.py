@@ -34,9 +34,7 @@ class AIAdvisorView:
         self.report_service = ReportService()
         self.chat_history: list[ChatMessage] = []
         self._last_respuesta: str = ""
-        self._familia_nombre: str = (
-            SessionManager.get_username(page) or "Familia"
-        )
+        self._familia_nombre: str = SessionManager.get_username(page) or "Familia"
 
         # Campo de pregunta moderno
         self.pregunta_input = ft.TextField(
@@ -105,9 +103,7 @@ class AIAdvisorView:
         return ft.Chip(
             label=ft.Text(text, size=12),
             leading=ft.Icon(icon_data, size=16),
-            on_click=lambda e, t=text: self.page.run_task(
-                self._send_quick_question, t
-            ),
+            on_click=lambda e, t=text: self.page.run_task(self._send_quick_question, t),
             bgcolor=ft.Colors.GREEN_50,
         )
 
@@ -179,7 +175,6 @@ class AIAdvisorView:
                         color=ft.Colors.GREY_600,
                         size=11 if is_mobile else 13,
                     ),
-
                     # Área de chat
                     ft.Container(
                         content=self.chat_column,
@@ -189,10 +184,8 @@ class AIAdvisorView:
                         expand=True,
                         border=ft.border.all(1, ft.Colors.GREY_200),
                     ),
-
                     # Typing indicator
                     self.typing_indicator,
-
                     # Chips + input + botón enviar
                     ft.Container(
                         content=ft.Column(
@@ -215,7 +208,9 @@ class AIAdvisorView:
                                 ),
                                 ft.Container(
                                     content=self.incluir_gastos_checkbox,
-                                    padding=ft.Padding.only(left=6 if is_mobile else 10),
+                                    padding=ft.Padding.only(
+                                        left=6 if is_mobile else 10
+                                    ),
                                 ),
                             ],
                             spacing=8 if is_mobile else 10,
@@ -233,18 +228,20 @@ class AIAdvisorView:
         )
 
     def _agregar_mensaje_bienvenida(self) -> None:
-        self.chat_history.append(ChatMessage(
-            role="assistant",
-            content=(
-                "¡Hola! Soy el **Contador Oriental**, tu asesor contable.\n\n"
-                "Puedo ayudarte con:\n"
-                "- 💳 Beneficios de débito/crédito (Inclusión Financiera)\n"
-                "- 🏠 Deducciones de IRPF (alquiler, hijos, hipoteca)\n"
-                "- 💰 Ahorro en UI contra la inflación\n"
-                "- 📊 Análisis de tus gastos del mes\n\n"
-                "Usá los botones de acceso rápido o escribí tu consulta."
-            ),
-        ))
+        self.chat_history.append(
+            ChatMessage(
+                role="assistant",
+                content=(
+                    "¡Hola! Soy el **Contador Oriental**, tu asesor contable.\n\n"
+                    "Puedo ayudarte con:\n"
+                    "- 💳 Beneficios de débito/crédito (Inclusión Financiera)\n"
+                    "- 🏠 Deducciones de IRPF (alquiler, hijos, hipoteca)\n"
+                    "- 💰 Ahorro en UI contra la inflación\n"
+                    "- 📊 Análisis de tus gastos del mes\n\n"
+                    "Usá los botones de acceso rápido o escribí tu consulta."
+                ),
+            )
+        )
         self._render_chat()
 
     async def _on_consultar(self, e) -> None:
@@ -384,7 +381,8 @@ class AIAdvisorView:
                         ft.Row(
                             controls=[
                                 ft.Icon(
-                                    ft.Icons.PERSON if is_user
+                                    ft.Icons.PERSON
+                                    if is_user
                                     else ft.Icons.AUTO_AWESOME,
                                     size=12,
                                     color=ft.Colors.BLUE_GREY_400,
@@ -432,7 +430,8 @@ class AIAdvisorView:
                 ft.Row(
                     controls=[bubble],
                     alignment=(
-                        ft.MainAxisAlignment.END if is_user
+                        ft.MainAxisAlignment.END
+                        if is_user
                         else ft.MainAxisAlignment.START
                     ),
                 )

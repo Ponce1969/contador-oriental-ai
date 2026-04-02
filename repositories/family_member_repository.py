@@ -20,7 +20,7 @@ from repositories.family_member_mappers import (
 
 class FamilyMemberRepository:
     """Repository para operaciones CRUD de miembros de la familia"""
-    
+
     def __init__(self, session: Session, familia_id: int | None = None) -> None:
         self._session = session
         self._familia_id = familia_id
@@ -50,9 +50,7 @@ class FamilyMemberRepository:
 
     def get_active(self) -> Sequence[FamilyMember]:
         """Obtener solo miembros activos de la familia"""
-        query = self._session.query(FamilyMemberTable).filter(
-            FamilyMemberTable.activo
-        )
+        query = self._session.query(FamilyMemberTable).filter(FamilyMemberTable.activo)
         if self._familia_id is not None:
             query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
         rows = query.all()
@@ -67,10 +65,10 @@ class FamilyMemberRepository:
             if self._familia_id is not None:
                 query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
             row = query.first()
-            
+
             if row is None:
                 return Err(DatabaseError(message=f"Miembro {member_id} no encontrado"))
-            
+
             return Ok(family_member_to_domain(row))
         except Exception as e:
             return Err(DatabaseError(message=f"Error al buscar miembro: {e}"))
@@ -80,17 +78,17 @@ class FamilyMemberRepository:
         try:
             if member.id is None:
                 return Err(DatabaseError(message="El miembro debe tener un ID"))
-            
+
             query = self._session.query(FamilyMemberTable).filter(
                 FamilyMemberTable.id == member.id
             )
             if self._familia_id is not None:
                 query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
             row = query.first()
-            
+
             if row is None:
                 return Err(DatabaseError(message=f"Miembro {member.id} no encontrado"))
-            
+
             # Actualizar campos
             row.nombre = member.nombre
             row.tipo_miembro = member.tipo_miembro
@@ -100,7 +98,7 @@ class FamilyMemberRepository:
             row.estado_laboral = member.estado_laboral
             row.activo = member.activo
             row.notas = member.notas
-            
+
             self._session.flush()
             return Ok(family_member_to_domain(row))
         except Exception as e:
@@ -115,10 +113,10 @@ class FamilyMemberRepository:
             if self._familia_id is not None:
                 query = query.filter(FamilyMemberTable.familia_id == self._familia_id)
             row = query.first()
-            
+
             if row is None:
                 return Err(DatabaseError(message=f"Miembro {member_id} no encontrado"))
-            
+
             row.activo = False
             self._session.flush()
             return Ok(None)

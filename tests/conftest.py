@@ -41,16 +41,20 @@ def db_session(db_engine) -> Session:
 @pytest.fixture
 def setup_test_data(db_session):
     """Asegurar que familia_id=1 y familia_id=2 existen para tests de aislamiento."""
-    db_session.execute(text(
-        "INSERT INTO familias (id, nombre, email, activo, created_at) "
-        "VALUES (999901, 'Test Familia 1', 'test1_fixture@test.com', true, NOW()) "
-        "ON CONFLICT (id) DO NOTHING"
-    ))
-    db_session.execute(text(
-        "INSERT INTO familias (id, nombre, email, activo, created_at) "
-        "VALUES (999902, 'Test Familia 2', 'test2_fixture@test.com', true, NOW()) "
-        "ON CONFLICT (id) DO NOTHING"
-    ))
+    db_session.execute(
+        text(
+            "INSERT INTO familias (id, nombre, email, activo, created_at) "
+            "VALUES (999901, 'Test Familia 1', 'test1_fixture@test.com', true, NOW()) "
+            "ON CONFLICT (id) DO NOTHING"
+        )
+    )
+    db_session.execute(
+        text(
+            "INSERT INTO familias (id, nombre, email, activo, created_at) "
+            "VALUES (999902, 'Test Familia 2', 'test2_fixture@test.com', true, NOW()) "
+            "ON CONFLICT (id) DO NOTHING"
+        )
+    )
     db_session.flush()
     return {"familia_id_1": 999901, "familia_id_2": 999902}
 
@@ -58,10 +62,12 @@ def setup_test_data(db_session):
 @pytest.fixture
 def family_member_id(db_session) -> int:
     """Crea un family_member real en la sesión de test y retorna su id."""
-    result = db_session.execute(text(
-        "INSERT INTO family_members (familia_id, nombre, parentesco) "
-        "VALUES (1, 'Test Member Fixture', 'otro') RETURNING id"
-    ))
+    result = db_session.execute(
+        text(
+            "INSERT INTO family_members (familia_id, nombre, parentesco) "
+            "VALUES (1, 'Test Member Fixture', 'otro') RETURNING id"
+        )
+    )
     db_session.flush()
     return result.scalar()
 
@@ -72,7 +78,7 @@ def sample_expense_data():
     from datetime import date
 
     from models.categories import ExpenseCategory, PaymentMethod
-    
+
     return {
         "familia_id": 1,
         "monto": 150.50,
@@ -92,7 +98,7 @@ def sample_income_data(family_member_id):
     from datetime import date
 
     from models.income_model import IncomeCategory
-    
+
     return {
         "familia_id": 1,
         "family_member_id": family_member_id,

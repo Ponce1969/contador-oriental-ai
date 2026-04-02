@@ -2,6 +2,7 @@
 Tests para core/security.py — RateLimiter y timeout de sesión.
 No requiere BD ni Ollama.
 """
+
 from __future__ import annotations
 
 import time
@@ -142,10 +143,9 @@ class TestAuthServiceConSecurity:
 
     def _make_service(self):
         from services.domain.auth_service import AuthService
+
         repo = MagicMock()
-        repo.get_by_username.return_value = MagicMock(
-            is_err=lambda: True
-        )
+        repo.get_by_username.return_value = MagicMock(is_err=lambda: True)
         return AuthService(repo)
 
     def test_bloqueo_tras_max_intentos(self):

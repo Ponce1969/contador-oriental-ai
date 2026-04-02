@@ -1,6 +1,7 @@
 """
 Tests for income_mappers.
 """
+
 from datetime import date
 
 from database.tables import IncomeTable

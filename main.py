@@ -29,7 +29,9 @@ def _setup_memory_observer() -> None:
     Se omite silenciosamente si MEMORY_SERVICE_ENABLED=false.
     """
     if not AppConfig.MEMORY_SERVICE_ENABLED:
-        logger.info("[MEMORY] Servicio de memoria deshabilitado (MEMORY_SERVICE_ENABLED=false)")
+        logger.info(
+            "[MEMORY] Servicio de memoria deshabilitado (MEMORY_SERVICE_ENABLED=false)"
+        )
         return
 
     try:
@@ -73,7 +75,7 @@ async def main(page: ft.Page):
         page.theme_mode = ft.ThemeMode.LIGHT
         page.padding = 0
         page.spacing = 0
-        
+
         # Configurar icono personalizado de la aplicación (formato ICO para Windows)
         page.window_icon = "assets/icon-gastos.ico"  # type: ignore
 
@@ -105,23 +107,28 @@ async def main(page: ft.Page):
                         "Gestiona tus finanzas de forma fácil."
                     ),
                 ],
-                spacing=10
+                spacing=10,
             ),
             actions=[
-                ft.TextButton(content=ft.Text(value="Ir a Familia"), on_click=go_to_family),
-                ft.TextButton(content=ft.Text(value="Cerrar"), on_click=close_welcome_banner),
+                ft.TextButton(
+                    content=ft.Text(value="Ir a Familia"), on_click=go_to_family
+                ),
+                ft.TextButton(
+                    content=ft.Text(value="Cerrar"), on_click=close_welcome_banner
+                ),
             ],
         )
 
         if page.platform in (
             ft.PagePlatform.WINDOWS,
             ft.PagePlatform.LINUX,
-            ft.PagePlatform.MACOS
+            ft.PagePlatform.MACOS,
         ):
             page.window.width = AppConfig.DEFAULT_SCREEN["width"]
             page.window.height = AppConfig.DEFAULT_SCREEN["height"]
 
         from core.i18n import I18n
+
         I18n.load("pt")
 
         from core.router import Router
@@ -163,6 +170,7 @@ async def main(page: ft.Page):
     except Exception as e:
         GlobalErrorHandler.handle(page, e)
 
+
 # Detectar si estamos en Docker (modo web) o local (modo desktop)
 # Si existe POSTGRES_HOST, estamos en Docker
 if os.getenv("POSTGRES_HOST"):
@@ -171,12 +179,8 @@ if os.getenv("POSTGRES_HOST"):
         assets_dir="assets",
         view=ft.AppView.WEB_BROWSER,
         port=int(os.getenv("APP_PORT", "8550")),
-        host="0.0.0.0"
+        host="0.0.0.0",
     )
 else:
     # Modo desktop para desarrollo local
-    ft.run(
-        main,
-        assets_dir="assets"
-    )
-
+    ft.run(main, assets_dir="assets")

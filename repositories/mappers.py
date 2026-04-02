@@ -8,7 +8,7 @@ from models.shopping_model import ShoppingItem
 def to_domain(row: ExpenseTable) -> Expense:
     """Convertir tabla de base de datos a modelo de dominio Expense"""
     from models.categories import ExpenseCategory, PaymentMethod, RecurrenceFrequency
-    
+
     return Expense(
         id=row.id,
         monto=row.monto,
@@ -18,9 +18,7 @@ def to_domain(row: ExpenseTable) -> Expense:
         subcategoria=row.subcategoria,
         metodo_pago=PaymentMethod(row.metodo_pago),
         es_recurrente=row.es_recurrente,
-        frecuencia=(
-            RecurrenceFrequency(row.frecuencia) if row.frecuencia else None
-        ),
+        frecuencia=(RecurrenceFrequency(row.frecuencia) if row.frecuencia else None),
         notas=row.notas,
     )
 

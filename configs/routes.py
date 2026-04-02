@@ -111,18 +111,19 @@ ROUTES = [
     },
 ]
 
+
 def load_view_class(view_path: str) -> type | None:
     """
     Carga dinámicamente una clase de vista desde su ruta de módulo.
-    
+
     Args:
         view_path: Ruta completa del módulo y clase (ej: 'views.pages.login_view.LoginView')
-        
+
     Returns:
         Clase de vista o None si falla la carga
     """
     module_name, class_name = view_path.rsplit(".", 1)
-    
+
     try:
         module = importlib.import_module(module_name)
         view_class = getattr(module, class_name)
@@ -136,22 +137,23 @@ def create_view_renderer(view_path: str) -> Callable:
     """
     Crea una función nombrada que renderiza una vista.
     Más legible y debuggeable que lambdas anidadas.
-    
+
     Args:
         view_path: Ruta completa del módulo y clase de la vista
-        
+
     Returns:
         Función que instancia y renderiza la vista
     """
+
     def render_view(page: ft.Page, router: Router) -> ft.Control:
         view_class = load_view_class(view_path)
         if view_class is None:
             logger.error(f"No se pudo cargar la vista: {view_path}")
             return ft.Text("Error: Vista no encontrada")
-        
+
         view_instance = view_class(page, router)
         return view_instance.render()
-    
+
     # Asignar nombre descriptivo para debugging
     render_view.__name__ = f"render_{view_path.split('.')[-1]}"
     return render_view
@@ -161,20 +163,19 @@ def build_routes_dict() -> dict[str, Callable]:
     """
     Construye el diccionario de rutas mapeando paths a funciones de renderizado.
     Usa funciones nombradas en lugar de lambdas para mejor legibilidad.
-    
+
     Returns:
         Diccionario con paths como keys y funciones de renderizado como values
     """
     routes_dict = {}
-    
+
     for route_config in ROUTES:
         path = route_config["path"]
         view_path = route_config["view"]
         routes_dict[path] = create_view_renderer(view_path)
-    
+
     logger.info(f"Rutas configuradas: {len(routes_dict)} rutas cargadas")
     return routes_dict
 
 
 routes = build_routes_dict()
-

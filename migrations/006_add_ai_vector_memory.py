@@ -11,6 +11,7 @@ Integra con estructura existente (VERIFICADA):
 - expenses (id, familia_id, monto, fecha, descripcion, categoria, subcategoria, metodo_pago, es_recurrente, frecuencia, notas, name, price, category, purchased, purchase_date)
 - monthly_expense_snapshots (id, familia_id, anio, mes, categoria, total_dinero, cantidad_compras, ticket_promedio, created_at)
 """
+
 from sqlalchemy import text
 
 
@@ -22,7 +23,8 @@ def up(conn):
     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
 
     # 2. Crear la tabla de memoria IA
-    conn.execute(text("""
+    conn.execute(
+        text("""
         CREATE TABLE IF NOT EXISTS ai_vector_memory (
             id SERIAL PRIMARY KEY,
             familia_id INTEGER NOT NULL REFERENCES familias(id) ON DELETE CASCADE,
@@ -32,21 +34,26 @@ def up(conn):
             source_id INTEGER,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
-    """))
+    """)
+    )
 
     # 3. Índice HNSW optimizado para Orange Pi 5 Plus (RAM eficiente)
-    conn.execute(text("""
+    conn.execute(
+        text("""
         CREATE INDEX IF NOT EXISTS idx_ai_vector_memory_embedding
         ON ai_vector_memory
         USING hnsw (embedding vector_cosine_ops)
         WITH (m = 16, ef_construction = 64);
-    """))
+    """)
+    )
 
     # 4. Índice por familia_id para multitenancy eficiente
-    conn.execute(text("""
+    conn.execute(
+        text("""
         CREATE INDEX IF NOT EXISTS idx_ai_vector_memory_familia
         ON ai_vector_memory (familia_id);
-    """))
+    """)
+    )
 
     print("✅ Migración 006 completada: pgvector y tabla ai_vector_memory listas.")
 

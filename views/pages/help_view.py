@@ -1,4 +1,3 @@
-
 import flet as ft
 from flet import UrlLauncher
 
@@ -15,18 +14,19 @@ class HelpView:
         self.model = HelpModel()
         self.controller = HelpController(self.model)
         self.url_launcher = UrlLauncher()
-    
+
     async def open_docs(self, e):
         await self.url_launcher.launch_url("https://github.com/alexyucra/Fleting")
 
     async def open_issues(self, e):
-        await self.url_launcher.launch_url("https://github.com/alexyucra/fleting/issues")
+        await self.url_launcher.launch_url(
+            "https://github.com/alexyucra/fleting/issues"
+        )
 
     async def open_support(self, e):
         await self.url_launcher.launch_url("https://alexyucra.github.io/#contato")
 
     def render(self):
-        
 
         content = ft.Column(
             spacing=24,
@@ -36,13 +36,11 @@ class HelpView:
                     size=28,
                     weight=ft.FontWeight.BOLD,
                 ),
-
                 ft.Text(
                     value="Precisa de ajuda com o Fleting?",
                     size=18,
                     weight=ft.FontWeight.W_500,
                 ),
-
                 ft.Text(
                     value=(
                         "Aqui você encontra links úteis para documentação, "
@@ -50,21 +48,17 @@ class HelpView:
                     ),
                     color=ft.Colors.GREY_600,
                 ),
-
                 ft.Divider(),
-
                 ft.Button(
                     content=ft.Text(value="📘 Documentação Oficial"),
                     icon=ft.Icons.MENU_BOOK,
                     on_click=self.open_docs,
                 ),
-
                 ft.Button(
                     content=ft.Text(value="🐛 Reportar um problema"),
                     icon=ft.Icons.BUG_REPORT,
                     on_click=self.open_issues,
                 ),
-
                 ft.Button(
                     content=ft.Text(value="💬 Precisa de uma automação ou Sistema?"),
                     icon=ft.Icons.BUG_REPORT,

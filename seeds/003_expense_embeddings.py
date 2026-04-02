@@ -19,8 +19,10 @@ from services.ai.embedding_service import EmbeddingService
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
+
 def _get_familia_id(session) -> int:
     from sqlalchemy import text
+
     row = session.execute(
         text("SELECT familia_id FROM usuarios WHERE username = 'admin' LIMIT 1")
     ).fetchone()
@@ -59,7 +61,9 @@ async def _poblar(session) -> tuple[int, int]:
         print("  ✓  Todos los gastos ya tienen embedding.")
         return 0, familia_id
 
-    print(f"  📦 Generando embeddings para {len(gastos)} gastos en expenses.embedding...")
+    print(
+        f"  📦 Generando embeddings para {len(gastos)} gastos en expenses.embedding..."
+    )
     ok_count = 0
 
     for g in gastos:
@@ -68,7 +72,9 @@ async def _poblar(session) -> tuple[int, int]:
         if hasattr(result, "ok") and result.ok():
             repo.guardar_embedding(g.id, result.ok())
             ok_count += 1
-            print(f"  ✅ [{ok_count:02d}/{len(gastos)}] {g.fecha} | {g.descripcion[:45]}")
+            print(
+                f"  ✅ [{ok_count:02d}/{len(gastos)}] {g.fecha} | {g.descripcion[:45]}"
+            )
         else:
             print(f"  ❌ Error embedding: {g.descripcion} — {result}")
 
@@ -82,7 +88,9 @@ def run(db):
     session = get_session()
     try:
         total, familia_id = asyncio.run(_poblar(session))
-        print(f"\n  🔍 {total} embeddings guardados en expenses.embedding para familia_id={familia_id}")
+        print(
+            f"\n  🔍 {total} embeddings guardados en expenses.embedding para familia_id={familia_id}"
+        )
     except Exception as e:
         session.rollback()
         print(f"  ❌ Error en seed de embeddings: {e}")

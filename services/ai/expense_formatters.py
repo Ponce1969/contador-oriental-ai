@@ -2,6 +2,7 @@
 ExpenseFormatters — Transformaciones de datos de gastos para el contexto IA.
 Funciones puras: sin BD, sin async, sin estado.
 """
+
 from __future__ import annotations
 
 from models.expense_model import Expense

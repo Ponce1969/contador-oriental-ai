@@ -59,16 +59,16 @@ _PROMPT_PARSEO = (
 async def _cleanup_sesiones_expiradas() -> None:
     """Elimina sesiones OCR expiradas cada 5 minutos."""
     import asyncio
+
     engine = get_engine(settings.database_url)
     while True:
         await asyncio.sleep(300)
         try:
             from sqlalchemy.orm import Session as SyncSession
+
             with SyncSession(engine) as session:
                 ahora = datetime.now(UTC)
-                session.execute(
-                    delete(OCRSession).where(OCRSession.expires_at < ahora)
-                )
+                session.execute(delete(OCRSession).where(OCRSession.expires_at < ahora))
                 session.commit()
                 logger.debug("[DB] Sesiones OCR expiradas eliminadas")
         except Exception as e:
@@ -79,6 +79,7 @@ async def _cleanup_sesiones_expiradas() -> None:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifecycle."""
     import asyncio
+
     init_db(settings.database_url)
     logger.info("🚀 OCR Service iniciado en puerto %d", settings.api_port)
     task = asyncio.create_task(_cleanup_sesiones_expiradas())
@@ -112,7 +113,9 @@ def _deskew(img: np.ndarray) -> np.ndarray:
     (h, w) = img.shape[:2]
     M = cv2.getRotationMatrix2D((w // 2, h // 2), angle, 1.0)
     return cv2.warpAffine(
-        img, M, (w, h),
+        img,
+        M,
+        (w, h),
         flags=cv2.INTER_CUBIC,
         borderMode=cv2.BORDER_REPLICATE,
     )
@@ -127,10 +130,12 @@ def preprocesar_imagen(imagen: Image.Image) -> Image.Image:
     img = clahe.apply(img)
     img = cv2.GaussianBlur(img, (3, 3), 0)
     img = cv2.adaptiveThreshold(
-        img, 255,
+        img,
+        255,
         cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         cv2.THRESH_BINARY,
-        31, 2,
+        31,
+        2,
     )
     img = _deskew(img)
     return Image.fromarray(img)
@@ -363,9 +368,13 @@ async def upload_form_submit(
 ) -> JSONResponse:
     """Recibe el archivo del formulario HTML, procesa OCR y guarda resultado."""
     if not file.content_type or not file.content_type.startswith("image/"):
-        return JSONResponse({"success": False, "error": "Solo imágenes"}, status_code=400)
+        return JSONResponse(
+            {"success": False, "error": "Solo imágenes"}, status_code=400
+        )
 
-    logger.info("[FORM] Procesando ticket session=%s familia=%d", session_id, familia_id)
+    logger.info(
+        "[FORM] Procesando ticket session=%s familia=%d", session_id, familia_id
+    )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
         content = await file.read()
@@ -376,8 +385,11 @@ async def upload_form_submit(
         texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
 
         if not texto_crudo or len(texto_crudo) < 20:
-            result = {"success": False, "error": "No se pudo extraer texto",
-                      "confianza_ocr": confianza}
+            result = {
+                "success": False,
+                "error": "No se pudo extraer texto",
+                "confianza_ocr": confianza,
+            }
             _guardar_resultado_db(session_id, familia_id, result)
             return JSONResponse(result)
 
@@ -426,16 +438,19 @@ def _guardar_resultado_db(session_id: str, familia_id: int, result: dict) -> Non
     """Persiste el resultado OCR en PostgreSQL con TTL de 10 minutos."""
     try:
         from sqlalchemy.orm import Session as SyncSession
+
         engine = get_engine(settings.database_url)
         ahora = datetime.now(UTC)
         with SyncSession(engine) as db:
-            db.merge(OCRSession(
-                session_id=session_id,
-                familia_id=familia_id,
-                resultado_json=json.dumps(result),
-                created_at=ahora,
-                expires_at=ahora + timedelta(minutes=10),
-            ))
+            db.merge(
+                OCRSession(
+                    session_id=session_id,
+                    familia_id=familia_id,
+                    resultado_json=json.dumps(result),
+                    created_at=ahora,
+                    expires_at=ahora + timedelta(minutes=10),
+                )
+            )
             db.commit()
     except Exception as e:
         logger.error("[DB] Error guardando sesión OCR: %s", e)
@@ -446,6 +461,7 @@ async def get_resultado(session_id: str) -> JSONResponse:
     """Polling desde Flet: retorna el resultado OCR cuando esté listo."""
     try:
         from sqlalchemy.orm import Session as SyncSession
+
         engine = get_engine(settings.database_url)
         with SyncSession(engine) as db:
             row = db.execute(
@@ -465,6 +481,7 @@ async def get_pendiente(familia_id: int) -> JSONResponse:
     """Retorna la sesión OCR más reciente con resultado listo para esta familia."""
     try:
         from sqlalchemy.orm import Session as SyncSession
+
         engine = get_engine(settings.database_url)
         with SyncSession(engine) as db:
             row = db.execute(

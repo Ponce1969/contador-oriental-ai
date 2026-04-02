@@ -13,11 +13,11 @@ def family_member_to_domain(row: FamilyMemberTable) -> FamilyMember:
     return FamilyMember(
         id=row.id,
         nombre=row.nombre,
-        tipo_miembro=row.tipo_miembro if hasattr(row, 'tipo_miembro') else 'persona',
-        parentesco=row.parentesco if hasattr(row, 'parentesco') else None,
-        especie=row.especie if hasattr(row, 'especie') else None,
-        edad=row.edad if hasattr(row, 'edad') else None,
-        estado_laboral=row.estado_laboral if hasattr(row, 'estado_laboral') else None,
+        tipo_miembro=row.tipo_miembro if hasattr(row, "tipo_miembro") else "persona",
+        parentesco=row.parentesco if hasattr(row, "parentesco") else None,
+        especie=row.especie if hasattr(row, "especie") else None,
+        edad=row.edad if hasattr(row, "edad") else None,
+        estado_laboral=row.estado_laboral if hasattr(row, "estado_laboral") else None,
         activo=row.activo,
         notas=row.notas,
     )

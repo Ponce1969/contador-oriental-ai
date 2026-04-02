@@ -1,6 +1,7 @@
 """
 Modelo SQLAlchemy para la tabla ai_vector_memory (memoria vectorial RAG)
 """
+
 from __future__ import annotations
 
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Text
@@ -11,6 +12,7 @@ from database.base import Base
 
 class MemoriaVectorial(Base):
     """Tabla de memoria vectorial para el Contador Oriental (pgvector)"""
+
     __tablename__ = "ai_vector_memory"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

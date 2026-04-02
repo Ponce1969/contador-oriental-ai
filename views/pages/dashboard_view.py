@@ -20,23 +20,23 @@ from views.layouts.main_layout import MainLayout
 
 class DashboardView:
     """Vista del dashboard con balance de ingresos y gastos"""
-    
+
     def __init__(self, page, router):
         self.page = page
         self.router = router
-        
+
         # Verificar login
         if not SessionManager.is_logged_in(page):
             router.navigate("/login")
             return
-        
+
         # Obtener familia_id de la sesión
         familia_id = SessionManager.get_familia_id(page)
-        
+
         # Controllers
         self.income_controller = IncomeController(familia_id=familia_id)
         self.expense_controller = ExpenseController(familia_id=familia_id)
-        
+
         # Contenedores para los datos
         self.balance_card = ft.Container()
         self.income_card = ft.Container()
@@ -50,17 +50,17 @@ class DashboardView:
         year = today.year
         month = today.month
         month_name = self._get_month_name(month)
-        
+
         # Obtener totales
         total_ingresos = self._get_total_ingresos(year, month)
         total_gastos = self._get_total_gastos(year, month)
         balance = total_ingresos - total_gastos
-        
+
         # Formatear montos
         ingresos_fmt = format_currency(total_ingresos)
         gastos_fmt = format_currency(total_gastos)
         balance_fmt = format_currency(balance)
-        
+
         # Determinar color y mensaje del balance
         if balance > 0:
             balance_color = ft.Colors.GREEN
@@ -74,7 +74,7 @@ class DashboardView:
             balance_color = ft.Colors.ORANGE
             balance_icon = ft.Icons.TRENDING_FLAT
             balance_msg = "Balance equilibrado"
-        
+
         # Calcular porcentajes para barra de progreso
         total = total_ingresos + total_gastos
         if total > 0:
@@ -83,7 +83,7 @@ class DashboardView:
         else:
             porcentaje_ingresos = 0.5
             porcentaje_gastos = 0.5
-        
+
         is_mobile = AppState.device == "mobile"
         title_size = 20 if is_mobile else 28
 
@@ -95,7 +95,6 @@ class DashboardView:
                     weight=ft.FontWeight.BOLD,
                 ),
                 ft.Divider(),
-
                 # Tarjeta de Balance Principal
                 ft.Container(
                     content=ft.Column(
@@ -148,7 +147,6 @@ class DashboardView:
                         color=ft.Colors.BLUE_GREY_100,
                     ),
                 ),
-
                 # Tarjetas de Ingresos y Gastos — ResponsiveRow
                 ft.ResponsiveRow(
                     controls=[
@@ -261,16 +259,13 @@ class DashboardView:
                     spacing=16,
                     run_spacing=16,
                 ),
-
                 ft.Divider(height=24),
-
                 # Resumen por categorías — ResponsiveRow
                 ft.Text(
                     value="📈 Resumen detallado",
                     size=18 if is_mobile else 20,
                     weight=ft.FontWeight.BOLD,
                 ),
-
                 ft.ResponsiveRow(
                     controls=[
                         ft.Container(
@@ -339,7 +334,7 @@ class DashboardView:
             spacing=16,
             scroll=ft.ScrollMode.AUTO,
         )
-        
+
         return MainLayout(
             page=self.page,
             content=content,
@@ -357,8 +352,17 @@ class DashboardView:
     def _get_month_name(self, month: int) -> str:
         """Obtener nombre del mes en español"""
         months = {
-            1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
-            5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
-            9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+            1: "Enero",
+            2: "Febrero",
+            3: "Marzo",
+            4: "Abril",
+            5: "Mayo",
+            6: "Junio",
+            7: "Julio",
+            8: "Agosto",
+            9: "Septiembre",
+            10: "Octubre",
+            11: "Noviembre",
+            12: "Diciembre",
         }
         return months.get(month, "")

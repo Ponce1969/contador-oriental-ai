@@ -35,7 +35,7 @@ class ShoppingView:
                         self.name_input,
                         self.price_input,
                         self.category_input,
-                        CorrectElevatedButton("Agregar", on_click=self._on_add_item)
+                        CorrectElevatedButton("Agregar", on_click=self._on_add_item),
                     ]
                 ),
                 ft.Divider(),
@@ -87,9 +87,6 @@ class ShoppingView:
         self.category_input.value = ""
 
     def _show_error(self, error: AppError) -> None:
-        snack_bar = CorrectSnackBar(
-            content=ft.Text(value=error.message),
-            open=True
-        )
+        snack_bar = CorrectSnackBar(content=ft.Text(value=error.message), open=True)
         self.page.overlay.append(snack_bar)
         self.page.update()

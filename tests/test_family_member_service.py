@@ -1,6 +1,7 @@
 """
 Tests for FamilyMemberService.
 """
+
 import pytest
 from result import Err, Ok
 
@@ -16,6 +17,7 @@ class TestFamilyMemberService:
         """Create family member service with test repository."""
         from repositories.family_member_repository import FamilyMemberRepository
         from services.domain.family_member_service import FamilyMemberService
+
         repo = FamilyMemberRepository(db_session, familia_id=1)
         return FamilyMemberService(repo)
 
@@ -26,7 +28,7 @@ class TestFamilyMemberService:
             tipo_miembro="persona",
             parentesco="padre",
             edad=35,
-            estado_laboral="empleado"
+            estado_laboral="empleado",
         )
         result = service.create_member(member)
 
@@ -35,11 +37,7 @@ class TestFamilyMemberService:
 
     def test_create_member_empty_name(self, service):
         """Test creating member with empty/whitespace name fails."""
-        member = FamilyMember(
-            nombre="   ",
-            tipo_miembro="persona",
-            parentesco="padre"
-        )
+        member = FamilyMember(nombre="   ", tipo_miembro="persona", parentesco="padre")
         result = service.create_member(member)
 
         assert isinstance(result, Err)
@@ -49,10 +47,7 @@ class TestFamilyMemberService:
     def test_create_pet_success(self, service):
         """Test creating pet member succeeds."""
         member = FamilyMember(
-            nombre="Firulais",
-            tipo_miembro="mascota",
-            especie="perro",
-            edad=3
+            nombre="Firulais", tipo_miembro="mascota", especie="perro", edad=3
         )
         result = service.create_member(member)
 
@@ -61,8 +56,12 @@ class TestFamilyMemberService:
 
     def test_list_members(self, service):
         """Test listing all members."""
-        member1 = FamilyMember(nombre="Miembro1", tipo_miembro="persona", parentesco="padre")
-        member2 = FamilyMember(nombre="Miembro2", tipo_miembro="persona", parentesco="madre")
+        member1 = FamilyMember(
+            nombre="Miembro1", tipo_miembro="persona", parentesco="padre"
+        )
+        member2 = FamilyMember(
+            nombre="Miembro2", tipo_miembro="persona", parentesco="madre"
+        )
 
         service.create_member(member1)
         service.create_member(member2)
@@ -81,7 +80,9 @@ class TestFamilyMemberService:
 
     def test_get_member(self, service):
         """Test getting member by id."""
-        member = FamilyMember(nombre="Pedro", tipo_miembro="persona", parentesco="primo")
+        member = FamilyMember(
+            nombre="Pedro", tipo_miembro="persona", parentesco="primo"
+        )
         created = service.create_member(member)
 
         if created.is_ok():
@@ -92,7 +93,9 @@ class TestFamilyMemberService:
 
     def test_update_member_success(self, service):
         """Test successful member update."""
-        member = FamilyMember(nombre="Original", tipo_miembro="persona", parentesco="sobrino")
+        member = FamilyMember(
+            nombre="Original", tipo_miembro="persona", parentesco="sobrino"
+        )
         created = service.create_member(member)
 
         if created.is_ok():

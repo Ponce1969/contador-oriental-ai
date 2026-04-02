@@ -134,6 +134,35 @@ services:
       timeout: 10s
       retries: 3
 
+  # Guardian Service - Monitoreo y Alertas
+  guardian:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auditor_familiar_guardian
+    restart: unless-stopped
+    depends_on:
+      - app
+      - postgres
+      - ocr_api
+    environment:
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-https://discord.com/api/webhooks/1489405150425776169/MpA53Ap6AneB1ZoPfLO6NxEJaU-4iYvNoh8O5naKS1GnKSwaNme5W53l7_COy_DzeVcH}
+      GUARDIAN_CHECK_INTERVAL: ${GUARDIAN_CHECK_INTERVAL:-60}
+      # Override de variables del app para guardian
+      APP_ENV: guardian
+      SKIP_WEB_SERVER: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./logs:/app/logs
+    networks:
+      - auditor_network
+    command: ["uv", "run", "python", "guardian/guardian_service.py"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
 volumes:
   postgres_data:
     driver: local

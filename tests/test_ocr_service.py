@@ -2,6 +2,7 @@
 Tests para OCRService.
 Usan mocks de pytesseract y PIL — no requieren Tesseract instalado ni imágenes reales.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -38,7 +39,6 @@ def datos_tesseract_ilegibles():
 
 
 class TestOCRServiceExtraerTexto:
-
     async def test_archivo_no_existe_retorna_error(self, ocr_service):
         resultado = await ocr_service.extraer_texto("/ruta/inexistente/ticket.jpg")
 
@@ -49,6 +49,7 @@ class TestOCRServiceExtraerTexto:
         self, datos_tesseract_validos
     ):
         import pathlib
+
         ocr = OCRService()
         mock_img = MagicMock()
 
@@ -75,6 +76,7 @@ class TestOCRServiceExtraerTexto:
         self, datos_tesseract_ilegibles
     ):
         import pathlib
+
         ocr = OCRService()
         mock_img = MagicMock()
 
@@ -94,9 +96,7 @@ class TestOCRServiceExtraerTexto:
         partial = resultado.ok()
         assert partial.confianza_ocr == 0.0
 
-    async def test_pytesseract_no_instalado_retorna_error(
-        self, ocr_service, tmp_path
-    ):
+    async def test_pytesseract_no_instalado_retorna_error(self, ocr_service, tmp_path):
         imagen_path = tmp_path / "ticket.jpg"
         imagen_path.write_bytes(b"fake_image_data")
 
@@ -121,7 +121,6 @@ class TestOCRServiceExtraerTexto:
 
 
 class TestPartialExpensePropiedades:
-
     def test_es_confiable_sobre_umbral(self):
         partial = PartialExpense(confianza_ocr=0.75)
         assert partial.es_confiable is True

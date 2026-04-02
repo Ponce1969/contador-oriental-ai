@@ -1,6 +1,7 @@
 """
 Sistema de sesión - Manejo de autenticación y estado del usuario
 """
+
 import flet as ft
 
 from core.security import limpiar_sesion, registrar_actividad, sesion_expirada
@@ -12,11 +13,11 @@ _sessions = {}
 
 class SessionManager:
     """Gestor de sesión de usuario"""
-    
+
     SESSION_KEY_USER_ID = "user_id"
     SESSION_KEY_FAMILIA_ID = "familia_id"
     SESSION_KEY_USERNAME = "username"
-    
+
     @staticmethod
     def _get_session_data(page: ft.Page) -> dict:
         """Obtener o crear datos de sesión para esta página"""
@@ -24,7 +25,7 @@ class SessionManager:
         if session_id not in _sessions:
             _sessions[session_id] = {}
         return _sessions[session_id]
-    
+
     @staticmethod
     def login(page: ft.Page, user: User) -> None:
         """Iniciar sesión de usuario y registrar actividad inicial."""
@@ -57,25 +58,25 @@ class SessionManager:
             return False
         registrar_actividad(session_id)
         return True
-    
+
     @staticmethod
     def get_user_id(page: ft.Page) -> int | None:
         """Obtener ID del usuario actual"""
         session_data = SessionManager._get_session_data(page)
         return session_data.get(SessionManager.SESSION_KEY_USER_ID)
-    
+
     @staticmethod
     def get_familia_id(page: ft.Page) -> int | None:
         """Obtener ID de la familia del usuario actual"""
         session_data = SessionManager._get_session_data(page)
         return session_data.get(SessionManager.SESSION_KEY_FAMILIA_ID)
-    
+
     @staticmethod
     def get_username(page: ft.Page) -> str | None:
         """Obtener username del usuario actual"""
         session_data = SessionManager._get_session_data(page)
         return session_data.get(SessionManager.SESSION_KEY_USERNAME)
-    
+
     @staticmethod
     def require_login(page: ft.Page) -> bool:
         """
@@ -84,6 +85,7 @@ class SessionManager:
         """
         if not SessionManager.is_logged_in(page):
             from core.router import Router
+
             router = Router(page)
             router.navigate("/login")
             return False

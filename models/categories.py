@@ -9,6 +9,7 @@ from enum import Enum
 
 class ExpenseCategory(str, Enum):
     """Categorías principales de gastos"""
+
     ALMACEN = "🛒 Almacén"
     VEHICULOS = "🚗 Vehículos"
     HOGAR = "🏠 Hogar"
@@ -97,6 +98,7 @@ SUBCATEGORIES = {
 
 class PaymentMethod(str, Enum):
     """Métodos de pago"""
+
     EFECTIVO = "Efectivo"
     TARJETA_DEBITO = "Tarjeta débito"
     TARJETA_CREDITO = "Tarjeta crédito"
@@ -106,6 +108,7 @@ class PaymentMethod(str, Enum):
 
 class RecurrenceFrequency(str, Enum):
     """Frecuencia de gastos recurrentes"""
+
     DIARIA = "Diaria"
     SEMANAL = "Semanal"
     QUINCENAL = "Quincenal"

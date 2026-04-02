@@ -1,4 +1,3 @@
-
 import logging
 import os
 import sys
@@ -6,11 +5,14 @@ from pathlib import Path
 
 APP_NAME = "fleting"
 
+
 def is_frozen():
     return getattr(sys, "frozen", False)
 
+
 def is_android():
     return sys.platform == "android"
+
 
 def get_log_dir():
     # ANDROID (APK)
@@ -25,6 +27,7 @@ def get_log_dir():
     # DESENVOLVIMENTO
     return Path.cwd() / "logs"
 
+
 LOG_DIR = get_log_dir()
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -38,6 +41,7 @@ logging.basicConfig(
         logging.StreamHandler(),
     ],
 )
+
 
 def get_logger(name: str):
     return logging.getLogger(name)

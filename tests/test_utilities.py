@@ -9,6 +9,7 @@ class TestDatabaseConfig:
     def test_database_config_class(self):
         """Test database config class exists."""
         from configs.database_config import DatabaseConfig
+
         assert DatabaseConfig is not None
         assert DatabaseConfig.DB_TYPE in ("sqlite", "postgresql", "mysql")
 
@@ -16,6 +17,7 @@ class TestDatabaseConfig:
         """Test getting SQLite database URL."""
         import unittest.mock
         from configs.database_config import DatabaseConfig
+
         with unittest.mock.patch.object(DatabaseConfig, "DB_TYPE", "sqlite"):
             url = DatabaseConfig.get_database_url()
             assert url.startswith("sqlite:///")
@@ -24,6 +26,7 @@ class TestDatabaseConfig:
         """Test is_postgresql check."""
         import unittest.mock
         from configs.database_config import DatabaseConfig
+
         with unittest.mock.patch.object(DatabaseConfig, "DB_TYPE", "sqlite"):
             assert DatabaseConfig.is_postgresql() is False
 
@@ -34,6 +37,7 @@ class TestSQLAlchemySession:
     def test_get_db_session(self):
         """Test getting database session."""
         from core.sqlalchemy_session import get_db_session
+
         with get_db_session() as session:
             assert session is not None
 

@@ -52,7 +52,7 @@ class FamilyMembersView:
             expand=True,
         )
         self.select_dropdown.on_select = self._on_select
-        
+
         # Botón oculto (ya no necesario, se dispara automáticamente)
         self.load_button = CorrectElevatedButton(
             "🔄 Cargar",
@@ -220,7 +220,7 @@ class FamilyMembersView:
 
         # Handlers - Usar on_select según documentación de Fleting
         self.select_dropdown.on_select = self._on_select
-        
+
         # Sync inicial
         self._sync_ui()
 
@@ -243,7 +243,7 @@ class FamilyMembersView:
             for m in self.state["members"]
         ]
         self.select_dropdown.value = self.state["selected_id"]
-        
+
         # Workaround: Forzar update individual del dropdown
         # (bug conocido de Flet donde value no se refleja visualmente)
         try:
@@ -261,7 +261,7 @@ class FamilyMembersView:
 
         # List
         self._render_list()
-        
+
         # Workaround: Forzar updates individuales de todos los campos
         # (bug conocido de Flet donde los controles no se actualizan visualmente)
         try:
@@ -318,7 +318,7 @@ class FamilyMembersView:
         for m in self.state["members"]:
             # Construir texto descriptivo
             edad_text = f"{m.edad} años" if m.edad else "Edad no especificada"
-            
+
             if m.tipo_miembro == "mascota":
                 especie_text = m.especie.capitalize() if m.especie else "Mascota"
                 info_text = f"🐾 {especie_text} • {edad_text}"
@@ -385,7 +385,7 @@ class FamilyMembersView:
         """Handler para on_change del dropdown - dispara carga automática"""
         # Disparar automáticamente la carga de datos sin necesidad del botón
         self._on_load_click(e)
-    
+
     def _on_load_click(self, e):
         """Cargar datos del miembro seleccionado al hacer clic en el botón"""
         if not self.select_dropdown.value:

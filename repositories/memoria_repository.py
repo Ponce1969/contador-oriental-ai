@@ -2,6 +2,7 @@
 MemoriaRepository — Acceso a la tabla ai_vector_memory con búsqueda semántica.
 Usa SQL directo para las operaciones vectoriales (pgvector <=> cosine distance).
 """
+
 from __future__ import annotations
 
 import logging
@@ -166,8 +167,7 @@ class MemoriaRepository:
         try:
             result = self.session.execute(
                 text(
-                    "SELECT COUNT(*) FROM ai_vector_memory "
-                    "WHERE familia_id = :fam_id"
+                    "SELECT COUNT(*) FROM ai_vector_memory WHERE familia_id = :fam_id"
                 ),
                 {"fam_id": self.familia_id},
             )

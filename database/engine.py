@@ -16,11 +16,13 @@ engine_kwargs = {
 
 # Para PostgreSQL, agregar configuración de pool
 if DatabaseConfig.is_postgresql():
-    engine_kwargs.update({
-        "pool_size": 10,
-        "max_overflow": 20,
-        "pool_pre_ping": True,  # Verificar conexiones antes de usar
-    })
+    engine_kwargs.update(
+        {
+            "pool_size": 10,
+            "max_overflow": 20,
+            "pool_pre_ping": True,  # Verificar conexiones antes de usar
+        }
+    )
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
 

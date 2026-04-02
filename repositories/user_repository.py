@@ -1,6 +1,7 @@
 """
 Repositorio de usuarios - Acceso a datos de autenticación
 """
+
 from result import Err, Ok, Result
 from sqlalchemy import text
 
@@ -11,10 +12,10 @@ from models.user_model import User
 
 class UserRepository:
     """Repositorio para gestión de usuarios"""
-    
+
     def __init__(self, session=None):
         self._session = session
-    
+
     def _get_session(self):
         """Get session - use provided or global"""
         if self._session is not None:
@@ -34,6 +35,7 @@ class UserRepository:
 
     def get_by_username(self, username: str) -> Result[User, DatabaseError]:
         """Obtener usuario por nombre de usuario"""
+
         def _query(session):
             result = session.execute(
                 text("""
@@ -43,14 +45,12 @@ class UserRepository:
                     FROM usuarios
                     WHERE username = :username
                 """),
-                {"username": username}
+                {"username": username},
             )
             row = result.fetchone()
 
             if not row:
-                return Err(
-                    DatabaseError(message=f"Usuario {username} no encontrado")
-                )
+                return Err(DatabaseError(message=f"Usuario {username} no encontrado"))
 
             user = User(
                 id=row[0],
@@ -68,9 +68,10 @@ class UserRepository:
             return self._use_session(_query)
         except Exception as e:
             return Err(DatabaseError(message=f"Error al buscar usuario: {e}"))
-                
+
     def get_by_id(self, user_id: int) -> Result[User, DatabaseError]:
         """Obtener usuario por ID"""
+
         def _query(session):
             result = session.execute(
                 text("""
@@ -80,7 +81,7 @@ class UserRepository:
                     FROM usuarios
                     WHERE id = :user_id
                 """),
-                {"user_id": user_id}
+                {"user_id": user_id},
             )
             row = result.fetchone()
 
@@ -97,7 +98,7 @@ class UserRepository:
                 nombre_completo=row[4],
                 activo=bool(row[5]),
                 created_at=row[6],
-                last_login=row[7]
+                last_login=row[7],
             )
             return Ok(user)
 
@@ -105,9 +106,10 @@ class UserRepository:
             return self._use_session(_query)
         except Exception as e:
             return Err(DatabaseError(message=f"Error al buscar usuario: {str(e)}"))
-    
+
     def add(self, user: User) -> Result[User, DatabaseError]:
         """Crear nuevo usuario"""
+
         def _query(session):
             result = session.execute(
                 text("""
@@ -126,8 +128,8 @@ class UserRepository:
                     "username": user.username,
                     "password_hash": user.password_hash,
                     "nombre_completo": user.nombre_completo,
-                    "activo": user.activo
-                }
+                    "activo": user.activo,
+                },
             )
             row = result.fetchone()
 
@@ -141,9 +143,10 @@ class UserRepository:
             return self._use_session(_query)
         except Exception as e:
             return Err(DatabaseError(message=f"Error al crear usuario: {str(e)}"))
-    
+
     def update_last_login(self, user_id: int) -> Result[None, DatabaseError]:
         """Actualizar fecha de último login"""
+
         def _query(session):
             session.execute(
                 text("""
@@ -151,7 +154,7 @@ class UserRepository:
                     SET last_login = CURRENT_TIMESTAMP
                     WHERE id = :user_id
                 """),
-                {"user_id": user_id}
+                {"user_id": user_id},
             )
             return Ok(None)
 
@@ -161,11 +164,12 @@ class UserRepository:
             return Err(
                 DatabaseError(message=f"Error al actualizar último login: {str(e)}")
             )
-    
+
     def update_password(
         self, user_id: int, new_password_hash: str
     ) -> Result[None, DatabaseError]:
         """Actualizar contraseña de usuario"""
+
         def _query(session):
             session.execute(
                 text("""
@@ -173,7 +177,7 @@ class UserRepository:
                     SET password_hash = :password_hash
                     WHERE id = :user_id
                 """),
-                {"user_id": user_id, "password_hash": new_password_hash}
+                {"user_id": user_id, "password_hash": new_password_hash},
             )
             return Ok(None)
 
@@ -183,9 +187,10 @@ class UserRepository:
             return Err(
                 DatabaseError(message=f"Error al actualizar contraseña: {str(e)}")
             )
-    
+
     def get_by_familia(self, familia_id: int) -> Result[list[User], DatabaseError]:
         """Obtener todos los usuarios de una familia"""
+
         def _query(session):
             result = session.execute(
                 text("""
@@ -196,7 +201,7 @@ class UserRepository:
                     WHERE familia_id = :familia_id
                     ORDER BY username
                 """),
-                {"familia_id": familia_id}
+                {"familia_id": familia_id},
             )
 
             users = []
@@ -209,7 +214,7 @@ class UserRepository:
                     nombre_completo=row[4],
                     activo=bool(row[5]),
                     created_at=row[6],
-                    last_login=row[7]
+                    last_login=row[7],
                 )
                 users.append(user)
 
@@ -218,6 +223,4 @@ class UserRepository:
         try:
             return self._use_session(_query)
         except Exception as e:
-            return Err(
-                DatabaseError(message=f"Error al listar usuarios: {str(e)}")
-            )
+            return Err(DatabaseError(message=f"Error al listar usuarios: {str(e)}"))

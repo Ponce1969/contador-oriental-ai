@@ -3,6 +3,7 @@ Tests para TicketService.
 Usan mocks de OCRService, AIAdvisorService y ExpenseRepository.
 No requieren Tesseract, Ollama ni base de datos.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -56,7 +57,6 @@ def partial_con_texto():
 
 
 class TestTicketServiceProcesarTicket:
-
     async def test_ocr_falla_retorna_err(self, ticket_service, mock_ocr):
         mock_ocr.extraer_texto.return_value = Err(AppError("imagen no encontrada"))
 
@@ -66,8 +66,13 @@ class TestTicketServiceProcesarTicket:
         assert "imagen no encontrada" in resultado.err().message
 
     async def test_flujo_completo_con_mocks(
-        self, ticket_service, mock_ocr, mock_ai,
-        mock_embedding, mock_expense_repo, partial_con_texto
+        self,
+        ticket_service,
+        mock_ocr,
+        mock_ai,
+        mock_embedding,
+        mock_expense_repo,
+        partial_con_texto,
     ):
         mock_ocr.extraer_texto.return_value = Ok(partial_con_texto)
         mock_ai.llamada_directa.return_value = (
@@ -77,9 +82,7 @@ class TestTicketServiceProcesarTicket:
         mock_embedding.generar_embedding.return_value = Ok([0.1] * 768)
         mock_gasto = MagicMock()
         mock_gasto.categoria.value = "🛒 Almacén"
-        mock_expense_repo.buscar_por_similitud.return_value = [
-            (mock_gasto, 0.92)
-        ]
+        mock_expense_repo.buscar_por_similitud.return_value = [(mock_gasto, 0.92)]
 
         resultado = await ticket_service.procesar_ticket("/fake/ticket.jpg")
 
@@ -92,8 +95,13 @@ class TestTicketServiceProcesarTicket:
         assert partial.categoria_sugerida == "🛒 Almacén"
 
     async def test_gemma_falla_retorna_partial_sin_datos(
-        self, ticket_service, mock_ocr, mock_ai, mock_embedding,
-        mock_expense_repo, partial_con_texto
+        self,
+        ticket_service,
+        mock_ocr,
+        mock_ai,
+        mock_embedding,
+        mock_expense_repo,
+        partial_con_texto,
     ):
         mock_ocr.extraer_texto.return_value = Ok(partial_con_texto)
         mock_ai.llamada_directa.return_value = ""
@@ -109,8 +117,13 @@ class TestTicketServiceProcesarTicket:
         assert partial.texto_crudo != ""  # el texto crudo siempre está
 
     async def test_confianza_baja_loguea_warning(
-        self, ticket_service, mock_ocr, mock_ai, mock_embedding,
-        mock_expense_repo, caplog
+        self,
+        ticket_service,
+        mock_ocr,
+        mock_ai,
+        mock_embedding,
+        mock_expense_repo,
+        caplog,
     ):
         partial_baja = PartialExpense(
             texto_crudo="texto ilegible",
@@ -127,7 +140,6 @@ class TestTicketServiceProcesarTicket:
 
 
 class TestTicketServiceParsearConGemma:
-
     async def test_json_valido_retorna_datos(self, ticket_service, mock_ai):
         mock_ai.llamada_directa.return_value = (
             '{"monto": 500.0, "fecha": "2026-01-15", '
@@ -139,9 +151,7 @@ class TestTicketServiceParsearConGemma:
         assert resultado["monto"] == 500.0
         assert resultado["comercio"] == "Disco"
 
-    async def test_gemma_con_texto_extra_extrae_json(
-        self, ticket_service, mock_ai
-    ):
+    async def test_gemma_con_texto_extra_extrae_json(self, ticket_service, mock_ai):
         mock_ai.llamada_directa.return_value = (
             "Acá está el resultado: "
             '{"monto": 750.0, "fecha": null, "comercio": "Devoto", "items": []}'
@@ -175,7 +185,6 @@ class TestTicketServiceParsearConGemma:
 
 
 class TestTicketServiceSugerirCategoria:
-
     async def test_retorna_categoria_mas_frecuente(
         self, ticket_service, mock_embedding, mock_expense_repo
     ):
@@ -185,16 +194,16 @@ class TestTicketServiceSugerirCategoria:
         mock_g2.categoria.value = "🛒 Almacén"
         mock_g3.categoria.value = "🏠 Hogar"
         mock_expense_repo.buscar_por_similitud.return_value = [
-            (mock_g1, 0.95), (mock_g2, 0.90), (mock_g3, 0.80)
+            (mock_g1, 0.95),
+            (mock_g2, 0.90),
+            (mock_g3, 0.80),
         ]
 
         resultado = await ticket_service._sugerir_categoria("supermercado")
 
         assert resultado == "🛒 Almacén"
 
-    async def test_embedding_falla_retorna_none(
-        self, ticket_service, mock_embedding
-    ):
+    async def test_embedding_falla_retorna_none(self, ticket_service, mock_embedding):
         mock_embedding.generar_embedding.return_value = Err(AppError("Ollama down"))
 
         resultado = await ticket_service._sugerir_categoria("supermercado")

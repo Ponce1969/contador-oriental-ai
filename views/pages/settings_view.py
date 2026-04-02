@@ -1,4 +1,3 @@
-
 import flet as ft
 
 from controllers.settings_controller import SettingsController
@@ -12,7 +11,7 @@ class SettingsView:
         self.page = page
         self.router = router
         self.controller = SettingsController()
-    
+
     def _change_language(self, lang: str):
         I18n.load(lang)
         self.page.update()
@@ -26,13 +25,11 @@ class SettingsView:
                     size=28,
                     weight=ft.FontWeight.BOLD,
                 ),
-
                 ft.Text(
                     I18n.t("settings.language"),
                     size=16,
                     color=ft.Colors.GREY_600,
                 ),
-
                 ft.RadioGroup(
                     value=AppState.language,
                     on_change=lambda e: self._change_language(e.control.value),

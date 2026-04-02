@@ -5,6 +5,7 @@ Orquestador del flujo OCR completo:
   3. ExpenseRepository busca categoría por similitud cosine
   4. Retorna PartialExpense listo para mostrar al usuario en vista de confirmación
 """
+
 from __future__ import annotations
 
 import json
@@ -53,8 +54,8 @@ class TicketService:
         self,
         ocr_service: OCRService,
         embedding_service: EmbeddingService,
-        expense_repo,       # ExpenseRepository — inyectado
-        ai_service,         # AIAdvisorService — inyectado para llamada_directa()
+        expense_repo,  # ExpenseRepository — inyectado
+        ai_service,  # AIAdvisorService — inyectado para llamada_directa()
     ):
         self.ocr = ocr_service
         self.embedding = embedding_service
@@ -140,7 +141,7 @@ class TicketService:
                 return None
 
             # Buscar JSON — Gemma a veces agrega texto antes/después
-            match = re.search(r'\{.*?\}', respuesta, re.DOTALL)
+            match = re.search(r"\{.*?\}", respuesta, re.DOTALL)
             if not match:
                 logger.warning("[TICKET] Gemma no devolvió JSON válido")
                 return None

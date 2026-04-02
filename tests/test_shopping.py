@@ -1,6 +1,7 @@
 """
 Tests for Shopping functionality.
 """
+
 from datetime import date
 
 import pytest

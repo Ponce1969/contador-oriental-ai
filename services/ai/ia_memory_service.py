@@ -2,6 +2,7 @@
 IAMemoryService — Orquestador de memoria vectorial para el Contador Oriental.
 Coordina EmbeddingService + MemoriaRepository para guardar y recuperar recuerdos.
 """
+
 from __future__ import annotations
 
 import logging

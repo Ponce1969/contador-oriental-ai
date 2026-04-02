@@ -2,6 +2,7 @@
 EmbeddingService — Genera vectores de texto usando nomic-embed-text via Ollama.
 Diseñado para Orange Pi 5 Plus: async, liviano, resiliente a fallos.
 """
+
 from __future__ import annotations
 
 import logging
@@ -57,9 +58,7 @@ class EmbeddingService:
                 if response.status_code == 200:
                     embedding = response.json().get("embedding", [])
                     if not embedding:
-                        return Err(
-                            AppError(message="Ollama devolvió embedding vacío.")
-                        )
+                        return Err(AppError(message="Ollama devolvió embedding vacío."))
                     logger.debug(
                         "Embedding generado: %d dims para '%s...'",
                         len(embedding),

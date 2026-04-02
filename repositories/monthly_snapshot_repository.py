@@ -2,6 +2,7 @@
 Repositorio para snapshots mensuales de gastos.
 Usa SQL con window function LAG para comparativa mes a mes.
 """
+
 from __future__ import annotations
 
 import logging
@@ -66,7 +67,10 @@ class MonthlySnapshotRepository:
         count: int = result.rowcount
         logger.info(
             "Snapshot upsert: familia=%s %s/%s → %s categorías",
-            self.familia_id, mes, anio, count,
+            self.familia_id,
+            mes,
+            anio,
+            count,
         )
         return count
 
@@ -144,16 +148,22 @@ class MonthlySnapshotRepository:
                 cantidad_actual=int(row.cantidad_compras),
                 ticket_actual=float(row.ticket_promedio),
                 total_anterior=float(row.total_anterior)
-                if row.total_anterior is not None else None,
+                if row.total_anterior is not None
+                else None,
                 cantidad_anterior=int(row.cantidad_anterior)
-                if row.cantidad_anterior is not None else None,
+                if row.cantidad_anterior is not None
+                else None,
                 ticket_anterior=float(row.ticket_anterior)
-                if row.ticket_anterior is not None else None,
+                if row.ticket_anterior is not None
+                else None,
             )
             metrics.append(metric)
 
         logger.info(
             "Comparativa mensual: familia=%s %s/%s → %s categorías",
-            self.familia_id, mes, anio, len(metrics),
+            self.familia_id,
+            mes,
+            anio,
+            len(metrics),
         )
         return metrics

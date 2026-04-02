@@ -23,26 +23,26 @@ from views.layouts.main_layout import MainLayout
 
 class IncomesView:
     """Vista para registrar ingresos familiares"""
-    
+
     def __init__(self, page, router):
         self.page = page
         self.router = router
-        
+
         # Verificar login
         if not SessionManager.is_logged_in(page):
             router.navigate("/login")
             return
-        
+
         # Obtener familia_id de la sesión
         familia_id = SessionManager.get_familia_id(page)
-        
+
         # Controllers
         self.income_controller = IncomeController(familia_id=familia_id)
         self.member_controller = FamilyMemberController(familia_id=familia_id)
-        
+
         # Cargar miembros activos
         self.active_members = self.member_controller.list_active_members()
-        
+
         # Campos del formulario
         self.member_dropdown = ft.Dropdown(
             label="Miembro de la familia",
@@ -99,10 +99,10 @@ class IncomesView:
 
         # Lista de ingresos
         self.incomes_column = ft.Column(spacing=10)
-        
+
         # Resumen
         self.summary_column = ft.Column(spacing=5)
-        
+
         # Estado de edición
         self.editing_income_id = None
 
@@ -118,7 +118,6 @@ class IncomesView:
                     weight=ft.FontWeight.BOLD,
                 ),
                 ft.Divider(),
-
                 # Formulario de registro
                 ft.Container(
                     content=ft.Column(
@@ -171,7 +170,9 @@ class IncomesView:
                                     CorrectElevatedButton(
                                         "❌ Cancelar",
                                         on_click=self._on_cancel_edit,
-                                    ) if self.editing_income_id else ft.Container(),
+                                    )
+                                    if self.editing_income_id
+                                    else ft.Container(),
                                 ],
                                 spacing=10,
                             ),
@@ -188,17 +189,13 @@ class IncomesView:
                         color=ft.Colors.TEAL_100,
                     ),
                 ),
-
                 ft.Divider(),
-
                 ft.Text(
                     value="📊 Resumen por categorías",
                     size=16 if is_mobile else 20,
                 ),
                 self.summary_column,
-
                 ft.Divider(),
-
                 ft.Text(
                     value="💵 Ingresos registrados",
                     size=16 if is_mobile else 20,
@@ -231,30 +228,28 @@ class IncomesView:
             if not self.member_dropdown.value:
                 self._show_error(AppError(message="Debe seleccionar un miembro"))
                 return
-            
+
             if not self.monto_input.value:
                 self._show_error(AppError(message="El monto es obligatorio"))
                 return
-            
+
             if not self.descripcion_input.value:
                 self._show_error(AppError(message="La descripción es obligatoria"))
                 return
-            
+
             if not self.categoria_dropdown.value:
                 self._show_error(AppError(message="La categoría es obligatoria"))
                 return
-            
+
             # Parsear fecha
             try:
                 fecha = date.fromisoformat(self.fecha_input.value)
             except ValueError:
                 self._show_error(
-                    AppError(
-                        message="Fecha inválida. Use formato YYYY-MM-DD"
-                    )
+                    AppError(message="Fecha inválida. Use formato YYYY-MM-DD")
                 )
                 return
-            
+
             # Parsear monto (limpiar formato: eliminar puntos de separador de miles)
             try:
                 monto_str = self.monto_input.value.replace(".", "").replace(",", ".")
@@ -262,22 +257,20 @@ class IncomesView:
             except ValueError:
                 self._show_error(AppError(message="El monto debe ser un número válido"))
                 return
-            
+
             # Obtener categoría
             try:
                 categoria = IncomeCategory[self.categoria_dropdown.value]
             except KeyError:
                 self._show_error(AppError(message="Categoría inválida"))
                 return
-            
+
             # Crear o actualizar el ingreso
             es_recurrente = bool(self.recurrente_checkbox.value)
             frecuencia = None
             if es_recurrente and self.frecuencia_dropdown.value:
                 try:
-                    frecuencia = RecurrenceFrequency[
-                        self.frecuencia_dropdown.value
-                    ]
+                    frecuencia = RecurrenceFrequency[self.frecuencia_dropdown.value]
                 except KeyError:
                     pass
 
@@ -292,14 +285,14 @@ class IncomesView:
                 frecuencia=frecuencia,
                 notas=None,
             )
-            
+
             if self.editing_income_id:
                 result = self.income_controller.update_income(income)
                 success_msg = "Ingreso actualizado correctamente"
             else:
                 result = self.income_controller.add_income(income)
                 success_msg = "Ingreso guardado correctamente"
-            
+
             match result:
                 case Ok(_):
                     self.editing_income_id = None
@@ -307,10 +300,10 @@ class IncomesView:
                     self._render_incomes()
                     self._render_summary()
                     self._show_success(success_msg)
-                
+
                 case Err(error):
                     self._show_error(error)
-        
+
         except Exception as e:
             self._show_error(AppError(message=f"Error inesperado: {e}"))
 
@@ -319,7 +312,7 @@ class IncomesView:
         self.incomes_column.controls.clear()
         today = date.today()
         incomes = self.income_controller.list_for_month(today.year, today.month)
-        
+
         if not incomes:
             self.incomes_column.controls.append(
                 ft.Text(value="No hay ingresos registrados", italic=True)
@@ -327,7 +320,7 @@ class IncomesView:
         else:
             # Ordenar por fecha descendente
             incomes_sorted = sorted(incomes, key=lambda x: x.fecha, reverse=True)
-            
+
             for income in incomes_sorted:
                 # Buscar nombre del miembro
                 member_name = "Desconocido"
@@ -335,7 +328,7 @@ class IncomesView:
                     if member.id == income.family_member_id:
                         member_name = member.nombre
                         break
-                
+
                 monto_formateado = format_currency(income.monto)
                 recurrente_badge = (
                     ft.Container(
@@ -360,7 +353,7 @@ class IncomesView:
                                 ft.Icon(
                                     icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
                                     color=ft.Colors.TEAL_600,
-                                    size=30
+                                    size=30,
                                 ),
                                 ft.Column(
                                     controls=[
@@ -386,11 +379,11 @@ class IncomesView:
                                                 f"{income.fecha}"
                                             ),
                                             size=12,
-                                            color=ft.Colors.TEAL_700
+                                            color=ft.Colors.TEAL_700,
                                         ),
                                     ],
                                     spacing=2,
-                                    expand=True
+                                    expand=True,
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.EDIT,
@@ -398,7 +391,7 @@ class IncomesView:
                                     icon_color=ft.Colors.TEAL_400,
                                     on_click=(
                                         lambda e, inc=income: self._on_edit_income(inc)
-                                    )
+                                    ),
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.DELETE,
@@ -406,10 +399,10 @@ class IncomesView:
                                     icon_color=ft.Colors.RED_400,
                                     on_click=lambda e, inc=income: (
                                         self._on_delete_income(inc)
-                                    )
+                                    ),
                                 ),
                             ],
-                            alignment=ft.MainAxisAlignment.START
+                            alignment=ft.MainAxisAlignment.START,
                         ),
                         padding=15,
                         bgcolor=ft.Colors.CYAN_50,
@@ -419,10 +412,10 @@ class IncomesView:
                             spread_radius=1,
                             blur_radius=4,
                             color=ft.Colors.TEAL_100,
-                        )
+                        ),
                     )
                 )
-        
+
         self.page.update()
 
     def _render_summary(self) -> None:
@@ -432,38 +425,38 @@ class IncomesView:
         summary = self.income_controller.get_summary_by_categories(
             year=today.year, month=today.month
         )
-        
+
         if not summary:
             self.summary_column.controls.append(
                 ft.Text(value="No hay datos para mostrar", italic=True)
             )
         else:
             total = sum(summary.values())
-            
+
             # Formatear total con separador de miles
             total_formateado = format_currency(total)
-            
+
             # Agregar total general
             self.summary_column.controls.append(
                 ft.Text(
                     value=f"💰 Total de ingresos: ${total_formateado}",
                     size=18,
                     weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.GREEN
+                    color=ft.Colors.GREEN,
                 )
             )
-            
+
             self.summary_column.controls.append(ft.Divider())
-            
+
             # Ordenar por monto descendente
             sorted_summary = sorted(summary.items(), key=lambda x: x[1], reverse=True)
-            
+
             for categoria, monto in sorted_summary:
                 porcentaje = (monto / total * 100) if total > 0 else 0
-                
+
                 # Formatear monto con separador de miles
                 monto_formateado = format_currency(monto)
-                
+
                 self.summary_column.controls.append(
                     ft.Column(
                         controls=[
@@ -472,12 +465,11 @@ class IncomesView:
                                     ft.Text(
                                         value=categoria,
                                         weight=ft.FontWeight.BOLD,
-                                        expand=True
+                                        expand=True,
                                     ),
                                     ft.Text(
                                         value=(
-                                            f"${monto_formateado} "
-                                            f"({porcentaje:.1f}%)"
+                                            f"${monto_formateado} ({porcentaje:.1f}%)"
                                         )
                                     ),
                                 ],
@@ -485,13 +477,13 @@ class IncomesView:
                             ft.ProgressBar(
                                 value=porcentaje / 100,
                                 color=ft.Colors.GREEN,
-                                bgcolor=ft.Colors.GREEN_100
+                                bgcolor=ft.Colors.GREEN_100,
                             ),
                         ],
-                        spacing=5
+                        spacing=5,
                     )
                 )
-        
+
         self.page.update()
 
     def _on_edit_income(self, income: Income) -> None:
@@ -541,17 +533,13 @@ class IncomesView:
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""
         snack_bar = CorrectSnackBar(
-            content=ft.Text(value=f"❌ {error.message}"),
-            open=True
+            content=ft.Text(value=f"❌ {error.message}"), open=True
         )
         self.page.overlay.append(snack_bar)
         self.page.update()
 
     def _show_success(self, message: str) -> None:
         """Mostrar mensaje de éxito"""
-        snack_bar = CorrectSnackBar(
-            content=ft.Text(value=f"✅ {message}"),
-            open=True
-        )
+        snack_bar = CorrectSnackBar(content=ft.Text(value=f"✅ {message}"), open=True)
         self.page.overlay.append(snack_bar)
         self.page.update()

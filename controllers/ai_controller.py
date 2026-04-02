@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 class AIController(BaseController):
     """Controlador para interactuar con el Contador Oriental"""
-    
+
     def __init__(self, familia_id: int):
         super().__init__(familia_id=familia_id)
         self.ai_service = AIAdvisorService()
@@ -46,7 +46,6 @@ class AIController(BaseController):
         """Crear IAMemoryService con sesión activa."""
         repo = MemoriaRepository(session, self._familia_id or 0)
         return IAMemoryService(repo, self.embedding_service)
-    
 
     async def _calcular_subtotal_semantico(
         self,
@@ -63,7 +62,9 @@ class AIController(BaseController):
 
         embedding_result = await self.embedding_service.generar_embedding(pregunta)
         if isinstance(embedding_result, Err):
-            logger.warning("[SUBTOTAL] No se pudo generar embedding: %s", embedding_result.err())
+            logger.warning(
+                "[SUBTOTAL] No se pudo generar embedding: %s", embedding_result.err()
+            )
             return 0.0, ""
 
         emb = embedding_result.ok()
@@ -78,7 +79,9 @@ class AIController(BaseController):
         label = pregunta.strip()[:40]
         logger.info(
             "[SUBTOTAL] %d gastos cosine (umbral=%.2f) → $%.0f",
-            len(resultados), umbral_cosine, subtotal,
+            len(resultados),
+            umbral_cosine,
+            subtotal,
         )
         return subtotal, label
 
@@ -111,11 +114,16 @@ class AIController(BaseController):
                         a += 1
                 logger.info(
                     "[RANGO] %d gastos históricos cargados (%d/%d→%d/%d)",
-                    len(gastos_mes), mes_ini, anio_ini, mes_fin, anio_fin,
+                    len(gastos_mes),
+                    mes_ini,
+                    anio_ini,
+                    mes_fin,
+                    anio_fin,
                 )
             else:
                 gastos_mes = [
-                    g for g in expense_service.list_expenses()
+                    g
+                    for g in expense_service.list_expenses()
                     if g.fecha.month == mes_actual and g.fecha.year == anio_actual
                 ]
 
@@ -135,7 +143,8 @@ class AIController(BaseController):
             income_repo = IncomeRepository(session, self._familia_id)
             income_service = IncomeService(income_repo)
             ingresos = [
-                i for i in income_service.list_incomes()
+                i
+                for i in income_service.list_incomes()
                 if i.fecha.month == mes_actual and i.fecha.year == anio_actual
             ]
             ingresos_total = sum(i.monto for i in ingresos)
@@ -180,6 +189,7 @@ class AIController(BaseController):
                 if not memory_service.tiene_memoria():
                     return ""
                 from result import Ok as MemOk
+
                 mem_result = await memory_service.buscar_contexto_para_pregunta(
                     pregunta=pregunta, limit=5
                 )
@@ -194,30 +204,28 @@ class AIController(BaseController):
         return ""
 
     async def consultar_contador(
-        self,
-        pregunta: str,
-        incluir_gastos: bool = True
+        self, pregunta: str, incluir_gastos: bool = True
     ) -> Result[AIResponse, AppError]:
         """
         Consulta al Contador Oriental con detección inteligente de contexto.
         La parte de IA es asíncrona; la BD permanece síncrona.
-        
+
         Args:
             pregunta: Pregunta del usuario
             incluir_gastos: Si incluir gastos recientes en el contexto
-            
+
         Returns:
             Result con la respuesta del contador o error
         """
         logger.info(f"Consulta recibida: '{pregunta}'")
-        
+
         # Crear request
         request = AIRequest(
             pregunta=pregunta,
             familia_id=self._familia_id,
-            incluir_gastos_recientes=incluir_gastos
+            incluir_gastos_recientes=incluir_gastos,
         )
-        
+
         ctx = AIContext()
         if incluir_gastos:
             ctx = await self._construir_contexto(pregunta)
@@ -265,11 +273,11 @@ class AIController(BaseController):
             request, ctx=ctx, memoria_vectorial=memoria_str
         ):
             yield token
-    
+
     def get_title(self) -> str:
         """Título de la vista"""
         return "🧮 Contador Oriental"
-    
+
     def get_description(self) -> str:
         """Descripción del servicio"""
         return "Asistente contable con IA para familias uruguayas"

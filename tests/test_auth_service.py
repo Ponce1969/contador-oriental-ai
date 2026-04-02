@@ -1,6 +1,7 @@
 """
 Tests for AuthService.
 """
+
 import pytest
 from result import Err, Ok
 
@@ -16,6 +17,7 @@ class TestAuthService:
     def service(self, db_session):
         """Create auth service with test repository."""
         from repositories.user_repository import UserRepository
+
         repo = UserRepository(session=db_session)
         return AuthService(repo)
 

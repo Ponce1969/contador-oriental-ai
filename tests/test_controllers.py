@@ -1,6 +1,7 @@
 """
 Tests for Controllers.
 """
+
 from datetime import date
 
 import pytest
@@ -18,9 +19,11 @@ class TestAuthController:
     def controller(self, db_session):
         """Create auth controller with mock page."""
         from controllers.auth_controller import AuthController
+
         # Mock page object
         class MockPage:
             pass
+
         return AuthController(MockPage())
 
     def test_login_failure(self, controller):
@@ -49,6 +52,7 @@ class TestExpenseController:
     def controller(self, db_session):
         """Create expense controller with test session."""
         from controllers.expense_controller import ExpenseController
+
         return ExpenseController(db_session, familia_id=1)
 
     def test_add_expense(self, controller):
@@ -151,6 +155,7 @@ class TestIncomeController:
     def controller(self, db_session):
         """Create income controller with test session."""
         from controllers.income_controller import IncomeController
+
         return IncomeController(db_session, familia_id=1)
 
     def test_add_income(self, controller, family_member_id):
@@ -267,4 +272,3 @@ class TestIncomeController:
         """Test getting controller title."""
         title = controller.get_title()
         assert title == "Ingresos Familiares"
-

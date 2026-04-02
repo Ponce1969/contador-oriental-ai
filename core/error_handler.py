@@ -1,9 +1,9 @@
-
 import flet as ft
 
 from core.logger import get_logger
 
 logger = get_logger("ErrorHandler")
+
 
 class GlobalErrorHandler:
     @staticmethod
@@ -18,7 +18,7 @@ class GlobalErrorHandler:
                         ft.Text(
                             value="⚠️ An error occurred.",
                             size=24,
-                            weight=ft.FontWeight.BOLD
+                            weight=ft.FontWeight.BOLD,
                         ),
                         ft.Text(value="Something went wrong. Please try again."),
                     ],

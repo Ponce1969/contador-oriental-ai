@@ -2,6 +2,7 @@
 QueryAnalyzer — Analizador de lenguaje natural para consultas financieras.
 Lógica NLU pura: sin BD, sin async, sin estado. Determinístico y testeable.
 """
+
 from __future__ import annotations
 
 import difflib
@@ -15,61 +16,185 @@ logger = logging.getLogger(__name__)
 
 class IntentData(NamedTuple):
     """Resultado del análisis de intención de una pregunta."""
+
     categorias: list[str]
     rango: tuple[int, int, int, int] | None
 
 
-_PALABRAS_TEMPORALES: frozenset[str] = frozenset([
-    "pasado", "pasada", "anterior", "anteriores", "previo", "previa",
-    "ultimo", "última", "ultimos", "últimas", "actual", "reciente",
-    "meses", "semana", "semanas", "dias", "años", "año",
-    "enero", "febrero", "marzo", "abril", "mayo", "junio",
-    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-    "cuanto", "cuánto", "cual", "cuál", "como", "cómo", "cuando", "cuándo",
-    "gaste", "gasté", "total", "resumen", "gasto", "gastos",
-])
+_PALABRAS_TEMPORALES: frozenset[str] = frozenset(
+    [
+        "pasado",
+        "pasada",
+        "anterior",
+        "anteriores",
+        "previo",
+        "previa",
+        "ultimo",
+        "última",
+        "ultimos",
+        "últimas",
+        "actual",
+        "reciente",
+        "meses",
+        "semana",
+        "semanas",
+        "dias",
+        "años",
+        "año",
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+        "cuanto",
+        "cuánto",
+        "cual",
+        "cuál",
+        "como",
+        "cómo",
+        "cuando",
+        "cuándo",
+        "gaste",
+        "gasté",
+        "total",
+        "resumen",
+        "gasto",
+        "gastos",
+    ]
+)
 
 _MESES_ES: dict[str, int] = {
-    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
-    "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
-    "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
 }
 
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "🛒 Almacén": [
-        "super", "supermercado", "comida", "almacen", "almacén",
-        "compras", "comestibles", "mercado", "verduleria", "verdulería",
-        "carniceria", "carnicería", "panaderia", "panadería", "delivery",
+        "super",
+        "supermercado",
+        "comida",
+        "almacen",
+        "almacén",
+        "compras",
+        "comestibles",
+        "mercado",
+        "verduleria",
+        "verdulería",
+        "carniceria",
+        "carnicería",
+        "panaderia",
+        "panadería",
+        "delivery",
     ],
     "🚗 Vehículos": [
-        "nafta", "combustible", "gasolina", "auto", "coche", "vehiculo",
-        "vehículo", "transporte", "peaje", "estacionamiento", "patente",
-        "seguro auto", "mantenimiento auto",
+        "nafta",
+        "combustible",
+        "gasolina",
+        "auto",
+        "coche",
+        "vehiculo",
+        "vehículo",
+        "transporte",
+        "peaje",
+        "estacionamiento",
+        "patente",
+        "seguro auto",
+        "mantenimiento auto",
     ],
     "🏠 Hogar": [
-        "luz", "agua", "gas", "internet", "telefono", "teléfono",
-        "cable", "alquiler", "casa", "hogar", "expensas", "servicio",
+        "luz",
+        "agua",
+        "gas",
+        "internet",
+        "telefono",
+        "teléfono",
+        "cable",
+        "alquiler",
+        "casa",
+        "hogar",
+        "expensas",
+        "servicio",
     ],
     "👨‍⚕️ Salud": [
-        "farmacia", "medico", "médico", "doctor", "hospital",
-        "clinica", "clínica", "medicamento", "salud", "consulta",
-        "obra social", "odontologo", "odontólogo",
+        "farmacia",
+        "medico",
+        "médico",
+        "doctor",
+        "hospital",
+        "clinica",
+        "clínica",
+        "medicamento",
+        "salud",
+        "consulta",
+        "obra social",
+        "odontologo",
+        "odontólogo",
     ],
     "🎉 Ocio": [
-        "cine", "teatro", "salida", "restaurante", "cena",
-        "asado", "bar", "cerveza", "entretenimiento", "ocio",
-        "vacaciones", "paseo", "streaming", "netflix", "spotify",
+        "cine",
+        "teatro",
+        "salida",
+        "restaurante",
+        "cena",
+        "asado",
+        "bar",
+        "cerveza",
+        "entretenimiento",
+        "ocio",
+        "vacaciones",
+        "paseo",
+        "streaming",
+        "netflix",
+        "spotify",
     ],
     "📚 Educación": [
-        "escuela", "colegio", "universidad", "curso", "libro",
-        "material", "educacion", "educación", "estudio", "utiles", "útiles",
+        "escuela",
+        "colegio",
+        "universidad",
+        "curso",
+        "libro",
+        "material",
+        "educacion",
+        "educación",
+        "estudio",
+        "utiles",
+        "útiles",
     ],
     "👕 Ropa": [
-        "ropa", "vestimenta", "calzado", "zapato", "remera",
-        "pantalon", "pantalón", "campera", "abrigo", "zapatilla",
+        "ropa",
+        "vestimenta",
+        "calzado",
+        "zapato",
+        "remera",
+        "pantalon",
+        "pantalón",
+        "campera",
+        "abrigo",
+        "zapatilla",
     ],
     "💳 Otros": [
-        "impuesto", "seguro", "prestamo", "préstamo", "varios",
+        "impuesto",
+        "seguro",
+        "prestamo",
+        "préstamo",
+        "varios",
     ],
 }
 
@@ -111,16 +236,16 @@ class QueryAnalyzer:
                     if keyword in palabras:
                         match_encontrado = True
                         break
-                    candidatos = [
-                        p for p in palabras if p not in _PALABRAS_TEMPORALES
-                    ]
+                    candidatos = [p for p in palabras if p not in _PALABRAS_TEMPORALES]
                     matches = difflib.get_close_matches(
                         keyword, candidatos, n=1, cutoff=0.88
                     )
                     if matches:
                         logger.info(
                             "Fuzzy match: '%s' -> '%s' (%s)",
-                            matches[0], keyword, categoria,
+                            matches[0],
+                            keyword,
+                            categoria,
                         )
                         match_encontrado = True
                         break
@@ -172,7 +297,11 @@ class QueryAnalyzer:
                 anio_ini -= 1
             logger.info(
                 "[RANGO] Últimos %d meses: %d/%d -> %d/%d",
-                n, mes_ini, anio_ini, mes_actual, anio_actual,
+                n,
+                mes_ini,
+                anio_ini,
+                mes_actual,
+                anio_actual,
             )
             return (mes_ini, anio_ini, mes_actual, anio_actual)
 

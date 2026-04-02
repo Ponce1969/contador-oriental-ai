@@ -39,10 +39,7 @@ class TestFamilyMemberModel:
     def test_family_member_str_person(self):
         """Test string representation for person."""
         member = FamilyMember(
-            nombre="María García",
-            tipo_miembro="persona",
-            parentesco="madre",
-            edad=40
+            nombre="María García", tipo_miembro="persona", parentesco="madre", edad=40
         )
         str_repr = str(member)
         assert "María García" in str_repr
@@ -52,10 +49,7 @@ class TestFamilyMemberModel:
     def test_family_member_str_pet(self):
         """Test string representation for pet."""
         member = FamilyMember(
-            nombre="Michi",
-            tipo_miembro="mascota",
-            especie="gato",
-            edad=2
+            nombre="Michi", tipo_miembro="mascota", especie="gato", edad=2
         )
         str_repr = str(member)
         assert "Michi" in str_repr

@@ -427,9 +427,7 @@ class TicketUploadView:
         """
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(
-                    f"{_OCR_INTERNAL}/pendiente/{self._familia_id}"
-                )
+                resp = await client.get(f"{_OCR_INTERNAL}/pendiente/{self._familia_id}")
                 data = resp.json()
             if data.get("ready"):
                 self._session_id = data.get("session_id")
