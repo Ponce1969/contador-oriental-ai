@@ -15,6 +15,8 @@ Sistema de gestión financiera familiar con **Python 3.12 + Flet + PostgreSQL + 
 - **🧠 Memoria Vectorial** — Cada gasto se vectoriza automáticamente; el Contador recuerda el historial completo con búsqueda semántica (pgvector + HNSW)
 - **🔍 Búsqueda Semántica** — `expenses.embedding` vector(768): el subtotal se calcula por similitud cosine, no por keywords. "supermercado" encuentra "almacén", "verdulería", "delivery"
 - **📅 Consultas Históricas** — Detecta automáticamente meses específicos ("octubre"), "mes pasado" y "últimos N meses" y carga los gastos reales de BD
+- **📱 Soporte WhatsApp** — Botón de ayuda directo en la app (código Uruguay +598)
+- **🛡️ Guardian** — Monitoreo automático de contenedores con alertas a Discord
 
 ---
 
@@ -463,7 +465,55 @@ Cada familia crea su cuenta desde el registro en la UI. No necesitás crear cuen
 
 ---
 
-## 🛡️ Escudo Charrúa
+## � Soporte y Monitoreo
+
+### Botón de WhatsApp
+
+Acceso directo a soporte desde cualquier pantalla de la app:
+
+- **Número**: `+598 99 171 819` (Uruguay)
+- **Mensaje predefinido**: *"Hola, necesito ayuda con Contador Oriental AI"*
+- **Ubicación**: Top bar (icono verde 💬)
+
+```python
+# Implementación: views/layouts/main_layout.py
+WhatsAppConfig(
+    phone_number="99171819",
+    default_message="Hola, necesito ayuda con Contador Oriental AI",
+    country_code="598",
+)
+```
+
+> ⚠️ **Nota técnica**: `page.launch_url()` es async en Flet web. Requiere `await` y manejo con `asyncio.create_task()` en callbacks de UI.
+
+### Guardian — Monitoreo de Contenedores
+
+Servicio independiente que vigila la salud de todos los contenedores Docker y envía alertas a Discord.
+
+| Función | Descripción |
+|---------|-------------|
+| **Monitoreo** | Revisa cada 60s: `app`, `postgres`, `ocr_api` |
+| **Alertas** | Notificación Discord si un contenedor cae o vuelve |
+| **Auto-start** | Se levanta con `docker compose up` |
+
+**Variables de entorno**:
+
+```bash
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+GUARDIAN_CHECK_INTERVAL=60  # segundos
+```
+
+**Estructura del proyecto**:
+
+```
+guardian/
+├── guardian_service.py     # Servicio async de monitoreo
+└── README.md               # Documentación específica
+```
+
+---
+
+## �🛡️ Escudo Charrúa
 
 | Pilar | Implementación |
 |---|---|
@@ -579,6 +629,7 @@ ocr_sessions(
 | `app` | 8550 | App Flet principal |
 | `ocr_api` | 8551 | Microservicio OCR FastAPI |
 | `postgres` | 5432 | Base de datos |
+| `guardian` | — | Monitoreo de salud + alertas Discord |
 
 ### Variables de entorno relevantes
 

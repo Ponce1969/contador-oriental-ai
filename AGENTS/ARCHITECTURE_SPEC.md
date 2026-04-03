@@ -47,6 +47,7 @@
 | app | 8550 | Flet web application |
 | ocr_api | 8551 | FastAPI OCR microservice |
 | postgres | 5432 | PostgreSQL + pgvector |
+| guardian | — | Health monitoring + Discord alerts |
 
 ### Internal Communication
 - **Flet → OCR**: `http://auditor_familiar_ocr_api:8551`
@@ -60,9 +61,15 @@
 - **View**: Flet pages in `views/pages/`
 - **Controller**: Business logic in `controllers/`
 
-### Multi-Tenancy
-- All queries filter by `familia_id`
-- Controllers accept optional `familia_id` parameter
+### Multi-Family Support
+- Family registration and management
+- Per-family data isolation (familia_id)
+- Role-based access
+
+### WhatsApp Support
+- Direct support button in app header
+- Pre-filled message with app name
+- Uruguayan country code (+598)
 
 ### Event System (Observer Pattern)
 - `EventSystem` for fire-and-forget operations
@@ -120,3 +127,5 @@ uv run ruff format .
 - `OCR_API_URL` - Internal OCR service
 - `OCR_API_PUBLIC_URL` - Public OCR service
 - `APP_ENV` - production/development
+- `DISCORD_WEBHOOK_URL` - Guardian alerts
+- `GUARDIAN_CHECK_INTERVAL` - Monitoring interval (seconds)

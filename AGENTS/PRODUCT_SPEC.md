@@ -38,6 +38,11 @@ Manages household expenses, income, and provides AI-powered financial advice.
 - Per-family data isolation (familia_id)
 - Role-based access
 
+### 6. WhatsApp Support
+- Direct support button accessible from any screen
+- Pre-filled message: "Hola, necesito ayuda con Contador Oriental AI"
+- Opens WhatsApp web/app with Uruguayan number (+598)
+
 ## User Flows
 
 ### Add Expense (Manual)
