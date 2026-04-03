@@ -154,9 +154,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./logs:/app/logs
+      - guardian_data:/app/.venv
     networks:
       - auditor_network
-    command: ["uv", "run", "python", "guardian/guardian_service.py"]
+    user: "0:0"  # Ejecutar como root para acceso a Docker socket
+    entrypoint: ["uv", "run", "--no-project", "python", "guardian/guardian_service.py"]
     healthcheck:
       test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
       interval: 60s
@@ -169,6 +171,8 @@ volumes:
   pgadmin_data:
     driver: local
   app_data:
+    driver: local
+  guardian_data:
     driver: local
 
 networks:
