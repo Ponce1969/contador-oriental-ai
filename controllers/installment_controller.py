@@ -12,7 +12,7 @@ from result import Ok, Result
 from controllers.base_controller import BaseController
 from core.events import Event, EventType
 from models.categories import ExpenseCategory, PaymentMethod
-from models.errors import AppError, ValidationError
+from models.errors import AppError
 from models.expense_model import Expense
 from models.installment_model import InstallmentPayment, InstallmentPurchase
 from repositories.expense_repository import ExpenseRepository
@@ -111,7 +111,6 @@ class InstallmentController(BaseController):
         """
         creados = 0
         planes = self.obtener_cuotas_pendientes()
-        hoy = date.today()
 
         for plan in planes:
             if not plan.activo or plan.completado:
