@@ -364,7 +364,7 @@ class DashboardView:
 
         total_mes = sum(
             (p.monto_por_cuota for p in planes),
-            __import__("decimal").Decimal("0"),
+            Decimal("0"),
         )
 
         return ft.Container(

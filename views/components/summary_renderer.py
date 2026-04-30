@@ -7,6 +7,8 @@ en dashboard_view.py.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 import flet as ft
 
 from utils.formatters import format_currency
@@ -38,7 +40,7 @@ class SummaryRenderer:
                 ]
             )
 
-        total = sum(summary.values())
+        total = sum(summary.values(), Decimal("0"))
         sorted_items = sorted(summary.items(), key=lambda x: x[1], reverse=True)
 
         controls = []

@@ -432,7 +432,7 @@ class IncomesView:
                 ft.Text(value="No hay datos para mostrar", italic=True)
             )
         else:
-            total = sum(summary.values())
+            total = sum(summary.values(), Decimal("0"))
 
             # Formatear total con separador de miles
             total_formateado = format_currency(total)

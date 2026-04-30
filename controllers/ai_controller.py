@@ -75,14 +75,15 @@ class AIController(BaseController):
 
         if not resultados:
             logger.info("[SUBTOTAL] Sin resultados cosine para: %s", pregunta)
-            return 0.0, ""
+            return Decimal("0"), ""
 
-        subtotal = sum(g.monto for g, _ in resultados)
+        subtotal = sum((g.monto for g, _ in resultados), Decimal("0"))
         label = pregunta.strip()[:40]
         logger.info(
-            "[SUBTOTAL] %d gastos cosine (umbral=%.2f) → $%.0f",
+            "[SUBTOTAL] %d gastos cosine (umbral=%.2f) -> %s",
             len(resultados),
             umbral_cosine,
+            subtotal,
             subtotal,
         )
         return subtotal, label

@@ -9,9 +9,9 @@ import logging
 import os
 import re
 from decimal import Decimal
-from datetime import datetime
 
 from fpdf import FPDF
+from services.infrastructure.formatters import format_pesos
 from result import Err, Ok, Result
 
 from models.ai_model import AIContext
@@ -128,8 +128,8 @@ class ReportService:
         pdf.set_text_color(*_GRIS_OSCURO)
 
         datos = [
-            ("Ingresos totales", f"$ {ctx.ingresos_total:,.0f}"),
-            ("Total gastos del mes", f"$ {ctx.total_gastos_mes:,.0f}"),
+            ("Ingresos totales", f"{format_pesos(ctx.ingresos_total)}"),
+            ("Total gastos del mes", f"{format_pesos(ctx.total_gastos_mes)}"),
             ("Miembros del hogar", str(ctx.miembros_count)),
         ]
         for label, valor in datos:
@@ -143,7 +143,7 @@ class ReportService:
         pdf.set_font("helvetica", "B", 11)
         pdf.set_text_color(*balance_color)
         signo = "+" if balance >= 0 else ""
-        pdf.cell(95, 8, f"{signo}$ {balance:,.0f}", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(95, 8, f"{signo}{format_pesos(balance)}", new_x="LMARGIN", new_y="NEXT")
         pdf.set_text_color(*_GRIS_OSCURO)
         pdf.ln(6)
 
@@ -165,7 +165,7 @@ class ReportService:
         pdf.ln()
 
         pdf.set_font("helvetica", "", 9)
-        total_tabla = 0.0
+        total_tabla = Decimal("0")
         fill = False
 
         for categoria, items in ctx.resumen_gastos.items():
@@ -184,7 +184,7 @@ class ReportService:
                 pdf.cell(80, 7, f" {cat_limpia}", border=1, fill=True)
                 pdf.cell(60, 7, f" {desc_limpia}", border=1, fill=True)
                 pdf.cell(25, 7, str(cantidad), border=1, fill=True, align="C")
-                pdf.cell(25, 7, f"${monto:,.0f}", border=1, fill=True, align="R")
+                pdf.cell(25, 7, format_pesos(monto), border=1, fill=True, align="R")
                 pdf.ln()
                 fill = not fill
 
@@ -192,7 +192,7 @@ class ReportService:
         pdf.set_font("helvetica", "B", 10)
         pdf.set_fill_color(*_GRIS_TABLA)
         pdf.cell(80 + 60 + 25, 8, " TOTAL CONSULTADO", border=1, fill=True)
-        pdf.cell(25, 8, f"${total_tabla:,.0f}", border=1, fill=True, align="R")
+        pdf.cell(25, 8, format_pesos(total_tabla), border=1, fill=True, align="R")
         pdf.ln(8)
 
     def _seccion_metodos_pago(self, pdf: FPDF, ctx: AIContext) -> None:

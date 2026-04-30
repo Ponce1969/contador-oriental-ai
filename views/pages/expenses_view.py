@@ -609,7 +609,7 @@ class ExpensesView:
                 ft.Text(value="No hay datos para mostrar", italic=True)
             )
         else:
-            total = sum(summary.values())
+                total = sum(summary.values(), Decimal("0"))
 
             for categoria, monto in sorted(
                 summary.items(), key=lambda x: x[1], reverse=True

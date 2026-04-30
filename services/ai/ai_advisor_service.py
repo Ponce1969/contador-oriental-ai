@@ -167,12 +167,12 @@ class AIAdvisorService:
                     metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
                     if cantidad > 1:
                         lineas.append(
-                            f"  • {descripcion}: ${monto:,.0f} total"
+                            f"  - {descripcion}: {format_pesos(monto)} total"
                             f" ({cantidad} transacciones separadas, {metodo_str})"
                         )
                     else:
                         lineas.append(
-                            f"  • {descripcion}: ${monto:,.0f} ({metodo_str})"
+                            f"  - {descripcion}: {format_pesos(monto)} ({metodo_str})"
                         )
 
         lineas.append("")
