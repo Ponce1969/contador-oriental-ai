@@ -70,6 +70,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    ports:
+      - "8550:8550"
 
   # pgAdmin (opcional, para administración de BD)
   pgadmin:

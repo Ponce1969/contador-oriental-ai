@@ -10,6 +10,7 @@ import logging
 import os
 import uuid
 from datetime import date
+from decimal import Decimal
 from enum import Enum, auto
 
 import flet as ft
@@ -518,7 +519,7 @@ class TicketUploadView:
     def _on_confirmar(self, _):
         """Guarda el gasto con los datos confirmados/editados por el usuario."""
         try:
-            monto = float(self._monto_field.value or "0")
+            monto = Decimal(self._monto_field.value or "0")
             if monto <= 0:
                 self.page.overlay.append(
                     ft.SnackBar(ft.Text("El monto debe ser mayor a 0"), open=True)

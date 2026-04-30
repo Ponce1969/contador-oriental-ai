@@ -43,7 +43,7 @@ class SummaryRenderer:
 
         controls = []
         for categoria, monto in sorted_items:
-            porcentaje = (monto / total * 100) if total > 0 else 0
+            porcentaje = float((monto / total * 100)) if total > 0 else 0.0
             monto_fmt = format_currency(monto)
 
             controls.append(

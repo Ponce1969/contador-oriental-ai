@@ -5,6 +5,7 @@ Modelos de dominio para el AI Contador Oriental
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -52,12 +53,12 @@ class CategoryMetric(BaseModel):
     categoria: str
     mes_actual: int
     anio_actual: int
-    total_actual: float
+    total_actual: Decimal = Field(default=Decimal("0"))
     cantidad_actual: int
-    ticket_actual: float
-    total_anterior: float | None = None
+    ticket_actual: Decimal = Field(default=Decimal("0"))
+    total_anterior: Decimal | None = None
     cantidad_anterior: int | None = None
-    ticket_anterior: float | None = None
+    ticket_anterior: Decimal | None = None
 
     @property
     def variacion_total_pct(self) -> float | None:
@@ -109,16 +110,23 @@ class AIContext(BaseModel):
     total_gastos_count: int = Field(
         default=0, description="Cantidad de transacciones en el filtro actual"
     )
-    total_gastos_mes: float = Field(
-        default=0.0,
+    total_gastos_mes: Decimal = Field(
+        default=Decimal("0"),
         description="Total de gastos del mes completo (todas las categorías)",
     )
-    ingresos_total: float = Field(default=0.0, description="Total de ingresos del mes")
+    ingresos_total: Decimal = Field(
+        default=Decimal("0"), description="Total de ingresos del mes"
+    )
     miembros_count: int = Field(
         default=0, description="Cantidad de miembros en la familia"
     )
     resumen_metodos_pago: str = Field(
-        default="", description="Resumen de métodos de pago usados en el mes"
+        default="",
+        description="Resumen textual de los metodos de pago del mes (pre-formateado)",
+    )
+    proyeccion_cuotas: dict[str, Decimal] = Field(
+        default_factory=dict,
+        description="Proyeccion de cuotas futuras: {'2026-06': 15000, ...}",
     )
     comparativa_meses: list[CategoryMetric] = Field(
         default_factory=list,

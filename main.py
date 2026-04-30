@@ -62,6 +62,12 @@ def _setup_memory_observer() -> None:
         event_system.subscribe(EventType.GASTO_CREADO, _dispatch_gasto)
         logger.info("[MEMORY] Observer de gastos suscrito al EventSystem ✅")
 
+        async def _dispatch_cuota(event):
+            await _dispatch_gasto(event)
+
+        event_system.subscribe(EventType.COMPRA_CUOTAS_CREADA, _dispatch_cuota)
+        logger.info("[MEMORY] Observer de cuotas suscrito al EventSystem ✅")
+
     except Exception as e:
         logger.warning("[MEMORY] No se pudo inicializar el observer: %s", str(e))
 

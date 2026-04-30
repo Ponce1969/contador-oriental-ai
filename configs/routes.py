@@ -70,6 +70,14 @@ ROUTES = [
         "show_in_bottom": True,
     },
     {
+        "path": "/planes",
+        "view": "views.pages.planes_view.PlanesView",
+        "label": "📋 Mis Planes",
+        "icon": ft.Icons.CREDIT_CARD,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+    {
         "path": "/ai-contador",
         "view": "views.pages.ai_advisor_view.AIAdvisorView",
         "label": "🧮 Contador Oriental",

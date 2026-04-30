@@ -1,4 +1,6 @@
 from datetime import date, datetime
+from decimal import Decimal
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -8,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
 )
@@ -97,7 +100,7 @@ class IncomeTable(Base):
     )
 
     # Datos básicos del ingreso
-    monto: Mapped[float] = mapped_column(Float, nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     descripcion: Mapped[str] = mapped_column(String(200), nullable=False)
 
@@ -133,7 +136,7 @@ class ExpenseTable(Base):
     )
 
     # Datos básicos del gasto
-    monto: Mapped[float] = mapped_column(Float, nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     descripcion: Mapped[str] = mapped_column(String(200), nullable=False)
 
@@ -151,6 +154,15 @@ class ExpenseTable(Base):
     # Información adicional
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Estado de pago
+    pendiente: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Compra en cuotas
+    installment_purchase_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("installment_purchases.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     # Embedding semántico para búsqueda cosine via pgvector (Vector en PG, Text en otros)
     embedding = Column(_VECTOR_TYPE, nullable=True)
 
@@ -167,3 +179,75 @@ class ExpenseTable(Base):
 
 # Alias para compatibilidad con código existente
 ShoppingItemTable = ExpenseTable
+
+
+class InstallmentPurchaseTable(Base):
+    """
+    Tabla de compras en cuotas con tarjeta de crédito
+    """
+
+    __tablename__ = "installment_purchases"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    expense_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("expenses.id"), nullable=True
+    )
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id"), nullable=False
+    )
+
+    nombre_tarjeta: Mapped[str] = mapped_column(String(50), nullable=False)
+    monto_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    numero_cuotas: Mapped[int] = mapped_column(Integer, nullable=False)
+    cuotas_pagadas: Mapped[int] = mapped_column(Integer, default=0)
+    monto_por_cuota: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+
+    fecha_compra: Mapped[date] = mapped_column(Date, nullable=False)
+    mes_inicio_pago: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fecha_ultima_cuota: Mapped[date | None] = mapped_column(Date, nullable=True)
+
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    completado: Mapped[bool] = mapped_column(Boolean, default=False)
+    vectorizado: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    descripcion: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    __table_args__ = (
+        Index("idx_installments_familia", "familia_id"),
+        Index("idx_installments_activo", "familia_id", "activo"),
+    )
+
+
+class InstallmentPaymentTable(Base):
+    """
+    Tabla de pagos individuales de cada cuota
+    """
+
+    __tablename__ = "installment_payments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    installment_purchase_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("installment_purchases.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    expense_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("expenses.id"), nullable=True
+    )
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id"), nullable=False
+    )
+
+    numero_cuota: Mapped[int] = mapped_column(Integer, nullable=False)
+    monto_pagado: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    fecha_pago: Mapped[date] = mapped_column(Date, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index("idx_payments_purchase", "installment_purchase_id"),
+    )

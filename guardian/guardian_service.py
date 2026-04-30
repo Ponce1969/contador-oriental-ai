@@ -469,6 +469,46 @@ class GuardianService:
             COLOR_BLUE,
         )
     
+    async def _check_cuotas_ratio(self) -> None:
+        """Verifica que las cuotas no superen el 30% de ingresos promedio."""
+        try:
+            from decimal import Decimal
+            from controllers.installment_controller import InstallmentController
+            from controllers.income_controller import IncomeController
+            from datetime import date
+
+            hoy = date.today()
+            # Proyectar 3 meses
+            ctrl = InstallmentController()
+            proyeccion = ctrl.proyectar_meses(3)
+
+            # Ingresos promedio (ultimos 3 meses)
+            income_ctrl = IncomeController()
+            ingresos: list[Decimal] = []
+            for i in range(3):
+                mes = ((hoy.month - 1 - i) % 12) + 1
+                anio = hoy.year - ((hoy.month - 1 - i) // 12)
+                ingresos.append(
+                    Decimal(str(income_ctrl.get_total_by_month(anio, mes)))
+                )
+            ingreso_promedio = sum(ingresos, Decimal("0")) / max(len(ingresos), 1)
+            if ingreso_promedio <= 0:
+                return
+
+            # Chequear cada mes proyectado
+            for mes_key, total_cuotas in proyeccion.items():
+                ratio = total_cuotas / ingreso_promedio
+                if ratio > Decimal("0.3"):
+                    logger.warning(
+                        "ALERTA FINANCIERA: %s cuotas=%s (%.0f%% del ingreso promedio %s)",
+                        mes_key,
+                        total_cuotas,
+                        ratio * 100,
+                        ingreso_promedio,
+                    )
+        except Exception as e:
+            logger.debug("Chequeo de ratio cuotas/ingresos omitido: %s", e)
+
     async def _monitoring_loop(self) -> None:
         """Loop principal de monitoreo."""
         if not self._monitor:
@@ -484,8 +524,11 @@ class GuardianService:
                     logger.warning(summary)
                 else:
                     logger.info(summary)
-                
-                # Esperar con cancelación graceful
+
+                # Check de salud financiera: ratio cuotas/ingresos
+                await self._check_cuotas_ratio()
+
+                # Esperar con cancelacion graceful
                 try:
                     await asyncio.wait_for(
                         self._shutdown_event.wait(),

@@ -17,7 +17,7 @@ class ExpenseCategory(str, Enum):
     EDUCACION = "📚 Educación"
     OCIO = "🎉 Ocio"
     ROPA = "👕 Ropa"
-    OTROS = "💳 Otros"
+    OTROS = "📦 Otros"
 
 
 # Subcategorías por categoría principal

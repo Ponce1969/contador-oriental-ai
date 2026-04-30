@@ -10,6 +10,7 @@ This file provides references to the specification documents for AI agents.
 | [ARCHITECTURE_SPEC.md](AGENTS/ARCHITECTURE_SPEC.md) | Tech stack, project structure, patterns |
 | [CODING_STANDARDS_SPEC.md](AGENTS/CODING_STANDARDS_SPEC.md) | Code conventions, type hints, error handling |
 | [IMPLEMENTATION_SPEC.md](AGENTS/IMPLEMENTATION_SPEC.md) | OCR flow, AI system, database schema |
+| [INSTALLMENT_EXPENSES_SPEC.md](AGENTS/INSTALLMENT_EXPENSES_SPEC.md) | Credit card installment tracking feature |
 
 ## Quick Commands
 
@@ -41,3 +42,4 @@ uv run fleting db seed
 - See [CODING_STANDARDS_SPEC.md](AGENTS/CODING_STANDARDS_SPEC.md) for error handling patterns
 - See [IMPLEMENTATION_SPEC.md](AGENTS/IMPLEMENTATION_SPEC.md) for OCR ticket upload flow
 - See [ARCHITECTURE_SPEC.md](AGENTS/ARCHITECTURE_SPEC.md) for database schema
+- See [INSTALLMENT_EXPENSES_SPEC.md](AGENTS/INSTALLMENT_EXPENSES_SPEC.md) for installment tracking implementation

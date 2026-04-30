@@ -6,6 +6,7 @@ Evolución de ShoppingItem a un sistema completo de gastos
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -20,7 +21,7 @@ class Expense(BaseModel):
     id: int | None = None
 
     # Datos básicos del gasto
-    monto: float = Field(gt=0, description="Monto del gasto en pesos")
+    monto: Decimal = Field(gt=0, description="Monto del gasto en pesos")
     fecha: date = Field(default_factory=date.today, description="Fecha del gasto")
     descripcion: str = Field(
         min_length=1, max_length=200, description="Descripción del gasto"
@@ -48,6 +49,14 @@ class Expense(BaseModel):
     # Información adicional
     notas: str | None = Field(
         default=None, max_length=500, description="Notas adicionales sobre el gasto"
+    )
+
+    # Cuotas
+    installment_purchase_id: int | None = Field(
+        default=None, description="ID de compra en cuotas asociada"
+    )
+    pendiente: bool = Field(
+        default=False, description="Gasto pendiente de pago (ej: cuota auto-generada)"
     )
 
     # Campos heredados de ShoppingItem (para compatibilidad temporal)

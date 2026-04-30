@@ -5,40 +5,20 @@ Evita duplicación de formateo de moneda y otros valores
 
 from __future__ import annotations
 
+from decimal import Decimal
 
-def format_currency(value: float) -> str:
+
+def format_currency(value: float | Decimal) -> str:
     """
     Formatear moneda uruguaya de forma consistente.
-
-    Args:
-        value: Valor numérico a formatear
-
-    Returns:
-        String formateado como pesos uruguayos (ej: "80.000")
-
-    Examples:
-        >>> format_currency(80000)
-        '80.000'
-        >>> format_currency(1234.5)
-        '1.235'
     """
+    if isinstance(value, Decimal):
+        value = int(value)
     return f"{value:,.0f}".replace(",", ".")
 
 
-def format_currency_with_symbol(value: float) -> str:
-    """
-    Formatear moneda uruguaya con símbolo $.
-
-    Args:
-        value: Valor numérico a formatear
-
-    Returns:
-        String con símbolo $ (ej: "$ 80.000")
-
-    Examples:
-        >>> format_currency_with_symbol(80000)
-        '$ 80.000'
-    """
+def format_currency_with_symbol(value: float | Decimal) -> str:
+    """Formatear moneda uruguaya con simbolo $."""
     return f"$ {format_currency(value)}"
 
 

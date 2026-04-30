@@ -4,7 +4,9 @@ Servicio de lógica de negocio para gastos familiares
 
 from __future__ import annotations
 
-from result import Result
+from decimal import Decimal
+
+from result import Err, Result
 
 from constants.messages import ValidationMessages
 from models.errors import DatabaseError, ValidationError
@@ -61,7 +63,18 @@ class ExpenseService:
         return list(expenses)
 
     def delete_expense(self, expense_id: int) -> Result[None, DatabaseError]:
-        """Eliminar un gasto"""
+        """Eliminar un gasto (preserva historial de cuotas con SET NULL)"""
+        # Verificar si el gasto tiene compra en cuotas asociada
+        expense_result = self._repo.get_by_id(expense_id)
+        if isinstance(expense_result, Err):
+            return expense_result
+
+        expense = expense_result.ok()
+        if expense.installment_purchase_id:
+            # No bloquear eliminación, ON DELETE SET NULL se encarga
+            # El historial de cuotas queda preservado
+            pass
+
         return self._repo.delete(expense_id)
 
     def update_expense(
@@ -77,28 +90,28 @@ class ExpenseService:
                 return check  # type: ignore[return-value]
         return self._repo.update(expense)
 
-    def get_total_by_category(self, categoria: str) -> float:
+    def get_total_by_category(self, categoria: str) -> Decimal:
         """Calcular total gastado en una categoría"""
         expenses = self.list_by_category(categoria)
-        return sum(expense.monto for expense in expenses)
+        return sum((expense.monto for expense in expenses), Decimal("0"))
 
-    def get_total_by_month(self, year: int, month: int) -> float:
+    def get_total_by_month(self, year: int, month: int) -> Decimal:
         """Calcular total gastado en un mes"""
         expenses = self.list_by_month(year, month)
-        return sum(expense.monto for expense in expenses)
+        return sum((expense.monto for expense in expenses), Decimal("0"))
 
     def get_summary_by_categories(
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, float]:
+    ) -> dict[str, Decimal]:
         """Obtener resumen de gastos por categoría, opcionalmente filtrado por mes."""
         if year is not None and month is not None:
             expenses = self.list_by_month(year, month)
         else:
             expenses = self.list_expenses()
-        summary: dict[str, float] = {}
+        summary: dict[str, Decimal] = {}
         for expense in expenses:
             categoria = expense.categoria.value
-            summary[categoria] = summary.get(categoria, 0.0) + expense.monto
+            summary[categoria] = summary.get(categoria, Decimal("0")) + expense.monto
         return summary

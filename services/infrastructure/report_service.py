@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+from decimal import Decimal
 from datetime import datetime
 
 from fpdf import FPDF
@@ -171,7 +172,7 @@ class ReportService:
             cat_limpia = self._limpiar_emojis(categoria)
             for descripcion, datos in items.items():
                 desc_limpia = self._limpiar_emojis(descripcion)
-                monto: float = datos["total"]
+                monto: Decimal = datos["total"]
                 cantidad: int = datos["cantidad"]
                 total_tabla += monto
 

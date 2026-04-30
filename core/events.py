@@ -21,6 +21,8 @@ class EventType(Enum):
     INGRESO_CREADO = "ingreso_creado"
     SNAPSHOT_CREADO = "snapshot_creado"
     OCR_PROCESADO = "ocr_procesado"
+    COMPRA_CUOTAS_CREADA = "compra_cuotas_creada"
+    CUOTA_PAGADA = "cuota_pagada"
 
 
 @dataclass

@@ -6,11 +6,13 @@ from __future__ import annotations
 
 import logging
 import os
+from decimal import Decimal
 
 from result import Err, Ok, Result
 
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
+from services.infrastructure.formatters import format_pesos
 
 logger = logging.getLogger(__name__)
 
@@ -101,15 +103,16 @@ class AIAdvisorService:
         Returns:
             String formateado con el resumen financiero
         """
-        balance_mes: float = ctx.ingresos_total - ctx.total_gastos_mes
+        balance_mes: Decimal = ctx.ingresos_total - ctx.total_gastos_mes
 
         lineas: list[str] = [
             "### ESTADO DE LA HACIENDA FAMILIAR ###",
             f"- Miembros en el hogar: {ctx.miembros_count}",
-            f"- Ingresos totales del mes: ${ctx.ingresos_total:,.0f}",
+            f"- Ingresos totales del mes: {format_pesos(ctx.ingresos_total)}",
             f"- TOTAL gastos del mes (todas las categorías):"
-            f" ${ctx.total_gastos_mes:,.0f}",
-            f"- BALANCE DEL MES (Ingresos - Gastos totales): ${balance_mes:,.0f}",
+            f" {format_pesos(ctx.total_gastos_mes)}",
+            f"- BALANCE DEL MES (Ingresos - Gastos totales): "
+            f"{format_pesos(balance_mes)}",
         ]
 
         if ctx.resumen_metodos_pago:
@@ -120,7 +123,18 @@ class AIAdvisorService:
         if ctx.subtotal_descripcion and ctx.terminos_buscados:
             lineas.append(
                 f"- *** RESPUESTA DIRECTA: '{ctx.terminos_buscados}'"
-                f" este mes = ${ctx.subtotal_descripcion:,.0f} ***"
+                f" este mes = {format_pesos(ctx.subtotal_descripcion)} ***"
+            )
+
+        # Proyeccion de cuotas futuras
+        if ctx.proyeccion_cuotas:
+            lineas.append("")
+            lineas.append("PROYECCION DE CUOTAS FUTURAS:")
+            for mes, total in ctx.proyeccion_cuotas.items():
+                lineas.append(f"  {mes}: {format_pesos(total)}")
+            lineas.append(
+                "Usa esta proyeccion para advertir si un nuevo gasto "
+                "comprometeria meses futuros."
             )
 
         lineas += [
@@ -185,7 +199,7 @@ class AIAdvisorService:
 
             if vt is None:
                 lineas.append(
-                    f"- {m.categoria}: ${m.total_actual:,.0f} este mes"
+                    f"- {m.categoria}: {format_pesos(m.total_actual)} este mes"
                     f" (sin datos del mes anterior para comparar)."
                 )
                 continue
@@ -195,9 +209,11 @@ class AIAdvisorService:
             lineas.append(
                 f"- {m.categoria}:"
                 f" gasto total {signo_t}{vt:.1f}%"
-                f" (${m.total_anterior:,.0f} → ${m.total_actual:,.0f}),"
+                f" ({format_pesos(m.total_anterior)} ->"
+                f" {format_pesos(m.total_actual)}),"
                 f" ticket promedio {signo_tk}{vtk:.1f}%"
-                f" (${m.ticket_anterior:,.0f} → ${m.ticket_actual:,.0f})."
+                f" ({format_pesos(m.ticket_anterior)} ->"
+                f" {format_pesos(m.ticket_actual)})."
                 f" {diag}"
             )
 

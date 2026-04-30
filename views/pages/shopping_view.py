@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 import flet as ft
 from result import Err, Ok
@@ -9,6 +10,7 @@ from controllers.shopping_controller import ShoppingController
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
 from models.shopping_model import ShoppingItem
+from services.infrastructure.formatters import format_pesos
 from views.layouts.main_layout import MainLayout
 
 
@@ -56,7 +58,7 @@ class ShoppingView:
     def _on_add_item(self, _: ft.ControlEvent) -> None:
         item = ShoppingItem(
             name=self.name_input.value or "",
-            price=float(self.price_input.value or 0),
+                price=Decimal(self.price_input.value or "0"),
             category=self.category_input.value or "General",
             purchase_date=date.today(),
         )
@@ -76,7 +78,10 @@ class ShoppingView:
 
         for item in self.controller.list_items():
             self.items_column.controls.append(
-                ft.Text(value=f"{item.name} - ${item.price:.2f} [{item.category}]")
+                ft.Text(
+                    value=f"{item.name} - "
+                    f"{format_pesos(item.price)} [{item.category}]"
+                )
             )
 
         self.page.update()

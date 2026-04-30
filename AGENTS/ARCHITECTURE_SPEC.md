@@ -91,6 +91,10 @@
 - `categorias_gastos` - Expense categories
 - `ai_vector_memory` - RAG vector storage
 
+### Installment Tables
+- `installment_purchases` - Credit card installment purchases
+- `installment_payments` - Individual installment payment records
+
 ### OCR Tables
 - `ocr_sessions` - OCR processing sessions with TTL
 

@@ -5,6 +5,7 @@ Vista para gestión de ingresos familiares
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 import flet as ft
 from result import Err, Ok
@@ -244,7 +245,7 @@ class IncomesView:
             # Parsear fecha
             try:
                 fecha = date.fromisoformat(self.fecha_input.value)
-            except ValueError:
+            except (ValueError, InvalidOperation):
                 self._show_error(
                     AppError(message="Fecha inválida. Use formato YYYY-MM-DD")
                 )
@@ -253,8 +254,8 @@ class IncomesView:
             # Parsear monto (limpiar formato: eliminar puntos de separador de miles)
             try:
                 monto_str = self.monto_input.value.replace(".", "").replace(",", ".")
-                monto = float(monto_str)
-            except ValueError:
+                monto = Decimal(monto_str)
+            except (ValueError, InvalidOperation):
                 self._show_error(AppError(message="El monto debe ser un número válido"))
                 return
 
@@ -452,7 +453,7 @@ class IncomesView:
             sorted_summary = sorted(summary.items(), key=lambda x: x[1], reverse=True)
 
             for categoria, monto in sorted_summary:
-                porcentaje = (monto / total * 100) if total > 0 else 0
+                porcentaje = float(monto / total * 100) if total > 0 else 0.0
 
                 # Formatear monto con separador de miles
                 monto_formateado = format_currency(monto)

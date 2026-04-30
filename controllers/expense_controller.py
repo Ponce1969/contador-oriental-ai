@@ -1,10 +1,10 @@
 """
 Controller para gestión de gastos familiares
 """
-
 from __future__ import annotations
 
 import logging
+from decimal import Decimal
 
 from result import Ok, Result
 
@@ -41,7 +41,7 @@ class ExpenseController(BaseController):
                 source_id=gasto.id,
                 data={
                     "descripcion": gasto.descripcion,
-                    "monto": float(gasto.monto),
+                    "monto": gasto.monto,  # Decimal → formateado por MemoryEventHandler
                     "categoria": gasto.categoria.value,
                     "metodo_pago": gasto.metodo_pago.value,
                     "fecha": str(gasto.fecha),
@@ -77,7 +77,7 @@ class ExpenseController(BaseController):
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, float]:
+    ) -> dict[str, Decimal]:
         """Obtener resumen de gastos por categoría del mes indicado."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
@@ -98,7 +98,7 @@ class ExpenseController(BaseController):
             service = ExpenseService(repo)
             return service.delete_expense(expense_id)
 
-    def get_total_by_month(self, year: int, month: int) -> float:
+    def get_total_by_month(self, year: int, month: int) -> Decimal:
         """Obtener total de gastos de un mes específico"""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)

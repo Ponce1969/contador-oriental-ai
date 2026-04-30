@@ -20,6 +20,8 @@ def to_domain(row: ExpenseTable) -> Expense:
         es_recurrente=row.es_recurrente,
         frecuencia=(RecurrenceFrequency(row.frecuencia) if row.frecuencia else None),
         notas=row.notas,
+        installment_purchase_id=row.installment_purchase_id,
+        pendiente=row.pendiente,
     )
 
 

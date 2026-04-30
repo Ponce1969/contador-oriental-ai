@@ -4,6 +4,8 @@ Controller para gestión de ingresos familiares
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from result import Result
 
 from controllers.base_controller import BaseController
@@ -51,14 +53,14 @@ class IncomeController(BaseController):
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, float]:
+    ) -> dict[str, Decimal]:
         """Obtener resumen de ingresos por categoría del mes indicado."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
             return service.get_summary_by_categories(year=year, month=month)
 
-    def get_total_by_month(self, year: int, month: int) -> float:
+    def get_total_by_month(self, year: int, month: int) -> Decimal:
         """Obtener total de ingresos del mes"""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)

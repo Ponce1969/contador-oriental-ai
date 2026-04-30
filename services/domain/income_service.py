@@ -4,6 +4,8 @@ Servicio de lógica de negocio para ingresos familiares
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from result import Err, Result
 
 from constants.messages import ValidationMessages
@@ -94,28 +96,28 @@ class IncomeService:
                 return check  # type: ignore[return-value]
         return self._repo.update(income)
 
-    def get_total_by_month(self, year: int, month: int) -> float:
+    def get_total_by_month(self, year: int, month: int) -> Decimal:
         """Total de ingresos del mes (recurrentes + no-recurrentes del mes)."""
         incomes = self.list_for_month(year, month)
-        return sum(income.monto for income in incomes)
+        return sum((income.monto for income in incomes), Decimal("0"))
 
-    def get_total_by_member(self, member_id: int) -> float:
+    def get_total_by_member(self, member_id: int) -> Decimal:
         """Calcular total de ingresos de un miembro"""
         incomes = self.list_by_member(member_id)
-        return sum(income.monto for income in incomes)
+        return sum((income.monto for income in incomes), Decimal("0"))
 
     def get_summary_by_categories(
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, float]:
+    ) -> dict[str, Decimal]:
         """Resumen de ingresos por categoría (recurrentes + no-recurrentes del mes)."""
         if year is not None and month is not None:
             incomes = self.list_for_month(year, month)
         else:
             incomes = self.list_incomes()
-        summary: dict[str, float] = {}
+        summary: dict[str, Decimal] = {}
         for income in incomes:
             categoria = income.categoria.value
-            summary[categoria] = summary.get(categoria, 0.0) + income.monto
+            summary[categoria] = summary.get(categoria, Decimal("0")) + income.monto
         return summary

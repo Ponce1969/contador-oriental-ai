@@ -5,6 +5,7 @@ Modelo de dominio para ingresos familiares
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -50,7 +51,7 @@ class Income(BaseModel):
     family_member_id: int = Field(description="ID del miembro de la familia")
 
     # Datos básicos del ingreso
-    monto: float = Field(gt=0, description="Monto del ingreso en pesos")
+    monto: Decimal = Field(gt=0, description="Monto del ingreso en pesos")
     fecha: date = Field(default_factory=date.today, description="Fecha del ingreso")
     descripcion: str = Field(
         min_length=1, max_length=200, description="Descripción del ingreso"

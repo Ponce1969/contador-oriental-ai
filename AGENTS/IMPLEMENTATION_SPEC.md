@@ -226,3 +226,90 @@ uv run fleting db make <name>
 uv run python check_flet.py --compat
 uv run python check_flet.py Card
 ```
+
+## Credit Card Installment System (v2.1)
+
+### Tables
+
+#### installment_purchases
+
+```python
+class InstallmentPurchaseTable(Base):
+    __tablename__ = "installment_purchases"
+    id: Mapped[int]
+    expense_id: Mapped[int | None]     # FK to expenses.id (SET NULL: no cascade)
+    familia_id: Mapped[int]           # FK to familias.id
+    nombre_tarjeta: Mapped[str]       # "OCA", "Scotia", etc.
+    monto_total: Mapped[float]
+    numero_cuotas: Mapped[int]
+    cuotas_pagadas: Mapped[int]
+    monto_por_cuota: Mapped[float]
+    fecha_compra: Mapped[date]
+    mes_inicio_pago: Mapped[date | None]  # Según cierre de tarjeta en Uruguay
+    fecha_ultima_cuota: Mapped[date | None]
+    activo: Mapped[bool]
+    completado: Mapped[bool]
+    vectorizado: Mapped[bool]          # TRUE si ya se vectorizó
+    descripcion: Mapped[str]
+```
+
+#### installment_payments
+
+```python
+class InstallmentPaymentTable(Base):
+    __tablename__ = "installment_payments"
+    id: Mapped[int]
+    installment_purchase_id: Mapped[int]  # FK
+    expense_id: Mapped[int | None]        # FK to expenses
+    familia_id: Mapped[int]
+    numero_cuota: Mapped[int]
+    monto_pagado: Mapped[float]
+    fecha_pago: Mapped[date]
+```
+
+### New Controller
+
+```python
+class InstallmentController(BaseController):
+    def crear_compra_cuotas(expense, installment_data) -> Result[...]
+    def obtener_cuotas_pendientes(familia_id) -> list[InstallmentPurchase]
+    def obtener_resumen_mes(familia_id, month, year) -> dict
+    def pagar_cuota(installment_purchase_id) -> Result[...]
+```
+
+### Migration
+
+```bash
+uv run fleting db make installment_tables
+uv run fleting db migrate
+```
+
+### Event Types (to add)
+
+```python
+CUOTA_PAGADA = "cuota_pagada"
+COMPRA_CUOTAS_CREADA = "compra_cuotas_creada"
+COMPRA_CUOTAS_COMPLETADA = "compra_cuotas_completada"
+```
+
+### Vectorization Strategy (Gemma2:2B safe)
+
+```python
+# ✅ Vectoriza SOLO la compra total, no las cuotas individuales
+def vectorize_purchase(purchase: InstallmentPurchase):
+    embedding_text = (
+        f"Compra en cuotas: {purchase.descripcion} "
+        f"Total: ${purchase.monto_total} en {purchase.numero_cuotas} cuotas"
+    )
+    metadata = {
+        "is_installment": True,
+        "total_amount": purchase.monto_total,
+    }
+    # EmbeddingService.escribir_texto(embedding_text, metadata)
+```
+
+**Rules:**
+1. Never vectorize individual installment payments
+2. Add `is_installment: True` metadata for filtering
+3. Python calculates totals; Gemma2:2B only receives final summary
+4. Gemma2:2B is NOT used for math operations

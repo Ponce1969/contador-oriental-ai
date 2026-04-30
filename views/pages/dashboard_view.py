@@ -5,14 +5,17 @@ Vista del Dashboard - Balance de Ingresos vs Gastos
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 import flet as ft
 
 from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
 from controllers.income_controller import IncomeController
+from controllers.installment_controller import InstallmentController
 from core.session import SessionManager
 from core.state import AppState
+from services.infrastructure.formatters import format_pesos
 from utils.formatters import format_currency
 from views.components.summary_renderer import SummaryRenderer
 from views.layouts.main_layout import MainLayout
@@ -36,6 +39,7 @@ class DashboardView:
         # Controllers
         self.income_controller = IncomeController(familia_id=familia_id)
         self.expense_controller = ExpenseController(familia_id=familia_id)
+        self.installment_controller = InstallmentController(familia_id=familia_id)
 
         # Contenedores para los datos
         self.balance_card = ft.Container()
@@ -50,6 +54,12 @@ class DashboardView:
         year = today.year
         month = today.month
         month_name = self._get_month_name(month)
+
+        # Generar gastos programados de cuotas (si no se hizo ya)
+        try:
+            self.installment_controller.generar_gastos_programados(year, month)
+        except Exception:
+            pass  # No bloquear dashboard por error de cuotas
 
         # Obtener totales
         total_ingresos = self._get_total_ingresos(year, month)
@@ -75,11 +85,11 @@ class DashboardView:
             balance_icon = ft.Icons.TRENDING_FLAT
             balance_msg = "Balance equilibrado"
 
-        # Calcular porcentajes para barra de progreso
+        # Calcular porcentajes para barra de progreso (DEBEN ser float para Flet)
         total = total_ingresos + total_gastos
         if total > 0:
-            porcentaje_ingresos = total_ingresos / total
-            porcentaje_gastos = total_gastos / total
+            porcentaje_ingresos = float(total_ingresos / total)
+            porcentaje_gastos = float(total_gastos / total)
         else:
             porcentaje_ingresos = 0.5
             porcentaje_gastos = 0.5
@@ -147,6 +157,7 @@ class DashboardView:
                         color=ft.Colors.BLUE_GREY_100,
                     ),
                 ),
+                self._build_cuotas_card(),
                 # Tarjetas de Ingresos y Gastos — ResponsiveRow
                 ft.ResponsiveRow(
                     controls=[
@@ -341,13 +352,57 @@ class DashboardView:
             router=self.router,
         )
 
-    def _get_total_ingresos(self, year: int, month: int) -> float:
-        """Obtener total de ingresos del mes"""
-        return self.income_controller.get_total_by_month(year, month)
+    def _build_cuotas_card(self) -> ft.Container:
+        """Card de awareness: cuotas pendientes del mes."""
+        try:
+            planes = self.installment_controller.obtener_cuotas_pendientes()
+        except Exception:
+            planes = []
 
-    def _get_total_gastos(self, year: int, month: int) -> float:
+        if not planes:
+            return ft.Container()  # Sin cuotas pendientes, no mostrar
+
+        total_mes = sum(
+            (p.monto_por_cuota for p in planes),
+            __import__("decimal").Decimal("0"),
+        )
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(
+                        ft.Icons.CREDIT_CARD,
+                        color=ft.Colors.BLUE_600,
+                        size=22,
+                    ),
+                    ft.Text(
+                        f"Cuotas del mes: {format_pesos(total_mes)}",
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.BLUE_700,
+                    ),
+                    ft.Text(
+                        f"({len(planes)} compras pendientes)",
+                        size=12,
+                        color=ft.Colors.GREY_500,
+                    ),
+                ],
+                spacing=8,
+            ),
+            padding=12,
+            bgcolor=ft.Colors.BLUE_50,
+            border_radius=10,
+            margin=ft.Margin.only(bottom=12),
+            on_click=lambda _: self.router.navigate("/planes"),
+        )
+
+    def _get_total_ingresos(self, year: int, month: int) -> Decimal:
+        """Obtener total de ingresos del mes"""
+        return Decimal(str(self.income_controller.get_total_by_month(year, month)))
+
+    def _get_total_gastos(self, year: int, month: int) -> Decimal:
         """Obtener total de gastos del mes"""
-        return self.expense_controller.get_total_by_month(year, month)
+        return Decimal(str(self.expense_controller.get_total_by_month(year, month)))
 
     def _get_month_name(self, month: int) -> str:
         """Obtener nombre del mes en español"""

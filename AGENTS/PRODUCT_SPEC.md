@@ -15,6 +15,8 @@ Manages household expenses, income, and provides AI-powered financial advice.
 - Add/edit/delete expenses with categories (Almacén, Hogar, Servicios, etc.)
 - Monthly expense tracking
 - Recurring expenses support
+- **Credit card installment tracking** (OCA, Scotia, Santander, etc.)
+- **Monthly installment payment notifications**
 - OCR ticket upload via mobile
 
 ### 2. Income Tracking
@@ -63,6 +65,19 @@ Manages household expenses, income, and provides AI-powered financial advice.
 1. Login → Contador
 2. Type question in natural language
 3. AI responds with context-aware advice
+
+### Add Expense in Installments
+1. Login → Gastos → "+" button
+2. Fill form: monto, descripción, fecha, categoría
+3. Select "Tarjeta de crédito" as payment method
+4. Enter card name (OCA, Scotia, etc.), number of installments, first payment date
+5. Save → Creates installment plan with monthly payment notifications
+
+### View Pending Installments
+1. Login → Dashboard
+2. Card shows "Cuotas del mes: $X (N pendientes)"
+3. Click to see detailed list of each purchase and remaining payments
+4. Pay individual installment → Updates payment count
 
 ## Success Criteria
 - Expenses correctly saved to PostgreSQL

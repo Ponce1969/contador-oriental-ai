@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from decimal import Decimal
 
 from result import Result
 
@@ -11,6 +12,7 @@ from controllers.base_controller import BaseController
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 from models.expense_model import Expense
+from controllers.installment_controller import InstallmentController
 from repositories.expense_repository import ExpenseRepository
 from repositories.family_member_repository import FamilyMemberRepository
 from repositories.income_repository import IncomeRepository
@@ -129,7 +131,9 @@ class AIController(BaseController):
 
             gastos_filtrados = filtrar_por_categorias(gastos_mes, intencion.categorias)
 
-            total_gastos_mes = sum(g.monto for g in gastos_mes)
+            total_gastos_mes = sum(
+                (g.monto for g in gastos_mes), Decimal("0")
+            )
             resumen_gastos: dict[str, dict[str, dict]] = {}
             total_gastos_count = 0
             if gastos_filtrados:
@@ -147,7 +151,7 @@ class AIController(BaseController):
                 for i in income_service.list_incomes()
                 if i.fecha.month == mes_actual and i.fecha.year == anio_actual
             ]
-            ingresos_total = sum(i.monto for i in ingresos)
+            ingresos_total = sum((i.monto for i in ingresos), Decimal("0"))
 
             member_repo = FamilyMemberRepository(session, self._familia_id)
             member_service = FamilyMemberService(member_repo)
@@ -163,6 +167,14 @@ class AIController(BaseController):
             except Exception as snap_err:
                 logger.warning("Comparativa no disponible: %s", snap_err)
 
+            # Proyeccion de cuotas futuras
+            proyeccion = {}
+            try:
+                inst_ctrl = InstallmentController(familia_id=self._familia_id)
+                proyeccion = inst_ctrl.proyectar_meses(6)
+            except Exception as proy_err:
+                logger.warning("Proyeccion no disponible: %s", proy_err)
+
             return AIContext(
                 resumen_gastos=resumen_gastos,
                 total_gastos_count=total_gastos_count,
@@ -173,6 +185,7 @@ class AIController(BaseController):
                 comparativa_meses=comparativa,
                 subtotal_descripcion=subtotal_desc if subtotal_desc else None,
                 terminos_buscados=label_desc,
+                proyeccion_cuotas=proyeccion,
             )
 
     async def _buscar_memoria_vectorial(self, pregunta: str, ctx: AIContext) -> str:

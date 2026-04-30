@@ -6,13 +6,17 @@ IncomeService y FamilyMemberService.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from result import Err, Ok, Result
 
 from constants.messages import ValidationMessages
 from models.errors import ValidationError
 
 
-def validate_monto_positivo(monto: float) -> Result[None, ValidationError]:
+def validate_monto_positivo(
+    monto: float | Decimal,
+) -> Result[None, ValidationError]:
     """Valida que el monto sea mayor a 0."""
     if monto <= 0:
         return Err(ValidationError(message=ValidationMessages.MONTO_POSITIVO))
