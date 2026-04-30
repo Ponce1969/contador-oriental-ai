@@ -171,7 +171,7 @@ class PlanesView:
                         spacing=10,
                     ),
                     padding=60,
-                    alignment=ft.alignment.center,
+                    alignment=ft.alignment.Alignment(0, 0),
                 )
             )
             return
