@@ -142,19 +142,23 @@ class AIAdvisorService:
             "DETALLE DE GASTOS CONSULTADOS (cada línea = una transacción real):",
         ]
 
-        total_filtrado = 0.0
+        total_filtrado = Decimal("0")
 
         if not ctx.resumen_gastos:
             lineas.append("- No hay gastos registrados en este contexto.")
         else:
             for categoria, items in ctx.resumen_gastos.items():
-                total_categoria = sum(d["total"] for d in items.values())
+                total_categoria = sum(
+                    (Decimal(str(d["total"])) for d in items.values()),
+                    Decimal("0"),
+                )
                 cant_categoria = sum(d["cantidad"] for d in items.values())
                 total_filtrado += total_categoria
 
                 lineas.append(
                     f"\n📂 {categoria}"
-                    f" → SUBTOTAL: ${total_categoria:,.0f} ({cant_categoria} transacciones):"
+                    f" → SUBTOTAL: {format_pesos(total_categoria)}"
+                    f" ({cant_categoria} transacciones):"
                 )
                 for descripcion, datos in items.items():
                     monto = datos["total"]
@@ -173,7 +177,7 @@ class AIAdvisorService:
 
         lineas.append("")
         lineas.append(
-            f"SUBTOTAL CONSULTADO: ${total_filtrado:,.0f}"
+            f"SUBTOTAL CONSULTADO: {format_pesos(total_filtrado)}"
             f" ({ctx.total_gastos_count} transacciones)"
         )
 
