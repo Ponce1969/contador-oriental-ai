@@ -321,6 +321,7 @@ class AIAdvisorView:
 
     def _agregar_burbuja_stream(self, markdown_widget: ft.Markdown) -> None:
         """Inserta en el chat una burbuja del asistente con el widget Markdown dado."""
+        is_mobile = AppState.device == "mobile"
         bubble = ft.Container(
             content=ft.Column(
                 controls=[
@@ -340,7 +341,10 @@ class AIAdvisorView:
                         ],
                         spacing=5,
                     ),
-                    markdown_widget,
+                    ft.Container(
+                        content=markdown_widget,
+                        expand=True,
+                    ),
                 ],
                 spacing=8,
                 tight=True,
@@ -354,7 +358,8 @@ class AIAdvisorView:
                 bottom_left=2,
                 bottom_right=15,
             ),
-            width=None if AppState.device == "mobile" else 500,
+            expand=is_mobile,
+            width=None if is_mobile else 500,
             shadow=ft.BoxShadow(
                 blur_radius=5,
                 color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK),
@@ -365,12 +370,14 @@ class AIAdvisorView:
             ft.Row(
                 controls=[bubble],
                 alignment=ft.MainAxisAlignment.START,
+                expand=is_mobile,
             )
         )
 
     def _render_chat(self) -> None:
         """Renderizado premium con Markdown y anchos controlados"""
         self.chat_column.controls.clear()
+        is_mobile = AppState.device == "mobile"
 
         for mensaje in self.chat_history:
             is_user = mensaje.role == "user"
@@ -396,11 +403,14 @@ class AIAdvisorView:
                             ],
                             spacing=5,
                         ),
-                        ft.Markdown(
-                            value=mensaje.content,
-                            selectable=True,
-                            extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
-                            on_tap_link=lambda e: self.page.launch_url(e.data),
+                        ft.Container(
+                            content=ft.Markdown(
+                                value=mensaje.content,
+                                selectable=True,
+                                extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
+                                on_tap_link=lambda e: self.page.launch_url(e.data),
+                            ),
+                            expand=True,
                         ),
                     ],
                     spacing=8,
@@ -418,7 +428,8 @@ class AIAdvisorView:
                     bottom_left=15 if is_user else 2,
                     bottom_right=2 if is_user else 15,
                 ),
-                width=None if AppState.device == "mobile" else 500,
+                expand=is_mobile,
+                width=None if is_mobile else 500,
                 shadow=ft.BoxShadow(
                     blur_radius=5,
                     color=ft.Colors.with_opacity(0.05, ft.Colors.BLACK),
@@ -434,6 +445,7 @@ class AIAdvisorView:
                         if is_user
                         else ft.MainAxisAlignment.START
                     ),
+                    expand=is_mobile,
                 )
             )
 
