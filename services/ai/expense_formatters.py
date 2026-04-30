@@ -5,6 +5,8 @@ Funciones puras: sin BD, sin async, sin estado.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from models.expense_model import Expense
 
 
@@ -15,7 +17,7 @@ def agrupar_gastos(gastos: list[Expense]) -> dict[str, dict[str, dict]]:
     Returns:
         {
             "Categoría": {
-                "Descripción": {"total": float, "cantidad": int, "metodos": dict}
+                "Descripción": {"total": Decimal, "cantidad": int, "metodos": dict}
             }
         }
     """
@@ -29,7 +31,7 @@ def agrupar_gastos(gastos: list[Expense]) -> dict[str, dict[str, dict]]:
             resumen[cat] = {}
 
         if desc not in resumen[cat]:
-            resumen[cat][desc] = {"total": 0.0, "cantidad": 0, "metodos": {}}
+            resumen[cat][desc] = {"total": Decimal("0"), "cantidad": 0, "metodos": {}}
 
         resumen[cat][desc]["total"] += gasto.monto
         resumen[cat][desc]["cantidad"] += 1

@@ -62,7 +62,7 @@ class Expense(BaseModel):
     # Campos heredados de ShoppingItem (para compatibilidad temporal)
     # TODO: Migrar datos existentes y eliminar estos campos
     name: str | None = None
-    price: float | None = None
+    price: Decimal | None = None
     category: str | None = None
     purchased: bool = False
     purchase_date: date | None = None

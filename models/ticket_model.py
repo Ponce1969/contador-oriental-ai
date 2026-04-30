@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
+from decimal import Decimal
 
 
 @dataclass
@@ -19,7 +20,7 @@ class PartialExpense:
     El usuario completa o corrige lo que falte en la vista de confirmación.
     """
 
-    monto: float | None = None
+    monto: Decimal | None = None
     fecha: date | None = None
     comercio: str | None = None
     items: list[str] = field(default_factory=list)

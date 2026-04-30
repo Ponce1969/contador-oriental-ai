@@ -14,6 +14,7 @@ import re
 from collections import Counter
 from collections.abc import Awaitable, Callable
 from datetime import date
+from decimal import Decimal
 
 from result import Err, Ok, Result
 
@@ -94,7 +95,8 @@ class TicketService:
         )
         parsed = await self._parsear_con_gemma(partial.texto_crudo)
         if parsed:
-            partial.monto = parsed.get("monto")
+            monto_raw = parsed.get("monto")
+            partial.monto = Decimal(str(monto_raw)) if monto_raw is not None else None
             partial.comercio = parsed.get("comercio")
             partial.items = parsed.get("items") or []
 

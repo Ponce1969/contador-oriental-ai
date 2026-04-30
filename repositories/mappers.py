@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from database.tables import ExpenseTable, ShoppingItemTable
 from models.expense_model import Expense
 from models.shopping_model import ShoppingItem
@@ -46,7 +48,7 @@ def shopping_to_domain(row: ShoppingItemTable) -> ShoppingItem:
     return ShoppingItem(
         id=row.id,
         name=row.name or "",
-        price=row.price or 0.0,
+        price=Decimal(str(row.price)) if row.price is not None else Decimal("0"),
         category=row.category or "",
         purchased=row.purchased,
         purchase_date=row.purchase_date or row.fecha,

@@ -498,8 +498,9 @@ class TicketUploadView:
             except (ValueError, TypeError):
                 pass
 
+        monto_val = data.get("monto")
         self._partial = PartialExpense(
-            monto=data.get("monto"),
+            monto=Decimal(str(monto_val)) if monto_val is not None else None,
             fecha=fecha_val,
             comercio=data.get("comercio"),
             items=data.get("items") or [],

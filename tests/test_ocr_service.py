@@ -5,6 +5,7 @@ Usan mocks de pytesseract y PIL — no requieren Tesseract instalado ni imágene
 
 from __future__ import annotations
 
+from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -134,7 +135,7 @@ class TestPartialExpensePropiedades:
         assert partial.es_confiable is True
 
     def test_tiene_datos_minimos_con_monto(self):
-        partial = PartialExpense(monto=1250.0)
+        partial = PartialExpense(monto=Decimal("1250"))
         assert partial.tiene_datos_minimos is True
 
     def test_tiene_datos_minimos_con_comercio(self):

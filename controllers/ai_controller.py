@@ -54,11 +54,11 @@ class AIController(BaseController):
         pregunta: str,
         session,
         umbral_cosine: float = 0.30,
-    ) -> tuple[float, str]:
+    ) -> tuple[Decimal, str]:
         """
         Busca gastos semánticamente similares a la pregunta usando
         pgvector cosine distance sobre expenses.embedding.
-        Retorna (subtotal, label) — (0.0, '') si no hay resultados.
+        Retorna (subtotal, label) — (Decimal('0'), '') si no hay resultados.
         """
         from result import Err
 
@@ -67,7 +67,7 @@ class AIController(BaseController):
             logger.warning(
                 "[SUBTOTAL] No se pudo generar embedding: %s", embedding_result.err()
             )
-            return 0.0, ""
+            return Decimal("0"), ""
 
         emb = embedding_result.ok()
         repo = ExpenseRepository(session, self._familia_id)
@@ -83,7 +83,6 @@ class AIController(BaseController):
             "[SUBTOTAL] %d gastos cosine (umbral=%.2f) -> %s",
             len(resultados),
             umbral_cosine,
-            subtotal,
             subtotal,
         )
         return subtotal, label
