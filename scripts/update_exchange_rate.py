@@ -10,6 +10,11 @@ from __future__ import annotations
 import asyncio
 import sys
 from datetime import date
+from pathlib import Path
+
+# Agregar raíz del proyecto al path para imports
+_project_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_project_root))
 
 from core.sqlalchemy_session import get_db_session
 from repositories.exchange_rate_repository import ExchangeRateRepository
