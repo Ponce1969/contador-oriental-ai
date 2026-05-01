@@ -137,7 +137,7 @@ class MainLayout(ft.Column):
 
             color = ft.Colors.LIGHT_BLUE_300 if is_fresh else ft.Colors.AMBER_400
             icon = ft.Icons.TRENDING_UP if is_fresh else ft.Icons.WARNING_AMBER
-            label = f"U$S 1.00 = $U {rate}"
+            label = f"1 USD = $ {rate}"
             tooltip_text = (
                 "Cotización actualizada hoy"
                 if is_fresh

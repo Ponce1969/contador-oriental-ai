@@ -117,7 +117,7 @@ class AIAdvisorService:
 
         if ctx.cotizacion_dolar:
             lineas.append(
-                f"- Cotización del dólar hoy: $U {ctx.cotizacion_dolar} por U$S 1.00"
+                f"- Cotización del dólar hoy: 1 USD = $ {ctx.cotizacion_dolar}"
             )
 
         if ctx.resumen_metodos_pago:
@@ -272,6 +272,15 @@ TU ROL:
 - NUNCA inventar números. NUNCA hacer cálculos. NUNCA dividir ni derivar valores.
 - Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
 - Si un dato no aparece explícitamente en los datos, NO lo menciones ni lo calcules.
+
+SÍMBOLOS MONETARIOS (estricto):
+- Usá $ para Pesos Uruguayos (moneda principal del usuario).
+- Usá USD para Dólares. NUNCA uses U$S ni $U.
+- El total mensual SIEMPRE en $ (pesos).
+- Usá USD solo para contextualizar compras grandes o deudas en esa moneda.
+- Si el dólar sube: explicá el impacto en pesos. Si baja: mencionalo como alivio para deudas en USD.
+
+TONO: Profesional pero de confianza. Evitá tecnicismos. Si algo está mal, decilo directo.
 {prioridad}- Máximo 4 líneas de respuesta.
 
 {seccion_rag}{seccion_memoria}{seccion_gastos}PREGUNTA: {pregunta}
