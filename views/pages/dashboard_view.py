@@ -398,14 +398,13 @@ class DashboardView:
                         expand=True,
                     ),
                     ft.TextButton(
-                        text="Ver historial →",
-                        on_click=lambda _: self.router.navigate("/history"),
-                        style=ft.ButtonStyle(
+                        content=ft.Text(
+                            value="Ver historial →",
+                            size=12,
+                            weight=ft.FontWeight.BOLD,
                             color=ft.Colors.INDIGO_600,
-                            text_style=ft.TextStyle(
-                                size=12, weight=ft.FontWeight.BOLD
-                            ),
                         ),
+                        on_click=lambda _: self.router.navigate("/history"),
                     ),
                 ],
                 spacing=8,
