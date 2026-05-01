@@ -146,6 +146,11 @@ class AIAdvisorView:
         self._agregar_mensaje_bienvenida()
         is_mobile = AppState.device == "mobile"
 
+        # Si viene una pregunta pre-cargada desde otra vista (ej: Historial)
+        if AppState.prefilled_question:
+            self.pregunta_input.value = AppState.prefilled_question
+            AppState.prefilled_question = None  # Consumir para no re-usar
+
         return MainLayout(
             page=self.page,
             router=self.router,

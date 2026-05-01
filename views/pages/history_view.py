@@ -252,36 +252,13 @@ class HistoryView:
         content_controls.extend(
             [
                 ft.Divider(height=24),
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Text(
-                                value="🧮 ¿Tenés preguntas sobre estos 3 meses?",
-                                size=16 if is_mobile else 18,
-                                weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.BLUE_GREY_800,
-                            ),
-                            ft.Text(
-                                value="Preguntale al Contador Oriental con todo el contexto listo.",
-                                size=13,
-                                color=ft.Colors.BLUE_GREY_500,
-                            ),
-                        ],
-                        spacing=4,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                    padding=16,
-                    bgcolor=ft.Colors.INDIGO_50,
-                    border_radius=12,
-                    border=ft.border.all(1, ft.Colors.INDIGO_200),
-                ),
                 ft.ElevatedButton(
                     content=ft.Row(
                         controls=[
                             ft.Icon(ft.Icons.PSYCHOLOGY, size=20, color=ft.Colors.WHITE),
                             ft.Text(
-                                value="Preguntale al Contador",
-                                size=16,
+                                value="Preguntale al Contador sobre estos 3 meses",
+                                size=15 if is_mobile else 16,
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.WHITE,
                             ),
@@ -289,7 +266,7 @@ class HistoryView:
                         spacing=8,
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
-                    on_click=lambda _: self.router.navigate("/ai-contador"),
+                    on_click=self._navigate_to_contador,
                     style=ft.ButtonStyle(
                         bgcolor=ft.Colors.INDIGO_600,
                         color=ft.Colors.WHITE,
@@ -311,3 +288,8 @@ class HistoryView:
             content=content,
             router=self.router,
         )
+
+    def _navigate_to_contador(self, _) -> None:
+        """Navega al Contador con pregunta pre-cargada del historial."""
+        AppState.prefilled_question = "Resumen de gastos de los últimos 3 meses"
+        self.router.navigate("/ai-contador")
