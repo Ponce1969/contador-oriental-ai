@@ -13,6 +13,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -264,4 +265,28 @@ class InstallmentPaymentTable(Base):
 
     __table_args__ = (
         Index("idx_payments_purchase", "installment_purchase_id"),
+    )
+
+
+class AiUsageTable(Base):
+    """
+    Tabla de uso de IA por familia y día.
+    Controla la cuota diaria de consultas a modelos cloud (Llama 3).
+    """
+
+    __tablename__ = "ai_usage"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id"), nullable=False
+    )
+    date: Mapped[date] = mapped_column(Date, nullable=False)
+    model: Mapped[str] = mapped_column(String(20), nullable=False)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index("idx_ai_usage_lookup", "familia_id", "date"),
+        UniqueConstraint("familia_id", "date", "model", name="uq_ai_usage_daily"),
     )
