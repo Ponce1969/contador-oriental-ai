@@ -70,6 +70,14 @@ ROUTES = [
         "show_in_bottom": True,
     },
     {
+        "path": "/history",
+        "view": "views.pages.history_view.HistoryView",
+        "label": "📊 Historial",
+        "icon": ft.Icons.ASSESSMENT,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+    {
         "path": "/planes",
         "view": "views.pages.planes_view.PlanesView",
         "label": "📋 Mis Planes",

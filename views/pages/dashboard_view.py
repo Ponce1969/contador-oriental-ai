@@ -11,6 +11,7 @@ import flet as ft
 
 from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
+from controllers.history_controller import HistoryController
 from controllers.income_controller import IncomeController
 from controllers.installment_controller import InstallmentController
 from core.session import SessionManager
@@ -19,6 +20,21 @@ from services.infrastructure.formatters import format_pesos
 from utils.formatters import format_currency
 from views.components.summary_renderer import SummaryRenderer
 from views.layouts.main_layout import MainLayout
+
+_MESES: dict[int, str] = {
+    1: "Enero",
+    2: "Febrero",
+    3: "Marzo",
+    4: "Abril",
+    5: "Mayo",
+    6: "Junio",
+    7: "Julio",
+    8: "Agosto",
+    9: "Septiembre",
+    10: "Octubre",
+    11: "Noviembre",
+    12: "Diciembre",
+}
 
 
 class DashboardView:
@@ -40,6 +56,7 @@ class DashboardView:
         self.income_controller = IncomeController(familia_id=familia_id)
         self.expense_controller = ExpenseController(familia_id=familia_id)
         self.installment_controller = InstallmentController(familia_id=familia_id)
+        self.history_controller = HistoryController(familia_id=familia_id)
 
         # Contenedores para los datos
         self.balance_card = ft.Container()
@@ -104,6 +121,7 @@ class DashboardView:
                     size=title_size,
                     weight=ft.FontWeight.BOLD,
                 ),
+                self._build_history_hook(year, month),
                 ft.Divider(),
                 # Tarjeta de Balance Principal
                 ft.Container(
@@ -350,6 +368,53 @@ class DashboardView:
             page=self.page,
             content=content,
             router=self.router,
+        )
+
+    def _build_history_hook(self, year: int, month: int) -> ft.Container:
+        """Strip con los últimos 3 meses y link al Historial completo."""
+        try:
+            data = self.history_controller.get_last_3_months()
+        except Exception:
+            return ft.Container()
+
+        if not data.meses:
+            return ft.Container()
+
+        # Armar strip: "Mayo: $890 | Abril: $270.415 | Marzo: $5.177"
+        strip_parts: list[str] = []
+        for m in data.meses:
+            strip_parts.append(f"{m.label}: {format_pesos(m.total_gastos)}")
+
+        strip_text = "  |  ".join(strip_parts)
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.ASSESSMENT, size=18, color=ft.Colors.INDIGO_600),
+                    ft.Text(
+                        value=strip_text,
+                        size=12 if AppState.device == "mobile" else 13,
+                        color=ft.Colors.BLUE_GREY_700,
+                        expand=True,
+                    ),
+                    ft.TextButton(
+                        text="Ver historial →",
+                        on_click=lambda _: self.router.navigate("/history"),
+                        style=ft.ButtonStyle(
+                            color=ft.Colors.INDIGO_600,
+                            text_style=ft.TextStyle(
+                                size=12, weight=ft.FontWeight.BOLD
+                            ),
+                        ),
+                    ),
+                ],
+                spacing=8,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            padding=ft.padding.symmetric(horizontal=14, vertical=8),
+            bgcolor=ft.Colors.INDIGO_50,
+            border_radius=10,
+            border=ft.border.all(1, ft.Colors.INDIGO_200),
         )
 
     def _build_cuotas_card(self) -> ft.Container:
