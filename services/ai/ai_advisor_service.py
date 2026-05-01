@@ -116,8 +116,10 @@ class AIAdvisorService:
         ]
 
         if ctx.cotizacion_dolar:
+            # Redondear a 2 decimales para que no muestre 40.0100
+            cotizacion_str = f"{ctx.cotizacion_dolar:.2f}"
             lineas.append(
-                f"- Cotización del dólar hoy: 1 USD = $ {ctx.cotizacion_dolar}"
+                f"- Cotización del dólar hoy: 1 USD = $ {cotizacion_str}"
             )
 
         if ctx.resumen_metodos_pago:
@@ -347,6 +349,7 @@ RESPUESTA:"""
             model="contador-oriental",
             prompt=prompt,
             stream=True,
+            options={"temperature": 0.0, "num_predict": 512},
         ):
             token: str = part.get("response", "")
             if token:
@@ -366,9 +369,10 @@ RESPUESTA:"""
             client = AsyncClient(
                 host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
             )
-            response = await client.generate(
+            return await client.generate(
                 model="contador-oriental",
                 prompt=prompt,
+                options={"temperature": 0.0, "num_predict": 512},
             )
             return response.get("response", "").strip()
         except ConnectionError as e:
@@ -463,6 +467,7 @@ RESPUESTA:"""
                 response = await client.generate(
                     model="contador-oriental",
                     prompt=prompt,
+                    options={"temperature": 0.0, "num_predict": 512},
                 )
 
                 respuesta_texto: str = response["response"].strip()
