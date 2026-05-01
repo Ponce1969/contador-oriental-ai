@@ -144,6 +144,23 @@ class AIContext(BaseModel):
         default=None,
         description="Cotización USD/UYU del día para contexto macroeconómico",
     )
+    # Empalme: cierre del mes anterior cuando el mes actual tiene pocos movimientos
+    empalme_gastos: dict = Field(
+        default_factory=dict,
+        description="Gastos del mes anterior agrupados por categoría (solo cuando mes actual < 5 gastos)",
+    )
+    empalme_ingresos_total: Decimal = Field(
+        default=Decimal("0"),
+        description="Total de ingresos del mes anterior (empalme)",
+    )
+    empalme_mes_label: str = Field(
+        default="",
+        description="Etiqueta del mes anterior, ej: 'Abril 2025'",
+    )
+    empalme_total_gastos: Decimal = Field(
+        default=Decimal("0"),
+        description="Total de gastos del mes anterior (empalme)",
+    )
 
 
 class AIResponse(BaseModel):

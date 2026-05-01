@@ -144,6 +144,60 @@ class AIAdvisorService:
                 "comprometeria meses futuros."
             )
 
+        # ── Empalme: cierre del mes anterior ──────────────────────────
+        if ctx.empalme_mes_label:
+            balance_empalme = ctx.empalme_ingresos_total - ctx.empalme_total_gastos
+            lineas.append("")
+            lineas.append(
+                f"### CIERRE DEL MES ANTERIOR ({ctx.empalme_mes_label}) ###"
+            )
+            lineas.append(
+                f"- Ingresos: {format_pesos(ctx.empalme_ingresos_total)}"
+            )
+            lineas.append(
+                f"- Total gastos: {format_pesos(ctx.empalme_total_gastos)}"
+            )
+            lineas.append(
+                f"- Balance: {format_pesos(balance_empalme)}"
+            )
+
+            if ctx.empalme_gastos:
+                lineas.append("DETALLE DE GASTOS DEL MES ANTERIOR:")
+                for categoria, items in ctx.empalme_gastos.items():
+                    total_cat = sum(
+                        (Decimal(str(d["total"])) for d in items.values()),
+                        Decimal("0"),
+                    )
+                    cant_cat = sum(d["cantidad"] for d in items.values())
+                    lineas.append(
+                        f"  📂 {categoria}"
+                        f" → {format_pesos(total_cat)}"
+                        f" ({cant_cat} transacciones):"
+                    )
+                    for descripcion, datos in items.items():
+                        monto = datos["total"]
+                        cantidad = datos["cantidad"]
+                        metodos = datos.get("metodos", {})
+                        metodo_str = ", ".join(
+                            f"{m}({c}x)" for m, c in metodos.items()
+                        )
+                        if cantidad > 1:
+                            lineas.append(
+                                f"    - {descripcion}: {format_pesos(monto)}"
+                                f" ({cantidad}x, {metodo_str})"
+                            )
+                        else:
+                            lineas.append(
+                                f"    - {descripcion}: {format_pesos(monto)}"
+                                f" ({metodo_str})"
+                            )
+
+            lineas.append(
+                "NOTA: Estos datos son del mes anterior ("
+                f"{ctx.empalme_mes_label}). Los datos del mes en curso"
+                " están arriba."
+            )
+
         lineas += [
             "",
             "DETALLE DE GASTOS CONSULTADOS (cada línea = una transacción real):",
@@ -278,7 +332,8 @@ REGLAS ESTRICTAS (NO LAS ROMPAS NUNCA):
 - Si una cuota es $650 y otra es $240, NO digas "la mitad". Decí "$650 y $240 respectivamente".
 - Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
 - Si un dato no aparece explícitamente en los datos, NO lo menciones ni lo calcules.
-- Si hay pocos gastos este mes (principio de mes), mencioná que es el inicio del mes y puede haber más gastos pendientes.
+- Si hay pocos gastos este mes (principio de mes), usá la sección "CIERRE DEL MES ANTERIOR" para dar contexto del cierre del mes pasado.
+- La sección "CIERRE DEL MES ANTERIOR" es REFERENCIA: NO la mezcles con los datos del mes actual.
 
 SÍMBOLOS MONETARIOS (estricto):
 - Usá $ para Pesos Uruguayos (moneda principal del usuario). Ejemplo: $ 650, $ 890, $ 170.000

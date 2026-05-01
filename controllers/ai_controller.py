@@ -34,6 +34,21 @@ from services.domain.income_service import IncomeService
 
 logger = logging.getLogger(__name__)
 
+_MESES_NUM: dict[int, str] = {
+    1: "Enero",
+    2: "Febrero",
+    3: "Marzo",
+    4: "Abril",
+    5: "Mayo",
+    6: "Junio",
+    7: "Julio",
+    8: "Agosto",
+    9: "Septiembre",
+    10: "Octubre",
+    11: "Noviembre",
+    12: "Diciembre",
+}
+
 
 class AIController(BaseController):
     """Controlador para interactuar con el Contador Oriental"""
@@ -93,8 +108,12 @@ class AIController(BaseController):
         pregunta: str,
     ) -> AIContext:
         """Construye el AIContext con datos financieros del mes para una pregunta.
+
         Extrae gastos, ingresos, miembros, snapshot comparativo y subtotal semántico.
-        Usado tanto por consultar_contador como por consultar_contador_stream.
+        Si el QueryAnalyzer detecta un rango (ej: "abril"), sincroniza gastos,
+        ingresos y comparativa a ese rango.
+        Si el mes actual tiene pocos movimientos (< 5 gastos), inyecta el cierre
+        del mes anterior como contexto de empalme.
         """
         with self._get_session() as session:
             ahora = datetime.now()
@@ -103,8 +122,12 @@ class AIController(BaseController):
 
             expense_repo = ExpenseRepository(session, self._familia_id)
             expense_service = ExpenseService(expense_repo)
+            income_repo = IncomeRepository(session, self._familia_id)
+            income_service = IncomeService(income_repo)
 
             intencion = QueryAnalyzer.detectar_intenciones(pregunta)
+
+            # ── Gastos: rango detectado o mes actual ──────────────────────
             if intencion.rango:
                 mes_ini, anio_ini, mes_fin, anio_fin = intencion.rango
                 gastos_mes: list[Expense] = []
@@ -130,6 +153,34 @@ class AIController(BaseController):
                     if g.fecha.month == mes_actual and g.fecha.year == anio_actual
                 ]
 
+            # ── Ingresos: mismo rango que gastos ──────────────────────────
+            if intencion.rango:
+                mes_ini, anio_ini, mes_fin, anio_fin = intencion.rango
+                ingresos: list = []
+                m, a = mes_ini, anio_ini
+                while (a, m) <= (anio_fin, mes_fin):
+                    ingresos += list(income_repo.get_by_month(a, m))
+                    m += 1
+                    if m > 12:
+                        m = 1
+                        a += 1
+                logger.info(
+                    "[RANGO] %d ingresos históricos cargados (%d/%d→%d/%d)",
+                    len(ingresos),
+                    mes_ini,
+                    anio_ini,
+                    mes_fin,
+                    anio_fin,
+                )
+            else:
+                ingresos = [
+                    i
+                    for i in income_service.list_incomes()
+                    if i.fecha.month == mes_actual and i.fecha.year == anio_actual
+                ]
+            ingresos_total = sum((i.monto for i in ingresos), Decimal("0"))
+
+            # ── Filtrado por categorías ───────────────────────────────────
             gastos_filtrados = filtrar_por_categorias(gastos_mes, intencion.categorias)
 
             total_gastos_mes = sum(
@@ -145,30 +196,69 @@ class AIController(BaseController):
                 pregunta, session
             )
 
-            income_repo = IncomeRepository(session, self._familia_id)
-            income_service = IncomeService(income_repo)
-            ingresos = [
-                i
-                for i in income_service.list_incomes()
-                if i.fecha.month == mes_actual and i.fecha.year == anio_actual
-            ]
-            ingresos_total = sum((i.monto for i in ingresos), Decimal("0"))
-
+            # ── Miembros ──────────────────────────────────────────────────
             member_repo = FamilyMemberRepository(session, self._familia_id)
             member_service = FamilyMemberService(member_repo)
             miembros = member_service.list_members()
 
+            # ── Comparativa: relativa al rango o mes actual ──────────────
+            if intencion.rango:
+                _, _, mes_target, anio_target = intencion.rango
+            else:
+                mes_target = mes_actual
+                anio_target = anio_actual
+
+            mes_prev = mes_target - 1 if mes_target > 1 else 12
+            anio_prev = anio_target if mes_target > 1 else anio_target - 1
+
             snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
             comparativa: list = []
             try:
-                snapshot_repo.upsert_mes_actual(anio_actual, mes_actual)
+                snapshot_repo.upsert_mes_actual(anio_target, mes_target)
+                snapshot_repo.upsert_mes_actual(anio_prev, mes_prev)
                 comparativa = snapshot_repo.obtener_comparativa_mensual(
-                    anio_actual, mes_actual
+                    anio_target, mes_target
                 )
             except Exception as snap_err:
                 logger.warning("Comparativa no disponible: %s", snap_err)
 
-            # Proyeccion de cuotas futuras
+            # ── Empalme: cierre del mes anterior si mes actual tiene pocos
+            #    movimientos y no hay rango explícito ─────────────────────
+            empalme_gastos: dict = {}
+            empalme_ingresos_total = Decimal("0")
+            empalme_mes_label = ""
+            empalme_total_gastos = Decimal("0")
+
+            if not intencion.rango and len(gastos_mes) < 5:
+                mes_emp = mes_prev  # = mes_actual - 1 ya calculado
+                anio_emp = anio_prev
+                gastos_emp = list(expense_repo.get_by_month(anio_emp, mes_emp))
+                if gastos_emp:
+                    gastos_emp_filtrados = filtrar_por_categorias(
+                        gastos_emp, intencion.categorias
+                    )
+                    empalme_gastos = (
+                        agrupar_gastos(gastos_emp_filtrados)
+                        if gastos_emp_filtrados
+                        else {}
+                    )
+                    empalme_total_gastos = sum(
+                        (g.monto for g in gastos_emp), Decimal("0")
+                    )
+                    ingresos_emp = list(income_repo.get_by_month(anio_emp, mes_emp))
+                    empalme_ingresos_total = sum(
+                        (i.monto for i in ingresos_emp), Decimal("0")
+                    )
+                    empalme_mes_label = f"{_MESES_NUM[mes_emp]} {anio_emp}"
+                    logger.info(
+                        "[EMPALME] Cierre de %s: %d gastos ($%s), ingresos $%s",
+                        empalme_mes_label,
+                        len(gastos_emp),
+                        empalme_total_gastos,
+                        empalme_ingresos_total,
+                    )
+
+            # ── Proyección de cuotas futuras ───────────────────────────────
             proyeccion = {}
             try:
                 inst_ctrl = InstallmentController(familia_id=self._familia_id)
@@ -176,7 +266,7 @@ class AIController(BaseController):
             except Exception as proy_err:
                 logger.warning("Proyeccion no disponible: %s", proy_err)
 
-            # Cotización del dólar
+            # ── Cotización del dólar ──────────────────────────────────────
             exchange_ctrl = ExchangeRateController()
             cotizacion, _ = exchange_ctrl.get_display_rate()
 
@@ -192,16 +282,18 @@ class AIController(BaseController):
                 terminos_buscados=label_desc,
                 proyeccion_cuotas=proyeccion,
                 cotizacion_dolar=cotizacion if cotizacion > 0 else None,
+                empalme_gastos=empalme_gastos,
+                empalme_ingresos_total=empalme_ingresos_total,
+                empalme_mes_label=empalme_mes_label,
+                empalme_total_gastos=empalme_total_gastos,
             )
 
     async def _buscar_memoria_vectorial(self, pregunta: str, ctx: AIContext) -> str:
-        """Recupera contexto de memoria vectorial RAG solo si no hay datos reales del mes."""
-        if bool(ctx.resumen_gastos):
-            logger.info(
-                "[MEMORY] Omitiendo memoria vectorial: hay %d gastos reales del mes.",
-                ctx.total_gastos_count,
-            )
-            return ""
+        """Recupera contexto de memoria vectorial RAG para enriquecer la respuesta.
+
+        Siempre consulta la memoria vectorial: incluso con gastos del mes,
+        el contexto histórico de meses anteriores es valioso para la IA.
+        """
         try:
             with self._get_session() as session:
                 memory_service = self._get_memory_service(session)

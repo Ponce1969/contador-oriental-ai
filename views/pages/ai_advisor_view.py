@@ -5,6 +5,7 @@ Vista de chat con el Contador Oriental
 from __future__ import annotations
 
 import asyncio
+import re
 from datetime import datetime
 
 import flet as ft
@@ -16,6 +17,18 @@ from flet_types.flet_types import CorrectSnackBar
 from models.ai_model import ChatMessage
 from services.infrastructure.report_service import ReportService
 from views.layouts.main_layout import MainLayout
+
+
+def escape_markdown_pesos(texto: str) -> str:
+    """Escapa $ seguido de número o signo negativo para evitar LaTeX math mode
+    en el componente Markdown de Flet.
+
+    Reglas:
+      - $5.000    →  \\$5.000   (pesos positivos)
+      - $ -5.000  →  \\$ -5.000 (pesos negativos)
+      - USD       →  USD        (sin escape, es texto plano)
+    """
+    return re.sub(r"\$(\s*-?\s*\d)", r"\\$\1", texto)
 
 
 class AIAdvisorView:
@@ -284,7 +297,7 @@ class AIAdvisorView:
                     self.typing_indicator.visible = False
                     anim_task.cancel()
                     stream_bubble = ft.Markdown(
-                        value=respuesta_acumulada,
+                        value=escape_markdown_pesos(respuesta_acumulada),
                         selectable=True,
                         extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
                         on_tap_link=lambda e: self.page.launch_url(e.data),
@@ -293,7 +306,7 @@ class AIAdvisorView:
                     self.page.update()
                     _buffer_count = 0
                 elif _buffer_count >= _BUFFER_SIZE:
-                    stream_bubble.value = respuesta_acumulada
+                    stream_bubble.value = escape_markdown_pesos(respuesta_acumulada)
                     self.page.update()
                     _buffer_count = 0
 
@@ -405,7 +418,7 @@ class AIAdvisorView:
                         ),
                         ft.Container(
                             content=ft.Markdown(
-                                value=mensaje.content,
+                                value=escape_markdown_pesos(mensaje.content),
                                 selectable=True,
                                 extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
                                 on_tap_link=lambda e: self.page.launch_url(e.data),
@@ -494,7 +507,7 @@ class AIAdvisorView:
                 content=ft.Column(
                     controls=[
                         ft.Markdown(
-                            reporte,
+                            escape_markdown_pesos(reporte),
                             selectable=True,
                             extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
                         )
