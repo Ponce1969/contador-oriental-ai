@@ -332,6 +332,14 @@ class AIController(BaseController):
         """
         logger.info(f"Consulta recibida: '{pregunta}' (from_history={from_history})")
 
+        # Detectar rango temporal para routing
+        intencion = QueryAnalyzer.detectar_intenciones(pregunta)
+        range_months = 1
+        if intencion.rango:
+            mes_ini, anio_ini, mes_fin, anio_fin = intencion.rango
+            range_months = (anio_fin - anio_ini) * 12 + (mes_fin - mes_ini) + 1
+            logger.info("[RANGO] Consulta abarca %d meses", range_months)
+
         # Verificar cuota de Llama 3
         has_quota = True
         with self._get_session() as session:
@@ -362,6 +370,7 @@ class AIController(BaseController):
             memoria_vectorial=memoria_str,
             has_quota=has_quota,
             from_history=from_history,
+            range_months=range_months,
         )
 
         # Registrar uso de modelo en cuota
@@ -401,6 +410,14 @@ class AIController(BaseController):
         """
         logger.info("Stream consulta: '%s' (from_history=%s)", pregunta, from_history)
 
+        # Detectar rango temporal para routing
+        intencion = QueryAnalyzer.detectar_intenciones(pregunta)
+        range_months = 1
+        if intencion.rango:
+            mes_ini, anio_ini, mes_fin, anio_fin = intencion.rango
+            range_months = (anio_fin - anio_ini) * 12 + (mes_fin - mes_ini) + 1
+            logger.info("[RANGO] Consulta abarca %d meses", range_months)
+
         # Verificar cuota de Llama 3
         has_quota = True
         with self._get_session() as session:
@@ -433,6 +450,7 @@ class AIController(BaseController):
             ctx=ctx,
             has_quota=has_quota,
             from_history=from_history,
+            range_months=range_months,
         )
 
         async for token in self.ai_service.consultar_stream(
@@ -441,6 +459,7 @@ class AIController(BaseController):
             memoria_vectorial=memoria_str,
             has_quota=has_quota,
             from_history=from_history,
+            range_months=range_months,
         ):
             yield token
 

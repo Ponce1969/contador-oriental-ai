@@ -499,6 +499,7 @@ RESPUESTA:"""
         memoria_vectorial: str = "",
         has_quota: bool = True,
         from_history: bool = False,
+        range_months: int = 1,
     ):
         """
         Versión streaming de consultar().
@@ -511,6 +512,7 @@ RESPUESTA:"""
             memoria_vectorial: Contexto RAG de pgvector.
             has_quota: Si la familia tiene cuota de Llama 3 disponible.
             from_history: Si la pregunta viene del botón de Historial.
+            range_months: Cantidad de meses que abarca la consulta.
 
         Yields:
             str — fragmento de texto generado por el modelo.
@@ -539,6 +541,7 @@ RESPUESTA:"""
             ctx=ctx,
             has_quota=has_quota,
             from_history=from_history,
+            range_months=range_months,
         )
         cuota_agotada = modelo == "gemma2" and not has_quota
 
@@ -623,6 +626,7 @@ RESPUESTA:"""
         memoria_vectorial: str = "",
         has_quota: bool = True,
         from_history: bool = False,
+        range_months: int = 1,
     ) -> Result[AIResponse, AppError]:
         """
         Consulta al Contador Oriental con routing híbrido.
@@ -637,6 +641,7 @@ RESPUESTA:"""
             memoria_vectorial: Contexto RAG de pgvector (opcional).
             has_quota: Si la familia tiene cuota de Llama 3 disponible.
             from_history: Si la pregunta viene del botón de Historial.
+            range_months: Cantidad de meses que abarca la consulta.
 
         Returns:
             Result con la respuesta o error.
@@ -664,6 +669,7 @@ RESPUESTA:"""
                 ctx=ctx,
                 has_quota=has_quota,
                 from_history=from_history,
+                range_months=range_months,
             )
             cuota_agotada = modelo == "gemma2" and not has_quota
 

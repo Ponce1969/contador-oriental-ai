@@ -192,3 +192,74 @@ class TestModelRouterKeywordsCompleteness:
         assert expected.issubset(KEYWORDS_LLAMA3), (
             f"Keys faltantes: {expected - KEYWORDS_LLAMA3}"
         )
+
+
+class TestModelRouterRangeMonths:
+    """Verifica el routing basado en el rango temporal del QueryAnalyzer."""
+
+    def test_single_month_stays_gemma2(self, router: ModelRouter):
+        """Rango de 1 mes → Gemma 2 (consulta simple)."""
+        assert (
+            router.route(
+                "¿Cuánto gasté en supermercado?",
+                range_months=1,
+                has_quota=True,
+            )
+            == "gemma2"
+        )
+
+    def test_three_months_routes_to_llama3(self, router: ModelRouter):
+        """Rango de 3 meses → Llama 3."""
+        assert (
+            router.route(
+                "¿Cuánto gasté en los últimos 3 meses?",
+                range_months=3,
+                has_quota=True,
+            )
+            == "llama3"
+        )
+
+    def test_six_months_routes_to_llama3(self, router: ModelRouter):
+        """Rango de 6 meses → Llama 3."""
+        assert (
+            router.route(
+                "¿Cuánto gasté en los últimos 6 meses?",
+                range_months=6,
+                has_quota=True,
+            )
+            == "llama3"
+        )
+
+    def test_two_months_routes_to_llama3(self, router: ModelRouter):
+        """Rango de 2 meses → Llama 3."""
+        assert (
+            router.route(
+                "Compará abril y mayo",
+                range_months=2,
+                has_quota=True,
+            )
+            == "llama3"
+        )
+
+    def test_range_without_quota_stays_gemma2(self, router: ModelRouter):
+        """Rango de 6 meses sin cuota → Gemma 2 con aviso."""
+        assert (
+            router.route(
+                "¿Cuánto gasté en los últimos 6 meses?",
+                range_months=6,
+                has_quota=False,
+            )
+            == "gemma2"
+        )
+
+    def test_range_months_overrides_empalme(self, router: ModelRouter, ctx_with_empalme):
+        """Rango > 1 mes tiene prioridad sobre empalme."""
+        assert (
+            router.route(
+                "¿Cuánto gasté en los últimos 3 meses?",
+                ctx=ctx_with_empalme,
+                range_months=3,
+                has_quota=True,
+            )
+            == "llama3"
+        )

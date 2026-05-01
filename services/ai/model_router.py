@@ -3,7 +3,7 @@ ModelRouter — Decide qué modelo de IA usar basado en la pregunta y contexto.
 
 Lógica de routing:
 - Keywords de normativa/fiscal → Llama 3 70B (si hay cuota)
-- Historial ≥3 meses → Llama 3 70B (si hay cuota)
+- Rango temporal > 1 mes → Llama 3 70B (si hay cuota)
 - Viene del botón "Preguntale al Contador sobre estos 3 meses" → Llama 3 70B
 - Simple / clasificación → Gemma 2:2b (local, sin límite)
 - Cuota agotada → Gemma 2:2b con aviso
@@ -62,12 +62,13 @@ class ModelRouter:
     """
     Decide si usar Gemma 2:2b (local) o Llama 3 70B (cloud).
 
-    Criterios:
-    1. Si la pregunta tiene keywords fiscales/normativos → Llama 3
-    2. Si el contexto tiene ≥5 gastos Y la pregunta es compleja → Llama 3
-    3. Si viene del Historial (AppState.prefilled_question) → Llama 3
-    4. Si no hay cuota → Gemma 2 con aviso
-    5. Default → Gemma 2
+    Criterios (en orden de prioridad):
+    1. Si viene del Historial → Llama 3
+    2. Si la pregunta tiene keywords fiscales/normativos → Llama 3
+    3. Si el rango temporal abarca > 1 mes → Llama 3
+    4. Si el contexto tiene empalme → Llama 3
+    5. Si no hay cuota → Gemma 2 con aviso
+    6. Default → Gemma 2
     """
 
     def route(
@@ -76,6 +77,7 @@ class ModelRouter:
         ctx: AIContext | None = None,
         has_quota: bool = True,
         from_history: bool = False,
+        range_months: int = 1,
     ) -> str:
         """
         Retorna 'llama3' o 'gemma2' según la pregunta y contexto.
@@ -85,6 +87,7 @@ class ModelRouter:
             ctx: Contexto financiero pre-calculado (puede ser None).
             has_quota: Si la familia tiene cuota de Llama 3 disponible.
             from_history: Si la pregunta viene del botón de Historial.
+            range_months: Cantidad de meses que abarca la consulta (del QueryAnalyzer).
 
         Returns:
             'llama3' o 'gemma2'
@@ -110,7 +113,19 @@ class ModelRouter:
                 )
                 return "gemma2"
 
-        # 3. Contexto con empalme (mes anterior) → Llama 3
+        # 3. Rango temporal > 1 mes → Llama 3
+        if range_months > 1:
+            if has_quota:
+                logger.info(
+                    "[ROUTER] Rango de %d meses → Llama 3", range_months
+                )
+                return "llama3"
+            logger.info(
+                "[ROUTER] Rango de %d meses pero sin cuota → Gemma 2", range_months
+            )
+            return "gemma2"
+
+        # 4. Contexto con empalme (mes anterior) → Llama 3
         if ctx and ctx.empalme_mes_label:
             if has_quota:
                 logger.info(
@@ -121,6 +136,6 @@ class ModelRouter:
             logger.info("[ROUTER] Contexto con empalme pero sin cuota → Gemma 2")
             return "gemma2"
 
-        # 4. Default → Gemma 2 (local, sin límite)
-        logger.info("[ROUTER]Consulta simple → Gemma 2")
+        # 5. Default → Gemma 2 (local, sin límite)
+        logger.info("[ROUTER] Consulta simple → Gemma 2")
         return "gemma2"
