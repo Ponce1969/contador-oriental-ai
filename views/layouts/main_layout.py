@@ -158,7 +158,7 @@ class MainLayout(ft.Column):
             padding=ft.padding.symmetric(horizontal=12, vertical=4),
             bgcolor=ft.Colors.GREY_100,
             border_radius=20,
-            alignment=ft.alignment.center,
+            alignment=ft.Alignment(0, 0),
             tooltip=tooltip_text,
         )
 
