@@ -1,17 +1,21 @@
 """
 NVIDIAClient — Cliente async para NVIDIA API (Llama 3 70B).
 
-Usa httpx AsyncClient con timeout de 30s.
+Usa httpx AsyncClient con timeout de 60s.
 Retorna dict con 'response' y 'usage' compatible con el formato de Ollama.
+
+Raises:
+    ConnectionError: Si la API key no está configurada o hay error de conexión.
+    TimeoutError: Si la API no responde en el tiempo límite.
+    RuntimeError: Si hay un error HTTP inesperado.
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 
 import httpx
-
-from models.errors import AppError
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +65,13 @@ class NVIDIAClient:
                 'completion_tokens': int
 
         Raises:
-            AppError: Si la API key no está configurada o hay error de conexión.
+            ConnectionError: Si la API key no está configurada o hay error de conexión.
+            TimeoutError: Si la API no responde en el tiempo límite.
+            RuntimeError: Si hay un error HTTP inesperado.
         """
         if not self.is_configured:
-            raise AppError(
-                message="NVIDIA API key no configurada. "
+            raise ConnectionError(
+                "NVIDIA API key no configurada. "
                 "Configure NVIDIA_API_KEY en el archivo .env"
             )
 
@@ -120,22 +126,22 @@ class NVIDIAClient:
                 return result
 
             except httpx.TimeoutException:
-                logger.error("[NVIDIA] Timeout (30s) llamando a la API")
-                raise AppError(
-                    message="Timeout al consultar NVIDIA API. "
-                    "El servidor no respondió en 30 segundos."
+                logger.error("[NVIDIA] Timeout (60s) llamando a la API")
+                raise TimeoutError(
+                    "Timeout al consultar NVIDIA API. "
+                    "El servidor no respondió en 60 segundos."
                 )
             except httpx.HTTPStatusError as e:
                 logger.error(
                     "[NVIDIA] Error HTTP %d: %s", e.response.status_code, str(e)
                 )
-                raise AppError(
-                    message=f"Error HTTP {e.response.status_code} al consultar NVIDIA API."
+                raise RuntimeError(
+                    f"Error HTTP {e.response.status_code} al consultar NVIDIA API."
                 )
             except httpx.ConnectError:
                 logger.error("[NVIDIA] Error de conexión a NVIDIA API")
-                raise AppError(
-                    message="No se pudo conectar a NVIDIA API. "
+                raise ConnectionError(
+                    "No se pudo conectar a NVIDIA API. "
                     "Verifique la conexión a internet."
                 )
 
@@ -153,11 +159,13 @@ class NVIDIAClient:
             str — fragmento de texto generado por el modelo.
 
         Raises:
-            AppError: Si la API key no está configurada o hay error de conexión.
+            ConnectionError: Si la API key no está configurada o hay error de conexión.
+            TimeoutError: Si la API no responde en el tiempo límite.
+            RuntimeError: Si hay un error HTTP inesperado.
         """
         if not self.is_configured:
-            raise AppError(
-                message="NVIDIA API key no configurada. "
+            raise ConnectionError(
+                "NVIDIA API key no configurada. "
                 "Configure NVIDIA_API_KEY en el archivo .env"
             )
 
@@ -187,7 +195,9 @@ class NVIDIAClient:
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
-                async with client.stream("POST", url, json=payload, headers=headers) as response:
+                async with client.stream(
+                    "POST", url, json=payload, headers=headers
+                ) as response:
                     response.raise_for_status()
 
                     async for line in response.aiter_lines():
@@ -196,9 +206,10 @@ class NVIDIAClient:
                             if data_str.strip() == "[DONE]":
                                 break
                             try:
-                                import json
                                 chunk = json.loads(data_str)
-                                delta = chunk.get("choices", [{}])[0].get("delta", {})
+                                delta = chunk.get("choices", [{}])[0].get(
+                                    "delta", {}
+                                )
                                 content = delta.get("content", "")
                                 if content:
                                     yield content
@@ -208,14 +219,10 @@ class NVIDIAClient:
                 logger.info("[NVIDIA] Stream completado")
 
             except httpx.TimeoutException:
-                raise AppError(
-                    message="Timeout al consultar NVIDIA API (stream)."
-                )
+                raise TimeoutError("Timeout al consultar NVIDIA API (stream).")
             except httpx.HTTPStatusError as e:
-                raise AppError(
-                    message=f"Error HTTP {e.response.status_code} al consultar NVIDIA API."
+                raise RuntimeError(
+                    f"Error HTTP {e.response.status_code} al consultar NVIDIA API."
                 )
             except httpx.ConnectError:
-                raise AppError(
-                    message="No se pudo conectar a NVIDIA API."
-                )
+                raise ConnectionError("No se pudo conectar a NVIDIA API.")

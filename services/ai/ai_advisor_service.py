@@ -580,7 +580,7 @@ RESPUESTA:"""
                     yield "Se renueva a medianoche.\n\n"
                 async for token in self._call_ollama_stream(prompt):
                     yield token
-        except AppError:
+        except (ConnectionError, TimeoutError, RuntimeError):
             raise
         except Exception as e:
             ai_logger.error("❌ Error en stream: %s", e)
@@ -737,7 +737,7 @@ RESPUESTA:"""
                 result.get("completion_tokens", 0),
             )
             return respuesta
-        except AppError as e:
+        except (ConnectionError, TimeoutError, RuntimeError) as e:
             ai_logger.warning("⚠️ NVIDIAClient falló: %s. Fallback a Gemma 2", e)
             return await self._consultar_gemma2(prompt, ai_logger, cuota_agotada=False)
         except Exception as e:
@@ -759,14 +759,14 @@ RESPUESTA:"""
             respuesta_texto: str = response.get("response", "").strip()
         except ConnectionError as e:
             ai_logger.error("❌ Error de conexión con Ollama: %s", str(e))
-            raise AppError(
-                message="El Contador Oriental no puede conectarse al servidor "
+            raise ConnectionError(
+                "El Contador Oriental no puede conectarse al servidor "
                 "de IA. Verificar que Ollama esté corriendo en el host."
             )
         except Exception as e:
             ai_logger.error("❌ Error inesperado en Ollama: %s:%s", type(e).__name__, str(e))
-            raise AppError(
-                message=f"Error al consultar al Contador Oriental: {str(e)}"
+            raise RuntimeError(
+                f"Error al consultar al Contador Oriental: {str(e)}"
             )
 
         if cuota_agotada:
