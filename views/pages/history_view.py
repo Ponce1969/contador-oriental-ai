@@ -284,7 +284,7 @@ class HistoryView:
                         color=ft.Colors.WHITE,
                         text_style=ft.TextStyle(size=16, weight=ft.FontWeight.BOLD),
                         padding=16,
-                        shape=ft.RoundedRectangleBorderRadius(radius=12),
+                        shape=ft.RoundedRectangleBorder(radius=12),
                     ),
                 ),
             ]
