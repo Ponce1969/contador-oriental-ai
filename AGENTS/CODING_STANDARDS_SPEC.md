@@ -56,9 +56,39 @@ def get_summary_by_categories(
     self,
     year: int | None = None,
     month: int | None = None,
-) -> dict[str, float]:
+) -> dict[str, Decimal]:
     ...
 ```
+
+## Decimal vs Float (REGLA CRÍTICA)
+
+**NUNCA uses `float` para valores monetarios. SIEMPRE `Decimal`.**
+
+Python `float` tiene errores de precisión: `0.1 + 0.2 = 0.30000000000000004`. En un sistema financiero eso es inaceptable.
+
+```python
+# ❌ MAL — contamina Decimal con float
+total = {"total": 0.0}  # float!
+total["total"] += gasto.monto  # TypeError: float + Decimal
+
+# ✅ BIEN — todo Decimal
+total = {"total": Decimal("0")}
+total["total"] += gasto.monto  # Decimal + Decimal = Decimal
+
+# ❌ MAL
+monto: float = Field(gt=0)
+
+# ✅ BIEN
+monto: Decimal = Field(gt=0)
+
+# ❌ MAL — inicializar Decimal con float
+subtotal = sum((g.monto for g in gastos), 0.0)
+
+# ✅ BIEN — inicializar Decimal con Decimal
+subtotal = sum((g.monto for g in gastos), Decimal("0"))
+```
+
+Esta regla aplica a: models, services, controllers, formatters, repositories — TODO el código financiero.
 
 ## Error Handling
 
@@ -123,14 +153,15 @@ class ExpenseController(BaseController):
 from datetime import date
 from enum import Enum
 
+from decimal import Decimal
 from pydantic import BaseModel, Field
 
 class ExpenseCategory(Enum):
-    ALMACEN = "Almacén"
-    HOGAR = "Hogar"
+    ALMACEN = "🛒 Almacén"
+    HOGAR = "🏠 Hogar"
 
 class Expense(BaseModel):
-    monto: float = Field(gt=0)
+    monto: Decimal = Field(gt=0)  # NUNCA float — siempre Decimal para dinero
     descripcion: str = Field(min_length=1)
     fecha: date
     categoria: ExpenseCategory
