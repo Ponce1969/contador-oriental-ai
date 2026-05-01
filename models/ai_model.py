@@ -140,6 +140,10 @@ class AIContext(BaseModel):
         default="",
         description="Términos que el usuario buscó, para armar el label del subtotal",
     )
+    cotizacion_dolar: Decimal | None = Field(
+        default=None,
+        description="Cotización USD/UYU del día para contexto macroeconómico",
+    )
 
 
 class AIResponse(BaseModel):

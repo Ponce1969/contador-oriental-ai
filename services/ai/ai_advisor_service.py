@@ -115,6 +115,11 @@ class AIAdvisorService:
             f"{format_pesos(balance_mes)}",
         ]
 
+        if ctx.cotizacion_dolar:
+            lineas.append(
+                f"- Cotización del dólar hoy: $U {ctx.cotizacion_dolar} por U$S 1.00"
+            )
+
         if ctx.resumen_metodos_pago:
             lineas.append(
                 f"- Métodos de pago usados este mes: {ctx.resumen_metodos_pago}"

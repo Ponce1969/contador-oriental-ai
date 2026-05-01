@@ -5,6 +5,7 @@ import urllib.parse
 import asyncio
 
 from configs.routes import ROUTES
+from controllers.exchange_rate_controller import ExchangeRateController
 from core.i18n import I18n
 from core.session import SessionManager
 from core.state import AppState
@@ -99,6 +100,11 @@ class MainLayout(ft.Column):
         # TOP BAR
         self.controls.append(self._top_bar())
 
+        # EXCHANGE RATE BADGE
+        badge = self._exchange_rate_badge()
+        if badge is not None:
+            self.controls.append(badge)
+
         # CONTENT — padding lateral adaptativo
         content_padding = ft.padding.symmetric(
             horizontal=8 if self._is_mobile else 24,
@@ -115,6 +121,46 @@ class MainLayout(ft.Column):
         # BOTTOM BAR — solo en mobile y tablet
         if not self._is_desktop:
             self.controls.append(self._bottom_bar())
+
+    # ---------- EXCHANGE RATE BADGE ----------
+    def _exchange_rate_badge(self) -> ft.Control | None:
+        """Badge con cotización USD/UYU del día. None si no hay datos."""
+        from decimal import Decimal
+
+        ctrl = ExchangeRateController()
+        rate, is_fresh = ctrl.get_display_rate()
+        if rate == Decimal("0"):
+            return None
+
+        color = ft.Colors.LIGHT_BLUE_300 if is_fresh else ft.Colors.AMBER_400
+        icon = ft.Icons.TRENDING_UP if is_fresh else ft.Icons.WARNING_AMBER
+        label = f"U$S 1.00 = $U {rate}"
+        tooltip_text = (
+            "Cotización actualizada hoy"
+            if is_fresh
+            else "Última cotización disponible (no es de hoy)"
+        )
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(icon, size=14, color=color),
+                    ft.Text(
+                        label,
+                        size=12,
+                        color=ft.Colors.with_opacity(0.85, ft.Colors.ON_SURFACE),
+                        weight=ft.FontWeight.W_500,
+                    ),
+                ],
+                spacing=4,
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
+            padding=ft.padding.symmetric(horizontal=12, vertical=4),
+            bgcolor=ft.Colors.with_opacity(0.08, ft.Colors.SURFACE_VARIANT),
+            border_radius=20,
+            alignment=ft.alignment.center,
+            tooltip=tooltip_text,
+        )
 
     # ---------- TOP BAR ----------
     def _top_bar(self) -> ft.AppBar:

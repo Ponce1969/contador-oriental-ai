@@ -9,6 +9,7 @@ from decimal import Decimal
 from result import Result
 
 from controllers.base_controller import BaseController
+from controllers.exchange_rate_controller import ExchangeRateController
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 from models.expense_model import Expense
@@ -175,6 +176,10 @@ class AIController(BaseController):
             except Exception as proy_err:
                 logger.warning("Proyeccion no disponible: %s", proy_err)
 
+            # Cotización del dólar
+            exchange_ctrl = ExchangeRateController()
+            cotizacion, _ = exchange_ctrl.get_display_rate()
+
             return AIContext(
                 resumen_gastos=resumen_gastos,
                 total_gastos_count=total_gastos_count,
@@ -186,6 +191,7 @@ class AIController(BaseController):
                 subtotal_descripcion=subtotal_desc if subtotal_desc else None,
                 terminos_buscados=label_desc,
                 proyeccion_cuotas=proyeccion,
+                cotizacion_dolar=cotizacion if cotizacion > 0 else None,
             )
 
     async def _buscar_memoria_vectorial(self, pregunta: str, ctx: AIContext) -> str:
