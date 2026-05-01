@@ -124,43 +124,50 @@ class MainLayout(ft.Column):
 
     # ---------- EXCHANGE RATE BADGE ----------
     def _exchange_rate_badge(self) -> ft.Control | None:
-        """Badge con cotización USD/UYU del día. None si no hay datos."""
-        from decimal import Decimal
+        """Badge con cotización USD/UYU del día. None si no hay datos.
+        Defensivo: si falla cualquier cosa, no rompe la app.
+        """
+        try:
+            from decimal import Decimal
 
-        ctrl = ExchangeRateController()
-        rate, is_fresh = ctrl.get_display_rate()
-        if rate == Decimal("0"):
+            ctrl = ExchangeRateController()
+            rate, is_fresh = ctrl.get_display_rate()
+            if rate == Decimal("0"):
+                return None
+
+            color = ft.Colors.LIGHT_BLUE_300 if is_fresh else ft.Colors.AMBER_400
+            icon = ft.Icons.TRENDING_UP if is_fresh else ft.Icons.WARNING_AMBER
+            label = f"U$S 1.00 = $U {rate}"
+            tooltip_text = (
+                "Cotización actualizada hoy"
+                if is_fresh
+                else "Última cotización disponible (no es de hoy)"
+            )
+
+            return ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(icon, size=14, color=color),
+                        ft.Text(
+                            label,
+                            size=12,
+                            color=ft.Colors.with_opacity(0.85, ft.Colors.ON_SURFACE),
+                            weight=ft.FontWeight.W_500,
+                        ),
+                    ],
+                    spacing=4,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                padding=ft.padding.symmetric(horizontal=12, vertical=4),
+                bgcolor=ft.Colors.GREY_100,
+                border_radius=20,
+                alignment=ft.Alignment(0, 0),
+                tooltip=tooltip_text,
+            )
+        except Exception:
+            # Si falla la DB, los imports, o cualquier cosa,
+            # simplemente no mostramos el badge. La app sigue funcionando.
             return None
-
-        color = ft.Colors.LIGHT_BLUE_300 if is_fresh else ft.Colors.AMBER_400
-        icon = ft.Icons.TRENDING_UP if is_fresh else ft.Icons.WARNING_AMBER
-        label = f"U$S 1.00 = $U {rate}"
-        tooltip_text = (
-            "Cotización actualizada hoy"
-            if is_fresh
-            else "Última cotización disponible (no es de hoy)"
-        )
-
-        return ft.Container(
-            content=ft.Row(
-                controls=[
-                    ft.Icon(icon, size=14, color=color),
-                    ft.Text(
-                        label,
-                        size=12,
-                        color=ft.Colors.with_opacity(0.85, ft.Colors.ON_SURFACE),
-                        weight=ft.FontWeight.W_500,
-                    ),
-                ],
-                spacing=4,
-                alignment=ft.MainAxisAlignment.CENTER,
-            ),
-            padding=ft.padding.symmetric(horizontal=12, vertical=4),
-            bgcolor=ft.Colors.GREY_100,
-            border_radius=20,
-            alignment=ft.Alignment(0, 0),
-            tooltip=tooltip_text,
-        )
 
     # ---------- TOP BAR ----------
     def _top_bar(self) -> ft.AppBar:
