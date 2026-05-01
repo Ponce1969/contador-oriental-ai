@@ -276,13 +276,23 @@ class HistoryView:
                     border=ft.border.all(1, ft.Colors.INDIGO_200),
                 ),
                 ft.ElevatedButton(
-                    text="🧮 Preguntale al Contador",
-                    icon=ft.Icons.PSYCHOLOGY,
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(ft.Icons.PSYCHOLOGY, size=20, color=ft.Colors.WHITE),
+                            ft.Text(
+                                value="Preguntale al Contador",
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.WHITE,
+                            ),
+                        ],
+                        spacing=8,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
                     on_click=lambda _: self.router.navigate("/ai-contador"),
                     style=ft.ButtonStyle(
                         bgcolor=ft.Colors.INDIGO_600,
                         color=ft.Colors.WHITE,
-                        text_style=ft.TextStyle(size=16, weight=ft.FontWeight.BOLD),
                         padding=16,
                         shape=ft.RoundedRectangleBorder(radius=12),
                     ),
