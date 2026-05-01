@@ -323,6 +323,16 @@ RESPUESTA:"""
             request.pregunta, contexto, gastos_formateados, memoria_vectorial
         )
 
+        ai_logger.info("=" * 80)
+        ai_logger.info("📊 CONTEXTO ENVIADO AL MODELO (STREAM):")
+        ai_logger.info(f"  - Pregunta: {request.pregunta}")
+        ai_logger.info(f"  - Incluir gastos: {request.incluir_gastos_recientes}")
+        ai_logger.info(f"  - Transacciones: {ctx.total_gastos_count if ctx else 0}")
+        ai_logger.info(f"  - Contexto legal: {'Sí' if contexto else 'No'}")
+        ai_logger.info(f"  - Prompt completo ({len(prompt)} chars):")
+        ai_logger.info("-" * 80)
+        ai_logger.info(prompt)
+        ai_logger.info("=" * 80)
         ai_logger.info("🔴 STREAM iniciado (%s chars prompt)", len(prompt))
 
         try:

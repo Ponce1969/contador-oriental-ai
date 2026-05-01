@@ -39,6 +39,8 @@ def to_table(expense: Expense) -> ExpenseTable:
         es_recurrente=expense.es_recurrente,
         frecuencia=expense.frecuencia.value if expense.frecuencia else None,
         notas=expense.notas,
+        installment_purchase_id=expense.installment_purchase_id,
+        pendiente=expense.pendiente,
     )
 
 
