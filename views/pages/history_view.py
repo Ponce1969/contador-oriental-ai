@@ -292,4 +292,5 @@ class HistoryView:
     def _navigate_to_contador(self, _) -> None:
         """Navega al Contador con pregunta pre-cargada del historial."""
         AppState.prefilled_question = "Resumen de gastos de los últimos 3 meses"
+        AppState.from_history = True
         self.router.navigate("/ai-contador")

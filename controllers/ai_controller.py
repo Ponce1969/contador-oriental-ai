@@ -10,6 +10,7 @@ from result import Result
 
 from controllers.base_controller import BaseController
 from controllers.exchange_rate_controller import ExchangeRateController
+from core.state import AppState
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 from models.expense_model import Expense
@@ -315,7 +316,7 @@ class AIController(BaseController):
         return ""
 
     async def consultar_contador(
-        self, pregunta: str, incluir_gastos: bool = True
+        self, pregunta: str, incluir_gastos: bool = True, from_history: bool = False
     ) -> Result[AIResponse, AppError]:
         """
         Consulta al Contador Oriental con detección inteligente de contexto.
@@ -324,11 +325,20 @@ class AIController(BaseController):
         Args:
             pregunta: Pregunta del usuario
             incluir_gastos: Si incluir gastos recientes en el contexto
+            from_history: Si la pregunta viene del botón de Historial
 
         Returns:
             Result con la respuesta del contador o error
         """
-        logger.info(f"Consulta recibida: '{pregunta}'")
+        logger.info(f"Consulta recibida: '{pregunta}' (from_history={from_history})")
+
+        # Verificar cuota de Llama 3
+        has_quota = True
+        with self._get_session() as session:
+            from services.infrastructure.quota_manager import QuotaManager
+
+            quota = QuotaManager(session, self._familia_id)
+            has_quota = quota.can_use_llama3()
 
         # Crear request
         request = AIRequest(
@@ -346,24 +356,58 @@ class AIController(BaseController):
 
         memoria_str = await self._buscar_memoria_vectorial(pregunta, ctx)
 
-        return await self.ai_service.consultar(
-            request, ctx=ctx, memoria_vectorial=memoria_str
+        result = await self.ai_service.consultar(
+            request,
+            ctx=ctx,
+            memoria_vectorial=memoria_str,
+            has_quota=has_quota,
+            from_history=from_history,
         )
+
+        # Registrar uso de modelo en cuota
+        if result.is_ok():
+            modelo_usado = "llama3" if (has_quota and from_history) else "gemma2"
+            # El router decide internamente, pero registramos lo que se usó
+            # Esto se podría mejorar extrayendo el modelo del resultado
+            with self._get_session() as session:
+                from services.infrastructure.quota_manager import QuotaManager
+
+                quota = QuotaManager(session, self._familia_id)
+                if modelo_usado == "llama3":
+                    quota.register_llama3_usage()
+                else:
+                    quota.register_gemma2_usage()
+
+        return result
 
     async def consultar_contador_stream(
         self,
         pregunta: str,
         incluir_gastos: bool = True,
+        from_history: bool = False,
     ):
         """
         Versión streaming de consultar_contador().
-        Prepara el mismo AIContext y yield tokens a medida que Gemma responde.
-        La vista actualiza la burbuja token a token.
+        Prepara el mismo AIContext y yield tokens a medida que el modelo responde.
+        Soporta routing híbrido: Llama 3 (cloud) o Gemma 2 (local).
+
+        Args:
+            pregunta: Pregunta del usuario
+            incluir_gastos: Si incluir gastos recientes en el contexto
+            from_history: Si la pregunta viene del botón de Historial
 
         Yields:
             str — fragmento de texto del modelo.
         """
-        logger.info("Stream consulta: '%s'", pregunta)
+        logger.info("Stream consulta: '%s' (from_history=%s)", pregunta, from_history)
+
+        # Verificar cuota de Llama 3
+        has_quota = True
+        with self._get_session() as session:
+            from services.infrastructure.quota_manager import QuotaManager
+
+            quota = QuotaManager(session, self._familia_id)
+            has_quota = quota.can_use_llama3()
 
         request = AIRequest(
             pregunta=pregunta,
@@ -380,10 +424,35 @@ class AIController(BaseController):
 
         memoria_str = await self._buscar_memoria_vectorial(pregunta, ctx)
 
+        # Determinar modelo para registro de cuota
+        from services.ai.model_router import ModelRouter
+
+        router = ModelRouter()
+        modelo = router.route(
+            pregunta=pregunta,
+            ctx=ctx,
+            has_quota=has_quota,
+            from_history=from_history,
+        )
+
         async for token in self.ai_service.consultar_stream(
-            request, ctx=ctx, memoria_vectorial=memoria_str
+            request,
+            ctx=ctx,
+            memoria_vectorial=memoria_str,
+            has_quota=has_quota,
+            from_history=from_history,
         ):
             yield token
+
+        # Registrar uso después del stream
+        with self._get_session() as session:
+            from services.infrastructure.quota_manager import QuotaManager
+
+            quota = QuotaManager(session, self._familia_id)
+            if modelo == "llama3":
+                quota.register_llama3_usage()
+            else:
+                quota.register_gemma2_usage()
 
     def get_title(self) -> str:
         """Título de la vista"""

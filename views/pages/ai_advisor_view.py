@@ -150,6 +150,7 @@ class AIAdvisorView:
         if AppState.prefilled_question:
             self.pregunta_input.value = AppState.prefilled_question
             AppState.prefilled_question = None  # Consumir para no re-usar
+            # from_history se propaga al controller en _on_consultar
 
         return MainLayout(
             page=self.page,
@@ -281,6 +282,8 @@ class AIAdvisorView:
         anim_task = asyncio.create_task(self._animate_typing())
 
         incluir_gastos = self.incluir_gastos_checkbox.value or False
+        from_history = AppState.from_history
+        AppState.from_history = False  # Consumir para no re-usar
         respuesta_acumulada = ""
         stream_bubble: ft.Markdown | None = None
 
@@ -293,6 +296,7 @@ class AIAdvisorView:
             async for token in self.controller.consultar_contador_stream(
                 pregunta=pregunta,
                 incluir_gastos=incluir_gastos,
+                from_history=from_history,
             ):
                 respuesta_acumulada += token
                 _buffer_count += 1

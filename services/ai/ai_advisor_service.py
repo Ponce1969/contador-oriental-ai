@@ -1,5 +1,8 @@
 """
-Servicio de asesoría con IA - Contador Oriental (gemma2:2b)
+Servicio de asesoría con IA - Contador Oriental (arquitectura híbrida)
+
+Orquestador que decide entre Gemma 2:2b (local) y Llama 3 70B (cloud NVIDIA)
+basado en la complejidad de la pregunta y la cuota disponible.
 """
 
 from __future__ import annotations
@@ -12,15 +15,32 @@ from result import Err, Ok, Result
 
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
+from services.ai.model_router import ModelRouter
 from services.infrastructure.formatters import format_pesos
+from services.infrastructure.nvidia_client import NVIDIAClient
 
 logger = logging.getLogger(__name__)
 
 
 class AIAdvisorService:
-    """Servicio para consultar al Contador Oriental"""
+    """
+    Servicio para consultar al Contador Oriental.
 
-    def __init__(self, knowledge_path: str = "./knowledge"):
+    Arquitectura híbrida:
+    - Gemma 2:2b (Ollama local) para consultas simples y fallback
+    - Llama 3 70B (NVIDIA cloud) para consultas complejas/normativas
+    - ModelRouter decide qué modelo usar
+    - QuotaManager controla cuotas diarias de Llama 3
+    """
+
+    def __init__(
+        self,
+        model_router: ModelRouter | None = None,
+        nvidia_client: NVIDIAClient | None = None,
+        knowledge_path: str = "./knowledge",
+    ):
+        self.router = model_router or ModelRouter()
+        self.nvidia_client = nvidia_client or NVIDIAClient()
         self.knowledge_path = knowledge_path
         self.mapa_conocimiento = {
             "irpf_familia_uy.md": {
@@ -59,6 +79,48 @@ class AIAdvisorService:
                     "banco",
                 ],
                 "peso": 1,
+            },
+            "sucive_patentes_uy.md": {
+                "keywords": [
+                    "patente",
+                    "sucive",
+                    "vencimiento",
+                    "automotor",
+                    "vehiculo",
+                    "descuento",
+                    "rodado",
+                    "cuota patente",
+                ],
+                "peso": 2,
+            },
+            "iva_general_uy.md": {
+                "keywords": [
+                    "iva",
+                    "tasa basica",
+                    "tasa minima",
+                    "exento",
+                    "22%",
+                    "10%",
+                    "puntos iva",
+                    "factura",
+                    "precio con iva",
+                ],
+                "peso": 2,
+            },
+            "bps_aportes_uy.md": {
+                "keywords": [
+                    "bps",
+                    "aportes",
+                    "jubilacion",
+                    "fonasa",
+                    "monotributo",
+                    "servicio domestico",
+                    "unipersonal",
+                    "planilla",
+                    "empleado",
+                    "empleador",
+                ],
+                "peso": 2,
             },
         }
 
@@ -290,10 +352,19 @@ class AIAdvisorService:
         contexto_legal: str,
         gastos_formateados: str,
         memoria_vectorial: str = "",
+        cuota_agotada: bool = False,
+        modelo: str = "gemma2",
     ) -> str:
         """
-        Construye el prompt optimizado para gemma2:2b
-        CRÍTICO: Mantener conciso para evitar que el modelo se pierda
+        Construye el prompt optimizado para el modelo seleccionado.
+
+        Args:
+            pregunta: La pregunta del usuario.
+            contexto_legal: Texto de conocimiento RAG.
+            gastos_formateados: Resumen financiero pre-calculado.
+            memoria_vectorial: Contexto histórico de pgvector.
+            cuota_agotada: Si True, agrega aviso de precisión reducida.
+            modelo: 'gemma2' o 'llama3' — ajusta restricciones del prompt.
         """
         seccion_rag = (
             f"NORMATIVA URUGUAYA RELEVANTE:\n{contexto_legal}\n"
@@ -320,6 +391,18 @@ class AIAdvisorService:
             else ""
         )
 
+        # Aviso cuando la cuota de Llama 3 está agotada y cae a Gemma 2
+        aviso_cuota = ""
+        if cuota_agotada:
+            aviso_cuota = (
+                "\nADVERTENCIA: Estás respondiendo con información limitada "
+                "(modelo local). Sé conservador y agregá que la respuesta "
+                "puede ser menos precisa.\n"
+            )
+
+        # Límite de líneas depende del modelo
+        max_lineas = "6 líneas" if modelo == "llama3" else "4 líneas"
+
         prompt = f"""Sos el Contador Oriental, un contador público uruguayo.
 
 TU ROL:
@@ -342,7 +425,7 @@ SÍMBOLOS MONETARIOS (estricto):
 - Usá USD solo para contextualizar compras grandes o deudas en esa moneda.
 
 TONO: Profesional pero de confianza. Evitá tecnicismos. Si algo está mal, decilo directo.
-{prioridad}- Máximo 4 líneas de respuesta.
+{aviso_cuota}{prioridad}- Máximo {max_lineas} de respuesta.
 
 {seccion_rag}{seccion_memoria}{seccion_gastos}PREGUNTA: {pregunta}
 
@@ -350,16 +433,84 @@ RESPUESTA:"""
 
         return prompt
 
+    async def _call_ollama(self, prompt: str) -> dict:
+        """
+        Llama a Ollama (Gemma 2:2b local) sin streaming.
+        Retorna el dict completo con 'response' key.
+        """
+        from ollama import AsyncClient
+
+        _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        client = AsyncClient(host=_ollama_url)
+
+        return await client.generate(
+            model="contador-oriental",
+            prompt=prompt,
+            options={"temperature": 0.0, "num_predict": 512},
+        )
+
+    async def _call_ollama_stream(self, prompt: str):
+        """
+        Llama a Ollama (Gemma 2:2b local) con streaming.
+        Yield tokens a medida que el modelo los genera.
+        """
+        from ollama import AsyncClient
+
+        _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        client = AsyncClient(host=_ollama_url)
+
+        async for part in await client.generate(
+            model="contador-oriental",
+            prompt=prompt,
+            stream=True,
+            options={"temperature": 0.0, "num_predict": 512},
+        ):
+            token: str = part.get("response", "")
+            if token:
+                yield token
+
+    async def _call_nvidia(self, prompt: str) -> dict:
+        """
+        Llama a NVIDIA API (Llama 3 70B cloud) sin streaming.
+        Retorna el dict con 'response', 'prompt_tokens', 'completion_tokens'.
+        """
+        return await self.nvidia_client.generate(
+            prompt=prompt,
+            temperature=0.1,
+            max_tokens=1024,
+        )
+
+    async def _call_nvidia_stream(self, prompt: str):
+        """
+        Llama a NVIDIA API (Llama 3 70B cloud) con streaming.
+        Yield tokens a medida que el modelo los genera.
+        """
+        async for token in self.nvidia_client.generate_stream(
+            prompt=prompt,
+            temperature=0.1,
+            max_tokens=1024,
+        ):
+            yield token
+
     async def consultar_stream(
         self,
         request: AIRequest,
         ctx: AIContext | None = None,
         memoria_vectorial: str = "",
+        has_quota: bool = True,
+        from_history: bool = False,
     ):
         """
         Versión streaming de consultar().
-        Yield tokens a medida que Gemma los genera.
-        El caller acumula y actualiza la UI token a token.
+        Yield tokens a medida que el modelo los genera.
+        Soporta routing híbrido: Llama 3 (cloud) o Gemma 2 (local).
+
+        Args:
+            request: Datos de la consulta.
+            ctx: Contexto financiero pre-calculado.
+            memoria_vectorial: Contexto RAG de pgvector.
+            has_quota: Si la familia tiene cuota de Llama 3 disponible.
+            from_history: Si la pregunta viene del botón de Historial.
 
         Yields:
             str — fragmento de texto generado por el modelo.
@@ -371,8 +522,10 @@ RESPUESTA:"""
 
         ai_logger = get_logger("AIAdvisor.stream")
 
+        # 1. Seleccionar contexto legal
         contexto, _ = self._seleccionar_contexto(request.pregunta)
 
+        # 2. Formatear gastos
         gastos_formateados = ""
         if request.incluir_gastos_recientes and ctx:
             gastos_formateados = self._formatear_datos_financieros(ctx)
@@ -380,59 +533,76 @@ RESPUESTA:"""
             if comparativa_str:
                 gastos_formateados += comparativa_str
 
+        # 3. Routing: decidir qué modelo usar
+        modelo = self.router.route(
+            pregunta=request.pregunta,
+            ctx=ctx,
+            has_quota=has_quota,
+            from_history=from_history,
+        )
+        cuota_agotada = modelo == "gemma2" and not has_quota
+
+        # 4. Construir prompt con flags de modelo
         prompt = self._construir_prompt(
-            request.pregunta, contexto, gastos_formateados, memoria_vectorial
+            request.pregunta,
+            contexto,
+            gastos_formateados,
+            memoria_vectorial,
+            cuota_agotada=cuota_agotada,
+            modelo=modelo,
         )
 
         ai_logger.info("=" * 80)
         ai_logger.info("📊 CONTEXTO ENVIADO AL MODELO (STREAM):")
-        ai_logger.info(f"  - Pregunta: {request.pregunta}")
-        ai_logger.info(f"  - Incluir gastos: {request.incluir_gastos_recientes}")
-        ai_logger.info(f"  - Transacciones: {ctx.total_gastos_count if ctx else 0}")
-        ai_logger.info(f"  - Contexto legal: {'Sí' if contexto else 'No'}")
-        ai_logger.info(f"  - Prompt completo ({len(prompt)} chars):")
+        ai_logger.info("  - Modelo: %s", modelo.upper())
+        ai_logger.info("  - Pregunta: %s", request.pregunta)
+        ai_logger.info("  - Incluir gastos: %s", request.incluir_gastos_recientes)
+        ai_logger.info("  - Transacciones: %d", ctx.total_gastos_count if ctx else 0)
+        ai_logger.info("  - Contexto legal: %s", "Sí" if contexto else "No")
+        ai_logger.info("  - Cuota agotada: %s", cuota_agotada)
+        ai_logger.info("  - Prompt completo (%d chars):", len(prompt))
         ai_logger.info("-" * 80)
         ai_logger.info(prompt)
         ai_logger.info("=" * 80)
         ai_logger.info("🔴 STREAM iniciado (%s chars prompt)", len(prompt))
 
+        # 5. Llamar al modelo seleccionado
         try:
-            from ollama import AsyncClient
-        except ImportError:
-            raise AppError(message="Dependencia 'ollama' no encontrada.")
+            if modelo == "llama3":
+                ai_logger.info("🤖 streaming con Llama 3 70B (NVIDIA)")
+                async for token in self._call_nvidia_stream(prompt):
+                    yield token
+            else:
+                ai_logger.info("🤖 streaming con Gemma 2:2b (Ollama)")
+                if cuota_agotada:
+                    yield "⚠️ Respuesta con precisión reducida. "
+                    yield "La cuota diaria de consultas avanzadas está agotada. "
+                    yield "Se renueva a medianoche.\n\n"
+                async for token in self._call_ollama_stream(prompt):
+                    yield token
+        except AppError:
+            raise
+        except Exception as e:
+            ai_logger.error("❌ Error en stream: %s", e)
+            # Fallback a Ollama si NVIDIA falla
+            if modelo == "llama3":
+                ai_logger.info("🔄 Fallback a Gemma 2 por error en NVIDIA")
+                async for token in self._call_ollama_stream(prompt):
+                    yield token
+            else:
+                raise
 
-        client = AsyncClient(
-            host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        )
-        async for part in await client.generate(
-            model="contador-oriental",
-            prompt=prompt,
-            stream=True,
-            options={"temperature": 0.0, "num_predict": 512},
-        ):
-            token: str = part.get("response", "")
-            if token:
-                yield token
-
-        ai_logger.info("✅ STREAM completado")
+        ai_logger.info("✅ STREAM completado (%s)", modelo)
 
     async def llamada_directa(self, prompt: str) -> str:
         """
-        Llama a Gemma con un prompt directo, sin contexto financiero.
+        Llama a Gemma 2:2b con un prompt directo, sin contexto financiero.
         Usado por TicketService para parsear texto crudo de tickets OCR.
+        Siempre usa el modelo local (no consume cuota cloud).
         Retorna el texto de la respuesta o string vacío si falla.
         """
         try:
-            from ollama import AsyncClient
-
-            client = AsyncClient(
-                host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-            )
-            return await client.generate(
-                model="contador-oriental",
-                prompt=prompt,
-                options={"temperature": 0.0, "num_predict": 512},
-            )
+            response = await self._call_ollama(prompt)
             return response.get("response", "").strip()
         except ConnectionError as e:
             logger.error(
@@ -451,19 +621,26 @@ RESPUESTA:"""
         request: AIRequest,
         ctx: AIContext | None = None,
         memoria_vectorial: str = "",
+        has_quota: bool = True,
+        from_history: bool = False,
     ) -> Result[AIResponse, AppError]:
         """
-        Consulta al Contador Oriental (asíncrono)
+        Consulta al Contador Oriental con routing híbrido.
+
+        El ModelRouter decide si usar Gemma 2:2b (local) o Llama 3 70B (cloud).
+        Si la cuota está agotada, cae a Gemma 2 con aviso de precisión reducida.
+        Si NVIDIA falla, cae automáticamente a Gemma 2 (fallback).
 
         Args:
-            request: Datos de la consulta
-            ctx: Contexto financiero pre-calculado por Python (opcional)
-            memoria_vectorial: Contexto RAG de pgvector (opcional)
+            request: Datos de la consulta.
+            ctx: Contexto financiero pre-calculado por Python (opcional).
+            memoria_vectorial: Contexto RAG de pgvector (opcional).
+            has_quota: Si la familia tiene cuota de Llama 3 disponible.
+            from_history: Si la pregunta viene del botón de Historial.
 
         Returns:
-            Result con la respuesta o error
+            Result con la respuesta o error.
         """
-        # Usar nombre distinto para evitar conflicto con logger global
         from core.logger import get_logger
 
         ai_logger = get_logger("AIAdvisor")
@@ -481,76 +658,56 @@ RESPUESTA:"""
                 if comparativa_str:
                     gastos_formateados += comparativa_str
 
-            # 3. Construir prompt (con memoria vectorial si está disponible)
+            # 3. Routing: decidir qué modelo usar
+            modelo = self.router.route(
+                pregunta=request.pregunta,
+                ctx=ctx,
+                has_quota=has_quota,
+                from_history=from_history,
+            )
+            cuota_agotada = modelo == "gemma2" and not has_quota
+
+            # 4. Construir prompt con flags de modelo
             prompt = self._construir_prompt(
                 request.pregunta,
                 contexto,
                 gastos_formateados,
                 memoria_vectorial,
+                cuota_agotada=cuota_agotada,
+                modelo=modelo,
             )
 
             # Log del contexto para debugging
             ai_logger.info("=" * 80)
             ai_logger.info("📊 CONTEXTO ENVIADO AL MODELO:")
-            ai_logger.info(f"  - Pregunta: {request.pregunta}")
-            ai_logger.info(f"  - Incluir gastos: {request.incluir_gastos_recientes}")
-            ai_logger.info(f"  - Transacciones: {ctx.total_gastos_count if ctx else 0}")
-            ai_logger.info(f"  - Contexto legal: {'Sí' if contexto else 'No'}")
-            ai_logger.info(f"  - Prompt completo ({len(prompt)} chars):")
+            ai_logger.info("  - Modelo: %s", modelo.upper())
+            ai_logger.info("  - Pregunta: %s", request.pregunta)
+            ai_logger.info(
+                "  - Incluir gastos: %s", request.incluir_gastos_recientes
+            )
+            ai_logger.info(
+                "  - Transacciones: %d", ctx.total_gastos_count if ctx else 0
+            )
+            ai_logger.info("  - Contexto legal: %s", "Sí" if contexto else "No")
+            ai_logger.info("  - Cuota agotada: %s", cuota_agotada)
+            ai_logger.info("  - Prompt completo (%d chars):", len(prompt))
             ai_logger.info("-" * 80)
             ai_logger.info(prompt)
             ai_logger.info("=" * 80)
 
-            # 4. Llamar a Ollama (gemma2:2b) con cliente asíncrono
-            try:
-                from ollama import AsyncClient
-            except ImportError:
-                ai_logger.error(
-                    "❌ Librería 'ollama' no encontrada en el entorno. "
-                    "Verificar que esté en requirements.txt"
+            # 5. Llamar al modelo seleccionado
+            respuesta_texto = ""
+
+            if modelo == "llama3":
+                respuesta_texto = await self._consultar_llama3(
+                    prompt, ai_logger
                 )
-                return Err(
-                    AppError(
-                        message="El Contador Oriental no puede funcionar: "
-                        "dependencia de IA faltante (ollama)."
-                    )
+            else:
+                respuesta_texto = await self._consultar_gemma2(
+                    prompt, ai_logger, cuota_agotada
                 )
 
-            try:
-                # Cliente asíncrono: no bloquea el event loop mientras Gemma genera
-                _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-                ai_logger.info("🔌 Conectando con Ollama en %s", _ollama_url)
-                client = AsyncClient(host=_ollama_url)
-
-                ai_logger.info("🤖 Generando respuesta con contador-oriental (async)")
-                response = await client.generate(
-                    model="contador-oriental",
-                    prompt=prompt,
-                    options={"temperature": 0.0, "num_predict": 512},
-                )
-
-                respuesta_texto: str = response["response"].strip()
-                ai_logger.info(f"✅ Respuesta generada: {len(respuesta_texto)} chars")
-
-            except ConnectionError as e:
-                ai_logger.error(f"❌ Error de conexión con Ollama: {str(e)}")
-                return Err(
-                    AppError(
-                        message="El Contador Oriental no puede conectarse al servidor "
-                        "de IA. Verificar que Ollama esté corriendo en el host."
-                    )
-                )
-            except Exception as e:
-                ai_logger.error(
-                    f"❌ Error inesperado en Ollama: {type(e).__name__}: {str(e)}"
-                )
-                return Err(
-                    AppError(
-                        message=f"Error al consultar al Contador Oriental: {str(e)}"
-                    )
-                )
-
-            # 5. Construir respuesta
+            # 6. Construir respuesta
             ai_response = AIResponse(
                 respuesta=respuesta_texto,
                 archivo_usado=archivo,
@@ -561,3 +718,64 @@ RESPUESTA:"""
 
         except Exception as e:
             return Err(AppError(message=f"Error en el Contador Oriental: {str(e)}"))
+
+    async def _consultar_llama3(
+        self, prompt: str, ai_logger
+    ) -> str:
+        """
+        Llama a Llama 3 70B via NVIDIA API.
+        Si falla, hace fallback automático a Gemma 2:2b.
+        """
+        ai_logger.info("🤖 Generando respuesta con Llama 3 70B (NVIDIA)")
+        try:
+            result = await self._call_nvidia(prompt)
+            respuesta = result["response"].strip()
+            ai_logger.info(
+                "✅ Respuesta Llama 3: %d chars (tokens: %d+%d)",
+                len(respuesta),
+                result.get("prompt_tokens", 0),
+                result.get("completion_tokens", 0),
+            )
+            return respuesta
+        except AppError as e:
+            ai_logger.warning("⚠️ NVIDIAClient falló: %s. Fallback a Gemma 2", e)
+            return await self._consultar_gemma2(prompt, ai_logger, cuota_agotada=False)
+        except Exception as e:
+            ai_logger.warning(
+                "⚠️ Error inesperado en NVIDIA: %s. Fallback a Gemma 2", e
+            )
+            return await self._consultar_gemma2(prompt, ai_logger, cuota_agotada=False)
+
+    async def _consultar_gemma2(
+        self, prompt: str, ai_logger, cuota_agotada: bool = False
+    ) -> str:
+        """
+        Llama a Gemma 2:2b via Ollama local.
+        Si cuota_agotada, prepone el aviso de precisión reducida.
+        """
+        ai_logger.info("🤖 Generando respuesta con Gemma 2:2b (Ollama)")
+        try:
+            response = await self._call_ollama(prompt)
+            respuesta_texto: str = response.get("response", "").strip()
+        except ConnectionError as e:
+            ai_logger.error("❌ Error de conexión con Ollama: %s", str(e))
+            raise AppError(
+                message="El Contador Oriental no puede conectarse al servidor "
+                "de IA. Verificar que Ollama esté corriendo en el host."
+            )
+        except Exception as e:
+            ai_logger.error("❌ Error inesperado en Ollama: %s:%s", type(e).__name__, str(e))
+            raise AppError(
+                message=f"Error al consultar al Contador Oriental: {str(e)}"
+            )
+
+        if cuota_agotada:
+            aviso = (
+                "⚠️ Respuesta con precisión reducida. "
+                "La cuota diaria de consultas avanzadas está agotada. "
+                "Se renueva a medianoche.\n\n"
+            )
+            respuesta_texto = aviso + respuesta_texto
+
+        ai_logger.info("✅ Respuesta Gemma 2: %d chars", len(respuesta_texto))
+        return respuesta_texto
