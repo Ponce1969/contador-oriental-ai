@@ -118,8 +118,8 @@ class MainLayout(ft.Column):
             )
         )
 
-        # BOTTOM BAR — solo en mobile y tablet
-        if not self._is_desktop:
+        # BOTTOM BAR — solo en desktop y tablet (en mobile el hamburger menu ya navega)
+        if not self._is_mobile:
             self.controls.append(self._bottom_bar())
 
     # ---------- EXCHANGE RATE BADGE ----------
