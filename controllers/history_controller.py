@@ -13,8 +13,6 @@ from controllers.base_controller import BaseController
 from repositories.expense_repository import ExpenseRepository
 from repositories.income_repository import IncomeRepository
 from services.ai.expense_formatters import agrupar_gastos
-from services.domain.expense_service import ExpenseService
-from services.domain.income_service import IncomeService
 from services.infrastructure.formatters import format_pesos
 
 _MESES: dict[int, str] = {
@@ -66,51 +64,54 @@ class HistoryController(BaseController):
     def get_last_3_months(self) -> HistoryData:
         """
         Obtiene resumen de los últimos 3 meses (mes actual y 2 anteriores).
-        Python puro — sin IA, sin embeddings.
+        Una sola sesión de DB para los 3 meses — sin IA, sin embeddings.
         """
         today = date.today()
         meses: list[MonthSummary] = []
 
-        for i in range(3):
-            # Mes actual, anterior, ante-anterior
-            mes = today.month - i
-            anio = today.year
-            while mes < 1:
-                mes += 12
-                anio -= 1
+        # Una sola sesión para los 3 meses
+        with self._get_session() as session:
+            expense_repo = ExpenseRepository(session, self._familia_id)
+            income_repo = IncomeRepository(session, self._familia_id)
 
-            with self._get_session() as session:
-                expense_repo = ExpenseRepository(session, self._familia_id)
-                income_repo = IncomeRepository(session, self._familia_id)
+            for i in range(3):
+                # Mes actual, anterior, ante-anterior
+                mes = today.month - i
+                anio = today.year
+                while mes < 1:
+                    mes += 12
+                    anio -= 1
 
                 gastos = list(expense_repo.get_by_month(anio, mes))
                 ingresos = list(income_repo.get_by_month(anio, mes))
 
-            total_gastos = sum((g.monto for g in gastos), Decimal("0"))
-            total_ingresos = sum((i.monto for i in ingresos), Decimal("0"))
-            balance = total_ingresos - total_gastos
+                total_gastos = sum((g.monto for g in gastos), Decimal("0"))
+                total_ingresos = sum((i.monto for i in ingresos), Decimal("0"))
+                balance = total_ingresos - total_gastos
 
-            # Gastos por categoría
-            resumen = agrupar_gastos(gastos) if gastos else {}
-            gastos_por_categoria: dict[str, Decimal] = {}
-            for categoria, items in resumen.items():
-                cat_total = sum((Decimal(str(d["total"])) for d in items.values()), Decimal("0"))
-                gastos_por_categoria[categoria] = cat_total
+                # Gastos por categoría — agrupar_gastos ya retorna Decimal
+                resumen = agrupar_gastos(gastos) if gastos else {}
+                gastos_por_categoria: dict[str, Decimal] = {}
+                for categoria, items in resumen.items():
+                    cat_total = sum(
+                        (d["total"] for d in items.values()), Decimal("0")
+                    )
+                    gastos_por_categoria[categoria] = cat_total
 
-            label = f"{_MESES[mes]} {anio}"
+                label = f"{_MESES[mes]} {anio}"
 
-            meses.append(
-                MonthSummary(
-                    year=anio,
-                    month=mes,
-                    label=label,
-                    total_gastos=total_gastos,
-                    total_ingresos=total_ingresos,
-                    balance=balance,
-                    gastos_por_categoria=gastos_por_categoria,
-                    cantidad_gastos=len(gastos),
+                meses.append(
+                    MonthSummary(
+                        year=anio,
+                        month=mes,
+                        label=label,
+                        total_gastos=total_gastos,
+                        total_ingresos=total_ingresos,
+                        balance=balance,
+                        gastos_por_categoria=gastos_por_categoria,
+                        cantidad_gastos=len(gastos),
+                    )
                 )
-            )
 
         # Máximo gasto para normalizar barras
         max_gasto = max((m.total_gastos for m in meses), default=Decimal("1"))
