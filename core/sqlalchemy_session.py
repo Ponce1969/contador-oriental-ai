@@ -1,5 +1,8 @@
 """
 Sesión de SQLAlchemy para fleting
+
+ reutiliza el SessionLocal de database.engine para evitar
+crear múltiples sessionmakers que causarían inconsistencias.
 """
 
 from __future__ import annotations
@@ -7,9 +10,9 @@ from __future__ import annotations
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from database.engine import engine
+from database.engine import SessionLocal, engine
 
 
 @contextmanager
@@ -17,13 +20,10 @@ def get_db_session() -> Generator[Session, None, None]:
     """
     Context manager para sesión de base de datos.
 
-    Usage:
-        with get_db_session() as session:
-            # usar session aquí
-            # commit automático, rollback automático en error
+    Reutiliza SessionLocal de database/engine.py (singleton real).
+    Cada llamada crea una nueva sesión del pool, asegurandoIsolation.
+    Commit al salir, rollback en excepción.
     """
-    SessionLocal = sessionmaker(bind=engine)
-
     session = SessionLocal()
     try:
         yield session

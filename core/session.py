@@ -39,6 +39,15 @@ class SessionManager:
     def logout(page: ft.Page) -> None:
         """Cerrar sesión y limpiar timestamp de actividad."""
         session_id = page.session.id
+
+        # Invalidar cache de miembros antes de limpiar sesión
+        from core.member_cache import member_cache
+
+        session_data = SessionManager._get_session_data(page)
+        familia_id = session_data.get(SessionManager.SESSION_KEY_FAMILIA_ID)
+        if familia_id is not None:
+            member_cache.invalidate(familia_id)
+
         if session_id in _sessions:
             del _sessions[session_id]
         limpiar_sesion(session_id)
