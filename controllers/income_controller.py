@@ -5,18 +5,34 @@ Controller para gestión de ingresos familiares
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from result import Result
 
 from controllers.base_controller import BaseController
+from core.unit_of_work import UnitOfWork
 from models.errors import AppError
 from models.income_model import Income
 from repositories.income_repository import IncomeRepository
 from services.domain.income_service import IncomeService
 
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
 
 class IncomeController(BaseController):
-    """Controller para gestión de ingresos"""
+    """
+    Controller para gestión de ingresos.
+    Soporta UoW inyectado para transacciones atómicas.
+    """
+
+    def __init__(
+        self,
+        session: Session | None = None,
+        familia_id: int | None = None,
+        uow: UnitOfWork | None = None,
+    ) -> None:
+        super().__init__(session=session, familia_id=familia_id, uow=uow)
 
     def get_title(self) -> str:
         return "Ingresos Familiares"

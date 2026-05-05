@@ -51,7 +51,7 @@ class FamilyMemberService:
         )
         if id_check.is_err():
             return id_check  # type: ignore[return-value]
-        err = self._validate_member(member)
+        err = self._validate_member(member, exclude_id=member.id)
         if err is not None:
             return err
         return self._repo.update(member)
@@ -61,7 +61,7 @@ class FamilyMemberService:
         return self._repo.delete(member_id)
 
     def _validate_member(
-        self, member: FamilyMember
+        self, member: FamilyMember, exclude_id: int | None = None
     ) -> Result[FamilyMember, ValidationError] | None:
         """Validaciones comunes para create y update."""
         if not member.nombre or member.nombre.strip() == "":
@@ -74,4 +74,10 @@ class FamilyMemberService:
             return Err(ValidationError(message=ValidationMessages.PARENTESCO_REQUERIDO))
         if member.tipo_miembro == "mascota" and not member.especie:
             return Err(ValidationError(message=ValidationMessages.ESPECIE_REQUERIDA))
+
+        familia_id = self._repo._familia_id
+        if familia_id is not None:
+            if self._repo.exists_by_name(familia_id, member.nombre, exclude_id=exclude_id):
+                return Err(ValidationError(message="Ya existe un integrante con ese nombre en esta familia"))
+
         return None

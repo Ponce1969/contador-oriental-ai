@@ -122,3 +122,26 @@ class FamilyMemberRepository:
             return Ok(None)
         except Exception as e:
             return Err(DatabaseError(message=f"Error al eliminar miembro: {e}"))
+
+    def exists_by_name(
+        self, familia_id: int, nombre: str, exclude_id: int | None = None
+    ) -> bool:
+        """
+        Verifica si existe un miembro activo con el nombre dado en la familia.
+
+        Args:
+            familia_id: ID de la familia a buscar
+            nombre: Nombre a verificar (case-insensitive)
+            exclude_id: ID a excluir (para update, evitar falsos positivos)
+
+        Returns:
+            True si existe un miembro activo con ese nombre, False si no
+        """
+        query = self._session.query(FamilyMemberTable).filter(
+            FamilyMemberTable.familia_id == familia_id,
+            FamilyMemberTable.activo == True,
+            FamilyMemberTable.nombre.ilike(nombre),
+        )
+        if exclude_id is not None:
+            query = query.filter(FamilyMemberTable.id != exclude_id)
+        return query.first() is not None

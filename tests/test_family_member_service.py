@@ -13,12 +13,13 @@ class TestFamilyMemberService:
     """Test cases for FamilyMemberService."""
 
     @pytest.fixture
-    def service(self, db_session):
+    def service(self, db_session, setup_test_data):
         """Create family member service with test repository."""
         from repositories.family_member_repository import FamilyMemberRepository
         from services.domain.family_member_service import FamilyMemberService
 
-        repo = FamilyMemberRepository(db_session, familia_id=1)
+        familia_id = setup_test_data["familia_id_1"]
+        repo = FamilyMemberRepository(db_session, familia_id=familia_id)
         return FamilyMemberService(repo)
 
     def test_create_member_success(self, service):
@@ -143,3 +144,68 @@ class TestFamilyMemberService:
             member_id = created.ok_value.id
             result = service.deactivate_member(member_id)
             assert isinstance(result, Ok)
+
+    def test_create_member_duplicate_name_fails(self, service):
+        """Test creating member with duplicate name in same family fails."""
+        member1 = FamilyMember(
+            nombre="Micaela", tipo_miembro="persona", parentesco="hermana"
+        )
+        result1 = service.create_member(member1)
+        assert result1.is_ok(), "First creation should succeed"
+
+        member2 = FamilyMember(
+            nombre="Micaela", tipo_miembro="persona", parentesco="prima"
+        )
+        result2 = service.create_member(member2)
+
+        assert isinstance(result2, Err)
+        assert isinstance(result2.err_value, ValidationError)
+        assert "ya existe" in result2.err_value.message.lower()
+
+    def test_update_member_duplicate_name_fails(self, service):
+        """Test updating member to duplicate name in same family fails."""
+        member1 = FamilyMember(
+            nombre="Juan", tipo_miembro="persona", parentesco="hermano"
+        )
+        result1 = service.create_member(member1)
+        assert result1.is_ok(), "First creation should succeed"
+
+        member2 = FamilyMember(
+            nombre="María", tipo_miembro="persona", parentesco="hermana"
+        )
+        result2 = service.create_member(member2)
+        assert result2.is_ok(), "Second creation should succeed"
+
+        existing_id = result1.ok_value.id
+        update_data = FamilyMember(
+            id=existing_id,
+            nombre="María",
+            tipo_miembro="persona",
+            parentesco="hermano",
+        )
+        result3 = service.update_member(update_data)
+
+        assert isinstance(result3, Err)
+        assert isinstance(result3.err_value, ValidationError)
+        assert "ya existe" in result3.err_value.message.lower()
+
+    def test_update_member_same_name_succeeds(self, service):
+        """Test updating member keeping same name succeeds."""
+        member = FamilyMember(
+            nombre="Pedro", tipo_miembro="persona", parentesco="tío"
+        )
+        created = service.create_member(member)
+        assert created.is_ok(), "Creation should succeed"
+
+        member_id = created.ok_value.id
+        update_data = FamilyMember(
+            id=member_id,
+            nombre="Pedro",
+            tipo_miembro="persona",
+            parentesco="primo",
+        )
+        result = service.update_member(update_data)
+
+        assert isinstance(result, Ok)
+        assert result.ok_value.nombre == "Pedro"
+        assert result.ok_value.parentesco == "primo"

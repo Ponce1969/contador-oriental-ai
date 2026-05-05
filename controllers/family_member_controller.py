@@ -7,6 +7,7 @@ from __future__ import annotations
 from result import Result
 
 from controllers.base_controller import BaseController
+from core.unit_of_work import UnitOfWork
 from models.errors import AppError
 from models.family_member_model import FamilyMember
 from repositories.family_member_repository import FamilyMemberRepository
@@ -14,10 +15,17 @@ from services.domain.family_member_service import FamilyMemberService
 
 
 class FamilyMemberController(BaseController):
-    """Controller para gestión de miembros de la familia"""
+    """
+    Controller para gestión de miembros de la familia.
+    Soporta UoW inyectado para transacciones atómicas.
+    """
 
-    def get_title(self) -> str:
-        return "Miembros de la Familia"
+    def __init__(
+        self,
+        familia_id: int | None = None,
+        uow: UnitOfWork | None = None,
+    ) -> None:
+        super().__init__(familia_id=familia_id, uow=uow)
 
     def add_member(self, member: FamilyMember) -> Result[FamilyMember, AppError]:
         """Agregar un nuevo miembro"""

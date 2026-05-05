@@ -2,17 +2,32 @@
 Controlador para el registro de familias
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import flet as ft
 
+from core.unit_of_work import UnitOfWork
 from services.domain.registration_service import RegistrationService
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 
 class RegistrationController:
     """Controlador para manejar el registro de nuevas familias"""
 
-    def __init__(self, page: ft.Page):
+    def __init__(
+        self,
+        page: ft.Page,
+        session: Session | None = None,
+        uow: UnitOfWork | None = None,
+    ) -> None:
         self.page = page
-        self.service = RegistrationService()
+        self._session = session
+        self._uow = uow
+        self.service = RegistrationService(uow=uow)
 
     def handle_register(
         self,

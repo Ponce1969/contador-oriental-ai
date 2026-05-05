@@ -2,23 +2,26 @@
 Servicio de registro de familias y usuarios
 """
 
+from __future__ import annotations
+
 import logging
 
 from argon2 import PasswordHasher
 from result import Err, Ok, Result
 from sqlalchemy import text
 
-logger = logging.getLogger(__name__)
-
-from core.sqlalchemy_session import get_db_session
+from core.unit_of_work import UnitOfWork
 from models.user_model import User
+
+logger = logging.getLogger(__name__)
 
 
 class RegistrationService:
     """Servicio para registrar nuevas familias y usuarios"""
 
-    def __init__(self):
+    def __init__(self, uow: UnitOfWork | None = None) -> None:
         self._ph = PasswordHasher()
+        self._uow = uow
 
     def register_family(
         self,
@@ -41,86 +44,119 @@ class RegistrationService:
         Returns:
             Result con el Usuario creado o mensaje de error
         """
-        # Validaciones
         validation_error = self._validate_registration_data(
             familia_nombre, familia_email, admin_username, admin_password
         )
         if validation_error:
             return Err(validation_error)
 
-        try:
-            with get_db_session() as session:
-                # Verificar que el email de familia no exista
-                email_exists = session.execute(
-                    text("SELECT id FROM familias WHERE email = :email"),
-                    {"email": familia_email},
-                ).fetchone()
+        if self._uow is not None:
+            return self._register_with_uow(
+                familia_nombre,
+                familia_email,
+                admin_username,
+                admin_password,
+                admin_nombre_completo,
+            )
 
-                if email_exists:
-                    return Err("El email de familia ya está registrado")
+        with UnitOfWork() as uow:
+            return self._do_registration(
+                uow,
+                familia_nombre,
+                familia_email,
+                admin_username,
+                admin_password,
+                admin_nombre_completo,
+            )
 
-                # Verificar que el username no exista
-                username_exists = session.execute(
-                    text("SELECT id FROM usuarios WHERE username = :username"),
-                    {"username": admin_username},
-                ).fetchone()
+    def _register_with_uow(
+        self,
+        familia_nombre: str,
+        familia_email: str,
+        admin_username: str,
+        admin_password: str,
+        admin_nombre_completo: str,
+    ) -> Result[User, str]:
+        with self._uow as uow:
+            return self._do_registration(
+                uow,
+                familia_nombre,
+                familia_email,
+                admin_username,
+                admin_password,
+                admin_nombre_completo,
+            )
 
-                if username_exists:
-                    return Err("El nombre de usuario ya está en uso")
+    def _do_registration(
+        self,
+        uow: UnitOfWork,
+        familia_nombre: str,
+        familia_email: str,
+        admin_username: str,
+        admin_password: str,
+        admin_nombre_completo: str,
+    ) -> Result[User, str]:
+        session = uow.session
 
-                # Crear la familia
-                result = session.execute(
-                    text("""
-                        INSERT INTO familias (nombre, email, activo, created_at)
-                        VALUES (:nombre, :email, TRUE, CURRENT_TIMESTAMP)
-                        RETURNING id
-                    """),
-                    {"nombre": familia_nombre, "email": familia_email},
+        email_exists = session.execute(
+            text("SELECT id FROM familias WHERE email = :email"),
+            {"email": familia_email},
+        ).fetchone()
+
+        if email_exists:
+            return Err("El email de familia ya está registrado")
+
+        username_exists = session.execute(
+            text("SELECT id FROM usuarios WHERE username = :username"),
+            {"username": admin_username},
+        ).fetchone()
+
+        if username_exists:
+            return Err("El nombre de usuario ya está en uso")
+
+        result = session.execute(
+            text("""
+                INSERT INTO familias (nombre, email, activo, created_at)
+                VALUES (:nombre, :email, TRUE, CURRENT_TIMESTAMP)
+                RETURNING id
+            """),
+            {"nombre": familia_nombre, "email": familia_email},
+        )
+        familia_id = result.fetchone()[0]
+
+        password_hash = self._ph.hash(admin_password)
+
+        result = session.execute(
+            text("""
+                INSERT INTO usuarios (
+                    familia_id, username, password_hash,
+                    nombre_completo, activo, created_at
                 )
-                familia_id = result.fetchone()[0]
-
-                # Hash de la contraseña
-                password_hash = self._ph.hash(admin_password)
-
-                # Crear el usuario admin
-                result = session.execute(
-                    text("""
-                        INSERT INTO usuarios (
-                            familia_id, username, password_hash, 
-                            nombre_completo, activo, created_at
-                        )
-                        VALUES (
-                            :familia_id, :username, :password_hash,
-                            :nombre_completo, TRUE, CURRENT_TIMESTAMP
-                        )
-                        RETURNING id
-                    """),
-                    {
-                        "familia_id": familia_id,
-                        "username": admin_username,
-                        "password_hash": password_hash,
-                        "nombre_completo": admin_nombre_completo,
-                    },
+                VALUES (
+                    :familia_id, :username, :password_hash,
+                    :nombre_completo, TRUE, CURRENT_TIMESTAMP
                 )
-                usuario_id = result.fetchone()[0]
+                RETURNING id
+            """),
+            {
+                "familia_id": familia_id,
+                "username": admin_username,
+                "password_hash": password_hash,
+                "nombre_completo": admin_nombre_completo,
+            },
+        )
+        usuario_id = result.fetchone()[0]
 
-                session.commit()
+        uow.flush()
 
-                # Crear objeto User para retornar
-                usuario = User(
-                    id=usuario_id,
-                    familia_id=familia_id,
-                    username=admin_username,
-                    password_hash=password_hash,
-                    nombre_completo=admin_nombre_completo,
-                    activo=True,
-                )
-
-                return Ok(usuario)
-
-        except Exception as e:
-            logger.exception("Error al registrar familia")
-            return Err("Error interno al registrar la familia. Intentá de nuevo.")
+        return Ok(User(
+            id=usuario_id,
+            familia_id=familia_id,
+            username=admin_username,
+            password_hash=password_hash,
+            nombre_completo=admin_nombre_completo,
+            activo=True,
+        ))
 
     def _validate_registration_data(
         self, familia_nombre: str, familia_email: str, username: str, password: str

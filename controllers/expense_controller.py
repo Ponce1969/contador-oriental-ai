@@ -1,27 +1,42 @@
 """
 Controller para gestión de gastos familiares
 """
+
 from __future__ import annotations
 
 import logging
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from result import Ok, Result
 
 from controllers.base_controller import BaseController
 from core.events import Event, EventType
+from core.unit_of_work import UnitOfWork
 from models.errors import AppError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
 from services.domain.expense_service import ExpenseService
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
 
 class ExpenseController(BaseController):
     """
-    Controller para página de gastos
+    Controller para página de gastos.
+    Soporta UoW inyectado para transacciones atómicas.
     """
+
+    def __init__(
+        self,
+        session: Session | None = None,
+        familia_id: int | None = None,
+        uow: UnitOfWork | None = None,
+    ) -> None:
+        super().__init__(session=session, familia_id=familia_id, uow=uow)
 
     def get_title(self) -> str:
         return "Gastos Familiares"
@@ -41,7 +56,7 @@ class ExpenseController(BaseController):
                 source_id=gasto.id,
                 data={
                     "descripcion": gasto.descripcion,
-                    "monto": gasto.monto,  # Decimal → formateado por MemoryEventHandler
+                    "monto": gasto.monto,
                     "categoria": gasto.categoria.value,
                     "metodo_pago": gasto.metodo_pago.value,
                     "fecha": str(gasto.fecha),
