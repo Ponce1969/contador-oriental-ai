@@ -214,10 +214,9 @@ class AIController(BaseController):
             if intencion.rango:
                 fecha_min = date(anio_ini, mes_ini, 1)
                 # Ultimo día del mes de fin
-                if mes_fin == 12:
-                    fecha_max = date(anio_fin, 12, 31)
-                else:
-                    fecha_max = date(anio_fin, mes_fin + 1, 1)
+                import calendar
+                last_day = calendar.monthrange(anio_fin, mes_fin)[1]
+                fecha_max = date(anio_fin, mes_fin, last_day)
 
             subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
                 pregunta,
