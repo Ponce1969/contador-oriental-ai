@@ -52,6 +52,24 @@ class InstallmentPurchase(BaseModel):
         return self.numero_cuotas - self.cuotas_pagadas
 
     @property
+    def cuotas_pagadas_calculada(self) -> int:
+        """
+        Calcula las cuotas pagadas automáticamente según la fecha actual.
+        Para tarjetas de crédito que se debitan automáticamente del banco.
+        No cuenta meses futuros.
+        """
+        if self.mes_inicio_pago is None:
+            return 0
+        today = date.today()
+        meses_desde_inicio = (
+            (today.year - self.mes_inicio_pago.year) * 12
+            + (today.month - self.mes_inicio_pago.month)
+        )
+        if meses_desde_inicio < 0:
+            return 0
+        return min(meses_desde_inicio, self.numero_cuotas)
+
+    @property
     def monto_restante(self) -> Decimal:
         return self.monto_total - (self.monto_por_cuota * self.cuotas_pagadas)
 

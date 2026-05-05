@@ -206,7 +206,8 @@ class PlanesView:
 
         # ── Cards de planes ──
         for plan in sorted(planes, key=lambda p: p.cuotas_restantes):
-            ratio = float(plan.cuotas_pagadas / plan.numero_cuotas)
+            pagadas = plan.cuotas_pagadas_calculada
+            ratio = float(pagadas / plan.numero_cuotas)
             celebrando = ratio >= 0.80
             color_acento = _color_semaforo(ratio)
 
@@ -214,7 +215,6 @@ class PlanesView:
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            # Header: descripcion + total
                             ft.Row(
                                 controls=[
                                     ft.Column(
@@ -244,12 +244,8 @@ class PlanesView:
                                 ],
                             ),
                             ft.Container(height=10),
-                            # Barra de progreso premium
-                            _barra_progreso(
-                                plan.cuotas_pagadas, plan.numero_cuotas
-                            ),
+                            _barra_progreso(pagadas, plan.numero_cuotas),
                             ft.Container(height=4),
-                            # Footer: restantes + glow si celebra
                             ft.Row(
                                 controls=[
                                     ft.Text(
