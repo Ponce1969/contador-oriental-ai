@@ -161,6 +161,10 @@ class AIContext(BaseModel):
         default=Decimal("0"),
         description="Total de gastos del mes anterior (empalme)",
     )
+    periodo_label: str = Field(
+        default="del mes",
+        description="Etiqueta del período: 'del mes' o 'de Marzo 2026 a Mayo 2026'",
+    )
 
 
 class AIResponse(BaseModel):

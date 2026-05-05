@@ -170,10 +170,11 @@ class AIAdvisorService:
         lineas: list[str] = [
             "### ESTADO DE LA HACIENDA FAMILIAR ###",
             f"- Miembros en el hogar: {ctx.miembros_count}",
-            f"- Ingresos totales del mes: {format_pesos(ctx.ingresos_total)}",
-            f"- TOTAL gastos del mes (todas las categorías):"
+            f"- Ingresos totales {ctx.periodo_label}:"
+            f" {format_pesos(ctx.ingresos_total)}",
+            f"- TOTAL gastos {ctx.periodo_label} (todas las categorías):"
             f" {format_pesos(ctx.total_gastos_mes)}",
-            f"- BALANCE DEL MES (Ingresos - Gastos totales): "
+            f"- BALANCE {ctx.periodo_label} (Ingresos - Gastos totales): "
             f"{format_pesos(balance_mes)}",
         ]
 
@@ -185,14 +186,16 @@ class AIAdvisorService:
             )
 
         if ctx.resumen_metodos_pago:
-            lineas.append(
-                f"- Métodos de pago usados este mes: {ctx.resumen_metodos_pago}"
+            metodos_label = (
+                f"- Métodos de pago usados {ctx.periodo_label}:"
+                f" {ctx.resumen_metodos_pago}"
             )
+            lineas.append(metodos_label)
 
         if ctx.subtotal_descripcion and ctx.terminos_buscados:
             lineas.append(
                 f"- *** RESPUESTA DIRECTA: '{ctx.terminos_buscados}'"
-                f" este mes = {format_pesos(ctx.subtotal_descripcion)} ***"
+                f" {ctx.periodo_label} = {format_pesos(ctx.subtotal_descripcion)} ***"
             )
 
         # Proyeccion de cuotas futuras

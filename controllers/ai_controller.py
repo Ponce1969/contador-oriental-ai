@@ -300,6 +300,15 @@ class AIController(BaseController):
             exchange_ctrl = ExchangeRateController()
             cotizacion, _ = exchange_ctrl.get_display_rate()
 
+            # ── Etiqueta del período consultado ──────────────────────────
+            if intencion.rango:
+                periodo_label = (
+                    f"de {_MESES_NUM[mes_ini]} {anio_ini}"
+                    f" a {_MESES_NUM[mes_fin]} {anio_fin}"
+                )
+            else:
+                periodo_label = f"de {_MESES_NUM[mes_actual]} {anio_actual}"
+
             return AIContext(
                 resumen_gastos=resumen_gastos,
                 total_gastos_count=total_gastos_count,
@@ -316,6 +325,7 @@ class AIController(BaseController):
                 empalme_ingresos_total=empalme_ingresos_total,
                 empalme_mes_label=empalme_mes_label,
                 empalme_total_gastos=empalme_total_gastos,
+                periodo_label=periodo_label,
             )
 
     async def _buscar_memoria_vectorial(self, pregunta: str, ctx: AIContext) -> str:
