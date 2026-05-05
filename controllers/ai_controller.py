@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from result import Result
 
 from controllers.base_controller import BaseController
 from controllers.exchange_rate_controller import ExchangeRateController
-from core.state import AppState
+from controllers.installment_controller import InstallmentController
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 from models.expense_model import Expense
-from controllers.installment_controller import InstallmentController
 from repositories.expense_repository import ExpenseRepository
 from repositories.family_member_repository import FamilyMemberRepository
 from repositories.income_repository import IncomeRepository
@@ -71,11 +70,20 @@ class AIController(BaseController):
         pregunta: str,
         session,
         umbral_cosine: float = 0.30,
+        fecha_min: date | None = None,
+        fecha_max: date | None = None,
     ) -> tuple[Decimal, str]:
         """
         Busca gastos semánticamente similares a la pregunta usando
         pgvector cosine distance sobre expenses.embedding.
         Retorna (subtotal, label) — (Decimal('0'), '') si no hay resultados.
+
+        Args:
+            pregunta: Texto a buscar semánticamente
+            session: Sesión de DB
+            umbral_cosine: Similitud mínima (0=exacta, 0.5=moderada, 0.8=baja)
+            fecha_min: Filtrar solo gastos desde esta fecha
+            fecha_max: Filtrar solo gastos hasta esta fecha
         """
         from result import Err
 
@@ -88,7 +96,12 @@ class AIController(BaseController):
 
         emb = embedding_result.ok()
         repo = ExpenseRepository(session, self._familia_id)
-        resultados = repo.buscar_por_similitud(emb, umbral_cosine=umbral_cosine)
+        resultados = repo.buscar_por_similitud(
+            emb,
+            umbral_cosine=umbral_cosine,
+            fecha_min=fecha_min,
+            fecha_max=fecha_max,
+        )
 
         if not resultados:
             logger.info("[SUBTOTAL] Sin resultados cosine para: %s", pregunta)
@@ -97,9 +110,11 @@ class AIController(BaseController):
         subtotal = sum((g.monto for g, _ in resultados), Decimal("0"))
         label = pregunta.strip()[:40]
         logger.info(
-            "[SUBTOTAL] %d gastos cosine (umbral=%.2f) -> %s",
+            "[SUBTOTAL] %d gastos cosine (umbral=%.2f) [%s→%s] -> %s",
             len(resultados),
             umbral_cosine,
+            fecha_min or "inicio",
+            fecha_max or "fin",
             subtotal,
         )
         return subtotal, label
@@ -193,8 +208,22 @@ class AIController(BaseController):
                 resumen_gastos = agrupar_gastos(gastos_filtrados)
                 total_gastos_count = len(gastos_filtrados)
 
+            # ── Subtotal semántico con filtro de fechas ────────────────────
+            fecha_min: date | None = None
+            fecha_max: date | None = None
+            if intencion.rango:
+                fecha_min = date(anio_ini, mes_ini, 1)
+                # Ultimo día del mes de fin
+                if mes_fin == 12:
+                    fecha_max = date(anio_fin, 12, 31)
+                else:
+                    fecha_max = date(anio_fin, mes_fin + 1, 1)
+
             subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
-                pregunta, session
+                pregunta,
+                session,
+                fecha_min=fecha_min,
+                fecha_max=fecha_max,
             )
 
             # ── Miembros ──────────────────────────────────────────────────

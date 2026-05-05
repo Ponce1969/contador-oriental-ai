@@ -5,6 +5,7 @@ Repository para gestión de gastos familiares
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import date
 
 from sqlalchemy.orm import Session
 
@@ -70,11 +71,20 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
         embedding: list[float],
         umbral_cosine: float = 0.25,
         limite: int = 20,
+        fecha_min: date | None = None,
+        fecha_max: date | None = None,
     ) -> list[tuple[Expense, float]]:
         """
         Buscar gastos semánticamente similares usando distancia cosine pgvector.
         Retorna lista de (Expense, distancia) ordenada por similitud ascendente.
         Solo retorna gastos con embedding != NULL y distancia <= umbral.
+
+        Args:
+            embedding: Vector de embedding para buscar
+            umbral_cosine: Distancia máxima (0=exacta, 0.5=moderada, 0.8=baja)
+            limite: Cantidad máxima de resultados
+            fecha_min: Filtrar solo gastos desde esta fecha (inclusive)
+            fecha_max: Filtrar solo gastos hasta esta fecha (inclusive)
         """
         from sqlalchemy import text
 
@@ -84,18 +94,25 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
             WHERE familia_id = :fid
               AND embedding IS NOT NULL
               AND (embedding <=> CAST(:emb AS vector)) <= :umbral
-            ORDER BY distancia ASC
-            LIMIT :limite
         """)
-        rows = self.session.execute(
-            sql,
-            {
-                "emb": str(embedding),
-                "fid": self.familia_id,
-                "umbral": umbral_cosine,
-                "limite": limite,
-            },
-        ).fetchall()
+        params: dict = {
+            "emb": str(embedding),
+            "fid": self.familia_id,
+            "umbral": umbral_cosine,
+            "limite": limite,
+        }
+
+        if fecha_min is not None:
+            sql = text(str(sql) + " AND fecha >= :fecha_min")
+            params["fecha_min"] = fecha_min
+
+        if fecha_max is not None:
+            sql = text(str(sql) + " AND fecha <= :fecha_max")
+            params["fecha_max"] = fecha_max
+
+        sql = text(str(sql) + " ORDER BY distancia ASC LIMIT :limite")
+
+        rows = self.session.execute(sql, params).fetchall()
 
         if not rows:
             return []
