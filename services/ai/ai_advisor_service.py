@@ -16,7 +16,7 @@ from result import Err, Ok, Result
 from models.ai_model import AIContext, AIRequest, AIResponse
 from models.errors import AppError
 from services.ai.model_router import ModelRouter
-from services.infrastructure.formatters import format_pesos
+from services.infrastructure.formatters import format_pesos_ai
 from services.infrastructure.nvidia_client import NVIDIAClient
 
 logger = logging.getLogger(__name__)
@@ -171,11 +171,11 @@ class AIAdvisorService:
             "### ESTADO DE LA HACIENDA FAMILIAR ###",
             f"- Miembros en el hogar: {ctx.miembros_count}",
             f"- Ingresos totales {ctx.periodo_label}:"
-            f" {format_pesos(ctx.ingresos_total)}",
+            f" {format_pesos_ai(ctx.ingresos_total)}",
             f"- TOTAL gastos {ctx.periodo_label} (todas las categorías):"
-            f" {format_pesos(ctx.total_gastos_mes)}",
+            f" {format_pesos_ai(ctx.total_gastos_mes)}",
             f"- BALANCE {ctx.periodo_label} (Ingresos - Gastos totales): "
-            f"{format_pesos(balance_mes)}",
+            f"{format_pesos_ai(balance_mes)}",
         ]
 
         if ctx.cotizacion_dolar:
@@ -193,17 +193,19 @@ class AIAdvisorService:
             lineas.append(metodos_label)
 
         if ctx.subtotal_descripcion and ctx.terminos_buscados:
-            lineas.append(
+            subtotal_str = (
                 f"- *** RESPUESTA DIRECTA: '{ctx.terminos_buscados}'"
-                f" {ctx.periodo_label} = {format_pesos(ctx.subtotal_descripcion)} ***"
+                f" {ctx.periodo_label}"
+                f" = {format_pesos_ai(ctx.subtotal_descripcion)} ***"
             )
+            lineas.append(subtotal_str)
 
         # Proyeccion de cuotas futuras
         if ctx.proyeccion_cuotas:
             lineas.append("")
             lineas.append("PROYECCION DE CUOTAS FUTURAS:")
             for mes, total in ctx.proyeccion_cuotas.items():
-                lineas.append(f"  {mes}: {format_pesos(total)}")
+                lineas.append(f"  {mes}: {format_pesos_ai(total)}")
             lineas.append(
                 "Usa esta proyeccion para advertir si un nuevo gasto "
                 "comprometeria meses futuros."
@@ -217,13 +219,13 @@ class AIAdvisorService:
                 f"### CIERRE DEL MES ANTERIOR ({ctx.empalme_mes_label}) ###"
             )
             lineas.append(
-                f"- Ingresos: {format_pesos(ctx.empalme_ingresos_total)}"
+                f"- Ingresos: {format_pesos_ai(ctx.empalme_ingresos_total)}"
             )
             lineas.append(
-                f"- Total gastos: {format_pesos(ctx.empalme_total_gastos)}"
+                f"- Total gastos: {format_pesos_ai(ctx.empalme_total_gastos)}"
             )
             lineas.append(
-                f"- Balance: {format_pesos(balance_empalme)}"
+                f"- Balance: {format_pesos_ai(balance_empalme)}"
             )
 
             if ctx.empalme_gastos:
@@ -236,7 +238,7 @@ class AIAdvisorService:
                     cant_cat = sum(d["cantidad"] for d in items.values())
                     lineas.append(
                         f"  📂 {categoria}"
-                        f" → {format_pesos(total_cat)}"
+                        f" → {format_pesos_ai(total_cat)}"
                         f" ({cant_cat} transacciones):"
                     )
                     for descripcion, datos in items.items():
@@ -248,12 +250,12 @@ class AIAdvisorService:
                         )
                         if cantidad > 1:
                             lineas.append(
-                                f"    - {descripcion}: {format_pesos(monto)}"
+                                f"    - {descripcion}: {format_pesos_ai(monto)}"
                                 f" ({cantidad}x, {metodo_str})"
                             )
                         else:
                             lineas.append(
-                                f"    - {descripcion}: {format_pesos(monto)}"
+                                f"    - {descripcion}: {format_pesos_ai(monto)}"
                                 f" ({metodo_str})"
                             )
 
@@ -283,7 +285,7 @@ class AIAdvisorService:
 
                 lineas.append(
                     f"\n📂 {categoria}"
-                    f" → SUBTOTAL: {format_pesos(total_categoria)}"
+                    f" → SUBTOTAL: {format_pesos_ai(total_categoria)}"
                     f" ({cant_categoria} transacciones):"
                 )
                 for descripcion, datos in items.items():
@@ -293,17 +295,19 @@ class AIAdvisorService:
                     metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
                     if cantidad > 1:
                         lineas.append(
-                            f"  - {descripcion}: {format_pesos(monto)} total"
+                            f"  - {descripcion}: {format_pesos_ai(monto)} total"
                             f" ({cantidad} transacciones separadas, {metodo_str})"
                         )
                     else:
+                        monto_str = format_pesos_ai(monto)
                         lineas.append(
-                            f"  - {descripcion}: {format_pesos(monto)} ({metodo_str})"
+                            f"  - {descripcion}:"
+                            f" {monto_str} ({metodo_str})"
                         )
 
         lineas.append("")
         lineas.append(
-            f"SUBTOTAL CONSULTADO: {format_pesos(total_filtrado)}"
+            f"SUBTOTAL CONSULTADO: {format_pesos_ai(total_filtrado)}"
             f" ({ctx.total_gastos_count} transacciones)"
         )
 
@@ -329,7 +333,7 @@ class AIAdvisorService:
 
             if vt is None:
                 lineas.append(
-                    f"- {m.categoria}: {format_pesos(m.total_actual)} este mes"
+                    f"- {m.categoria}: {format_pesos_ai(m.total_actual)} este mes"
                     f" (sin datos del mes anterior para comparar)."
                 )
                 continue
@@ -339,11 +343,11 @@ class AIAdvisorService:
             lineas.append(
                 f"- {m.categoria}:"
                 f" gasto total {signo_t}{vt:.1f}%"
-                f" ({format_pesos(m.total_anterior)} ->"
-                f" {format_pesos(m.total_actual)}),"
+                f" ({format_pesos_ai(m.total_anterior)} ->"
+                f" {format_pesos_ai(m.total_actual)}),"
                 f" ticket promedio {signo_tk}{vtk:.1f}%"
-                f" ({format_pesos(m.ticket_anterior)} ->"
-                f" {format_pesos(m.ticket_actual)})."
+                f" ({format_pesos_ai(m.ticket_anterior)} ->"
+                f" {format_pesos_ai(m.ticket_actual)})."
                 f" {diag}"
             )
 
@@ -415,14 +419,14 @@ TU ROL:
 REGLAS ESTRICTAS (NO LAS ROMPAS NUNCA):
 - NUNCA inventar números. NUNCA hacer cálculos. NUNCA dividir ni derivar valores.
 - NUNCA decir "la mitad" o "un tercio" o porcentajes inventados. Solo usá los números exactos que aparecen en los datos.
-- Si una cuota es $650 y otra es $240, NO digas "la mitad". Decí "$650 y $240 respectivamente".
+- Si una cuota es $ 650 y otra es $ 240, NO digas "la mitad". Decí "$ 650 y $ 240 respectivamente".
 - Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
 - Si un dato no aparece explícitamente en los datos, NO lo menciones ni lo calcules.
 - Si hay pocos gastos este mes (principio de mes), usá la sección "CIERRE DEL MES ANTERIOR" para dar contexto del cierre del mes pasado.
 - La sección "CIERRE DEL MES ANTERIOR" es REFERENCIA: NO la mezcles con los datos del mes actual.
 
 SÍMBOLOS MONETARIOS (estricto):
-- Usá $ para Pesos Uruguayos (moneda principal del usuario). Ejemplo: $ 650, $ 890, $ 170.000
+- Usá $ para Pesos Uruguayos (moneda principal del usuario). Ejemplo: $ 650, $ 890, $ 173 720
 - Usá USD para Dólares. NUNCA uses U$S ni $U.
 - El total mensual SIEMPRE en $ (pesos).
 - Usá USD solo para contextualizar compras grandes o deudas en esa moneda.
