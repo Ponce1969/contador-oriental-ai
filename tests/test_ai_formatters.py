@@ -1,7 +1,7 @@
-"""Tests para format_pesos_ai - formato inequivoco para modelos de IA."""
+"""Tests para format_pesos_ai y format_cotizacion - formato inequivoco para IA y UI."""
 from decimal import Decimal
 
-from services.infrastructure.formatters import format_pesos, format_pesos_ai
+from services.infrastructure.formatters import format_pesos, format_pesos_ai, format_cotizacion
 
 
 class TestFormatPesosAi:
@@ -36,3 +36,37 @@ class TestFormatPesosAi:
 
     def test_int_input(self):
         assert format_pesos_ai(12990) == "$ 12 990"
+
+
+class TestFormatCotizacion:
+    def test_standard_rate(self):
+        assert format_cotizacion(Decimal("40.01")) == "$ 40,01"
+
+    def test_trailing_zeros(self):
+        assert format_cotizacion(Decimal("40.0100")) == "$ 40,01"
+
+    def test_whole_number(self):
+        assert format_cotizacion(Decimal("42")) == "$ 42,00"
+
+    def test_half(self):
+        assert format_cotizacion(Decimal("42.5")) == "$ 42,50"
+
+    def test_rounding_up(self):
+        assert format_cotizacion(Decimal("42.505")) == "$ 42,51"
+
+    def test_rounding_down(self):
+        assert format_cotizacion(Decimal("42.504")) == "$ 42,50"
+
+    def test_large_rate(self):
+        assert format_cotizacion(Decimal("1234.56")) == "$ 1.234,56"
+
+    def test_no_more_than_2_decimals(self):
+        result = format_cotizacion(Decimal("40.0100"))
+        # No debe mostrar 4 decimales
+        assert result == "$ 40,01"
+        # No debe tener punto como separador decimal
+        assert ".01" not in result
+
+    def test_comma_as_decimal_separator(self):
+        result = format_cotizacion(Decimal("40.01"))
+        assert ",01" in result

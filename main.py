@@ -92,6 +92,14 @@ async def main(page: ft.Page):
         # Activar memoria vectorial (Observer Pattern)
         _setup_memory_observer()
 
+        # Iniciar scheduler de cotización USD/UYU en background
+        from services.infrastructure.exchange_rate_scheduler import (
+            exchange_rate_scheduler,
+        )
+
+        page.run_task(exchange_rate_scheduler)
+        logger.info("[EXCHANGE_RATE] Scheduler de cotización iniciado")
+
         # Banner de bienvenida
         def close_welcome_banner(e):
             page.banner.open = False  # type: ignore

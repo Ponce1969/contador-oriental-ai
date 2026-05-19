@@ -179,8 +179,15 @@ class AIAdvisorService:
         ]
 
         if ctx.cotizacion_dolar:
-            # Redondear a 2 decimales para que no muestre 40.0100
-            cotizacion_str = f"{ctx.cotizacion_dolar:.2f}"
+            # Formato inequivoco para IA: coma decimal, sin punto
+            # "$ 40,01" en vez de "$ 40.01" (Llama confunde punto con decimal)
+            cotizacion_2d = ctx.cotizacion_dolar.quantize(
+                Decimal("0.01")
+            )
+            entero = int(cotizacion_2d)
+            decimal_part = int((cotizacion_2d - entero) * 100)
+            entero_str = f"{entero:,}".replace(",", " ")
+            cotizacion_str = f"{entero_str},{decimal_part:02d}"
             lineas.append(
                 f"- Cotización del dólar hoy: 1 USD = $ {cotizacion_str}"
             )

@@ -48,6 +48,31 @@ def format_pesos_ai(monto: Decimal) -> str:
     return f"$ {entero_str}"
 
 
+def format_cotizacion(rate: Decimal) -> str:
+    """
+    Formatear cotización de dólar con 2 decimales y separador de miles.
+
+    Para cotizaciones como USD/UYU necesitamos decimales (40.01),
+    a diferencia de pesos uruguayos que se redondean al entero.
+
+    >>> format_cotizacion(Decimal("40.0100"))
+    '$ 40.01'
+    >>> format_cotizacion(Decimal("42.5"))
+    '$ 42.50'
+    >>> format_cotizacion(Decimal("1234.5678"))
+    '$ 1.234,57'
+    """
+    if not isinstance(rate, Decimal):
+        rate = Decimal(str(rate))
+    # Quantize a 2 decimales con redondeo banker's
+    rate_2d = rate.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    # Formatear: parte entera con punto, parte decimal con coma
+    entero = int(rate_2d)
+    decimal_part = int((rate_2d - entero) * 100)
+    entero_str = f"{entero:,}".replace(",", ".")
+    return f"$ {entero_str},{decimal_part:02d}"
+
+
 def pesos_entero(monto: Decimal) -> int:
     """Redondear al entero más cercano para guardar/comparar."""
     if not isinstance(monto, Decimal):
