@@ -97,7 +97,7 @@ class HistoryView:
                             ),
                             bgcolor=var_color,
                             border_radius=6,
-                            padding=ft.padding.symmetric(horizontal=8, vertical=3),
+                            padding=ft.Padding.symmetric(horizontal=8, vertical=3),
                             alignment=ft.Alignment(0, 0),
                         )
                         if m == data.meses[0] and data.variacion_gastos is not None
@@ -164,7 +164,7 @@ class HistoryView:
                                     ),
                                     bgcolor=ft.Colors.DEEP_ORANGE_400,
                                     border_radius=6,
-                                    padding=ft.padding.symmetric(
+                                    padding=ft.Padding.symmetric(
                                         horizontal=10, vertical=6
                                     ),
                                     width=max(int(ancho_barra * 300), 80),

@@ -51,8 +51,8 @@ def _barra_progreso(pagadas: int, total: int) -> ft.Control:
                     height=8,
                     border_radius=10,
                     gradient=ft.LinearGradient(
-                        begin=ft.alignment.Alignment(-1, 0),
-                        end=ft.alignment.Alignment(1, 0),
+                        begin=ft.Alignment.Alignment(-1, 0),
+                        end=ft.Alignment.Alignment(1, 0),
                         colors=[_EMERALD, _EMERALD_MINT],
                     ),
                     shadow=(
@@ -115,7 +115,7 @@ class PlanesView:
                                 ),
                             ],
                         ),
-                        padding=ft.padding.only(bottom=4),
+                        padding=ft.Padding.only(bottom=4),
                     ),
                     ft.Text(
                         "Compras en cuotas activas y su progreso",
@@ -171,7 +171,7 @@ class PlanesView:
                         spacing=10,
                     ),
                     padding=60,
-                    alignment=ft.alignment.Alignment(0, 0),
+                    alignment=ft.Alignment.Alignment(0, 0),
                 )
             )
             return
@@ -200,7 +200,7 @@ class PlanesView:
                     ],
                     spacing=8,
                 ),
-                padding=ft.padding.only(bottom=12),
+                padding=ft.Padding.only(bottom=12),
             ),
         )
 

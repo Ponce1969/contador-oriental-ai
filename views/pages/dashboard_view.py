@@ -410,7 +410,7 @@ class DashboardView:
                 spacing=8,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            padding=ft.padding.symmetric(horizontal=14, vertical=8),
+            padding=ft.Padding.symmetric(horizontal=14, vertical=8),
             bgcolor=ft.Colors.INDIGO_50,
             border_radius=10,
             border=ft.border.all(1, ft.Colors.INDIGO_200),

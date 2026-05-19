@@ -108,7 +108,7 @@ class MainLayout(ft.Column):
             self.controls.append(badge)
 
         # CONTENT — padding lateral adaptativo
-        content_padding = ft.padding.symmetric(
+        content_padding = ft.Padding.symmetric(
             horizontal=8 if self._is_mobile else 24,
             vertical=8 if self._is_mobile else 16,
         )
@@ -160,7 +160,7 @@ class MainLayout(ft.Column):
                     spacing=4,
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
-                padding=ft.padding.symmetric(horizontal=12, vertical=4),
+                padding=ft.Padding.symmetric(horizontal=12, vertical=4),
                 bgcolor=ft.Colors.GREY_100,
                 border_radius=20,
                 alignment=ft.Alignment(0, 0),
