@@ -51,8 +51,8 @@ def _barra_progreso(pagadas: int, total: int) -> ft.Control:
                     height=8,
                     border_radius=10,
                     gradient=ft.LinearGradient(
-                        begin=ft.Alignment.Alignment(-1, 0),
-                        end=ft.Alignment.Alignment(1, 0),
+                        begin=ft.Alignment(-1, 0),
+                        end=ft.Alignment(1, 0),
                         colors=[_EMERALD, _EMERALD_MINT],
                     ),
                     shadow=(
@@ -171,7 +171,7 @@ class PlanesView:
                         spacing=10,
                     ),
                     padding=60,
-                    alignment=ft.Alignment.Alignment(0, 0),
+                    alignment=ft.Alignment(0, 0),
                 )
             )
             return
