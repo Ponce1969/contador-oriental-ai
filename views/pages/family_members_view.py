@@ -204,7 +204,7 @@ class FamilyMembersView:
                     ),
                     padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.PURPLE_50,
-                    border=ft.border.all(2, ft.Colors.PURPLE_200),
+                    border=ft.Border.all(2, ft.Colors.PURPLE_200),
                     border_radius=10,
                 ),
                 ft.Divider(),
@@ -364,7 +364,7 @@ class FamilyMembersView:
                     ),
                     padding=15,
                     bgcolor=ft.Colors.PURPLE_50,
-                    border=ft.border.all(2, ft.Colors.PURPLE_200),
+                    border=ft.Border.all(2, ft.Colors.PURPLE_200),
                     border_radius=10,
                 )
             )

@@ -201,7 +201,7 @@ class AIAdvisorView:
                         border_radius=16 if is_mobile else 20,
                         padding=12 if is_mobile else 20,
                         expand=True,
-                        border=ft.border.all(1, ft.Colors.GREY_200),
+                        border=ft.Border.all(1, ft.Colors.GREY_200),
                     ),
                     # Typing indicator
                     self.typing_indicator,
@@ -373,7 +373,7 @@ class AIAdvisorView:
             ),
             padding=15,
             bgcolor=ft.Colors.WHITE,
-            border=ft.border.all(1, ft.Colors.GREY_200),
+            border=ft.Border.all(1, ft.Colors.GREY_200),
             border_radius=ft.BorderRadius.only(
                 top_left=15,
                 top_right=15,
@@ -440,7 +440,7 @@ class AIAdvisorView:
                 ),
                 padding=15,
                 bgcolor=ft.Colors.BLUE_50 if is_user else ft.Colors.WHITE,
-                border=ft.border.all(
+                border=ft.Border.all(
                     1,
                     ft.Colors.BLUE_100 if is_user else ft.Colors.GREY_200,
                 ),

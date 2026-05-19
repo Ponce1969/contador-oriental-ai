@@ -321,7 +321,7 @@ class DashboardView:
                             ),
                             padding=14,
                             bgcolor=ft.Colors.CYAN_50,
-                            border=ft.border.all(2, ft.Colors.TEAL_200),
+                            border=ft.Border.all(2, ft.Colors.TEAL_200),
                             border_radius=10,
                             height=280,
                             col=Responsive.COL_HALF,
@@ -350,7 +350,7 @@ class DashboardView:
                             ),
                             padding=14,
                             bgcolor=ft.Colors.ORANGE_50,
-                            border=ft.border.all(2, ft.Colors.ORANGE_200),
+                            border=ft.Border.all(2, ft.Colors.ORANGE_200),
                             border_radius=10,
                             height=280,
                             col=Responsive.COL_HALF,
@@ -413,7 +413,7 @@ class DashboardView:
             padding=ft.Padding.symmetric(horizontal=14, vertical=8),
             bgcolor=ft.Colors.INDIGO_50,
             border_radius=10,
-            border=ft.border.all(1, ft.Colors.INDIGO_200),
+            border=ft.Border.all(1, ft.Colors.INDIGO_200),
         )
 
     def _build_cuotas_card(self) -> ft.Container:

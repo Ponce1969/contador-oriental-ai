@@ -113,7 +113,7 @@ class HistoryView:
                 padding=16 if is_mobile else 20,
                 bgcolor=ft.Colors.WHITE,
                 border_radius=12,
-                border=ft.border.all(1, ft.Colors.BLUE_GREY_100),
+                border=ft.Border.all(1, ft.Colors.BLUE_GREY_100),
                 shadow=ft.BoxShadow(
                     spread_radius=0,
                     blur_radius=4,
@@ -182,7 +182,7 @@ class HistoryView:
                 padding=16 if is_mobile else 20,
                 bgcolor=ft.Colors.ORANGE_50,
                 border_radius=12,
-                border=ft.border.all(1, ft.Colors.ORANGE_200),
+                border=ft.Border.all(1, ft.Colors.ORANGE_200),
             )
         )
 
@@ -239,7 +239,7 @@ class HistoryView:
                     padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.WHITE,
                     border_radius=12,
-                    border=ft.border.all(1, ft.Colors.BLUE_GREY_200),
+                    border=ft.Border.all(1, ft.Colors.BLUE_GREY_200),
                     shadow=ft.BoxShadow(
                         spread_radius=0,
                         blur_radius=4,

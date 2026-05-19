@@ -284,7 +284,7 @@ class PlanesView:
                     padding=18,
                     border_radius=16,
                     bgcolor=_SLATE,
-                    border=ft.border.all(1, _BORDER),
+                    border=ft.Border.all(1, _BORDER),
                     shadow=(
                         ft.BoxShadow(
                             spread_radius=0,

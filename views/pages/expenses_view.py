@@ -256,7 +256,7 @@ class ExpensesView:
                     ),
                     padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.ORANGE_50,
-                    border=ft.border.all(2, ft.Colors.ORANGE_200),
+                    border=ft.Border.all(2, ft.Colors.ORANGE_200),
                     border_radius=10,
                     shadow=ft.BoxShadow(
                         spread_radius=1,
@@ -279,7 +279,7 @@ class ExpensesView:
                     ),
                     padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.ORANGE_50,
-                    border=ft.border.all(2, ft.Colors.ORANGE_200),
+                    border=ft.Border.all(2, ft.Colors.ORANGE_200),
                     border_radius=10,
                     shadow=ft.BoxShadow(
                         spread_radius=1,
@@ -589,7 +589,7 @@ class ExpensesView:
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         ),
                         padding=10,
-                        border=ft.border.all(1, ft.Colors.OUTLINE),
+                        border=ft.Border.all(1, ft.Colors.OUTLINE),
                         border_radius=5,
                     )
                 )

@@ -182,7 +182,7 @@ class IncomesView:
                     ),
                     padding=16 if is_mobile else 20,
                     bgcolor=ft.Colors.CYAN_50,
-                    border=ft.border.all(2, ft.Colors.TEAL_200),
+                    border=ft.Border.all(2, ft.Colors.TEAL_200),
                     border_radius=10,
                     shadow=ft.BoxShadow(
                         spread_radius=1,
@@ -407,7 +407,7 @@ class IncomesView:
                         ),
                         padding=15,
                         bgcolor=ft.Colors.CYAN_50,
-                        border=ft.border.all(2, ft.Colors.TEAL_200),
+                        border=ft.Border.all(2, ft.Colors.TEAL_200),
                         border_radius=10,
                         shadow=ft.BoxShadow(
                             spread_radius=1,
