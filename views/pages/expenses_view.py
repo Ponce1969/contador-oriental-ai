@@ -535,10 +535,15 @@ class ExpensesView:
             for expense in reversed(expenses):  # Más recientes primero
                 self.expenses_column.controls.append(
                     ft.Container(
-                        content=ft.Row(
+                        content=ft.ResponsiveRow(
                             controls=[
-                                ft.Icon(
-                                    icon=ft.Icons.ATTACH_MONEY, color=ft.Colors.GREEN
+                                ft.Container(
+                                    content=ft.Icon(
+                                        icon=ft.Icons.ATTACH_MONEY,
+                                        color=ft.Colors.GREEN,
+                                    ),
+                                    col={"xs": 1, "sm": 1},
+                                    alignment=ft.alignment.center_left,
                                 ),
                                 ft.Column(
                                     controls=[
@@ -555,38 +560,55 @@ class ExpensesView:
                                             color=ft.Colors.GREY_700,
                                         ),
                                     ],
+                                    col={"xs": 5, "sm": 5},
                                     spacing=2,
-                                    expand=True,
                                 ),
-                                ft.Text(
-                                    value=format_pesos(expense.monto),
-                                    size=18,
-                                    weight=ft.FontWeight.BOLD,
-                                    color=ft.Colors.RED_700,
-                                ),
-                                ft.Text(
-                                    value=expense.fecha.strftime("%d/%m"),
-                                    size=12,
-                                    color=ft.Colors.GREY_600,
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.EDIT,
-                                    icon_color=ft.Colors.BLUE,
-                                    tooltip="Editar gasto",
-                                    on_click=lambda e, exp=expense: (
-                                        self._on_edit_expense(exp)
+                                ft.Container(
+                                    content=ft.Text(
+                                        value=format_pesos(expense.monto),
+                                        size=18,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.RED_700,
+                                        no_wrap=True,
+                                        text_align=ft.TextAlign.RIGHT,
                                     ),
+                                    col={"xs": 3, "sm": 2},
+                                    alignment=ft.alignment.center_right,
                                 ),
-                                ft.IconButton(
-                                    icon=ft.Icons.DELETE,
-                                    icon_color=ft.Colors.RED,
-                                    tooltip="Eliminar gasto",
-                                    on_click=lambda e, exp=expense: (
-                                        self._on_delete_expense(exp)
+                                ft.Container(
+                                    content=ft.Row(
+                                        controls=[
+                                            ft.Text(
+                                                value=expense.fecha.strftime("%d/%m"),
+                                                size=12,
+                                                color=ft.Colors.GREY_600,
+                                            ),
+                                            ft.IconButton(
+                                                icon=ft.Icons.EDIT,
+                                                icon_color=ft.Colors.BLUE,
+                                                tooltip="Editar gasto",
+                                                on_click=lambda e, exp=expense: (
+                                                    self._on_edit_expense(exp)
+                                                ),
+                                            ),
+                                            ft.IconButton(
+                                                icon=ft.Icons.DELETE,
+                                                icon_color=ft.Colors.RED,
+                                                tooltip="Eliminar gasto",
+                                                on_click=lambda e, exp=expense: (
+                                                    self._on_delete_expense(exp)
+                                                ),
+                                            ),
+                                        ],
+                                        spacing=0,
+                                        alignment=ft.MainAxisAlignment.END,
                                     ),
+                                    col={"xs": 3, "sm": 4},
+                                    alignment=ft.alignment.center_right,
                                 ),
                             ],
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            alignment=ft.MainAxisAlignment.START,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
                         padding=10,
                         border=ft.Border.all(1, ft.Colors.OUTLINE),
@@ -617,38 +639,57 @@ class ExpensesView:
                 porcentaje = float((monto / total * 100)) if total > 0 else 0.0
 
                 self.summary_column.controls.append(
-                    ft.Row(
+                    ft.ResponsiveRow(
                         controls=[
-                            ft.Text(value=categoria, width=150),
+                            ft.Text(
+                                value=categoria,
+                                col={"xs": 5, "sm": 3},
+                                no_wrap=True,
+                            ),
                             ft.ProgressBar(
                                 value=porcentaje / 100,
-                                width=200,
+                                col={"xs": 7, "sm": 5},
                                 color=ft.Colors.BLUE,
                                 bgcolor=ft.Colors.BLUE_100,
                             ),
                             ft.Text(
                                 value=f"{format_pesos(monto)} ({porcentaje:.1f}%)",
-                                width=150,
+                                col={"xs": 12, "sm": 4},
+                                no_wrap=True,
+                                text_align=ft.TextAlign.RIGHT,
                             ),
-                        ]
+                        ],
+                        alignment=ft.MainAxisAlignment.START,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     )
                 )
 
             # Total general
             self.summary_column.controls.append(ft.Divider())
             self.summary_column.controls.append(
-                ft.Row(
+                ft.ResponsiveRow(
                     controls=[
-                        ft.Text(value="TOTAL", weight=ft.FontWeight.BOLD, width=150),
-                        ft.Text(value="", width=200),
+                        ft.Text(
+                            value="TOTAL",
+                            weight=ft.FontWeight.BOLD,
+                            col={"xs": 5, "sm": 3},
+                        ),
+                        ft.Text(
+                            value="",
+                            col={"xs": 7, "sm": 5},
+                        ),
                         ft.Text(
                             value=format_pesos(total),
                             weight=ft.FontWeight.BOLD,
                             size=18,
                             color=ft.Colors.RED_700,
-                            width=150,
+                            col={"xs": 12, "sm": 4},
+                            no_wrap=True,
+                            text_align=ft.TextAlign.RIGHT,
                         ),
-                    ]
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             )
 
