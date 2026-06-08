@@ -543,7 +543,7 @@ class ExpensesView:
                                         color=ft.Colors.GREEN,
                                     ),
                                     col={"xs": 1, "sm": 1},
-                                    alignment=ft.alignment.center_left,
+                                    alignment=ft.Alignment.CENTER_LEFT,
                                 ),
                                 ft.Column(
                                     controls=[
@@ -573,7 +573,7 @@ class ExpensesView:
                                         text_align=ft.TextAlign.RIGHT,
                                     ),
                                     col={"xs": 3, "sm": 2},
-                                    alignment=ft.alignment.center_right,
+                                    alignment=ft.Alignment.CENTER_RIGHT,
                                 ),
                                 ft.Container(
                                     content=ft.Row(
@@ -604,7 +604,7 @@ class ExpensesView:
                                         alignment=ft.MainAxisAlignment.END,
                                     ),
                                     col={"xs": 3, "sm": 4},
-                                    alignment=ft.alignment.center_right,
+                                    alignment=ft.Alignment.CENTER_RIGHT,
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.START,
