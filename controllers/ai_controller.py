@@ -175,7 +175,8 @@ class AIController(BaseController):
                 ingresos: list = []
                 m, a = mes_ini, anio_ini
                 while (a, m) <= (anio_fin, mes_fin):
-                    ingresos += list(income_repo.get_by_month(a, m))
+                    # Usar income_service para incluir ingresos recurrentes
+                    ingresos += income_service.list_for_month(a, m)
                     m += 1
                     if m > 12:
                         m = 1
@@ -189,11 +190,8 @@ class AIController(BaseController):
                     anio_fin,
                 )
             else:
-                ingresos = [
-                    i
-                    for i in income_service.list_incomes()
-                    if i.fecha.month == mes_actual and i.fecha.year == anio_actual
-                ]
+                # Usar income_service para incluir ingresos recurrentes
+                ingresos = income_service.list_for_month(mes_actual, anio_actual)
             ingresos_total = sum((i.monto for i in ingresos), Decimal("0"))
 
             # ── Filtrado por categorías ───────────────────────────────────
@@ -274,7 +272,8 @@ class AIController(BaseController):
                     empalme_total_gastos = sum(
                         (g.monto for g in gastos_emp), Decimal("0")
                     )
-                    ingresos_emp = list(income_repo.get_by_month(anio_emp, mes_emp))
+                    # Usar income_service para incluir ingresos recurrentes
+                    ingresos_emp = income_service.list_for_month(anio_emp, mes_emp)
                     empalme_ingresos_total = sum(
                         (i.monto for i in ingresos_emp), Decimal("0")
                     )
