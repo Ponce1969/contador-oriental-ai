@@ -13,6 +13,7 @@ from controllers.base_controller import BaseController
 from repositories.expense_repository import ExpenseRepository
 from repositories.income_repository import IncomeRepository
 from services.ai.expense_formatters import agrupar_gastos
+from services.domain.income_service import IncomeService
 from services.infrastructure.formatters import format_pesos
 
 _MESES: dict[int, str] = {
@@ -73,6 +74,7 @@ class HistoryController(BaseController):
         with self._get_session() as session:
             expense_repo = ExpenseRepository(session, self._familia_id)
             income_repo = IncomeRepository(session, self._familia_id)
+            income_service = IncomeService(income_repo)
 
             for i in range(3):
                 # Mes actual, anterior, ante-anterior
@@ -83,7 +85,8 @@ class HistoryController(BaseController):
                     anio -= 1
 
                 gastos = list(expense_repo.get_by_month(anio, mes))
-                ingresos = list(income_repo.get_by_month(anio, mes))
+                # Usar IncomeService para incluir ingresos recurrentes
+                ingresos = income_service.list_for_month(anio, mes)
 
                 total_gastos = sum((g.monto for g in gastos), Decimal("0"))
                 total_ingresos = sum((i.monto for i in ingresos), Decimal("0"))
