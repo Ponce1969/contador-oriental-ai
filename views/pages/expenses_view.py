@@ -533,82 +533,123 @@ class ExpensesView:
             )
         else:
             for expense in reversed(expenses):  # Más recientes primero
-                self.expenses_column.controls.append(
-                    ft.Container(
-                        content=ft.ResponsiveRow(
+                # Fila principal: icono + descripción + monto + fecha
+                main_row = ft.ResponsiveRow(
+                    controls=[
+                        ft.Container(
+                            content=ft.Icon(
+                                icon=ft.Icons.ATTACH_MONEY,
+                                color=ft.Colors.GREEN,
+                            ),
+                            col={"xs": 1, "sm": 1},
+                            alignment=ft.Alignment.CENTER_LEFT,
+                        ),
+                        ft.Column(
                             controls=[
-                                ft.Container(
-                                    content=ft.Icon(
-                                        icon=ft.Icons.ATTACH_MONEY,
-                                        color=ft.Colors.GREEN,
-                                    ),
-                                    col={"xs": 1, "sm": 1},
-                                    alignment=ft.Alignment.CENTER_LEFT,
+                                ft.Text(
+                                    value=expense.descripcion,
+                                    weight=ft.FontWeight.BOLD,
                                 ),
-                                ft.Column(
-                                    controls=[
-                                        ft.Text(
-                                            value=expense.descripcion,
-                                            weight=ft.FontWeight.BOLD,
-                                        ),
-                                        ft.Text(
-                                            value=(
-                                                f"{expense.categoria.value} • "
-                                                f"{expense.metodo_pago.value}"
-                                            ),
-                                            size=12,
-                                            color=ft.Colors.GREY_700,
-                                        ),
-                                    ],
-                                    col={"xs": 5, "sm": 5},
-                                    spacing=2,
-                                ),
-                                ft.Container(
-                                    content=ft.Text(
-                                        value=format_pesos(expense.monto),
-                                        size=18,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.RED_700,
-                                        no_wrap=True,
-                                        text_align=ft.TextAlign.RIGHT,
+                                ft.Text(
+                                    value=(
+                                        f"{expense.categoria.value} • "
+                                        f"{expense.metodo_pago.value}"
                                     ),
-                                    col={"xs": 3, "sm": 2},
-                                    alignment=ft.Alignment.CENTER_RIGHT,
-                                ),
-                                ft.Container(
-                                    content=ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                value=expense.fecha.strftime("%d/%m"),
-                                                size=12,
-                                                color=ft.Colors.GREY_600,
-                                            ),
-                                            ft.IconButton(
-                                                icon=ft.Icons.EDIT,
-                                                icon_color=ft.Colors.BLUE,
-                                                tooltip="Editar gasto",
-                                                on_click=lambda e, exp=expense: (
-                                                    self._on_edit_expense(exp)
-                                                ),
-                                            ),
-                                            ft.IconButton(
-                                                icon=ft.Icons.DELETE,
-                                                icon_color=ft.Colors.RED,
-                                                tooltip="Eliminar gasto",
-                                                on_click=lambda e, exp=expense: (
-                                                    self._on_delete_expense(exp)
-                                                ),
-                                            ),
-                                        ],
-                                        spacing=0,
-                                        alignment=ft.MainAxisAlignment.END,
-                                    ),
-                                    col={"xs": 3, "sm": 4},
-                                    alignment=ft.Alignment.CENTER_RIGHT,
+                                    size=12,
+                                    color=ft.Colors.GREY_700,
                                 ),
                             ],
-                            alignment=ft.MainAxisAlignment.START,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            col={"xs": 5, "sm": 5},
+                            spacing=2,
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                value=format_pesos(expense.monto),
+                                size=18,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.RED_700,
+                                no_wrap=True,
+                                text_align=ft.TextAlign.RIGHT,
+                            ),
+                            col={"xs": 4, "sm": 2},
+                            alignment=ft.Alignment.CENTER_RIGHT,
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                value=expense.fecha.strftime("%d/%m"),
+                                size=12,
+                                color=ft.Colors.GREY_600,
+                                text_align=ft.TextAlign.RIGHT,
+                            ),
+                            col={"xs": 2, "sm": 4},
+                            alignment=ft.Alignment.CENTER_RIGHT,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                )
+
+                # Fila de acciones (solo visible en móviles xs)
+                actions_row_xs = ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT,
+                                icon_color=ft.Colors.BLUE,
+                                tooltip="Editar gasto",
+                                on_click=lambda e, exp=expense: (
+                                    self._on_edit_expense(exp)
+                                ),
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE,
+                                icon_color=ft.Colors.RED,
+                                tooltip="Eliminar gasto",
+                                on_click=lambda e, exp=expense: (
+                                    self._on_delete_expense(exp)
+                                ),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.END,
+                        spacing=0,
+                    ),
+                    visible=True,  # Visible en xs
+                    col={"xs": 12, "sm": 0},  # Solo en xs
+                )
+
+                # Botones de acción (solo visibles en desktop sm+)
+                actions_col_sm = ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT,
+                                icon_color=ft.Colors.BLUE,
+                                tooltip="Editar gasto",
+                                on_click=lambda e, exp=expense: (
+                                    self._on_edit_expense(exp)
+                                ),
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.DELETE,
+                                icon_color=ft.Colors.RED,
+                                tooltip="Eliminar gasto",
+                                on_click=lambda e, exp=expense: (
+                                    self._on_delete_expense(exp)
+                                ),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.END,
+                        spacing=0,
+                    ),
+                    visible=True,  # Visible en sm+
+                    col={"xs": 0, "sm": 12},  # Solo en sm+
+                )
+
+                self.expenses_column.controls.append(
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[main_row, actions_row_xs, actions_col_sm],
+                            spacing=0,
                         ),
                         padding=10,
                         border=ft.Border.all(1, ft.Colors.OUTLINE),
