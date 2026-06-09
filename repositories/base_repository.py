@@ -42,7 +42,7 @@ class BaseRepository(Generic[T]):
         query = self.session.query(self.model).filter(self.model.id == id)
 
         # Filtrar por familia si el modelo tiene family_id
-        if self.familia_id and hasattr(self.model, "family_id"):
+        if self.familia_id is not None and hasattr(self.model, "family_id"):
             query = query.filter(self.model.family_id == self.familia_id)
 
         return query.first()
@@ -57,7 +57,7 @@ class BaseRepository(Generic[T]):
         query = self.session.query(self.model)
 
         # Filtrar por familia si el modelo tiene family_id
-        if self.familia_id and hasattr(self.model, "family_id"):
+        if self.familia_id is not None and hasattr(self.model, "family_id"):
             query = query.filter(self.model.family_id == self.familia_id)
 
         return query.all()
@@ -118,7 +118,7 @@ class BaseRepository(Generic[T]):
         query = self.session.query(self.model)
 
         # Filtrar por familia si el modelo tiene family_id
-        if self.familia_id and hasattr(self.model, "family_id"):
+        if self.familia_id is not None and hasattr(self.model, "family_id"):
             query = query.filter(self.model.family_id == self.familia_id)
 
         return query.count()
@@ -133,7 +133,7 @@ class BaseRepository(Generic[T]):
         query = self.session.query(self.model)
 
         # Filtrar por familia si el modelo tiene family_id
-        if self.familia_id and hasattr(self.model, "family_id"):
+        if self.familia_id is not None and hasattr(self.model, "family_id"):
             query = query.filter(self.model.family_id == self.familia_id)
 
         # Filtrar por activo si el modelo tiene el campo

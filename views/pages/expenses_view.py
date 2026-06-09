@@ -700,7 +700,12 @@ class ExpensesView:
         self.editing_expense_id = expense.id
 
         self.descripcion_input.value = expense.descripcion
-        self.monto_input.value = str(expense.monto).rstrip("0").rstrip(".")
+        # Formatear Decimal sin notación científica ni ceros decimales innecesarios
+        # Ej: Decimal("1000") -> "1000", Decimal("1500.50") -> "1500.5"
+        monto_str = f"{expense.monto:f}"
+        if '.' in monto_str:
+            monto_str = monto_str.rstrip('0').rstrip('.')
+        self.monto_input.value = monto_str
         self.categoria_dropdown.value = expense.categoria.value
         self.metodo_pago_dropdown.value = expense.metodo_pago.value
         self.page.update()

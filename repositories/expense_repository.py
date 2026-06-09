@@ -88,29 +88,36 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
         """
         from sqlalchemy import text
 
-        sql = text("""
+        # Construir SQL con cláusulas opcionales de forma segura
+        sql_parts = [
+            """
             SELECT id, (embedding <=> CAST(:emb AS vector)) AS distancia
             FROM expenses
             WHERE familia_id = :fid
               AND embedding IS NOT NULL
               AND (embedding <=> CAST(:emb AS vector)) <= :umbral
-        """)
+            """
+        ]
         params: dict = {
             "emb": str(embedding),
             "fid": self.familia_id,
             "umbral": umbral_cosine,
-            "limite": limite,
         }
 
         if fecha_min is not None:
-            sql = text(str(sql) + " AND fecha >= :fecha_min")
+            sql_parts.append("AND fecha >= :fecha_min")
             params["fecha_min"] = fecha_min
 
         if fecha_max is not None:
-            sql = text(str(sql) + " AND fecha <= :fecha_max")
+            sql_parts.append("AND fecha <= :fecha_max")
             params["fecha_max"] = fecha_max
 
-        sql = text(str(sql) + " ORDER BY distancia ASC LIMIT :limite")
+        sql_parts.append("ORDER BY distancia ASC LIMIT :limite")
+        params["limite"] = limite
+
+        # Unir todas las partes en un solo text() con binding seguro
+        sql_string = " ".join(sql_parts)
+        sql = text(sql_string)
 
         rows = self.session.execute(sql, params).fetchall()
 

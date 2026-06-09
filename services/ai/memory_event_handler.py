@@ -10,7 +10,7 @@ from typing import Any
 
 from core.events import Event, EventType
 from services.ai.ia_memory_service import IAMemoryService
-from services.infrastructure.formatters import format_pesos
+from services.infrastructure.formatters import format_pesos_ai
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class MemoryEventHandler:
         monto = data.get("monto", 0)
         return (
             f"Gasto registrado: {data.get('descripcion', '')} "
-            f"por {format_pesos(monto)} "
+            f"por {format_pesos_ai(monto)} "
             f"en categoría {data.get('categoria', '')}. "
             f"Método: {data.get('metodo_pago', '')}. "
             f"Fecha: {data.get('fecha', '')}."
@@ -118,9 +118,9 @@ class MemoryEventHandler:
     def _formatear_compra_cuotas(self, data: dict[str, Any]) -> str:
         return (
             f"Compra en cuotas: {data.get('descripcion', '')} "
-            f"por {format_pesos(data.get('monto_total', 0))} "
+            f"por {format_pesos_ai(data.get('monto_total', 0))} "
             f"en {data.get('numero_cuotas', 0)} cuotas "
-            f"de {format_pesos(data.get('monto_por_cuota', 0))} "
+            f"de {format_pesos_ai(data.get('monto_por_cuota', 0))} "
             f"con tarjeta {data.get('tarjeta', '')}. "
             f"Quedan {data.get('cuotas_restantes', 0)} cuotas por pagar."
         )
@@ -128,7 +128,7 @@ class MemoryEventHandler:
     def _formatear_ingreso(self, data: dict[str, Any]) -> str:
         return (
             f"Ingreso registrado: {data.get('descripcion', '')} "
-            f"por {format_pesos(data.get('monto', 0))} "
+            f"por {format_pesos_ai(data.get('monto', 0))} "
             f"en categoría {data.get('categoria', '')}. "
             f"Miembro: {data.get('miembro', '')}. "
             f"Fecha: {data.get('fecha', '')}."
@@ -137,10 +137,10 @@ class MemoryEventHandler:
     def _formatear_snapshot(self, data: dict[str, Any]) -> str:
         return (
             f"Snapshot mensual: {data.get('categoria', '')} "
-            f"total {format_pesos(data.get('total_dinero', 0))} "
+            f"total {format_pesos_ai(data.get('total_dinero', 0))} "
             f"en {data.get('cantidad_compras', 0)} compras. "
             f"Ticket promedio: "
-            f"{format_pesos(data.get('ticket_promedio', 0))}. "
+            f"{format_pesos_ai(data.get('ticket_promedio', 0))}. "
             f"Período: {data.get('mes', '')}/{data.get('anio', '')}."
         )
 
@@ -148,7 +148,7 @@ class MemoryEventHandler:
         return (
             f"Ticket procesado por OCR: {data.get('texto_extraido', '')}. "
             f"Total estimado: "
-            f"{format_pesos(data.get('total_estimado', 0))}. "
+            f"{format_pesos_ai(data.get('total_estimado', 0))}. "
             f"Comercio: {data.get('comercio', '')}. "
             f"Fecha: {data.get('fecha', '')}."
         )

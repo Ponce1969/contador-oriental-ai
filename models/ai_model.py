@@ -61,7 +61,7 @@ class CategoryMetric(BaseModel):
     ticket_anterior: Decimal | None = None
 
     @property
-    def variacion_total_pct(self) -> float | None:
+    def variacion_total_pct(self) -> Decimal | None:
         """Variación porcentual del gasto total vs mes anterior."""
         if self.total_anterior and self.total_anterior > 0:
             return (
@@ -70,7 +70,7 @@ class CategoryMetric(BaseModel):
         return None
 
     @property
-    def variacion_ticket_pct(self) -> float | None:
+    def variacion_ticket_pct(self) -> Decimal | None:
         """Variación porcentual del ticket promedio vs mes anterior."""
         if self.ticket_anterior and self.ticket_anterior > 0:
             return (
