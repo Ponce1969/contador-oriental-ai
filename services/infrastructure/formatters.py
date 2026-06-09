@@ -28,24 +28,26 @@ def format_pesos(monto: Decimal) -> str:
 
 def format_pesos_ai(monto: Decimal) -> str:
     """
-    Formatear monto para prompts de IA: usa ESPACIO como separador de miles.
+    Formatear monto para prompts de IA: SIN separador de miles.
 
-    Llama/Gemma confunden el punto como separador decimal (formato inglés),
-    interpretando "$ 173.720" como "ciento setenta y tres con setecientos
-    veinte centesimos". Con espacio: "$ 173 720" es inequivoco.
+    Las IAs (Gemma2, Llama3) no necesitan separadores y pueden
+    malinterpretarlos:
+    - Llama3 trunca en el espacio: "$ 560 620" → lee "$ 560"
+    - Gemma2 confunde el punto con decimal: "$ 173.720" → lee "173 con 720"
+    
+    Sin separador: "$ 560620" es inequívoco para cualquier modelo.
 
     >>> format_pesos_ai(Decimal("173720"))
-    '$ 173 720'
+    '$ 173720'
     >>> format_pesos_ai(Decimal("18480"))
-    '$ 18 480'
+    '$ 18480'
     >>> format_pesos_ai(Decimal("650"))
     '$ 650'
     """
     if not isinstance(monto, Decimal):
         monto = Decimal(str(monto))
     entero = int(monto.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
-    entero_str = f"{entero:,}".replace(",", " ")
-    return f"$ {entero_str}"
+    return f"$ {entero}"
 
 
 def format_cotizacion(rate: Decimal) -> str:
