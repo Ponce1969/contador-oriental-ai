@@ -206,9 +206,7 @@ class TestPasswordReset:
         assert email_service.sent_emails[0]["to"] == "test@example.com"
         assert "/reset-password?token=" in email_service.sent_emails[0]["reset_url"]
 
-    def test_request_password_reset_nonexistent_email(
-        self, service_with_mock_email
-    ):
+    def test_request_password_reset_nonexistent_email(self, service_with_mock_email):
         """Non-existent email returns generic message (enum protection)."""
         result = service_with_mock_email.request_password_reset(
             "nonexistent@example.com"
@@ -239,9 +237,7 @@ class TestPasswordReset:
         assert result.is_ok()
         assert "Esperá" in result.ok_value
 
-    def test_reset_password_valid_token(
-        self, service_with_mock_email, user_with_email
-    ):
+    def test_reset_password_valid_token(self, service_with_mock_email, user_with_email):
         """Reset password with valid token succeeds."""
         from repositories.password_reset_repository import PasswordResetRepository
 
@@ -286,9 +282,7 @@ class TestPasswordReset:
         assert result.is_err()
         assert "inválido o expirado" in str(result.err_value.message)
 
-    def test_reset_password_used_token(
-        self, service_with_mock_email, user_with_email
-    ):
+    def test_reset_password_used_token(self, service_with_mock_email, user_with_email):
         """Reset password with already used token fails."""
         from repositories.password_reset_repository import PasswordResetRepository
 
@@ -314,7 +308,8 @@ class TestPasswordReset:
     def test_reset_password_invalid_token(self, service_with_mock_email):
         """Reset password with non-existent token fails."""
         result = service_with_mock_email.reset_password(
-            "nonexistent_token", "newpassword123",
+            "nonexistent_token",
+            "newpassword123",
         )
 
         assert result.is_err()

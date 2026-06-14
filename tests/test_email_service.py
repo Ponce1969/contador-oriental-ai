@@ -44,9 +44,12 @@ class TestResendEmailService:
             "APP_BASE_URL": "http://test.com",
         }.get(key, default)
 
-        with patch.object(resend, "api_key", "test_api_key"), patch.object(
-            resend.Emails, "send", return_value={"id": "email_123"}
-        ) as mock_send:
+        with (
+            patch.object(resend, "api_key", "test_api_key"),
+            patch.object(
+                resend.Emails, "send", return_value={"id": "email_123"}
+            ) as mock_send,
+        ):
             service = ResendEmailService()
             result = service.send_password_reset(
                 to_email="user@example.com",
