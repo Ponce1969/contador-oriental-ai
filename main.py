@@ -149,6 +149,7 @@ async def main(page: ft.Page):
         from core.session import SessionManager
 
         router = Router(page)
+        public_routes = ["/forgot-password", "/reset-password", "/register"]
 
         def on_resize(e: object) -> None:
             new_device = get_device_type(page.width)
@@ -156,25 +157,32 @@ async def main(page: ft.Page):
                 AppState.device = new_device
                 router.navigate(router.current_route)
 
+        def _navigate_to_route(route: str) -> None:
+            """Route navigation respecting auth state and public routes."""
+            if SessionManager.is_logged_in(page):
+                # Logged in — always go to dashboard
+                page.banner.open = True  # type: ignore
+                router.navigate("/")
+            elif route in public_routes:
+                # Public routes (forgot-password, reset-password, register)
+                # No auth required — navigate directly, preserving query params
+                router.navigate(route)
+            else:
+                # No session — go to login
+                router.navigate("/login")
+
+        def on_route_change(e: ft.RouteChangeEvent) -> None:
+            """Handle URL route changes from browser navigation."""
+            _navigate_to_route(e.route)
+
         page.on_resize = on_resize
+        page.on_route_change = on_route_change
         AppState.device = get_device_type(page.width or 1280)
 
-        # Verificar si hay sesión activa
-        # Si la URL es /reset-password o /forgot-password, respetar la ruta
-        # (el usuario no necesita sesión para recuperar contraseña)
-        current_url = page.route or "/login"
-        public_routes = ["/forgot-password", "/reset-password", "/register"]
-
-        if SessionManager.is_logged_in(page):
-            # Usuario logueado - mostrar banner y dashboard
-            page.banner.open = True  # type: ignore
-            router.navigate("/")
-        elif current_url in public_routes:
-            # Rutas públicas sin login (forgot-password, reset-password, register)
-            router.navigate(current_url)
-        else:
-            # No hay sesión - ir a login
-            router.navigate("/login")
+        # Navigate to the current URL (handles deep links correctly)
+        # page.go triggers on_route_change which calls _navigate_to_route
+        initial_route = page.route or "/login"
+        _navigate_to_route(initial_route)
 
         logger.info("Aplicação iniciada com sucesso")
 
