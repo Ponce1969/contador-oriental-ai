@@ -60,6 +60,11 @@ services:
       NVIDIA_MODEL: ${NVIDIA_MODEL:-meta/llama-3.3-70b-instruct}
       LLAMA3_DAILY_QUOTA: ${LLAMA3_DAILY_QUOTA:-10}
 
+      # Email — Password Recovery (Resend)
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-pedidos@loquinto.com}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8550}
+
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_FILE: /app/logs/app.log
