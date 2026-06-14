@@ -51,6 +51,13 @@ class LoginView:
             width=300,
         )
 
+        # Link de recuperar contraseña
+        self.forgot_password_link = ft.TextButton(
+            content=ft.Text("¿Olvidaste tu contraseña?"),
+            on_click=self._on_forgot_password_click,
+            style=ft.ButtonStyle(color=ft.Colors.BLUE_700),
+        )
+
     def render(self):
         """Renderizar vista de login"""
         return ft.Container(
@@ -97,6 +104,10 @@ class LoginView:
                                 self.password_input,
                                 self.error_text,
                                 self.login_button,
+                                ft.Container(
+                                    content=self.forgot_password_link,
+                                    margin=ft.Margin.only(top=5),
+                                ),
                                 # Link de registro
                                 ft.Container(
                                     content=ft.TextButton(
@@ -186,6 +197,13 @@ class LoginView:
 
         router = Router(self.page)
         router.navigate("/register")
+
+    def _on_forgot_password_click(self, e):
+        """Navegar a la página de recuperar contraseña"""
+        from core.router import Router
+
+        router = Router(self.page)
+        router.navigate("/forgot-password")
 
     def _show_error(self, message: str):
         """Mostrar mensaje de error"""
