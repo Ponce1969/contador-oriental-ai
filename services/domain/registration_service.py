@@ -130,11 +130,11 @@ class RegistrationService:
             text("""
                 INSERT INTO usuarios (
                     familia_id, username, password_hash,
-                    nombre_completo, activo, created_at
+                    nombre_completo, email, activo, created_at
                 )
                 VALUES (
                     :familia_id, :username, :password_hash,
-                    :nombre_completo, TRUE, CURRENT_TIMESTAMP
+                    :nombre_completo, :email, TRUE, CURRENT_TIMESTAMP
                 )
                 RETURNING id
             """),
@@ -143,20 +143,24 @@ class RegistrationService:
                 "username": admin_username,
                 "password_hash": password_hash,
                 "nombre_completo": admin_nombre_completo,
+                "email": familia_email,
             },
         )
         usuario_id = result.fetchone()[0]
 
         uow.flush()
 
-        return Ok(User(
-            id=usuario_id,
-            familia_id=familia_id,
-            username=admin_username,
-            password_hash=password_hash,
-            nombre_completo=admin_nombre_completo,
-            activo=True,
-        ))
+        return Ok(
+            User(
+                id=usuario_id,
+                familia_id=familia_id,
+                username=admin_username,
+                password_hash=password_hash,
+                nombre_completo=admin_nombre_completo,
+                email=familia_email,
+                activo=True,
+            )
+        )
 
     def _validate_registration_data(
         self, familia_nombre: str, familia_email: str, username: str, password: str

@@ -25,8 +25,8 @@ class RegisterView:
         )
 
         self.familia_email_field = ft.TextField(
-            label="Email de la Familia",
-            hint_text="familia@ejemplo.com",
+            label="Email",
+            hint_text="tu@email.com — se usa para recuperar tu contraseña",
             width=400,
             keyboard_type=ft.KeyboardType.EMAIL,
             prefix_icon=ft.Icons.EMAIL,
