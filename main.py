@@ -158,12 +158,15 @@ async def main(page: ft.Page):
                 router.navigate(router.current_route)
 
         def _navigate_to_route(route: str) -> None:
-            """Route navigation respecting auth state and public routes."""
+            """Route navigation respecting auth state and public routes.
+            Strips query params before matching (token read from page.query).
+            """
+            clean_route = route.split("?")[0]
             if SessionManager.is_logged_in(page):
                 # Logged in — always go to dashboard
                 page.banner.open = True  # type: ignore
                 router.navigate("/")
-            elif route in public_routes:
+            elif clean_route in public_routes:
                 # Public routes (forgot-password, reset-password, register)
                 # No auth required — navigate directly, preserving query params
                 router.navigate(route)
