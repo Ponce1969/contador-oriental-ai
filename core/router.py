@@ -16,15 +16,24 @@ class Router:
 
         return routes
 
+    @staticmethod
+    def _strip_query(route: str) -> str:
+        """Remove query string from route for dict lookup.
+        e.g. '/reset-password?token=abc' -> '/reset-password'
+        """
+        return route.split("?")[0]
+
     def navigate(self, route):
         routes = self.routes
 
-        if route not in routes:
-            logger.warning(f"Route not found: {route}")
-            route = "/"
+        # Strip query params before matching (token is read from page.query)
+        clean_route = self._strip_query(route)
+        if clean_route not in routes:
+            logger.warning(f"Route not found: {clean_route}")
+            clean_route = "/"
 
-        logger.info(f"Navigating to: {route}")
-        self.current_route = route
+        logger.info(f"Navigating to: {clean_route}")
+        self.current_route = clean_route
         self.page.controls.clear()
 
         try:
