@@ -41,3 +41,14 @@ class AuthController:
                 return Err(AppError(message="Error desconocido"))
 
         return result
+
+    def request_password_reset(self, email: str) -> Result[str, AppError]:
+        """Request password reset by email"""
+        if not email or "@" not in email:
+            return Err(AppError(message="Ingresá un email válido"))
+
+        return self._auth_service.request_password_reset(email.lower().strip())
+
+    def reset_password(self, token: str, new_password: str) -> Result[None, AppError]:
+        """Reset password using token"""
+        return self._auth_service.reset_password(token, new_password)

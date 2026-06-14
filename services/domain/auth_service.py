@@ -2,16 +2,26 @@
 Servicio de autenticación - Login, logout, gestión de usuarios
 """
 
+from __future__ import annotations
+
 import logging
+import os
+import secrets
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from result import Err, Ok, Result
 
 from core.security import rate_limiter
-from models.errors import DatabaseError, ValidationError
+from models.errors import AppError, DatabaseError, ValidationError
 from models.user_model import User, UserCreate, UserLogin
+from repositories.password_reset_repository import PasswordResetRepository
 from repositories.user_repository import UserRepository
+
+if TYPE_CHECKING:
+    from services.infrastructure.email_service import EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +31,20 @@ class AuthService:
 
     def __init__(self, user_repo: UserRepository):
         self._user_repo = user_repo
+        self._reset_repo = PasswordResetRepository()
         self._ph = PasswordHasher(time_cost=2, memory_cost=65536, parallelism=2)
+        self._email_service: EmailService | None = None
+
+    def set_email_service(self, email_service: EmailService) -> None:
+        """Set email service (for dependency injection in tests)"""
+        self._email_service = email_service
+
+    def _get_email_service(self) -> EmailService:
+        if self._email_service is None:
+            from services.infrastructure.email_service import ResendEmailService
+
+            self._email_service = ResendEmailService()
+        return self._email_service
 
     def login(
         self, credentials: UserLogin
@@ -156,3 +179,102 @@ class AuthService:
             return False
         except Exception:
             return False
+
+    def request_password_reset(self, email: str) -> Result[str, AppError]:
+        """
+        Request password reset by email.
+        Always returns success message (email enumeration protection).
+        """
+        # Rate limit: 3 requests per email per 15 minutes (using same limiter as login)
+        bloqueado, segundos = rate_limiter.esta_bloqueado(f"reset_{email}")
+        if bloqueado:
+            minutos = segundos // 60 + 1
+            # Still return generic message, but with rate limit info
+            msg = (
+                "Si tu email está registrado, recibirás un link para resetear tu "
+                f"contraseña. Esperá {minutos} minuto(s) antes de intentar de nuevo."
+            )
+            return Ok(msg)
+
+        # Try to find user by email
+        user_result = self._user_repo.get_by_email(email.lower().strip())
+
+        if user_result.is_ok():
+            user = user_result.ok_value
+            # Generate token
+            token = secrets.token_urlsafe(32)
+            expires_at = datetime.now(UTC) + timedelta(hours=1)
+
+            # Store token
+            token_result = self._reset_repo.create_token(
+                user_id=user.id,
+                token=token,
+                expires_at=expires_at,
+            )
+
+            if token_result.is_ok():
+                # Send email
+                base_url = os.getenv("APP_BASE_URL", "http://localhost:8550")
+                reset_url = f"{base_url}/reset-password?token={token}"
+
+                email_result = self._get_email_service().send_password_reset(
+                    email, reset_url
+                )
+                if email_result.is_err():
+                    logger.error(
+                        "Failed to send reset email to %s: %s",
+                        email,
+                        email_result.err_value,
+                    )
+            else:
+                logger.error("Failed to create reset token: %s", token_result.err_value)
+
+        # Register rate limit attempt
+        rate_limiter.registrar_fallo(f"reset_{email}")
+
+        # Always return generic message (email enumeration protection)
+        msg = (
+            "Si tu email está registrado, recibirás un link "
+            "para resetear tu contraseña."
+        )
+        return Ok(msg)
+
+    def reset_password(self, token: str, new_password: str) -> Result[None, AppError]:
+        """Reset password using a valid token"""
+
+        # Validate new password length
+        if len(new_password) < 6:
+            return Err(
+                ValidationError(
+                    message="La contraseña debe tener al menos 6 caracteres"
+                )
+            )
+
+        # Find valid token
+        token_result = self._reset_repo.find_valid_token(token)
+        if token_result.is_err():
+            return Err(AppError(message="Error al buscar token"))
+
+        reset_token = token_result.ok_value
+        if reset_token is None:
+            return Err(
+                ValidationError(message="Link inválido o expirado. Solicitá uno nuevo.")
+            )
+
+        # Update password
+        new_hash = self._hash_password(new_password)
+        password_result = self._user_repo.update_password(reset_token.user_id, new_hash)
+
+        if password_result.is_err():
+            return Err(AppError(message="Error al actualizar contraseña"))
+
+        # Mark token as used
+        self._reset_repo.mark_used(reset_token.id)
+
+        # Register success in rate limiter (clear any reset rate limit)
+        user_result = self._user_repo.get_by_id(reset_token.user_id)
+        if user_result.is_ok():
+            # Clear rate limit for this user
+            rate_limiter.registrar_exito(f"reset_{user_result.ok_value.email}")
+
+        return Ok(None)

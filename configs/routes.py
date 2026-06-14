@@ -30,6 +30,22 @@ ROUTES = [
         "show_in_bottom": False,
     },
     {
+        "path": "/forgot-password",
+        "view": "views.pages.forgot_password_view.ForgotPasswordView",
+        "label": "Recuperar contraseña",
+        "icon": ft.Icons.LOCK_RESET,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
+    {
+        "path": "/reset-password",
+        "view": "views.pages.reset_password_view.ResetPasswordView",
+        "label": "Resetear contraseña",
+        "icon": ft.Icons.PASSWORD,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
+    {
         "path": "/",
         "view": "views.pages.dashboard_view.DashboardView",
         "label": "📊 Dashboard",
