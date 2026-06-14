@@ -160,7 +160,8 @@ class ExpenseTable(Base):
 
     # Compra en cuotas
     installment_purchase_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("installment_purchases.id", ondelete="SET NULL"),
+        Integer,
+        ForeignKey("installment_purchases.id", ondelete="SET NULL"),
         nullable=True,
     )
 
@@ -263,9 +264,7 @@ class InstallmentPaymentTable(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
-    __table_args__ = (
-        Index("idx_payments_purchase", "installment_purchase_id"),
-    )
+    __table_args__ = (Index("idx_payments_purchase", "installment_purchase_id"),)
 
 
 class AiUsageTable(Base):
@@ -289,4 +288,24 @@ class AiUsageTable(Base):
     __table_args__ = (
         Index("idx_ai_usage_lookup", "familia_id", "date"),
         UniqueConstraint("familia_id", "date", "model", name="uq_ai_usage_daily"),
+    )
+
+
+class PasswordResetTokensTable(Base):
+    """Tabla de tokens para reseteo de contraseña"""
+
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False
+    )
+    token: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index("idx_password_reset_tokens_token", "token"),
+        Index("idx_password_reset_tokens_user_id", "user_id"),
     )

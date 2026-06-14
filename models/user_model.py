@@ -15,6 +15,9 @@ class User(BaseModel):
     username: str = Field(
         min_length=3, max_length=50, description="Nombre de usuario único"
     )
+    email: str | None = Field(
+        default=None, max_length=100, description="Email del usuario"
+    )
     password_hash: str = Field(description="Hash de la contraseña")
     nombre_completo: str | None = Field(
         default=None, max_length=100, description="Nombre completo del usuario"
@@ -39,5 +42,8 @@ class UserCreate(BaseModel):
 
     familia_id: int = Field(gt=0, description="ID de la familia")
     username: str = Field(min_length=3, max_length=50)
+    email: str | None = Field(
+        default=None, max_length=100, description="Email del usuario"
+    )
     password: str = Field(min_length=6, description="Contraseña en texto plano")
     nombre_completo: str | None = None

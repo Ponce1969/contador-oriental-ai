@@ -39,9 +39,9 @@ class UserRepository:
         def _query(session):
             result = session.execute(
                 text("""
-                    SELECT 
+                    SELECT
                         id, familia_id, username, password_hash,
-                        nombre_completo, activo, created_at, last_login
+                        nombre_completo, activo, email, created_at, last_login
                     FROM usuarios
                     WHERE username = :username
                 """),
@@ -59,8 +59,9 @@ class UserRepository:
                 password_hash=row[3],
                 nombre_completo=row[4],
                 activo=row[5],
-                created_at=row[6],
-                last_login=row[7],
+                email=row[6],
+                created_at=row[7],
+                last_login=row[8],
             )
             return Ok(user)
 
@@ -77,7 +78,7 @@ class UserRepository:
                 text("""
                     SELECT
                         id, familia_id, username, password_hash,
-                        nombre_completo, activo, created_at, last_login
+                        nombre_completo, activo, email, created_at, last_login
                     FROM usuarios
                     WHERE id = :user_id
                 """),
@@ -97,8 +98,9 @@ class UserRepository:
                 password_hash=row[3],
                 nombre_completo=row[4],
                 activo=bool(row[5]),
-                created_at=row[6],
-                last_login=row[7],
+                email=row[6],
+                created_at=row[7],
+                last_login=row[8],
             )
             return Ok(user)
 
@@ -106,6 +108,45 @@ class UserRepository:
             return self._use_session(_query)
         except Exception as e:
             return Err(DatabaseError(message=f"Error al buscar usuario: {str(e)}"))
+
+    def get_by_email(self, email: str) -> Result[User, DatabaseError]:
+        """Obtener usuario por email"""
+
+        def _query(session):
+            result = session.execute(
+                text("""
+                    SELECT
+                        id, familia_id, username, password_hash,
+                        nombre_completo, activo, email, created_at, last_login
+                    FROM usuarios
+                    WHERE email = :email
+                """),
+                {"email": email},
+            )
+            row = result.fetchone()
+            if not row:
+                return Err(
+                    DatabaseError(message=f"Usuario con email {email} no encontrado")
+                )
+            user = User(
+                id=row[0],
+                familia_id=row[1],
+                username=row[2],
+                password_hash=row[3],
+                nombre_completo=row[4],
+                activo=bool(row[5]),
+                email=row[6],
+                created_at=row[7],
+                last_login=row[8],
+            )
+            return Ok(user)
+
+        try:
+            return self._use_session(_query)
+        except Exception as e:
+            return Err(
+                DatabaseError(message=f"Error al buscar usuario por email: {str(e)}")
+            )
 
     def add(self, user: User) -> Result[User, DatabaseError]:
         """Crear nuevo usuario"""
@@ -196,7 +237,7 @@ class UserRepository:
                 text("""
                     SELECT
                         id, familia_id, username, password_hash,
-                        nombre_completo, activo, created_at, last_login
+                        nombre_completo, activo, email, created_at, last_login
                     FROM usuarios
                     WHERE familia_id = :familia_id
                     ORDER BY username
@@ -213,8 +254,9 @@ class UserRepository:
                     password_hash=row[3],
                     nombre_completo=row[4],
                     activo=bool(row[5]),
-                    created_at=row[6],
-                    last_login=row[7],
+                    email=row[6],
+                    created_at=row[7],
+                    last_login=row[8],
                 )
                 users.append(user)
 
