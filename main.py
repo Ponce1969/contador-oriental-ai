@@ -160,10 +160,18 @@ async def main(page: ft.Page):
         AppState.device = get_device_type(page.width or 1280)
 
         # Verificar si hay sesión activa
+        # Si la URL es /reset-password o /forgot-password, respetar la ruta
+        # (el usuario no necesita sesión para recuperar contraseña)
+        current_url = page.route or "/login"
+        public_routes = ["/forgot-password", "/reset-password", "/register"]
+
         if SessionManager.is_logged_in(page):
             # Usuario logueado - mostrar banner y dashboard
             page.banner.open = True  # type: ignore
             router.navigate("/")
+        elif current_url in public_routes:
+            # Rutas públicas sin login (forgot-password, reset-password, register)
+            router.navigate(current_url)
         else:
             # No hay sesión - ir a login
             router.navigate("/login")
