@@ -51,8 +51,32 @@ class ResetPasswordView:
     def render(self):
         # Extract token from URL query params
         # Flet stores query params in page.query_params
+        # Try multiple ways to get the token since Flet web handling varies
+        self.token = None
+        
+        # Method 1: page.query_params (Flet 0.84+)
         if hasattr(self.page, "query_params") and self.page.query_params:
             self.token = self.page.query_params.get("token")
+        
+        # Method 2: parse from page.route if it contains query string
+        route = getattr(self.page, "route", "")
+        if not self.token and route and "?" in route:
+            from urllib.parse import parse_qs, urlparse
+
+            parsed = urlparse(route)
+            params = parse_qs(parsed.query)
+            if "token" in params:
+                self.token = params["token"][0]
+
+        # Method 3: parse from the full URL
+        url = getattr(self.page, "url", "")
+        if not self.token and url:
+            from urllib.parse import parse_qs, urlparse
+
+            parsed = urlparse(url)
+            params = parse_qs(parsed.query)
+            if "token" in params:
+                self.token = params["token"][0]
 
         if not self.token:
             return ft.Container(
