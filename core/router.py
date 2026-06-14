@@ -37,7 +37,7 @@ class Router:
         self.page.controls.clear()
 
         try:
-            view = routes[route](self.page, self)
+            view = routes[clean_route](self.page, self)
             self.page.add(view)
         except Exception:
             logger.exception("Error rendering view")
