@@ -7,6 +7,7 @@ Sistema de gestión financiera familiar con **Python 3.12 + Flet + PostgreSQL + 
 ## 🚀 Funcionalidades
 
 - **🔐 Autenticación** — Login y registro de familias (hash Argon2id), multi-tenant completo
+- **🔑 Recuperación de contraseña** — Reset por email con Resend, tokens de un solo uso con expiración de 1 hora, protección contra enumeración de emails
 - **👨‍👩‍👧‍👦 Familia** — Personas (parentesco, edad, estado laboral) y mascotas
 - **💰 Ingresos** — Por miembro, múltiples tipos (sueldo, jubilación, freelance, etc.)
 - **💳 Gastos** — Categorías uruguayas, métodos de pago, recurrencia
@@ -175,7 +176,8 @@ git clone
 | Tabla | Descripción |
 |---|---|
 | `familias` | Multi-tenant principal |
-| `usuarios` | Login y autenticación |
+| `usuarios` | Login y autenticación (incluye `email` para recovery) |
+| `password_reset_tokens` | Tokens de reseteo de contraseña (1hs TTL, un solo uso) |
 | `family_members` | Miembros de la familia (personas y mascotas) |
 | `incomes` | Ingresos por miembro |
 | `expenses` | Gastos + columna `embedding vector(768)` para búsqueda semántica |
@@ -349,6 +351,11 @@ MEMORY_SERVICE_ENABLED=true
 
 # Puertos
 APP_PORT=8550
+
+# Recuperación de contraseña (Resend)
+RESEND_API_KEY=re_xxxxx           # API key de Resend (https://resend.com)
+RESEND_FROM_EMAIL=app4@loquinto.com  # Email verificado en Resend
+APP_BASE_URL=https://app4.loquinto.com  # URL pública de la app (para generar link de reset)
 ```
 
 ---
@@ -641,6 +648,18 @@ ocr_sessions(
 ### Limitación conocida de Flet 0.82 web
 
 `ft.FilePicker`, `ft.UrlLauncher` y `page.launch_url()` son `Service` controls que dependen de un listener JS que **no se registra correctamente en Flet 0.82 web**. Se usa `ft.TextSpan(url=...)` como alternativa que sí funciona.
+
+### ⚠️ Flet Web y deep links (query params)
+
+Flet Web maneja las URLs de forma diferente a frameworks web tradicionales. Tres gotchas importantes:
+
+1. **`page.route` incluye query params**: Cuando un usuario navega a `/reset-password?token=abc`, `page.route` llega como `/reset-password?token=abc` (no solo `/reset-password`). El Router debe hacer `route.split("?")[0]` antes de buscar en el diccionario de rutas.
+
+2. **`QueryString.get()` lanza `KeyError`**: A diferencia de `dict.get(key)` que devuelve `None`, `page.query.get(key)` lanza `KeyError` si la key no existe. Además, `page.query` puede no estar poblado en el primer render de la sesión. Usar `try/except` y fallbacks que parseen `page.route` y `page.url`.
+
+3. **`page.on_route_change` es obligatorio**: Para que los deep links funcionen en Flet Web, hay que registrar `page.on_route_change` y llamar a la lógica de navegación desde ahí, no solo en `main()`.
+
+Ver `core/router.py` (`_strip_query`), `main.py` (`_navigate_to_route`, `on_route_change`) y `views/pages/reset_password_view.py` (3 métodos de extracción de token) para la implementación de referencia.
 
 ### Archivos relevantes
 
