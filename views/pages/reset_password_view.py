@@ -50,22 +50,37 @@ class ResetPasswordView:
 
     def render(self):
         # Extract token from URL query params
-        # Flet 0.81+ uses page.query (QueryString) for query parameters
+        # Flet Web may not populate page.query on initial render,
+        # so we try multiple methods with proper error handling.
         self.token = None
 
-        # Method 1: page.query (correct Flet 0.81+ API)
-        if hasattr(self.page, "query") and self.page.query:
-            token_value = self.page.query.get("token")
-            if token_value:
-                self.token = token_value
+        # Method 1: page.query (QueryString) — may be empty on first render
+        try:
+            if hasattr(self.page, "query") and self.page.query:
+                token_value = self.page.query.get("token")
+                if token_value:
+                    self.token = token_value
+        except (KeyError, TypeError, AttributeError):
+            pass  # Query not populated yet, try other methods
 
-        # Method 2: parse from page.route if it contains query string
+        # Method 2: parse from page.route (may include ?token=... on initial load)
         if not self.token:
             route = getattr(self.page, "route", "")
             if route and "?" in route:
                 from urllib.parse import parse_qs, urlparse
 
                 parsed = urlparse(route)
+                params = parse_qs(parsed.query)
+                if "token" in params:
+                    self.token = params["token"][0]
+
+        # Method 3: parse from page.url (full browser URL)
+        if not self.token:
+            url = getattr(self.page, "url", "")
+            if url and "?" in url:
+                from urllib.parse import parse_qs, urlparse
+
+                parsed = urlparse(url)
                 params = parse_qs(parsed.query)
                 if "token" in params:
                     self.token = params["token"][0]
