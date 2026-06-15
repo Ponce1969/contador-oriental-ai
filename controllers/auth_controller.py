@@ -3,7 +3,7 @@ Controlador de autenticación - Manejo de login y usuarios
 """
 
 import flet as ft
-from result import Err, Result
+from result import Err, Ok, Result
 
 from models.errors import AppError, DatabaseError, ValidationError
 from models.user_model import User, UserLogin
@@ -52,3 +52,21 @@ class AuthController:
     def reset_password(self, token: str, new_password: str) -> Result[None, AppError]:
         """Reset password using token"""
         return self._auth_service.reset_password(token, new_password)
+
+    def update_email(self, user_id: int, email: str | None) -> Result[str, AppError]:
+        """Update email for current user. None removes the email."""
+        if email is not None:
+            email = email.lower().strip()
+            if email and "@" not in email:
+                return Err(AppError(message="Ingresá un email válido"))
+
+        email_value = email if email else None
+        result = self._user_repo.update_email(user_id, email_value)
+
+        if result.is_ok():
+            if email_value:
+                return Ok("Email actualizado correctamente")
+            return Ok("Email eliminado")
+        else:
+            error = result.err_value
+            return Err(AppError(message=error.message))
