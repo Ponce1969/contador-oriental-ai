@@ -43,3 +43,4 @@ uv run fleting db seed
 - See [IMPLEMENTATION_SPEC.md](AGENTS/IMPLEMENTATION_SPEC.md) for OCR ticket upload flow
 - See [ARCHITECTURE_SPEC.md](AGENTS/ARCHITECTURE_SPEC.md) for database schema
 - See [INSTALLMENT_EXPENSES_SPEC.md](AGENTS/INSTALLMENT_EXPENSES_SPEC.md) for installment tracking implementation
+- See [Flet Knowledge Base](skills/flet-knowledge-base/SKILL.md) for Flet Web routing gotchas, query params, and deep-link patterns
