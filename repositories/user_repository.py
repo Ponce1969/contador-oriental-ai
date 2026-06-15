@@ -229,6 +229,35 @@ class UserRepository:
                 DatabaseError(message=f"Error al actualizar contraseña: {str(e)}")
             )
 
+    def update_email(
+        self, user_id: int, email: str | None
+    ) -> Result[None, DatabaseError]:
+        """Actualizar email de usuario. Pasar None para eliminar."""
+
+        def _query(session):
+            session.execute(
+                text("""
+                    UPDATE usuarios
+                    SET email = :email
+                    WHERE id = :user_id
+                """),
+                {"user_id": user_id, "email": email},
+            )
+            return Ok(None)
+
+        try:
+            return self._use_session(_query)
+        except Exception as e:
+            # Handle UNIQUE constraint violation for email
+            error_msg = str(e).lower()
+            if "unique" in error_msg and "email" in error_msg:
+                return Err(
+                    DatabaseError(
+                        message="Ese email ya está registrado por otro usuario"
+                    )
+                )
+            return Err(DatabaseError(message=f"Error al actualizar email: {str(e)}"))
+
     def get_by_familia(self, familia_id: int) -> Result[list[User], DatabaseError]:
         """Obtener todos los usuarios de una familia"""
 
