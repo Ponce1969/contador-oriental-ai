@@ -214,7 +214,7 @@ class AuthService:
 
             if token_result.is_ok():
                 # Send email
-                base_url = os.getenv("APP_BASE_URL", "http://localhost:8550")
+                base_url = os.environ["APP_BASE_URL"]
                 reset_url = f"{base_url}/reset-password?token={token}"
 
                 email_result = self._get_email_service().send_password_reset(
