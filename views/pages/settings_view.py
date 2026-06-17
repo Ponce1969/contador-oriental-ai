@@ -79,6 +79,13 @@ class SettingsView:
         if result.is_ok():
             self._current_email = email_value or ""
             self._show_email_status(result.ok_value, error=False)
+            # Dismiss email banner in session since user now has email
+            if email_value:
+                from core.session import _sessions
+
+                session_id = self.page.session.id
+                if session_id in _sessions:
+                    _sessions[session_id]["email_banner_dismissed"] = True
         else:
             self._show_email_status(result.err_value.message, error=True)
 

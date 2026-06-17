@@ -10,16 +10,18 @@ from controllers.exchange_rate_controller import ExchangeRateController
 from core.i18n import I18n
 from core.session import SessionManager
 from core.state import AppState
+from repositories.user_repository import UserRepository
 from services.infrastructure.formatters import format_cotizacion
 
 
 @dataclass(frozen=True)
 class WhatsAppConfig:
     """Configuración inmutable para contacto WhatsApp."""
+
     phone_number: str
     default_message: str
     country_code: str = "598"  # Uruguay
-    
+
     @property
     def formatted_number(self) -> str:
         """Retorna número con código de país sin +."""
@@ -28,7 +30,7 @@ class WhatsAppConfig:
         if not clean.startswith(self.country_code):
             clean = f"{self.country_code}{clean}"
         return clean
-    
+
     def build_url(self, custom_message: str | None = None) -> str:
         """Construye URL de WhatsApp con mensaje codificado."""
         message = custom_message or self.default_message
@@ -38,6 +40,7 @@ class WhatsAppConfig:
 
 class PageNavigator(Protocol):
     """Protocolo para navegación de página."""
+
     def launch_url(self, url: str, web_window_name: str | None = None) -> None: ...
     def open_dialog(self, dialog: ft.AlertDialog) -> None: ...
     def close_dialog(self, dialog: ft.AlertDialog) -> None: ...
@@ -45,15 +48,15 @@ class PageNavigator(Protocol):
 
 class WhatsAppContactHandler:
     """Handler simple y directo para contacto WhatsApp."""
-    
+
     WHATSAPP_CONFIG: Final[WhatsAppConfig] = WhatsAppConfig(
         phone_number="99171819",
         default_message="Hola, necesito ayuda con Contador Oriental AI",
     )
-    
+
     def __init__(self, page: ft.Page) -> None:
         self._page: ft.Page = page
-    
+
     def _show_snackbar(self, message: str, color: str, duration: int = 3000) -> None:
         """Muestra snackbar simple."""
         snackbar = ft.SnackBar(
@@ -64,18 +67,20 @@ class WhatsAppContactHandler:
         self._page.snack_bar = snackbar
         self._page.snack_bar.open = True
         self._page.update()
-    
+
     async def open_whatsapp(self, custom_message: str | None = None) -> None:
         """Abre WhatsApp de forma simple y directa."""
         url = self.WHATSAPP_CONFIG.build_url(custom_message)
-        
+
         try:
             # Intentar abrir directamente (launch_url es async)
             await self._page.launch_url(url)
             self._show_snackbar("Abriendo WhatsApp...", ft.Colors.GREEN_400)
         except Exception:
             # Si falla, mostrar URL para copiar manualmente
-            self._show_snackbar(f"Abre manualmente: {url}", ft.Colors.BLUE_400, duration=8000)
+            self._show_snackbar(
+                f"Abre manualmente: {url}", ft.Colors.BLUE_400, duration=8000
+            )
 
 
 class MainLayout(ft.Column):
@@ -85,8 +90,19 @@ class MainLayout(ft.Column):
         self._router = router
         self._content = content
         self._whatsapp_handler = WhatsAppContactHandler(page)
-        
+
         self._build()
+
+    def _user_needs_email_banner(self) -> bool:
+        """Check if current user is logged in but has no email registered."""
+        user_id = SessionManager.get_user_id(self._page)
+        if not user_id:
+            return False
+        user_result = UserRepository().get_by_id(user_id)
+        if user_result.is_err():
+            return False
+        email = user_result.ok_value.email
+        return not email  # Show banner if email is None or empty
 
     @property
     def _is_mobile(self) -> bool:
@@ -101,6 +117,16 @@ class MainLayout(ft.Column):
 
         # TOP BAR
         self.controls.append(self._top_bar())
+
+        # EMAIL BANNER — security reminder for users without email
+        from core.session import _sessions
+
+        session_id = self._page.session.id
+        session_data = _sessions.get(session_id, {})
+        if not session_data.get("email_banner_dismissed"):
+            banner = self._email_banner()
+            if banner is not None:
+                self.controls.append(banner)
 
         # EXCHANGE RATE BADGE
         badge = self._exchange_rate_badge()
@@ -125,6 +151,61 @@ class MainLayout(ft.Column):
             self.controls.append(self._bottom_bar())
 
     # ---------- EXCHANGE RATE BADGE ----------
+    def _email_banner(self) -> ft.Control | None:
+        """Banner for users without email — security reminder to add email for password recovery."""
+        if not self._user_needs_email_banner():
+            return None
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.LOCK_OUTLINE, size=18, color=ft.Colors.AMBER_700),
+                    ft.Text(
+                        "Para tu seguridad: agregá tu email en Configuración "
+                        "para poder recuperar tu contraseña si la olvidás.",
+                        size=13,
+                        color=ft.Colors.AMBER_900,
+                        expand=True,
+                    ),
+                    ft.TextButton(
+                        text="Ir a Configuración",
+                        on_click=lambda e: self._router.navigate("/settings"),
+                        style=ft.ButtonStyle(
+                            color=ft.Colors.BLUE_700,
+                            textStyle=ft.TextStyle(size=12, weight=ft.FontWeight.W_600),
+                        ),
+                    ),
+                    ft.IconButton(
+                        icon=ft.Icons.CLOSE,
+                        icon_size=16,
+                        on_click=self._dismiss_email_banner,
+                        tooltip="Recordarme más tarde",
+                    ),
+                ],
+                spacing=8,
+                alignment=ft.MainAxisAlignment.START,
+            ),
+            bgcolor=ft.Colors.AMBER_50,
+            border=ft.border.all(1, ft.Colors.AMBER_200),
+            border_radius=6,
+            padding=ft.Padding(left=12, right=4, top=6, bottom=6),
+            margin=ft.margin.only(left=8, right=8, top=4, bottom=0),
+        )
+
+    def _dismiss_email_banner(self, e: ft.ControlEvent) -> None:
+        """Hide the email banner for this session."""
+        from core.session import _sessions
+
+        session_id = self._page.session.id
+        if session_id in _sessions:
+            _sessions[session_id]["email_banner_dismissed"] = True
+        # Remove banner from controls and refresh
+        if len(self.controls) > 1:
+            banner = self.controls[1]
+            if isinstance(banner, ft.Container) and hasattr(banner, "bgcolor") and banner.bgcolor == ft.Colors.AMBER_50:
+                self.controls.pop(1)
+        self.update()
+
     def _exchange_rate_badge(self) -> ft.Control | None:
         """Badge con cotización USD/UYU del día. None si no hay datos.
         Defensivo: si falla cualquier cosa, no rompe la app.
@@ -220,11 +301,7 @@ class MainLayout(ft.Column):
         return ft.AppBar(
             title=ft.Text(I18n.t("app.name")),
             actions=[
-                ft.Text(
-                    f"👤 {username}", 
-                    size=14, 
-                    color=ft.Colors.ON_SURFACE_VARIANT
-                ),
+                ft.Text(f"👤 {username}", size=14, color=ft.Colors.ON_SURFACE_VARIANT),
                 # Botón de contacto WhatsApp mejorado
                 ft.IconButton(
                     icon=ft.Icons.MESSAGE,  # Icono más específico
@@ -268,8 +345,8 @@ class MainLayout(ft.Column):
             self._router.navigate(paths[selected_index])
 
         current_index = (
-            paths.index(AppState.current_route) 
-            if AppState.current_route in paths 
+            paths.index(AppState.current_route)
+            if AppState.current_route in paths
             else 0
         )
 
