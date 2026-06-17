@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import tempfile
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, timedelta
+from html import escape as html_escape
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -96,10 +98,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[os.getenv("OCR_ALLOWED_ORIGIN", "http://app:8550")],
+    allow_credentials=False,
+    allow_methods=["POST"],
+    allow_headers=["Content-Type"],
 )
 
 
@@ -222,6 +224,9 @@ async def health() -> HealthResponse:
 @app.get("/upload-form", response_class=HTMLResponse)
 async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
     """Formulario HTML nativo para subir ticket — no depende de FilePicker."""
+    # Escape all user-controlled parameters to prevent XSS
+    safe_session_id = html_escape(session_id, quote=True)
+    safe_familia_id = html_escape(str(familia_id), quote=True)
     html = f"""
 <!DOCTYPE html>
 <html lang="es">
@@ -294,8 +299,8 @@ async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
     <p>Seleccioná la foto del ticket para extraer monto, fecha y comercio.</p>
 
     <form id="form" enctype="multipart/form-data">
-      <input type="hidden" name="session_id" value="{session_id}">
-      <input type="hidden" name="familia_id" value="{familia_id}">
+      <input type="hidden" name="session_id" value="{safe_session_id}">
+      <input type="hidden" name="familia_id" value="{safe_familia_id}">
       <input type="file" id="fileInput" name="file" accept="image/*">
 
       <div class="upload-area" onclick="document.getElementById('fileInput').click()">

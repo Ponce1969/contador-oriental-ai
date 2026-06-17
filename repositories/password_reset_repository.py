@@ -60,7 +60,7 @@ class PasswordResetRepository:
         try:
             return self._use_session(_query)
         except Exception as e:
-            return Err(DatabaseError(message=f"Error al crear token: {str(e)}"))
+            return Err(DatabaseError(message="Error al crear token de reseteo"))
 
     def find_valid_token(
         self, token: str
@@ -95,7 +95,50 @@ class PasswordResetRepository:
         try:
             return self._use_session(_query)
         except Exception as e:
-            return Err(DatabaseError(message=f"Error al buscar token: {str(e)}"))
+            return Err(DatabaseError(message="Error al buscar token"))
+
+    def claim_token(
+        self, token: str
+    ) -> Result[PasswordResetToken | None, DatabaseError]:
+        """Atomically find and mark a token as used in a single operation.
+
+        Uses UPDATE ... RETURNING to eliminate the TOCTOU race condition between
+        find_valid_token (SELECT) and mark_used (UPDATE). If this returns a row,
+        the caller owns the token — no concurrent request can claim it.
+        If it returns None, the token was already used or expired.
+        """
+
+        def _query(session):
+            result = session.execute(
+                text("""
+                    UPDATE password_reset_tokens
+                    SET used_at = CURRENT_TIMESTAMP
+                    WHERE token = :token
+                    AND used_at IS NULL
+                    AND expires_at > CURRENT_TIMESTAMP
+                    RETURNING id, user_id, token, expires_at, used_at, created_at
+                """),
+                {"token": token},
+            )
+            row = result.fetchone()
+            if not row:
+                return Ok(None)
+            session.commit()
+            return Ok(
+                PasswordResetToken(
+                    id=row[0],
+                    user_id=row[1],
+                    token=row[2],
+                    expires_at=row[3],
+                    used_at=row[4],
+                    created_at=row[5],
+                )
+            )
+
+        try:
+            return self._use_session(_query)
+        except Exception as e:
+            return Err(DatabaseError(message="Error al reclamar token"))
 
     def mark_used(self, token_id: int) -> Result[None, DatabaseError]:
         """Marcar token como usado"""
@@ -115,5 +158,5 @@ class PasswordResetRepository:
             return self._use_session(_query)
         except Exception as e:
             return Err(
-                DatabaseError(message=f"Error al marcar token como usado: {str(e)}")
+                DatabaseError(message="Error al marcar token como usado")
             )

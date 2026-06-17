@@ -240,7 +240,7 @@ class AuthService:
         return Ok(msg)
 
     def reset_password(self, token: str, new_password: str) -> Result[None, AppError]:
-        """Reset password using a valid token"""
+        """Reset password using a valid token — atomic claim prevents TOCTOU race."""
 
         # Validate new password length
         if len(new_password) < 6:
@@ -250,12 +250,13 @@ class AuthService:
                 )
             )
 
-        # Find valid token
-        token_result = self._reset_repo.find_valid_token(token)
-        if token_result.is_err():
-            return Err(AppError(message="Error al buscar token"))
+        # Atomically find and claim the token (UPDATE ... RETURNING)
+        # This eliminates the race condition between find_valid_token and mark_used
+        claim_result = self._reset_repo.claim_token(token)
+        if claim_result.is_err():
+            return Err(AppError(message="Error al procesar token"))
 
-        reset_token = token_result.ok_value
+        reset_token = claim_result.ok_value
         if reset_token is None:
             return Err(
                 ValidationError(message="Link inválido o expirado. Solicitá uno nuevo.")
@@ -267,9 +268,6 @@ class AuthService:
 
         if password_result.is_err():
             return Err(AppError(message="Error al actualizar contraseña"))
-
-        # Mark token as used
-        self._reset_repo.mark_used(reset_token.id)
 
         # Register success in rate limiter (clear any reset rate limit)
         user_result = self._user_repo.get_by_id(reset_token.user_id)
