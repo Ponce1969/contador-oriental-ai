@@ -170,10 +170,7 @@ class MainLayout(ft.Column):
                     ft.TextButton(
                         text="Ir a Configuración",
                         on_click=lambda e: self._router.navigate("/settings"),
-                        style=ft.ButtonStyle(
-                            color=ft.Colors.BLUE_700,
-                            textStyle=ft.TextStyle(size=12, weight=ft.FontWeight.W_600),
-                        ),
+                        style=ft.ButtonStyle(color=ft.Colors.BLUE_700),
                     ),
                     ft.IconButton(
                         icon=ft.Icons.CLOSE,
