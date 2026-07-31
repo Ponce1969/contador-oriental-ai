@@ -240,7 +240,7 @@ class HistoryView:
                 ),
             ]
 
-            max_cat = data.top_categorias[0][1] if data.top_categorias else Decimal("1")
+            max_cat = data.top_categorias[0][2] if data.top_categorias else Decimal("1")
             if max_cat == Decimal("0"):
                 max_cat = Decimal("1")
 
