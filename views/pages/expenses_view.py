@@ -624,8 +624,8 @@ class ExpensesView:
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 )
 
-                # Fila de acciones (solo visible en móviles xs)
-                actions_row_xs = ft.Container(
+                # Fila de acciones (editar/borrar)
+                actions_row = ft.Container(
                     content=ft.Row(
                         controls=[
                             ft.IconButton(
@@ -648,42 +648,13 @@ class ExpensesView:
                         alignment=ft.MainAxisAlignment.END,
                         spacing=0,
                     ),
-                    visible=True,  # Visible en xs
-                    col={"xs": 12, "sm": 0},  # Solo en xs
-                )
-
-                # Botones de acción (solo visibles en desktop sm+)
-                actions_col_sm = ft.Container(
-                    content=ft.Row(
-                        controls=[
-                            ft.IconButton(
-                                icon=ft.Icons.EDIT,
-                                icon_color=ft.Colors.BLUE,
-                                tooltip="Editar gasto",
-                                on_click=lambda e, exp=expense: self._on_edit_expense(
-                                    exp
-                                ),
-                            ),
-                            ft.IconButton(
-                                icon=ft.Icons.DELETE,
-                                icon_color=ft.Colors.RED,
-                                tooltip="Eliminar gasto",
-                                on_click=lambda e, exp=expense: self._on_delete_expense(
-                                    exp
-                                ),
-                            ),
-                        ],
-                        alignment=ft.MainAxisAlignment.END,
-                        spacing=0,
-                    ),
-                    visible=True,  # Visible en sm+
-                    col={"xs": 0, "sm": 12},  # Solo en sm+
+                    col={"xs": 12, "sm": 3},
                 )
 
                 self.expenses_column.controls.append(
                     ft.Container(
-                        content=ft.Column(
-                            controls=[main_row, actions_row_xs, actions_col_sm],
+                        content=ft.ResponsiveRow(
+                            controls=[main_row, actions_row],
                             spacing=0,
                         ),
                         padding=10,
