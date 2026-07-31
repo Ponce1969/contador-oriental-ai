@@ -1,6 +1,7 @@
 """
 Modelo de dominio para tracking de uso de IA
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime

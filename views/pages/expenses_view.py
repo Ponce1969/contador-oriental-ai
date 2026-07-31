@@ -1,6 +1,7 @@
 """
 Vista para gestión de gastos familiares
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -56,6 +57,16 @@ class ExpensesView:
             hint_text="0.00",
             expand=True,
             keyboard_type=ft.KeyboardType.NUMBER,
+        )
+
+        self.currency_dropdown = ft.Dropdown(
+            label="Moneda",
+            expand=True,
+            value="UYU",
+            options=[
+                ft.dropdown.Option("UYU", "Pesos Uruguayos ($)"),
+                ft.dropdown.Option("USD", "Dólares (USD)"),
+            ],
         )
 
         self.categoria_dropdown = ft.Dropdown(
@@ -246,6 +257,16 @@ class ExpensesView:
                                 spacing=10,
                                 run_spacing=10,
                             ),
+                            ft.ResponsiveRow(
+                                controls=[
+                                    ft.Container(
+                                        content=self.currency_dropdown,
+                                        col=Responsive.COL_HALF,
+                                    ),
+                                ],
+                                spacing=10,
+                                run_spacing=10,
+                            ),
                             self._cuotas_container,
                             CorrectElevatedButton(
                                 "💾 Guardar gasto",
@@ -314,8 +335,18 @@ class ExpensesView:
     def _generar_meses_inicio(self) -> list[ft.dropdown.Option]:
         """Generar meses dinámicos desde el mes actual hasta 12 meses adelante"""
         meses = [
-            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-            "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre",
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Setiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
         ]
         hoy = date.today()
         options = []
@@ -348,6 +379,7 @@ class ExpensesView:
         if self.monto_input.value and self.cuotas_dropdown.value:
             try:
                 from decimal import ROUND_DOWN as _RD
+
                 total = Decimal(self.monto_input.value)
                 cuotas = int(self.cuotas_dropdown.value)
                 monto_cuota = (total / cuotas).quantize(Decimal("1"), rounding=_RD)
@@ -377,8 +409,7 @@ class ExpensesView:
                 return
             contado = Decimal(self.monto_input.value)
             cuotas = (
-                int(self.cuotas_dropdown.value)
-                if self.cuotas_dropdown.value else 1
+                int(self.cuotas_dropdown.value) if self.cuotas_dropdown.value else 1
             )
             monto_cuota = Decimal(self.monto_cuota_input.value)
             financiado = monto_cuota * cuotas
@@ -407,8 +438,7 @@ class ExpensesView:
     def _on_metodo_pago_change(self, e: ft.ControlEvent) -> None:
         """Mostrar/ocultar campos de cuotas cuando se selecciona tarjeta de crédito"""
         is_credit = (
-            self.metodo_pago_dropdown.value
-            == PaymentMethod.TARJETA_CREDITO.value
+            self.metodo_pago_dropdown.value == PaymentMethod.TARJETA_CREDITO.value
         )
         self._cuotas_container.visible = is_credit
         self.page.update()
@@ -451,6 +481,7 @@ class ExpensesView:
             expense = Expense(
                 id=self.editing_expense_id,
                 monto=Decimal(self.monto_input.value),
+                currency=self.currency_dropdown.value or "UYU",
                 fecha=date.today(),
                 descripcion=self.descripcion_input.value,
                 categoria=selected_cat,
@@ -488,9 +519,7 @@ class ExpensesView:
                             and self.monto_cuota_input.value != ""
                         ):
                             try:
-                                monto_cuota = Decimal(
-                                    self.monto_cuota_input.value
-                                )
+                                monto_cuota = Decimal(self.monto_cuota_input.value)
                             except (ValueError, InvalidOperation):
                                 pass
                         installment_result = (
@@ -504,9 +533,13 @@ class ExpensesView:
                         )
                         if isinstance(installment_result, Ok):
                             installment = installment_result.ok()
+                            cuota_fmt = format_pesos(
+                                installment.monto_por_cuota,
+                                currency=installment.currency,
+                            )
                             mensaje_exito += (
                                 f" (en {installment.numero_cuotas} cuotas "
-                                f"de {format_pesos(installment.monto_por_cuota)} "
+                                f"de {cuota_fmt} "
                                 f"con {installment.nombre_tarjeta})"
                             )
 
@@ -564,7 +597,9 @@ class ExpensesView:
                         ),
                         ft.Container(
                             content=ft.Text(
-                                value=format_pesos(expense.monto),
+                                value=format_pesos(
+                                    expense.monto, currency=expense.currency
+                                ),
                                 size=18,
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.RED_700,
@@ -597,16 +632,16 @@ class ExpensesView:
                                 icon=ft.Icons.EDIT,
                                 icon_color=ft.Colors.BLUE,
                                 tooltip="Editar gasto",
-                                on_click=lambda e, exp=expense: (
-                                    self._on_edit_expense(exp)
+                                on_click=lambda e, exp=expense: self._on_edit_expense(
+                                    exp
                                 ),
                             ),
                             ft.IconButton(
                                 icon=ft.Icons.DELETE,
                                 icon_color=ft.Colors.RED,
                                 tooltip="Eliminar gasto",
-                                on_click=lambda e, exp=expense: (
-                                    self._on_delete_expense(exp)
+                                on_click=lambda e, exp=expense: self._on_delete_expense(
+                                    exp
                                 ),
                             ),
                         ],
@@ -625,16 +660,16 @@ class ExpensesView:
                                 icon=ft.Icons.EDIT,
                                 icon_color=ft.Colors.BLUE,
                                 tooltip="Editar gasto",
-                                on_click=lambda e, exp=expense: (
-                                    self._on_edit_expense(exp)
+                                on_click=lambda e, exp=expense: self._on_edit_expense(
+                                    exp
                                 ),
                             ),
                             ft.IconButton(
                                 icon=ft.Icons.DELETE,
                                 icon_color=ft.Colors.RED,
                                 tooltip="Eliminar gasto",
-                                on_click=lambda e, exp=expense: (
-                                    self._on_delete_expense(exp)
+                                on_click=lambda e, exp=expense: self._on_delete_expense(
+                                    exp
                                 ),
                             ),
                         ],
@@ -660,7 +695,7 @@ class ExpensesView:
         self.page.update()
 
     def _render_summary(self) -> None:
-        """Renderizar resumen por categorías del mes actual"""
+        """Renderizar resumen por categorías del mes actual, separado por moneda."""
         self.summary_column.controls.clear()
         today = date.today()
         summary = self.controller.get_summary_by_categories(
@@ -672,29 +707,73 @@ class ExpensesView:
                 ft.Text(value="No hay datos para mostrar", italic=True)
             )
         else:
-            total = sum(summary.values(), Decimal("0"))
+            # Agrupar por moneda
+            by_currency: dict[str, dict[str, Decimal]] = {}
+            for (categoria, currency), monto in summary.items():
+                by_currency.setdefault(currency, {})[categoria] = monto
 
-            for categoria, monto in sorted(
-                summary.items(), key=lambda x: x[1], reverse=True
-            ):
-                porcentaje = float((monto / total * 100)) if total > 0 else 0.0
+            for currency, cat_summary in by_currency.items():
+                total = sum(cat_summary.values(), Decimal("0"))
 
+                self.summary_column.controls.append(
+                    ft.Text(
+                        value=("Pesos Uruguayos" if currency == "UYU" else "Dólares"),
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.BLUE_GREY_700,
+                    )
+                )
+
+                for categoria, monto in sorted(
+                    cat_summary.items(), key=lambda x: x[1], reverse=True
+                ):
+                    porcentaje = float(monto / total * 100) if total > 0 else 0.0
+                    monto_fmt = format_pesos(monto, currency=currency)
+
+                    self.summary_column.controls.append(
+                        ft.ResponsiveRow(
+                            controls=[
+                                ft.Text(
+                                    value=categoria,
+                                    col={"xs": 5, "sm": 3},
+                                    no_wrap=True,
+                                ),
+                                ft.ProgressBar(
+                                    value=porcentaje / 100,
+                                    col={"xs": 7, "sm": 5},
+                                    color=ft.Colors.BLUE,
+                                    bgcolor=ft.Colors.BLUE_100,
+                                ),
+                                ft.Text(
+                                    value=f"{monto_fmt} ({porcentaje:.1f}%)",
+                                    col={"xs": 12, "sm": 4},
+                                    no_wrap=True,
+                                    text_align=ft.TextAlign.RIGHT,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.START,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        )
+                    )
+
+                # Total por moneda
                 self.summary_column.controls.append(
                     ft.ResponsiveRow(
                         controls=[
                             ft.Text(
-                                value=categoria,
+                                value=f"TOTAL {currency}",
+                                weight=ft.FontWeight.BOLD,
                                 col={"xs": 5, "sm": 3},
-                                no_wrap=True,
-                            ),
-                            ft.ProgressBar(
-                                value=porcentaje / 100,
-                                col={"xs": 7, "sm": 5},
-                                color=ft.Colors.BLUE,
-                                bgcolor=ft.Colors.BLUE_100,
                             ),
                             ft.Text(
-                                value=f"{format_pesos(monto)} ({porcentaje:.1f}%)",
+                                value="",
+                                col={"xs": 7, "sm": 5},
+                            ),
+                            ft.Text(
+                                value=format_pesos(total, currency=currency),
+                                weight=ft.FontWeight.BOLD,
+                                size=18,
+                                color=ft.Colors.RED_700,
                                 col={"xs": 12, "sm": 4},
                                 no_wrap=True,
                                 text_align=ft.TextAlign.RIGHT,
@@ -704,35 +783,7 @@ class ExpensesView:
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     )
                 )
-
-            # Total general
-            self.summary_column.controls.append(ft.Divider())
-            self.summary_column.controls.append(
-                ft.ResponsiveRow(
-                    controls=[
-                        ft.Text(
-                            value="TOTAL",
-                            weight=ft.FontWeight.BOLD,
-                            col={"xs": 5, "sm": 3},
-                        ),
-                        ft.Text(
-                            value="",
-                            col={"xs": 7, "sm": 5},
-                        ),
-                        ft.Text(
-                            value=format_pesos(total),
-                            weight=ft.FontWeight.BOLD,
-                            size=18,
-                            color=ft.Colors.RED_700,
-                            col={"xs": 12, "sm": 4},
-                            no_wrap=True,
-                            text_align=ft.TextAlign.RIGHT,
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.START,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-            )
+                self.summary_column.controls.append(ft.Divider())
 
         self.page.update()
 
@@ -744,11 +795,12 @@ class ExpensesView:
         # Formatear Decimal sin notación científica ni ceros decimales innecesarios
         # Ej: Decimal("1000") -> "1000", Decimal("1500.50") -> "1500.5"
         monto_str = f"{expense.monto:f}"
-        if '.' in monto_str:
-            monto_str = monto_str.rstrip('0').rstrip('.')
+        if "." in monto_str:
+            monto_str = monto_str.rstrip("0").rstrip(".")
         self.monto_input.value = monto_str
         self.categoria_dropdown.value = expense.categoria.value
         self.metodo_pago_dropdown.value = expense.metodo_pago.value
+        self.currency_dropdown.value = expense.currency
         self.page.update()
 
     def _on_delete_expense(self, expense: Expense) -> None:

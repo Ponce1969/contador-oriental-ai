@@ -102,6 +102,9 @@ class IncomeTable(Base):
 
     # Datos básicos del ingreso
     monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default="UYU"
+    )
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     descripcion: Mapped[str] = mapped_column(String(200), nullable=False)
 
@@ -138,6 +141,9 @@ class ExpenseTable(Base):
 
     # Datos básicos del gasto
     monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default="UYU"
+    )
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     descripcion: Mapped[str] = mapped_column(String(200), nullable=False)
 
@@ -200,6 +206,9 @@ class InstallmentPurchaseTable(Base):
 
     nombre_tarjeta: Mapped[str] = mapped_column(String(50), nullable=False)
     monto_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default="UYU"
+    )
     numero_cuotas: Mapped[int] = mapped_column(Integer, nullable=False)
     cuotas_pagadas: Mapped[int] = mapped_column(Integer, default=0)
     monto_por_cuota: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)

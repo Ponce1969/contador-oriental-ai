@@ -2,6 +2,8 @@
 Tests para utils/formatters.py - Formato uruguayo consistente
 """
 
+from decimal import Decimal
+
 import pytest
 
 from utils.formatters import format_currency, format_currency_with_symbol
@@ -174,7 +176,7 @@ class TestFormattersIntegracion:
             (850.75, "Transporte"),  # $ 851 (redondeado)
         ]
 
-        for monto, descripcion in gastos:
+        for monto, _descripcion in gastos:
             formateado = format_currency_with_symbol(monto)
             assert formateado.startswith("$ ")
             assert "." in formateado or len(formateado.split(" ")[1]) <= 4
@@ -188,7 +190,7 @@ class TestFormattersIntegracion:
             (2500, "Horas extras"),  # $ 2.500
         ]
 
-        for monto, descripcion in ingresos:
+        for monto, _descripcion in ingresos:
             formateado = format_currency_with_symbol(monto)
             assert formateado.startswith("$ ")
             # Verificar que no tenga decimales
@@ -212,3 +214,29 @@ class TestFormattersIntegracion:
         balance = total_ingresos - total_gastos
         balance_formateado = format_currency_with_symbol(balance)
         assert balance_formateado == "$ 29.999"  # 75000 - 45001 = 29999
+
+
+class TestFormatCurrencyUSD:
+    """Tests para USD: decimales con centavos y prefijo USD."""
+
+    def test_format_currency_usd_basic(self):
+        """USD sin símbolo: separador de miles y coma decimal."""
+        assert format_currency(Decimal("1250.50"), "USD") == "1.250,50"
+
+    def test_format_currency_usd_small(self):
+        """USD con centavos pequeños."""
+        assert format_currency(Decimal("0.01"), "USD") == "0,01"
+        assert format_currency(Decimal("0.99"), "USD") == "0,99"
+
+    def test_format_currency_usd_large(self):
+        """USD con miles."""
+        assert format_currency(Decimal("1234567.89"), "USD") == "1.234.567,89"
+
+    def test_format_currency_with_symbol_usd(self):
+        """USD con símbolo: prefijo USD y coma decimal."""
+        assert format_currency_with_symbol(Decimal("1250.50"), "USD") == "USD 1.250,50"
+
+    def test_format_currency_with_symbol_usd_consistency(self):
+        """format_currency_with_symbol USD debe agregar prefijo al número base."""
+        base = format_currency(Decimal("9876.54"), "USD")
+        assert format_currency_with_symbol(Decimal("9876.54"), "USD") == f"USD {base}"

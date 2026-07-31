@@ -1,6 +1,7 @@
 """
 Service para gestión de compras en cuotas
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -59,7 +60,8 @@ class InstallmentService:
 
         # Convertir a Decimal para precisión exacta
         monto_total = (
-            expense.monto if isinstance(expense.monto, Decimal)
+            expense.monto
+            if isinstance(expense.monto, Decimal)
             else Decimal(str(expense.monto))
         )
 
@@ -73,6 +75,7 @@ class InstallmentService:
             # Usar ROUND_DOWN para las primeras N-1 cuotas
             # La última se ajusta con el residuo
             from decimal import ROUND_DOWN
+
             monto_cuota = (monto_total / numero_cuotas).quantize(
                 Decimal("1"), rounding=ROUND_DOWN
             )
@@ -96,6 +99,7 @@ class InstallmentService:
             familia_id=expense.familia_id if hasattr(expense, "familia_id") else 0,
             nombre_tarjeta=nombre_tarjeta,
             monto_total=monto_total,
+            currency=expense.currency,
             numero_cuotas=numero_cuotas,
             cuotas_pagadas=0,
             monto_por_cuota=monto_cuota,
@@ -167,8 +171,6 @@ class InstallmentService:
         """Obtener compras con cuotas pendientes"""
         return list(self._purchase_repo.get_pending())
 
-    def get_payment_history(
-        self, purchase_id: int
-    ) -> list[InstallmentPayment]:
+    def get_payment_history(self, purchase_id: int) -> list[InstallmentPayment]:
         """Obtener historial de pagos de una compra"""
         return list(self._payment_repo.get_by_purchase(purchase_id))

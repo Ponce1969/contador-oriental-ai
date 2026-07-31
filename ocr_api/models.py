@@ -48,6 +48,7 @@ class OCRResponse(BaseModel):
     monto: float | None = None
     comercio: str | None = None
     fecha: date | None = None
+    currency: str | None = None
     items: list[str] = Field(default_factory=list)
     categoria_sugerida: str | None = None
     confianza_ocr: float = Field(default=0.0, ge=0.0, le=1.0)

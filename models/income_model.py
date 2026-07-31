@@ -8,7 +8,7 @@ from datetime import date
 from decimal import Decimal
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class IncomeCategory(str, Enum):
@@ -51,7 +51,10 @@ class Income(BaseModel):
     family_member_id: int = Field(description="ID del miembro de la familia")
 
     # Datos básicos del ingreso
-    monto: Decimal = Field(gt=0, description="Monto del ingreso en pesos")
+    monto: Decimal = Field(gt=0, description="Monto del ingreso")
+    currency: str = Field(
+        default="UYU", min_length=3, max_length=3, description="Moneda del ingreso"
+    )
     fecha: date = Field(default_factory=date.today, description="Fecha del ingreso")
     descripcion: str = Field(
         min_length=1, max_length=200, description="Descripción del ingreso"
@@ -73,7 +76,17 @@ class Income(BaseModel):
         default=None, max_length=500, description="Notas adicionales sobre el ingreso"
     )
 
+    @field_validator("currency")
+    @classmethod
+    def _validate_currency(cls, value: str) -> str:
+        value = value.upper()
+        if value not in {"UYU", "USD"}:
+            raise ValueError(f"Moneda no soportada: {value}")
+        return value
+
     def __str__(self) -> str:
+        if self.currency == "USD":
+            return f"{self.categoria.value} - {self.descripcion}: USD {self.monto:.2f}"
         return f"{self.categoria.value} - {self.descripcion}: ${self.monto:.2f}"
 
     @property

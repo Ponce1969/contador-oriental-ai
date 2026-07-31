@@ -18,7 +18,7 @@ from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
 from models.income_model import Income, IncomeCategory, RecurrenceFrequency
-from utils.formatters import format_currency
+from utils.formatters import format_currency_with_symbol
 from views.layouts.main_layout import MainLayout
 
 
@@ -72,6 +72,16 @@ class IncomesView:
             options=[
                 ft.dropdown.Option(key=cat.name, text=cat.value)
                 for cat in IncomeCategory
+            ],
+        )
+
+        self.currency_dropdown = ft.Dropdown(
+            label="Moneda",
+            expand=True,
+            value="UYU",
+            options=[
+                ft.dropdown.Option("UYU", "Pesos Uruguayos ($)"),
+                ft.dropdown.Option("USD", "Dólares (USD)"),
             ],
         )
 
@@ -149,6 +159,10 @@ class IncomesView:
                                     ),
                                     ft.Container(
                                         content=self.fecha_input,
+                                        col=Responsive.COL_HALF,
+                                    ),
+                                    ft.Container(
+                                        content=self.currency_dropdown,
                                         col=Responsive.COL_HALF,
                                     ),
                                 ],
@@ -279,6 +293,7 @@ class IncomesView:
                 id=self.editing_income_id,
                 family_member_id=int(self.member_dropdown.value),
                 monto=monto,
+                currency=self.currency_dropdown.value or "UYU",
                 fecha=fecha,
                 descripcion=self.descripcion_input.value,
                 categoria=categoria,
@@ -330,7 +345,9 @@ class IncomesView:
                         member_name = member.nombre
                         break
 
-                monto_formateado = format_currency(income.monto)
+                monto_formateado = format_currency_with_symbol(
+                    income.monto, currency=income.currency
+                )
                 recurrente_badge = (
                     ft.Container(
                         content=ft.Text(
@@ -376,7 +393,7 @@ class IncomesView:
                                         ft.Text(
                                             value=(
                                                 f"{income.categoria.value} • "
-                                                f"${monto_formateado} • "
+                                                f"{monto_formateado} • "
                                                 f"{income.fecha}"
                                             ),
                                             size=12,
@@ -420,7 +437,7 @@ class IncomesView:
         self.page.update()
 
     def _render_summary(self) -> None:
-        """Renderizar resumen por categorías del mes (recurrentes + no-recurrentes)."""
+        """Renderizar resumen por categorías del mes, separado por moneda."""
         self.summary_column.controls.clear()
         today = date.today()
         summary = self.income_controller.get_summary_by_categories(
@@ -432,58 +449,67 @@ class IncomesView:
                 ft.Text(value="No hay datos para mostrar", italic=True)
             )
         else:
-            total = sum(summary.values(), Decimal("0"))
+            # Agrupar por moneda
+            by_currency: dict[str, dict[str, Decimal]] = {}
+            for (categoria, currency), monto in summary.items():
+                by_currency.setdefault(currency, {})[categoria] = monto
 
-            # Formatear total con separador de miles
-            total_formateado = format_currency(total)
+            for currency, cat_summary in by_currency.items():
+                total = sum(cat_summary.values(), Decimal("0"))
+                total_formateado = format_currency_with_symbol(total, currency=currency)
 
-            # Agregar total general
-            self.summary_column.controls.append(
-                ft.Text(
-                    value=f"💰 Total de ingresos: ${total_formateado}",
-                    size=18,
-                    weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.GREEN,
-                )
-            )
-
-            self.summary_column.controls.append(ft.Divider())
-
-            # Ordenar por monto descendente
-            sorted_summary = sorted(summary.items(), key=lambda x: x[1], reverse=True)
-
-            for categoria, monto in sorted_summary:
-                porcentaje = float(monto / total * 100) if total > 0 else 0.0
-
-                # Formatear monto con separador de miles
-                monto_formateado = format_currency(monto)
-
+                # Agregar total por moneda
                 self.summary_column.controls.append(
-                    ft.Column(
-                        controls=[
-                            ft.Row(
-                                controls=[
-                                    ft.Text(
-                                        value=categoria,
-                                        weight=ft.FontWeight.BOLD,
-                                        expand=True,
-                                    ),
-                                    ft.Text(
-                                        value=(
-                                            f"${monto_formateado} ({porcentaje:.1f}%)"
-                                        )
-                                    ),
-                                ],
-                            ),
-                            ft.ProgressBar(
-                                value=porcentaje / 100,
-                                color=ft.Colors.GREEN,
-                                bgcolor=ft.Colors.GREEN_100,
-                            ),
-                        ],
-                        spacing=5,
+                    ft.Text(
+                        value=f"💰 Total de ingresos {currency}: {total_formateado}",
+                        size=18,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.GREEN,
                     )
                 )
+
+                self.summary_column.controls.append(ft.Divider())
+
+                # Ordenar por monto descendente
+                sorted_summary = sorted(
+                    cat_summary.items(), key=lambda x: x[1], reverse=True
+                )
+
+                for categoria, monto in sorted_summary:
+                    porcentaje = float(monto / total * 100) if total > 0 else 0.0
+                    monto_formateado = format_currency_with_symbol(
+                        monto, currency=currency
+                    )
+
+                    self.summary_column.controls.append(
+                        ft.Column(
+                            controls=[
+                                ft.Row(
+                                    controls=[
+                                        ft.Text(
+                                            value=categoria,
+                                            weight=ft.FontWeight.BOLD,
+                                            expand=True,
+                                        ),
+                                        ft.Text(
+                                            value=(
+                                                f"{monto_formateado} "
+                                                f"({porcentaje:.1f}%)"
+                                            )
+                                        ),
+                                    ],
+                                ),
+                                ft.ProgressBar(
+                                    value=porcentaje / 100,
+                                    color=ft.Colors.GREEN,
+                                    bgcolor=ft.Colors.GREEN_100,
+                                ),
+                            ],
+                            spacing=5,
+                        )
+                    )
+
+                self.summary_column.controls.append(ft.Divider())
 
         self.page.update()
 
@@ -495,6 +521,7 @@ class IncomesView:
         self.descripcion_input.value = income.descripcion
         self.categoria_dropdown.value = income.categoria.name
         self.fecha_input.value = str(income.fecha)
+        self.currency_dropdown.value = income.currency
         self.recurrente_checkbox.value = income.es_recurrente
         self.frecuencia_dropdown.visible = income.es_recurrente
         self.frecuencia_dropdown.value = (

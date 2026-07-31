@@ -1,12 +1,13 @@
 """
 Modelos para compras en cuotas con tarjeta de crédito
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class InstallmentPurchase(BaseModel):
@@ -23,9 +24,10 @@ class InstallmentPurchase(BaseModel):
         description="Nombre de la tarjeta (OCA, Scotia, etc.)",
     )
     monto_total: Decimal = Field(default=Decimal("0"), gt=0)
-    numero_cuotas: int = Field(
-        ge=1, le=48, description="Cantidad de cuotas (1 a 48)"
+    currency: str = Field(
+        default="UYU", min_length=3, max_length=3, description="Moneda de la compra"
     )
+    numero_cuotas: int = Field(ge=1, le=48, description="Cantidad de cuotas (1 a 48)")
     cuotas_pagadas: int = Field(default=0, ge=0)
     monto_por_cuota: Decimal = Field(default=Decimal("0"), ge=0)
 
@@ -47,6 +49,14 @@ class InstallmentPurchase(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
+    @field_validator("currency")
+    @classmethod
+    def _validate_currency(cls, value: str) -> str:
+        value = value.upper()
+        if value not in {"UYU", "USD"}:
+            raise ValueError(f"Moneda no soportada: {value}")
+        return value
+
     @property
     def cuotas_restantes(self) -> int:
         return self.numero_cuotas - self.cuotas_pagadas_calculada
@@ -63,9 +73,8 @@ class InstallmentPurchase(BaseModel):
         if self.mes_inicio_pago is None:
             return 0
         today = date.today()
-        meses_desde_inicio = (
-            (today.year - self.mes_inicio_pago.year) * 12
-            + (today.month - self.mes_inicio_pago.month)
+        meses_desde_inicio = (today.year - self.mes_inicio_pago.year) * 12 + (
+            today.month - self.mes_inicio_pago.month
         )
         if meses_desde_inicio < 0:
             return 0

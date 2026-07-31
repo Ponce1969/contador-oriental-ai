@@ -1,0 +1,65 @@
+schema: spec-driven
+
+context: |
+  Python 3.12+ Flet desktop/web app. PostgreSQL + pgvector. SQLAlchemy raw SQL (no ORM).
+  Pydantic models. Result[T,E] error handling. Argon2 password hashing. Multi-user auth (familias + usuarios).
+  AI chat with Llama3 via NVIDIA API. Ollama + nomic-embed-text for local embeddings/RAG.
+  OCR microservice (FastAPI) with Tesseract + OpenCV. Docker Compose on Orange Pi 5 Plus (ARM64).
+  Resend API available in production. Guardian health monitoring with Discord alerts.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Document impact on multi-tenant data isolation (familia_id)
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Respect Decimal-only for monetary values (never float)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Follow existing layer order: views → controllers → services → repositories → database
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns (BaseTableRepository, BaseController, Result[T,E])
+    - Use ruff check . and ty check . before finishing
+    tdd: true
+    test_command: "uv run pytest -v"
+  verify:
+    test_command: "uv run pytest -v"
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+    - Preserve migration ordering when archiving DB-related changes
+
+testing:
+  strict_tdd: true
+  runner:
+    command: "uv run pytest -v"
+    framework: pytest
+  layers:
+    unit:
+      available: true
+      tool: pytest
+    integration:
+      available: true
+      tool: pytest + PostgreSQL real (transaction rollback per test)
+    e2e:
+      available: false
+      tool: ""
+  coverage:
+    available: true
+    command: "uv run pytest --cov=. --cov-report=html"
+  quality:
+    linter:
+      available: true
+      command: "uv run ruff check ."
+    type_checker:
+      available: true
+      command: "uv run ty check ."
+    formatter:
+      available: true
+      command: "uv run ruff format ."

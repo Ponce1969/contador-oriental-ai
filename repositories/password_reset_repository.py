@@ -157,6 +157,4 @@ class PasswordResetRepository:
         try:
             return self._use_session(_query)
         except Exception as e:
-            return Err(
-                DatabaseError(message="Error al marcar token como usado")
-            )
+            return Err(DatabaseError(message="Error al marcar token como usado"))

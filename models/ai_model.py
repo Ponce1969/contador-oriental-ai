@@ -59,6 +59,7 @@ class CategoryMetric(BaseModel):
     total_anterior: Decimal | None = None
     cantidad_anterior: int | None = None
     ticket_anterior: Decimal | None = None
+    currency: str = "UYU"
 
     @property
     def variacion_total_pct(self) -> Decimal | None:
@@ -114,8 +115,16 @@ class AIContext(BaseModel):
         default=Decimal("0"),
         description="Total de gastos del mes completo (todas las categorías)",
     )
+    gastos_por_moneda: dict[str, Decimal] = Field(
+        default_factory=dict,
+        description="Total de gastos del mes agrupado por moneda",
+    )
     ingresos_total: Decimal = Field(
         default=Decimal("0"), description="Total de ingresos del mes"
+    )
+    ingresos_por_moneda: dict[str, Decimal] = Field(
+        default_factory=dict,
+        description="Total de ingresos del mes agrupado por moneda",
     )
     miembros_count: int = Field(
         default=0, description="Cantidad de miembros en la familia"

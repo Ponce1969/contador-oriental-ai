@@ -9,6 +9,7 @@ Raises:
     TimeoutError: Si la API no responde en el tiempo límite.
     RuntimeError: Si hay un error HTTP inesperado.
 """
+
 from __future__ import annotations
 
 import json
@@ -207,9 +208,7 @@ class NVIDIAClient:
                                 break
                             try:
                                 chunk = json.loads(data_str)
-                                delta = chunk.get("choices", [{}])[0].get(
-                                    "delta", {}
-                                )
+                                delta = chunk.get("choices", [{}])[0].get("delta", {})
                                 content = delta.get("content", "")
                                 if content:
                                     yield content

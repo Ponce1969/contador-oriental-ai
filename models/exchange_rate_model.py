@@ -1,6 +1,7 @@
 """
 Modelo de dominio para cotizaciones de divisas
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime

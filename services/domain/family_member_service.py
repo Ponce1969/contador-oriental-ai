@@ -77,7 +77,13 @@ class FamilyMemberService:
 
         familia_id = self._repo._familia_id
         if familia_id is not None:
-            if self._repo.exists_by_name(familia_id, member.nombre, exclude_id=exclude_id):
-                return Err(ValidationError(message="Ya existe un integrante con ese nombre en esta familia"))
+            if self._repo.exists_by_name(
+                familia_id, member.nombre, exclude_id=exclude_id
+            ):
+                return Err(
+                    ValidationError(
+                        message="Ya existe un integrante con ese nombre en esta familia"
+                    )
+                )
 
         return None

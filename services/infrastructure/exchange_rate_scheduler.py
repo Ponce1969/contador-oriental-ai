@@ -5,6 +5,7 @@ Se ejecuta al inicio de la app y cada 6 horas en background.
 Si falla, loguea el error y reintenta en el próximo ciclo.
 No bloquea la UI de Flet.
 """
+
 from __future__ import annotations
 
 import asyncio

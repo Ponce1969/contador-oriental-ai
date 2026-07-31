@@ -58,7 +58,7 @@ class ShoppingView:
     def _on_add_item(self, _: ft.ControlEvent) -> None:
         item = ShoppingItem(
             name=self.name_input.value or "",
-                price=Decimal(self.price_input.value or "0"),
+            price=Decimal(self.price_input.value or "0"),
             category=self.category_input.value or "General",
             purchase_date=date.today(),
         )
@@ -79,8 +79,7 @@ class ShoppingView:
         for item in self.controller.list_items():
             self.items_column.controls.append(
                 ft.Text(
-                    value=f"{item.name} - "
-                    f"{format_pesos(item.price)} [{item.category}]"
+                    value=f"{item.name} - {format_pesos(item.price)} [{item.category}]"
                 )
             )
 

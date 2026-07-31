@@ -12,10 +12,10 @@ from datetime import datetime
 from decimal import Decimal
 
 from fpdf import FPDF
-from services.infrastructure.formatters import format_pesos
 from result import Err, Ok, Result
 
 from models.ai_model import AIContext
+from services.infrastructure.formatters import format_pesos
 
 logger = logging.getLogger(__name__)
 
@@ -119,39 +119,64 @@ class ReportService:
         pdf.set_text_color(*_GRIS_OSCURO)
 
     def _seccion_resumen(self, pdf: FPDF, ctx: AIContext) -> None:
-        """Bloque de resumen numérico: ingresos, gastos, balance."""
-        balance = ctx.ingresos_total - ctx.total_gastos_mes
-        balance_color = (39, 174, 96) if balance >= 0 else (192, 57, 43)
-
+        """Bloque de resumen numérico: ingresos, gastos, balance por moneda."""
         self._titulo_seccion(pdf, "Resumen del Mes", _AZUL_CLARO)
 
         pdf.set_font("helvetica", "", 11)
         pdf.set_text_color(*_GRIS_OSCURO)
 
-        datos = [
-            ("Ingresos totales", f"{format_pesos(ctx.ingresos_total)}"),
-            ("Total gastos del mes", f"{format_pesos(ctx.total_gastos_mes)}"),
+        datos: list[tuple[str, str]] = [
             ("Miembros del hogar", str(ctx.miembros_count)),
         ]
+        for ccy in sorted(ctx.ingresos_por_moneda.keys()):
+            ingresos_str = format_pesos(ctx.ingresos_por_moneda[ccy], currency=ccy)
+            datos.append((f"Ingresos totales ({ccy})", ingresos_str))
+        for ccy in sorted(ctx.gastos_por_moneda.keys()):
+            gastos_str = format_pesos(ctx.gastos_por_moneda[ccy], currency=ccy)
+            datos.append((f"Total gastos del mes ({ccy})", gastos_str))
         for label, valor in datos:
             pdf.cell(95, 8, f"  {label}:", new_x="RIGHT", new_y="TOP")
             pdf.set_font("helvetica", "B", 11)
             pdf.cell(95, 8, valor, new_x="LMARGIN", new_y="NEXT")
             pdf.set_font("helvetica", "", 11)
 
-        # Balance con color dinámico
-        pdf.cell(95, 8, "  Balance del mes:", new_x="RIGHT", new_y="TOP")
-        pdf.set_font("helvetica", "B", 11)
-        pdf.set_text_color(*balance_color)
-        signo = "+" if balance >= 0 else ""
-        pdf.cell(95, 8, f"{signo}{format_pesos(balance)}", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(*_GRIS_OSCURO)
+        # Balance con color dinámico por moneda
+        for ccy in sorted(
+            set(ctx.ingresos_por_moneda.keys()) | set(ctx.gastos_por_moneda.keys())
+        ):
+            ingresos = ctx.ingresos_por_moneda.get(ccy, Decimal("0"))
+            gastos = ctx.gastos_por_moneda.get(ccy, Decimal("0"))
+            balance = ingresos - gastos
+            balance_color = (39, 174, 96) if balance >= 0 else (192, 57, 43)
+            pdf.cell(95, 8, f"  Balance del mes ({ccy}):", new_x="RIGHT", new_y="TOP")
+            pdf.set_font("helvetica", "B", 11)
+            pdf.set_text_color(*balance_color)
+            signo = "+" if balance >= 0 else ""
+            balance_str = f"{signo}{format_pesos(balance, currency=ccy)}"
+            pdf.cell(95, 8, balance_str, new_x="LMARGIN", new_y="NEXT")
+            pdf.set_font("helvetica", "", 11)
+            pdf.set_text_color(*_GRIS_OSCURO)
         pdf.ln(6)
 
     def _seccion_tabla_gastos(self, pdf: FPDF, ctx: AIContext) -> None:
-        """Tabla con desglose de gastos por categoría."""
+        """Tabla con desglose de gastos por categoría y moneda."""
         if not ctx.resumen_gastos:
             return
+
+        # Aplanar y ordenar filas por moneda para acumular totales por divisa
+        filas: list[tuple[str, str, str, Decimal, int]] = []
+        for categoria, items in ctx.resumen_gastos.items():
+            cat_limpia = self._limpiar_emojis(categoria)
+            for (descripcion, ccy), datos in items.items():
+                desc_limpia = self._limpiar_emojis(descripcion)
+                filas.append(
+                    (cat_limpia, desc_limpia, ccy, datos["total"], datos["cantidad"])
+                )
+
+        if not filas:
+            return
+
+        filas.sort(key=lambda x: x[2])
 
         self._titulo_seccion(pdf, "Desglose de Gastos por Categoria", _AZUL_CLARO)
 
@@ -159,42 +184,59 @@ class ReportService:
         pdf.set_font("helvetica", "B", 10)
         pdf.set_fill_color(*_GRIS_TABLA)
         pdf.set_text_color(*_GRIS_OSCURO)
-        pdf.cell(80, 8, " Categoria", border=1, fill=True)
-        pdf.cell(60, 8, " Descripcion", border=1, fill=True)
+        pdf.cell(70, 8, " Categoria", border=1, fill=True)
+        pdf.cell(50, 8, " Descripcion", border=1, fill=True)
+        pdf.cell(25, 8, "Moneda", border=1, fill=True, align="C")
         pdf.cell(25, 8, "Compras", border=1, fill=True, align="C")
         pdf.cell(25, 8, "Total", border=1, fill=True, align="R")
         pdf.ln()
 
         pdf.set_font("helvetica", "", 9)
         total_tabla = Decimal("0")
+        ccy_actual = filas[0][2]
         fill = False
 
-        for categoria, items in ctx.resumen_gastos.items():
-            cat_limpia = self._limpiar_emojis(categoria)
-            for descripcion, datos in items.items():
-                desc_limpia = self._limpiar_emojis(descripcion)
-                monto: Decimal = datos["total"]
-                cantidad: int = datos["cantidad"]
-                total_tabla += monto
+        for cat_limpia, desc_limpia, ccy, monto, cantidad in filas:
+            if ccy != ccy_actual:
+                self._fila_total_tabla(pdf, ccy_actual, total_tabla)
+                total_tabla = Decimal("0")
+                ccy_actual = ccy
+                fill = False
 
-                if fill:
-                    pdf.set_fill_color(248, 248, 248)
-                else:
-                    pdf.set_fill_color(*_BLANCO)
+            total_tabla += monto
 
-                pdf.cell(80, 7, f" {cat_limpia}", border=1, fill=True)
-                pdf.cell(60, 7, f" {desc_limpia}", border=1, fill=True)
-                pdf.cell(25, 7, str(cantidad), border=1, fill=True, align="C")
-                pdf.cell(25, 7, format_pesos(monto), border=1, fill=True, align="R")
-                pdf.ln()
-                fill = not fill
+            if fill:
+                pdf.set_fill_color(248, 248, 248)
+            else:
+                pdf.set_fill_color(*_BLANCO)
 
-        # Fila de total
+            pdf.cell(70, 7, f" {cat_limpia}", border=1, fill=True)
+            pdf.cell(50, 7, f" {desc_limpia}", border=1, fill=True)
+            pdf.cell(25, 7, ccy, border=1, fill=True, align="C")
+            pdf.cell(25, 7, str(cantidad), border=1, fill=True, align="C")
+            monto_str = format_pesos(monto, currency=ccy)
+            pdf.cell(25, 7, monto_str, border=1, fill=True, align="R")
+            pdf.ln()
+            fill = not fill
+
+        # Fila de total para la última moneda
+        self._fila_total_tabla(pdf, ccy_actual, total_tabla)
+        pdf.ln(4)
+
+    def _fila_total_tabla(self, pdf: FPDF, currency: str, total: Decimal) -> None:
+        """Renderiza la fila de subtotal por moneda en la tabla de gastos."""
         pdf.set_font("helvetica", "B", 10)
         pdf.set_fill_color(*_GRIS_TABLA)
-        pdf.cell(80 + 60 + 25, 8, " TOTAL CONSULTADO", border=1, fill=True)
-        pdf.cell(25, 8, format_pesos(total_tabla), border=1, fill=True, align="R")
-        pdf.ln(8)
+        pdf.cell(70 + 50 + 25 + 25, 8, f" TOTAL {currency}", border=1, fill=True)
+        pdf.cell(
+            25,
+            8,
+            format_pesos(total, currency=currency),
+            border=1,
+            fill=True,
+            align="R",
+        )
+        pdf.ln()
 
     def _seccion_metodos_pago(self, pdf: FPDF, ctx: AIContext) -> None:
         """Línea con resumen de métodos de pago si está disponible."""

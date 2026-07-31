@@ -12,9 +12,7 @@ from decimal import Decimal
 from controllers.base_controller import BaseController
 from repositories.expense_repository import ExpenseRepository
 from repositories.income_repository import IncomeRepository
-from services.ai.expense_formatters import agrupar_gastos
 from services.domain.income_service import IncomeService
-from services.infrastructure.formatters import format_pesos
 
 _MESES: dict[int, str] = {
     1: "Enero",
@@ -34,15 +32,15 @@ _MESES: dict[int, str] = {
 
 @dataclass(frozen=True)
 class MonthSummary:
-    """Resumen de un mes individual."""
+    """Resumen de un mes individual con totales por moneda."""
 
     year: int
     month: int
     label: str  # "Abril 2025"
-    total_gastos: Decimal
-    total_ingresos: Decimal
-    balance: Decimal
-    gastos_por_categoria: dict[str, Decimal]
+    total_gastos: dict[str, Decimal]
+    total_ingresos: dict[str, Decimal]
+    balance: dict[str, Decimal]
+    gastos_por_categoria: dict[str, dict[str, Decimal]]  # categoría -> moneda -> monto
     cantidad_gastos: int
 
 
@@ -51,9 +49,11 @@ class HistoryData:
     """Datos completos del historial de 3 meses."""
 
     meses: list[MonthSummary]
-    max_gasto: Decimal  # Para normalizar barras
-    top_categorias: list[tuple[str, Decimal]]  # (nombre, total)
-    variacion_gastos: Decimal | None  # % vs mes anterior, None si no hay
+    max_gasto: (
+        Decimal  # Para normalizar barras (máximo absoluto entre todas las monedas)
+    )
+    top_categorias: list[tuple[str, str, Decimal]]  # (nombre, moneda, total)
+    variacion_gastos: Decimal | None  # % vs mes anterior, None si no hay (sobre UYU)
 
 
 class HistoryController(BaseController):
@@ -88,18 +88,36 @@ class HistoryController(BaseController):
                 # Usar IncomeService para incluir ingresos recurrentes
                 ingresos = income_service.list_for_month(anio, mes)
 
-                total_gastos = sum((g.monto for g in gastos), Decimal("0"))
-                total_ingresos = sum((i.monto for i in ingresos), Decimal("0"))
-                balance = total_ingresos - total_gastos
-
-                # Gastos por categoría — agrupar_gastos ya retorna Decimal
-                resumen = agrupar_gastos(gastos) if gastos else {}
-                gastos_por_categoria: dict[str, Decimal] = {}
-                for categoria, items in resumen.items():
-                    cat_total = sum(
-                        (d["total"] for d in items.values()), Decimal("0")
+                # Totales por moneda — nunca sumar monedas distintas
+                total_gastos: dict[str, Decimal] = {}
+                for g in gastos:
+                    total_gastos[g.currency] = (
+                        total_gastos.get(g.currency, Decimal("0")) + g.monto
                     )
-                    gastos_por_categoria[categoria] = cat_total
+
+                total_ingresos: dict[str, Decimal] = {}
+                for i in ingresos:
+                    total_ingresos[i.currency] = (
+                        total_ingresos.get(i.currency, Decimal("0")) + i.monto
+                    )
+
+                all_currencies = set(total_gastos.keys()) | set(total_ingresos.keys())
+                balance: dict[str, Decimal] = {}
+                for ccy in all_currencies:
+                    balance[ccy] = total_ingresos.get(
+                        ccy, Decimal("0")
+                    ) - total_gastos.get(ccy, Decimal("0"))
+
+                # Gastos por categoría y moneda
+                gastos_por_categoria: dict[str, dict[str, Decimal]] = {}
+                for g in gastos:
+                    cat = g.categoria.value
+                    if cat not in gastos_por_categoria:
+                        gastos_por_categoria[cat] = {}
+                    gastos_por_categoria[cat][g.currency] = (
+                        gastos_por_categoria[cat].get(g.currency, Decimal("0"))
+                        + g.monto
+                    )
 
                 label = f"{_MESES[mes]} {anio}"
 
@@ -116,25 +134,38 @@ class HistoryController(BaseController):
                     )
                 )
 
-        # Máximo gasto para normalizar barras
-        max_gasto = max((m.total_gastos for m in meses), default=Decimal("1"))
-        if max_gasto == Decimal("0"):
-            max_gasto = Decimal("1")
-
-        # Top categorías (acumulado 3 meses)
-        categorias_acum: dict[str, Decimal] = {}
+        # Máximo gasto para normalizar barras (entre todas las monedas y meses)
+        max_gasto = Decimal("1")
         for m in meses:
-            for cat, total in m.gastos_por_categoria.items():
-                categorias_acum[cat] = categorias_acum.get(cat, Decimal("0")) + total
+            for total in m.total_gastos.values():
+                if total > max_gasto:
+                    max_gasto = total
 
-        top_categorias = sorted(categorias_acum.items(), key=lambda x: x[1], reverse=True)[:6]
+        # Top categorías (acumulado 3 meses), manteniendo monedas separadas
+        categorias_acum: dict[tuple[str, str], Decimal] = {}
+        for m in meses:
+            for cat, por_moneda in m.gastos_por_categoria.items():
+                for ccy, total in por_moneda.items():
+                    key = (cat, ccy)
+                    categorias_acum[key] = (
+                        categorias_acum.get(key, Decimal("0")) + total
+                    )
 
-        # Variación gastos mes actual vs anterior
+        top_categorias = sorted(
+            ((cat, ccy, total) for (cat, ccy), total in categorias_acum.items()),
+            key=lambda x: x[2],
+            reverse=True,
+        )[:6]
+
+        # Variación gastos mes actual vs anterior (en UYU, moneda principal)
         variacion: Decimal | None = None
-        if len(meses) >= 2 and meses[1].total_gastos > 0:
-            actual = meses[0].total_gastos
-            anterior = meses[1].total_gastos
-            variacion = ((actual - anterior) / anterior) * Decimal("100")
+        if len(meses) >= 2:
+            actual_uyu = meses[0].total_gastos.get("UYU", Decimal("0"))
+            anterior_uyu = meses[1].total_gastos.get("UYU", Decimal("0"))
+            if anterior_uyu > 0:
+                variacion = ((actual_uyu - anterior_uyu) / anterior_uyu) * Decimal(
+                    "100"
+                )
 
         return HistoryData(
             meses=meses,

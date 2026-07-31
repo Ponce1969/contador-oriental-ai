@@ -8,6 +8,7 @@ Lógica de routing:
 - Simple / clasificación → Gemma 2:2b (local, sin límite)
 - Cuota agotada → Gemma 2:2b con aviso
 """
+
 from __future__ import annotations
 
 import logging
@@ -108,17 +109,13 @@ class ModelRouter:
                 if has_quota:
                     logger.info("[ROUTER] Keyword '%s' → Llama 3", keyword)
                     return "llama3"
-                logger.info(
-                    "[ROUTER] Keyword '%s' pero sin cuota → Gemma 2", keyword
-                )
+                logger.info("[ROUTER] Keyword '%s' pero sin cuota → Gemma 2", keyword)
                 return "gemma2"
 
         # 3. Rango temporal > 1 mes → Llama 3
         if range_months > 1:
             if has_quota:
-                logger.info(
-                    "[ROUTER] Rango de %d meses → Llama 3", range_months
-                )
+                logger.info("[ROUTER] Rango de %d meses → Llama 3", range_months)
                 return "llama3"
             logger.info(
                 "[ROUTER] Rango de %d meses pero sin cuota → Gemma 2", range_months

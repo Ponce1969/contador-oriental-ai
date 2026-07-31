@@ -2,6 +2,7 @@
 Controller para cotización de divisas
 Provee a la UI el valor del día con lógica de fallback.
 """
+
 from __future__ import annotations
 
 from decimal import Decimal

@@ -10,32 +10,40 @@ from decimal import Decimal
 from models.expense_model import Expense
 
 
-def agrupar_gastos(gastos: list[Expense]) -> dict[str, dict[str, dict]]:
+def agrupar_gastos(gastos: list[Expense]) -> dict[str, dict[tuple[str, str], dict]]:
     """
-    Agrupa gastos por categoría y descripción para el contexto del Contador.
+    Agrupa gastos por categoría, descripción y moneda para el contexto del Contador.
 
     Returns:
         {
             "Categoría": {
-                "Descripción": {"total": Decimal, "cantidad": int, "metodos": dict}
+                ("Descripción", "currency"): {"total": Decimal, "cantidad": int,
+                                              "metodos": dict, "currency": str}
             }
         }
     """
-    resumen: dict[str, dict[str, dict]] = {}
+    resumen: dict[str, dict[tuple[str, str], dict]] = {}
     for gasto in gastos:
         cat = gasto.categoria.value
         desc = gasto.descripcion.strip().capitalize()
+        ccy = getattr(gasto, "currency", "UYU")
         metodo = gasto.metodo_pago.value
 
         if cat not in resumen:
             resumen[cat] = {}
 
-        if desc not in resumen[cat]:
-            resumen[cat][desc] = {"total": Decimal("0"), "cantidad": 0, "metodos": {}}
+        key = (desc, ccy)
+        if key not in resumen[cat]:
+            resumen[cat][key] = {
+                "total": Decimal("0"),
+                "cantidad": 0,
+                "metodos": {},
+                "currency": ccy,
+            }
 
-        resumen[cat][desc]["total"] += gasto.monto
-        resumen[cat][desc]["cantidad"] += 1
-        metodos = resumen[cat][desc]["metodos"]
+        resumen[cat][key]["total"] += gasto.monto
+        resumen[cat][key]["cantidad"] += 1
+        metodos = resumen[cat][key]["metodos"]
         metodos[metodo] = metodos.get(metodo, 0) + 1
 
     return resumen

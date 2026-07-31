@@ -11,6 +11,7 @@ Sistema de gestión financiera familiar con **Python 3.12 + Flet + PostgreSQL + 
 - **👨‍👩‍👧‍👦 Familia** — Personas (parentesco, edad, estado laboral) y mascotas
 - **💰 Ingresos** — Por miembro, múltiples tipos (sueldo, jubilación, freelance, etc.)
 - **💳 Gastos** — Categorías uruguayas, métodos de pago, recurrencia
+- **💱 Multi-moneda** — Soporta UYU y USD; cada registro conserva su moneda original sin conversiones automáticas
 - **📊 Dashboard** — Balance mensual automático, comparativa vs mes anterior por categoría
 - **🤖 Contador Oriental** — Asistente IA local (Gemma 2:2b), streaming token a token, RAG con normativa uruguaya
 - **🧠 Memoria Vectorial** — Cada gasto se vectoriza automáticamente; el Contador recuerda el historial completo con búsqueda semántica (pgvector + HNSW)
@@ -18,6 +19,17 @@ Sistema de gestión financiera familiar con **Python 3.12 + Flet + PostgreSQL + 
 - **📅 Consultas Históricas** — Detecta automáticamente meses específicos ("octubre"), "mes pasado" y "últimos N meses" y carga los gastos reales de BD
 - **📱 Soporte WhatsApp** — Botón de ayuda directo en la app (código Uruguay +598)
 - **🛡️ Guardian** — Monitoreo automático de contenedores con alertas a Discord
+
+---
+
+## 💱 Multi-moneda
+
+- **Monedas soportadas:** UYU (`$`) y USD (`USD`).
+- **Registro:** En los formularios de gastos e ingresos se puede elegir la moneda desde un dropdown; por defecto es UYU.
+- **Dashboard:** muestra dos tarjetas de balance independientes: una en UYU y otra en USD. Nunca se mezclan monedas.
+- **Formato:** UYU se redondea a enteros (`$ 1.250`); USD muestra dos decimales (`USD 1.250,50`).
+- **Cuotas:** una compra en USD genera todas sus cuotas en USD.
+- **Rollback:** `fleting db rollback` de la migración `015` elimina la columna `currency`. Si existen registros USD, se perderá la distinción de moneda (los montos sobreviven). En v1 esto es aceptado; recuperar requiere re-migrar con backfill.
 
 ---
 

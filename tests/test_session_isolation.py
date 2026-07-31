@@ -1,6 +1,7 @@
 """
 Test para verificar que _sessions es thread-safe y no hay fuga de datos entre sesiones.
 """
+
 from __future__ import annotations
 
 import threading
@@ -101,7 +102,9 @@ class TestSessionIsolation:
 
         assert _sessions["session-A"]["familia_id"] == 100
         assert _sessions["session-B"]["familia_id"] == 200
-        assert _sessions["session-A"]["familia_id"] != _sessions["session-B"]["familia_id"]
+        assert (
+            _sessions["session-A"]["familia_id"] != _sessions["session-B"]["familia_id"]
+        )
 
         _sessions.clear()
 

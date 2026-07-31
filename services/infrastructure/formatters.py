@@ -3,14 +3,43 @@ Formateo de moneda uruguaya.
 En Uruguay los centésimos son obsoletos para contabilidad familiar.
 Usa Decimal para precisión financiera exacta.
 """
+
 from __future__ import annotations
 
 from decimal import ROUND_HALF_UP, Decimal
 
 
-def format_pesos(monto: Decimal) -> str:
+def _to_decimal(monto: Decimal | float) -> Decimal:
+    if not isinstance(monto, Decimal):
+        monto = Decimal(str(monto))
+    return monto
+
+
+def _format_usd_ui(monto: Decimal) -> str:
+    """UI: USD 1.250,50 con separador de miles."""
+    sign = "-" if monto < 0 else ""
+    monto = abs(monto)
+    entero = int(monto)
+    decimal_part = int((monto - entero) * 100)
+    entero_str = f"{entero:,}".replace(",", ".")
+    return f"{sign}USD {entero_str},{decimal_part:02d}"
+
+
+def _format_usd_ai(monto: Decimal) -> str:
+    """AI: USD 1250.50 sin separador de miles."""
+    sign = "-" if monto < 0 else ""
+    monto = abs(monto)
+    entero = int(monto)
+    decimal_part = int((monto - entero) * 100)
+    return f"{sign}USD {entero}.{decimal_part:02d}"
+
+
+def format_pesos(monto: Decimal, currency: str = "UYU") -> str:
     """
-    Formatear monto en pesos uruguayos sin decimales.
+    Formatear monto para la UI.
+
+    UYU: entero sin decimales, separador de miles.
+    USD: 2 decimales, separador de miles.
 
     >>> format_pesos(Decimal("18480.00"))
     '$ 18.480'
@@ -18,15 +47,20 @@ def format_pesos(monto: Decimal) -> str:
     '$ 12.990'
     >>> format_pesos(Decimal("770.50"))
     '$ 771'
+    >>> format_pesos(Decimal("1250.50"), "USD")
+    'USD 1.250,50'
     """
-    if not isinstance(monto, Decimal):
-        monto = Decimal(str(monto))
+    monto = _to_decimal(monto)
+    currency = currency.upper()
+    if currency == "USD":
+        monto = monto.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return _format_usd_ui(monto)
     entero = int(monto.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
     entero_str = f"{entero:,}".replace(",", ".")
     return f"$ {entero_str}"
 
 
-def format_pesos_ai(monto: Decimal) -> str:
+def format_pesos_ai(monto: Decimal, currency: str = "UYU") -> str:
     """
     Formatear monto para prompts de IA: SIN separador de miles.
 
@@ -34,7 +68,7 @@ def format_pesos_ai(monto: Decimal) -> str:
     malinterpretarlos:
     - Llama3 trunca en el espacio: "$ 560 620" → lee "$ 560"
     - Gemma2 confunde el punto con decimal: "$ 173.720" → lee "173 con 720"
-    
+
     Sin separador: "$ 560620" es inequívoco para cualquier modelo.
 
     >>> format_pesos_ai(Decimal("173720"))
@@ -43,9 +77,14 @@ def format_pesos_ai(monto: Decimal) -> str:
     '$ 18480'
     >>> format_pesos_ai(Decimal("650"))
     '$ 650'
+    >>> format_pesos_ai(Decimal("1250.50"), "USD")
+    'USD 1250.50'
     """
-    if not isinstance(monto, Decimal):
-        monto = Decimal(str(monto))
+    monto = _to_decimal(monto)
+    currency = currency.upper()
+    if currency == "USD":
+        monto = monto.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return _format_usd_ai(monto)
     entero = int(monto.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
     return f"$ {entero}"
 

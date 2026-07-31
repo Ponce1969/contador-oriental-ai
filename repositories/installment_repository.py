@@ -1,6 +1,7 @@
 """
 Repository para compras en cuotas
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -27,6 +28,7 @@ class InstallmentPurchaseRepository(
             familia_id=table_row.familia_id,
             nombre_tarjeta=table_row.nombre_tarjeta,
             monto_total=table_row.monto_total,
+            currency=table_row.currency,
             numero_cuotas=table_row.numero_cuotas,
             cuotas_pagadas=table_row.cuotas_pagadas,
             monto_por_cuota=table_row.monto_por_cuota,
@@ -47,6 +49,7 @@ class InstallmentPurchaseRepository(
             familia_id=purchase.familia_id,
             nombre_tarjeta=purchase.nombre_tarjeta,
             monto_total=purchase.monto_total,
+            currency=purchase.currency,
             numero_cuotas=purchase.numero_cuotas,
             cuotas_pagadas=purchase.cuotas_pagadas,
             monto_por_cuota=purchase.monto_por_cuota,
@@ -133,9 +136,7 @@ class InstallmentPaymentRepository(
     ) -> None:
         pass  # Payments are immutable once created
 
-    def get_by_purchase(
-        self, purchase_id: int
-    ) -> Sequence[InstallmentPayment]:
+    def get_by_purchase(self, purchase_id: int) -> Sequence[InstallmentPayment]:
         """Obtener todos los pagos de una compra en cuotas"""
         return [
             self._to_domain(row)

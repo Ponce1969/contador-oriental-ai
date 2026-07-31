@@ -74,13 +74,14 @@ class TestIncomeService:
             assert isinstance(result, Ok)
 
     def test_get_total_by_month(self, service, family_member_id):
-        """Test getting total by month."""
+        """Test getting total by month grouped by currency."""
         income1 = Income(
             family_member_id=family_member_id,
             monto=2500.00,
             fecha=date.today(),
             descripcion="Sueldo 1",
             categoria=IncomeCategory.SUELDO,
+            currency="UYU",
         )
         income2 = Income(
             family_member_id=family_member_id,
@@ -88,22 +89,33 @@ class TestIncomeService:
             fecha=date.today(),
             descripcion="Extra",
             categoria=IncomeCategory.EXTRA,
+            currency="USD",
         )
 
         service.create_income(income1)
         service.create_income(income2)
 
-        total = service.get_total_by_month(date.today().year, date.today().month)
-        assert total >= 3000.00
+        totals = service.get_total_by_month(date.today().year, date.today().month)
+        assert isinstance(totals, dict)
+        assert totals.get("UYU", 0) >= 2500
+        assert totals.get("USD", 0) >= 500
+
+        # Currency filter
+        uyu_only = service.get_total_by_month(
+            date.today().year, date.today().month, currency="UYU"
+        )
+        assert "UYU" in uyu_only
+        assert "USD" not in uyu_only
 
     def test_get_summary_by_categories(self, service, family_member_id):
-        """Test getting summary by categories."""
+        """Test getting summary by categories and currency."""
         income1 = Income(
             family_member_id=family_member_id,
             monto=2500.00,
             fecha=date.today(),
             descripcion="Sueldo",
             categoria=IncomeCategory.SUELDO,
+            currency="UYU",
         )
         income2 = Income(
             family_member_id=family_member_id,
@@ -111,6 +123,7 @@ class TestIncomeService:
             fecha=date.today(),
             descripcion="Sueldo 2",
             categoria=IncomeCategory.SUELDO,
+            currency="USD",
         )
 
         service.create_income(income1)
@@ -118,3 +131,5 @@ class TestIncomeService:
 
         summary = service.get_summary_by_categories()
         assert isinstance(summary, dict)
+        assert (IncomeCategory.SUELDO.value, "UYU") in summary
+        assert (IncomeCategory.SUELDO.value, "USD") in summary

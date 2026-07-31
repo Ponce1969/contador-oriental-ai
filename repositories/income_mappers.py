@@ -14,6 +14,7 @@ def income_to_domain(row: IncomeTable) -> Income:
         id=row.id,
         family_member_id=row.family_member_id,
         monto=row.monto,
+        currency=row.currency,
         fecha=row.fecha,
         descripcion=row.descripcion,
         categoria=IncomeCategory(row.categoria),
@@ -28,6 +29,7 @@ def income_to_table(income: Income) -> IncomeTable:
     return IncomeTable(
         family_member_id=income.family_member_id,
         monto=income.monto,
+        currency=income.currency,
         fecha=income.fecha,
         descripcion=income.descripcion,
         categoria=income.categoria.value,

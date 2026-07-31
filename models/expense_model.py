@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from models.categories import ExpenseCategory, PaymentMethod, RecurrenceFrequency
 
@@ -21,7 +21,10 @@ class Expense(BaseModel):
     id: int | None = None
 
     # Datos básicos del gasto
-    monto: Decimal = Field(gt=0, description="Monto del gasto en pesos")
+    monto: Decimal = Field(gt=0, description="Monto del gasto")
+    currency: str = Field(
+        default="UYU", min_length=3, max_length=3, description="Moneda del gasto"
+    )
     fecha: date = Field(default_factory=date.today, description="Fecha del gasto")
     descripcion: str = Field(
         min_length=1, max_length=200, description="Descripción del gasto"
@@ -67,7 +70,17 @@ class Expense(BaseModel):
     purchased: bool = False
     purchase_date: date | None = None
 
+    @field_validator("currency")
+    @classmethod
+    def _validate_currency(cls, value: str) -> str:
+        value = value.upper()
+        if value not in {"UYU", "USD"}:
+            raise ValueError(f"Moneda no soportada: {value}")
+        return value
+
     def __str__(self) -> str:
+        if self.currency == "USD":
+            return f"{self.categoria.value} - {self.descripcion}: USD {self.monto:.2f}"
         return f"{self.categoria.value} - {self.descripcion}: ${self.monto:.2f}"
 
     @property

@@ -191,9 +191,7 @@ class TestFamilyMemberService:
 
     def test_update_member_same_name_succeeds(self, service):
         """Test updating member keeping same name succeeds."""
-        member = FamilyMember(
-            nombre="Pedro", tipo_miembro="persona", parentesco="tío"
-        )
+        member = FamilyMember(nombre="Pedro", tipo_miembro="persona", parentesco="tío")
         created = service.create_member(member)
         assert created.is_ok(), "Creation should succeed"
 

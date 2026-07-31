@@ -9,6 +9,7 @@ incorrecta.
 La solución: un cache por familia_id que se limpia automáticamente
 cuando un usuario hace logout de esa familia.
 """
+
 from __future__ import annotations
 
 import logging

@@ -3,6 +3,7 @@ Servicio de cotización de divisas USD/UYU
 Usa exchangerate-api.com (sin API key, httpx nativo).
 0 floats: todo Decimal desde la respuesta JSON hasta la UI.
 """
+
 from __future__ import annotations
 
 import json
@@ -38,20 +39,12 @@ class ExchangeRateService:
                 return Ok(rate)
 
         except KeyError as e:
-            return Err(
-                AppError(message=f"Respuesta inválida de API: falta campo {e}")
-            )
+            return Err(AppError(message=f"Respuesta inválida de API: falta campo {e}"))
         except json.JSONDecodeError as e:
-            return Err(
-                AppError(message=f"Respuesta inválida de API (no es JSON): {e}")
-            )
+            return Err(AppError(message=f"Respuesta inválida de API (no es JSON): {e}"))
         except httpx.HTTPStatusError as e:
             return Err(
-                AppError(
-                    message=f"API exchangerate error {e.response.status_code}"
-                )
+                AppError(message=f"API exchangerate error {e.response.status_code}")
             )
         except Exception as e:
-            return Err(
-                AppError(message=f"Error consultando cotización del dólar: {e}")
-            )
+            return Err(AppError(message=f"Error consultando cotización del dólar: {e}"))

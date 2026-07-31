@@ -9,10 +9,10 @@ from decimal import Decimal
 
 import flet as ft
 
+from constants.responsive import Responsive
 from controllers.history_controller import HistoryController
 from core.session import SessionManager
 from core.state import AppState
-from constants.responsive import Responsive
 from services.infrastructure.formatters import format_pesos
 from views.layouts.main_layout import MainLayout
 
@@ -61,6 +61,20 @@ class HistoryView:
                 data.variacion_gastos if m == data.meses[0] else None
             )
 
+            gastos_uyu = m.total_gastos.get("UYU", Decimal("0"))
+            ingresos_uyu = m.total_ingresos.get("UYU", Decimal("0"))
+            balance_uyu = m.balance.get("UYU", Decimal("0"))
+            gastos_usd = m.total_gastos.get("USD", Decimal("0"))
+            ingresos_usd = m.total_ingresos.get("USD", Decimal("0"))
+            balance_usd = m.balance.get("USD", Decimal("0"))
+
+            gastos_uyu_fmt = format_pesos(gastos_uyu, currency="UYU")
+            ingresos_uyu_fmt = format_pesos(ingresos_uyu, currency="UYU")
+            balance_uyu_fmt = format_pesos(balance_uyu, currency="UYU")
+            gastos_usd_fmt = format_pesos(gastos_usd, currency="USD")
+            ingresos_usd_fmt = format_pesos(ingresos_usd, currency="USD")
+            balance_usd_fmt = format_pesos(balance_usd, currency="USD")
+
             card = ft.Container(
                 content=ft.Column(
                     controls=[
@@ -71,22 +85,51 @@ class HistoryView:
                             color=ft.Colors.BLUE_GREY_800,
                         ),
                         ft.Text(
-                            value=f"Gastos: {format_pesos(m.total_gastos)}",
+                            value=f"Gastos: {gastos_uyu_fmt}",
                             size=18 if is_mobile else 22,
                             weight=ft.FontWeight.BOLD,
                             color=ft.Colors.DEEP_ORANGE_700,
                         ),
+                        (
+                            ft.Text(
+                                value=f"Gastos USD: {gastos_usd_fmt}",
+                                size=12,
+                                color=ft.Colors.DEEP_ORANGE_700,
+                            )
+                            if gastos_usd
+                            else ft.Container()
+                        ),
                         ft.Text(
-                            value=f"Ingresos: {format_pesos(m.total_ingresos)}",
+                            value=f"Ingresos: {ingresos_uyu_fmt}",
                             size=12,
                             color=ft.Colors.TEAL_700,
                         ),
+                        (
+                            ft.Text(
+                                value=f"Ingresos USD: {ingresos_usd_fmt}",
+                                size=12,
+                                color=ft.Colors.TEAL_700,
+                            )
+                            if ingresos_usd
+                            else ft.Container()
+                        ),
                         ft.Text(
-                            value=f"Balance: {format_pesos(m.balance)}",
+                            value=f"Balance: {balance_uyu_fmt}",
                             size=12,
                             color=ft.Colors.GREEN_700
-                            if m.balance >= 0
+                            if balance_uyu >= 0
                             else ft.Colors.RED_700,
+                        ),
+                        (
+                            ft.Text(
+                                value=f"Balance USD: {balance_usd_fmt}",
+                                size=12,
+                                color=ft.Colors.GREEN_700
+                                if balance_usd >= 0
+                                else ft.Colors.RED_700,
+                            )
+                            if balance_usd
+                            else ft.Container()
                         ),
                         ft.Container(
                             content=ft.Text(
@@ -141,7 +184,8 @@ class HistoryView:
 
         bar_controls: list[ft.Control] = []
         for m in data.meses:
-            ancho = float(m.total_gastos / data.max_gasto) if data.max_gasto > 0 else 0
+            gastos_uyu = m.total_gastos.get("UYU", Decimal("0"))
+            ancho = float(gastos_uyu / data.max_gasto) if data.max_gasto > 0 else 0
             ancho_barra = max(ancho, 0.03)  # Mínimo visible
 
             bar_controls.append(
@@ -157,7 +201,7 @@ class HistoryView:
                             controls=[
                                 ft.Container(
                                     content=ft.Text(
-                                        value=format_pesos(m.total_gastos),
+                                        value=format_pesos(gastos_uyu, currency="UYU"),
                                         size=12,
                                         weight=ft.FontWeight.BOLD,
                                         color=ft.Colors.WHITE,
@@ -200,8 +244,9 @@ class HistoryView:
             if max_cat == Decimal("0"):
                 max_cat = Decimal("1")
 
-            for nombre_cat, total_cat in data.top_categorias:
+            for nombre_cat, currency, total_cat in data.top_categorias:
                 pct = float(total_cat / max_cat) if max_cat > 0 else 0
+                cat_label = f"{nombre_cat} ({currency})"
 
                 cat_controls.append(
                     ft.Column(
@@ -209,13 +254,15 @@ class HistoryView:
                             ft.Row(
                                 controls=[
                                     ft.Text(
-                                        value=nombre_cat,
+                                        value=cat_label,
                                         size=14,
                                         weight=ft.FontWeight.BOLD,
                                         expand=True,
                                     ),
                                     ft.Text(
-                                        value=format_pesos(total_cat),
+                                        value=format_pesos(
+                                            total_cat, currency=currency
+                                        ),
                                         size=14,
                                         color=ft.Colors.DEEP_ORANGE_700,
                                         weight=ft.FontWeight.BOLD,
@@ -255,7 +302,11 @@ class HistoryView:
                 ft.ElevatedButton(
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.Icons.PSYCHOLOGY, size=20, color=ft.Colors.WHITE),
+                            ft.Icon(
+                                icon=ft.Icons.PSYCHOLOGY,
+                                size=20,
+                                color=ft.Colors.WHITE,
+                            ),
                             ft.Text(
                                 value="Preguntale al Contador sobre estos 3 meses",
                                 size=15 if is_mobile else 16,

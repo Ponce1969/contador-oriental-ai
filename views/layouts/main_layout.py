@@ -199,7 +199,11 @@ class MainLayout(ft.Column):
         # Remove banner from controls and refresh
         if len(self.controls) > 1:
             banner = self.controls[1]
-            if isinstance(banner, ft.Container) and hasattr(banner, "bgcolor") and banner.bgcolor == ft.Colors.AMBER_50:
+            if (
+                isinstance(banner, ft.Container)
+                and hasattr(banner, "bgcolor")
+                and banner.bgcolor == ft.Colors.AMBER_50
+            ):
                 self.controls.pop(1)
         self.update()
 

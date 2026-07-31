@@ -1,6 +1,7 @@
 """
 Tests para el sistema de compras en cuotas
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -35,8 +36,12 @@ class TestInstallmentService:
             monto=12000.0,
             fecha=date(2026, 5, 15),
             descripcion="Compra en Tienda Inglesa",
-            categoria=__import__("models.categories", fromlist=["ExpenseCategory"]).ExpenseCategory.ALMACEN,
-            metodo_pago=__import__("models.categories", fromlist=["PaymentMethod"]).PaymentMethod.TARJETA_CREDITO,
+            categoria=__import__(
+                "models.categories", fromlist=["ExpenseCategory"]
+            ).ExpenseCategory.ALMACEN,
+            metodo_pago=__import__(
+                "models.categories", fromlist=["PaymentMethod"]
+            ).PaymentMethod.TARJETA_CREDITO,
             familia_id=1,
         )
 

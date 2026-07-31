@@ -14,6 +14,7 @@ def to_domain(row: ExpenseTable) -> Expense:
     return Expense(
         id=row.id,
         monto=row.monto,
+        currency=row.currency,
         fecha=row.fecha,
         descripcion=row.descripcion,
         categoria=ExpenseCategory(row.categoria),
@@ -31,6 +32,7 @@ def to_table(expense: Expense) -> ExpenseTable:
     """Convertir modelo de dominio Expense a tabla de base de datos"""
     return ExpenseTable(
         monto=expense.monto,
+        currency=expense.currency,
         fecha=expense.fecha,
         descripcion=expense.descripcion,
         categoria=expense.categoria.value,

@@ -2,6 +2,7 @@
 Repositorio para tracking de uso de IA.
 Controla cuotas diarias por familia para modelos cloud.
 """
+
 from __future__ import annotations
 
 from datetime import date

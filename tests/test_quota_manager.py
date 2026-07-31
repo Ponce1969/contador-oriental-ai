@@ -10,6 +10,7 @@ Criterio de aceptación:
 - register_gemma2_usage() funciona sin límite
 - Aislamiento entre familias: familia A no afecta cuota de familia B
 """
+
 from __future__ import annotations
 
 import os
@@ -163,7 +164,9 @@ class TestAiUsageRepository:
         """register_usage debe crear un registro en ai_usage."""
         repo = AiUsageRepository(db_session, familia_ids["fam_1"])
 
-        usage = repo.register_usage(model="llama3", prompt_tokens=100, completion_tokens=50)
+        usage = repo.register_usage(
+            model="llama3", prompt_tokens=100, completion_tokens=50
+        )
 
         assert usage.id is not None
         assert usage.familia_id == familia_ids["fam_1"]

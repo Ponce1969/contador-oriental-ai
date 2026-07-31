@@ -19,9 +19,10 @@ class SummaryRenderer:
 
     @staticmethod
     def render(
-        summary: dict[str, float],
+        summary: dict[str, Decimal],
         color: str,
         color_bg: str,
+        currency: str = "UYU",
         empty_msg: str = "No hay registros",
     ) -> ft.Column:
         """
@@ -31,6 +32,7 @@ class SummaryRenderer:
             summary: dict {categoria: monto}
             color: color de la barra y el monto (ej: ft.Colors.GREEN)
             color_bg: color de fondo de la barra (ej: ft.Colors.GREEN_100)
+            currency: moneda para formatear montos (UYU o USD)
             empty_msg: mensaje cuando no hay datos
         """
         if not summary:
@@ -43,10 +45,11 @@ class SummaryRenderer:
         total = sum(summary.values(), Decimal("0"))
         sorted_items = sorted(summary.items(), key=lambda x: x[1], reverse=True)
 
+        currency_symbol = "USD " if currency.upper() == "USD" else "$"
         controls = []
         for categoria, monto in sorted_items:
-            porcentaje = float((monto / total * 100)) if total > 0 else 0.0
-            monto_fmt = format_currency(monto)
+            porcentaje = float(monto / total * 100) if total > 0 else 0.0
+            monto_fmt = format_currency(monto, currency=currency)
 
             controls.append(
                 ft.Column(
@@ -60,7 +63,7 @@ class SummaryRenderer:
                                     expand=True,
                                 ),
                                 ft.Text(
-                                    value=f"${monto_fmt}",
+                                    value=f"{currency_symbol}{monto_fmt}",
                                     size=14,
                                     color=color,
                                 ),

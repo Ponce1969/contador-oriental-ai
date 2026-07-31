@@ -3,6 +3,7 @@ QuotaManager — Control de cuotas diarias para modelos cloud de IA.
 Regula el uso de Llama 3 70B por familia con límite configurable.
 Si la cuota se agota, cae automáticamente a Gemma 2:2b con aviso.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,9 @@ class QuotaManager:
     def __init__(self, session: Session, familia_id: int) -> None:
         self._session = session
         self._familia_id = familia_id
-        self._daily_limit = int(os.getenv("LLAMA3_DAILY_QUOTA", str(DEFAULT_DAILY_LIMIT)))
+        self._daily_limit = int(
+            os.getenv("LLAMA3_DAILY_QUOTA", str(DEFAULT_DAILY_LIMIT))
+        )
         self._repo = AiUsageRepository(session, familia_id)
 
     @property
@@ -79,8 +82,7 @@ class QuotaManager:
             completion_tokens=completion_tokens,
         )
         logger.info(
-            "[QUOTA] Familia %d: Llama 3 usage registrado "
-            "(%d/%d, tokens: %d+%d)",
+            "[QUOTA] Familia %d: Llama 3 usage registrado (%d/%d, tokens: %d+%d)",
             self._familia_id,
             self.get_count_today(),
             self._daily_limit,

@@ -1,6 +1,7 @@
 """
 Controller para gestión de compras en cuotas
 """
+
 from __future__ import annotations
 
 import logging
@@ -41,15 +42,16 @@ class InstallmentController(BaseController):
     ) -> Result[InstallmentPurchase, AppError]:
         """Crear una compra en cuotas a partir de un gasto"""
         with self._get_session() as session:
-            purchase_repo = InstallmentPurchaseRepository(
-                session, self._familia_id
-            )
+            purchase_repo = InstallmentPurchaseRepository(session, self._familia_id)
             payment_repo = InstallmentPaymentRepository(session, self._familia_id)
             expense_repo = ExpenseRepository(session, self._familia_id)
             service = InstallmentService(purchase_repo, payment_repo, expense_repo)
             result = service.create_installment(
-                expense, nombre_tarjeta, numero_cuotas,
-                mes_inicio_pago, monto_por_cuota,
+                expense,
+                nombre_tarjeta,
+                numero_cuotas,
+                mes_inicio_pago,
+                monto_por_cuota,
             )
 
         if isinstance(result, Ok):
@@ -77,9 +79,7 @@ class InstallmentController(BaseController):
     ) -> Result[InstallmentPayment, AppError]:
         """Pagar una cuota de una compra"""
         with self._get_session() as session:
-            purchase_repo = InstallmentPurchaseRepository(
-                session, self._familia_id
-            )
+            purchase_repo = InstallmentPurchaseRepository(session, self._familia_id)
             payment_repo = InstallmentPaymentRepository(session, self._familia_id)
             service = InstallmentService(purchase_repo, payment_repo)
             return service.pagar_cuota(purchase_id, fecha_pago)
@@ -91,20 +91,14 @@ class InstallmentController(BaseController):
             service = InstallmentService(repo, InstallmentPaymentRepository(session))
             return service.get_pending()
 
-    def obtener_historial(
-        self, purchase_id: int
-    ) -> list[InstallmentPayment]:
+    def obtener_historial(self, purchase_id: int) -> list[InstallmentPayment]:
         """Obtener todos los pagos de una compra"""
         with self._get_session() as session:
             repo = InstallmentPaymentRepository(session, self._familia_id)
-            service = InstallmentService(
-                InstallmentPurchaseRepository(session), repo
-            )
+            service = InstallmentService(InstallmentPurchaseRepository(session), repo)
             return service.get_payment_history(purchase_id)
 
-    def generar_gastos_programados(
-        self, anio: int, mes: int
-    ) -> int:
+    def generar_gastos_programados(self, anio: int, mes: int) -> int:
         """
         Generar gastos pendientes para cuotas del mes actual.
         Retorna cantidad de gastos creados.
@@ -130,7 +124,8 @@ class InstallmentController(BaseController):
             with self._get_session() as session:
                 expense_repo = ExpenseRepository(session, self._familia_id)
                 existentes = [
-                    e for e in expense_repo.get_by_month(anio, mes)
+                    e
+                    for e in expense_repo.get_by_month(anio, mes)
                     if e.installment_purchase_id == plan.id
                     and f"Cuota {cuota_actual}/{plan.numero_cuotas}" in e.descripcion
                 ]
@@ -146,9 +141,10 @@ class InstallmentController(BaseController):
                 else:
                     monto_cuota = plan.monto_por_cuota
 
-                # Crear gasto pendiente
+                # Crear gasto pendiente (hereda la moneda de la compra)
                 gasto = Expense(
                     monto=monto_cuota,
+                    currency=plan.currency,
                     fecha=fecha_cuota,
                     descripcion=(
                         f"{plan.descripcion} "
@@ -169,7 +165,9 @@ class InstallmentController(BaseController):
 
         logger.info(
             "Gastos programados generados: %d para %d/%d",
-            creados, mes, anio,
+            creados,
+            mes,
+            anio,
         )
         return creados
 
@@ -188,6 +186,8 @@ class InstallmentController(BaseController):
                 if i >= meses:
                     break
                 key = f"{fecha.year}-{fecha.month:02d}"
-                proyeccion[key] = proyeccion.get(key, Decimal("0")) + plan.monto_por_cuota
+                proyeccion[key] = (
+                    proyeccion.get(key, Decimal("0")) + plan.monto_por_cuota
+                )
 
         return dict(sorted(proyeccion.items()))

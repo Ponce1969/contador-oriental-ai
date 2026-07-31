@@ -104,39 +104,52 @@ class TestExpenseService:
             assert isinstance(result, Ok)
 
     def test_get_total_by_month(self, service):
-        """Test getting total by month."""
+        """Test getting total by month grouped by currency."""
         expense1 = Expense(
             monto=100.00,
             fecha=date.today(),
             descripcion="Gasto 1",
             categoria=ExpenseCategory.ALMACEN,
+            currency="UYU",
         )
         expense2 = Expense(
             monto=200.00,
             fecha=date.today(),
             descripcion="Gasto 2",
             categoria=ExpenseCategory.VEHICULOS,
+            currency="USD",
         )
 
         service.create_expense(expense1)
         service.create_expense(expense2)
 
-        total = service.get_total_by_month(date.today().year, date.today().month)
-        assert total >= 300.00
+        totals = service.get_total_by_month(date.today().year, date.today().month)
+        assert isinstance(totals, dict)
+        assert totals.get("UYU", 0) >= 100
+        assert totals.get("USD", 0) >= 200
+
+        # Currency filter
+        uyu_only = service.get_total_by_month(
+            date.today().year, date.today().month, currency="UYU"
+        )
+        assert "UYU" in uyu_only
+        assert "USD" not in uyu_only
 
     def test_get_summary_by_categories(self, service):
-        """Test getting summary by categories."""
+        """Test getting summary by categories and currency."""
         expense1 = Expense(
             monto=100.00,
             fecha=date.today(),
             descripcion="Comida",
             categoria=ExpenseCategory.ALMACEN,
+            currency="UYU",
         )
         expense2 = Expense(
             monto=50.00,
             fecha=date.today(),
             descripcion="Comida 2",
             categoria=ExpenseCategory.ALMACEN,
+            currency="USD",
         )
 
         service.create_expense(expense1)
@@ -144,3 +157,5 @@ class TestExpenseService:
 
         summary = service.get_summary_by_categories()
         assert isinstance(summary, dict)
+        assert (ExpenseCategory.ALMACEN.value, "UYU") in summary
+        assert (ExpenseCategory.ALMACEN.value, "USD") in summary

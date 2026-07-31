@@ -69,19 +69,24 @@ class IncomeController(BaseController):
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, Decimal]:
-        """Obtener resumen de ingresos por categoría del mes indicado."""
+        currency: str | None = None,
+    ) -> dict[tuple[str, str], Decimal]:
+        """Obtener resumen de ingresos por (categoría, moneda) del mes indicado."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
-            return service.get_summary_by_categories(year=year, month=month)
+            return service.get_summary_by_categories(
+                year=year, month=month, currency=currency
+            )
 
-    def get_total_by_month(self, year: int, month: int) -> Decimal:
-        """Obtener total de ingresos del mes"""
+    def get_total_by_month(
+        self, year: int, month: int, currency: str | None = None
+    ) -> dict[str, Decimal]:
+        """Obtener total de ingresos del mes, agrupado por moneda."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
-            return service.get_total_by_month(year, month)
+            return service.get_total_by_month(year, month, currency=currency)
 
     def delete_income(self, income_id: int) -> Result[None, AppError]:
         """Eliminar un ingreso"""

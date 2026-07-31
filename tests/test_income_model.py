@@ -3,8 +3,10 @@ Tests for Income model.
 """
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
 
 from models.income_model import Income, IncomeCategory, RecurrenceFrequency
 
@@ -167,3 +169,42 @@ class TestIncomeModel:
                 categoria=category,
             )
             assert income.categoria == category
+
+
+class TestIncomeCurrency:
+    """Validación de moneda en ingresos."""
+
+    def test_income_default_currency_uyu(self):
+        """Cuando no se especifica moneda, el default es UYU."""
+        income = Income(
+            family_member_id=1,
+            monto=Decimal("100"),
+            fecha=date.today(),
+            descripcion="Test",
+            categoria=IncomeCategory.SUELDO,
+        )
+        assert income.currency == "UYU"
+
+    def test_income_usd_is_valid(self):
+        """USD es una moneda válida."""
+        income = Income(
+            family_member_id=1,
+            monto=Decimal("100"),
+            currency="USD",
+            fecha=date.today(),
+            descripcion="Test USD",
+            categoria=IncomeCategory.SUELDO,
+        )
+        assert income.currency == "USD"
+
+    def test_income_eur_is_rejected(self):
+        """EUR no es una moneda soportada y debe fallar validación."""
+        with pytest.raises(ValidationError):
+            Income(
+                family_member_id=1,
+                monto=Decimal("100"),
+                currency="EUR",
+                fecha=date.today(),
+                descripcion="Test EUR",
+                categoria=IncomeCategory.SUELDO,
+            )

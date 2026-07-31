@@ -95,23 +95,35 @@ class ExpenseService:
         expenses = self.list_by_category(categoria)
         return sum((expense.monto for expense in expenses), Decimal("0"))
 
-    def get_total_by_month(self, year: int, month: int) -> Decimal:
-        """Calcular total gastado en un mes"""
+    def get_total_by_month(
+        self, year: int, month: int, currency: str | None = None
+    ) -> dict[str, Decimal]:
+        """Calcular total gastado en un mes, agrupado por moneda."""
         expenses = self.list_by_month(year, month)
-        return sum((expense.monto for expense in expenses), Decimal("0"))
+        totals: dict[str, Decimal] = {}
+        for expense in expenses:
+            if currency is not None and expense.currency != currency:
+                continue
+            totals[expense.currency] = (
+                totals.get(expense.currency, Decimal("0")) + expense.monto
+            )
+        return totals
 
     def get_summary_by_categories(
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, Decimal]:
-        """Obtener resumen de gastos por categoría, opcionalmente filtrado por mes."""
+        currency: str | None = None,
+    ) -> dict[tuple[str, str], Decimal]:
+        """Resumen de gastos por (categoría, moneda), opcionalmente filtrado por mes."""
         if year is not None and month is not None:
             expenses = self.list_by_month(year, month)
         else:
             expenses = self.list_expenses()
-        summary: dict[str, Decimal] = {}
+        summary: dict[tuple[str, str], Decimal] = {}
         for expense in expenses:
-            categoria = expense.categoria.value
-            summary[categoria] = summary.get(categoria, Decimal("0")) + expense.monto
+            if currency is not None and expense.currency != currency:
+                continue
+            key = (expense.categoria.value, expense.currency)
+            summary[key] = summary.get(key, Decimal("0")) + expense.monto
         return summary

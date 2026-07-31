@@ -36,6 +36,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def _resolve_currency(val: object) -> str:
+    """Normaliza el código de moneda detectado por OCR.
+
+    Solo UYU/USD son válidos en v1. Cualquier otro valor o None
+    se trata como detección ambigua y se resuelve a UYU sin alterar
+    el monto.
+    """
+    if not val or str(val).strip().lower() in ("null", "none", "n/a", "-"):
+        return "UYU"
+    ccy = str(val).strip().upper()
+    return ccy if ccy in {"UYU", "USD"} else "UYU"
+
+
 # Prompt para Ollama/Gemma
 _PROMPT_PARSEO = (
     "Analizá este texto de un ticket de compra uruguayo y extraé los datos.\n"
@@ -46,7 +60,8 @@ _PROMPT_PARSEO = (
     '  "monto": 1250.0,\n'
     '  "fecha": "2026-02-28",\n'
     '  "comercio": "Tienda Inglesa",\n'
-    '  "items": ["leche", "pan", "aceite"]\n'
+    '  "items": ["leche", "pan", "aceite"],\n'
+    '  "currency": null\n'
     "}}\n"
     "\n"
     "Si no podés determinar un campo, usá null.\n"
@@ -414,12 +429,15 @@ async def upload_form_submit(
                 return None
             return str(val)
 
+        currency = _resolve_currency((parsed or {}).get("currency"))
+
         result = {
             "success": True,
             "monto": (parsed or {}).get("monto"),
             "fecha": fecha_iso,
             "comercio": _str_or_none((parsed or {}).get("comercio")),
             "items": (parsed or {}).get("items") or [],
+            "currency": currency,
             "confianza_ocr": confianza,
             "texto_crudo": texto_crudo,
         }
@@ -551,6 +569,7 @@ async def upload_ocr(
         fecha_str = parsed.get("fecha")
         comercio = parsed.get("comercio")
         items = parsed.get("items") or []
+        currency = _resolve_currency(parsed.get("currency"))
 
         # Convertir fecha
         fecha_parsed: date | None = None
@@ -566,6 +585,7 @@ async def upload_ocr(
             fecha=fecha_parsed,
             comercio=comercio,
             items=items,
+            currency=currency,
             texto_crudo=texto_crudo,
             confianza_ocr=confianza,
         )

@@ -165,32 +165,37 @@ class AIAdvisorService:
         Returns:
             String formateado con el resumen financiero
         """
-        balance_mes: Decimal = ctx.ingresos_total - ctx.total_gastos_mes
-
         lineas: list[str] = [
             "### ESTADO DE LA HACIENDA FAMILIAR ###",
             f"- Miembros en el hogar: {ctx.miembros_count}",
-            f"- Ingresos totales {ctx.periodo_label}:"
-            f" {format_pesos_ai(ctx.ingresos_total)}",
-            f"- TOTAL gastos {ctx.periodo_label} (todas las categorías):"
-            f" {format_pesos_ai(ctx.total_gastos_mes)}",
-            f"- BALANCE {ctx.periodo_label} (Ingresos - Gastos totales): "
-            f"{format_pesos_ai(balance_mes)}",
+            f"- Ingresos totales {ctx.periodo_label}:",
         ]
+        for ccy in sorted(ctx.ingresos_por_moneda.keys()):
+            ingresos_str = format_pesos_ai(ctx.ingresos_por_moneda[ccy], currency=ccy)
+            lineas.append(f"  * {ccy}: {ingresos_str}")
+        lineas.append(f"- TOTAL gastos {ctx.periodo_label} (todas las categorías):")
+        for ccy in sorted(ctx.gastos_por_moneda.keys()):
+            gastos_str = format_pesos_ai(ctx.gastos_por_moneda[ccy], currency=ccy)
+            lineas.append(f"  * {ccy}: {gastos_str}")
+        lineas.append(f"- BALANCE {ctx.periodo_label} (Ingresos - Gastos) por moneda:")
+        ingresos_keys = set(ctx.ingresos_por_moneda.keys())
+        gastos_keys = set(ctx.gastos_por_moneda.keys())
+        for ccy in sorted(ingresos_keys | gastos_keys):
+            ingresos = ctx.ingresos_por_moneda.get(ccy, Decimal("0"))
+            gastos = ctx.gastos_por_moneda.get(ccy, Decimal("0"))
+            balance_mes = ingresos - gastos
+            balance_str = format_pesos_ai(balance_mes, currency=ccy)
+            lineas.append(f"  * {ccy}: {balance_str}")
 
         if ctx.cotizacion_dolar:
             # Formato inequivoco para IA: coma decimal, sin punto
             # "$ 40,01" en vez de "$ 40.01" (Llama confunde punto con decimal)
-            cotizacion_2d = ctx.cotizacion_dolar.quantize(
-                Decimal("0.01")
-            )
+            cotizacion_2d = ctx.cotizacion_dolar.quantize(Decimal("0.01"))
             entero = int(cotizacion_2d)
             decimal_part = int((cotizacion_2d - entero) * 100)
             entero_str = f"{entero:,}".replace(",", " ")
             cotizacion_str = f"{entero_str},{decimal_part:02d}"
-            lineas.append(
-                f"- Cotización del dólar hoy: 1 USD = $ {cotizacion_str}"
-            )
+            lineas.append(f"- Cotización del dólar hoy: 1 USD = $ {cotizacion_str}")
 
         if ctx.resumen_metodos_pago:
             metodos_label = (
@@ -222,18 +227,12 @@ class AIAdvisorService:
         if ctx.empalme_mes_label:
             balance_empalme = ctx.empalme_ingresos_total - ctx.empalme_total_gastos
             lineas.append("")
-            lineas.append(
-                f"### CIERRE DEL MES ANTERIOR ({ctx.empalme_mes_label}) ###"
-            )
-            lineas.append(
-                f"- Ingresos: {format_pesos_ai(ctx.empalme_ingresos_total)}"
-            )
+            lineas.append(f"### CIERRE DEL MES ANTERIOR ({ctx.empalme_mes_label}) ###")
+            lineas.append(f"- Ingresos: {format_pesos_ai(ctx.empalme_ingresos_total)}")
             lineas.append(
                 f"- Total gastos: {format_pesos_ai(ctx.empalme_total_gastos)}"
             )
-            lineas.append(
-                f"- Balance: {format_pesos_ai(balance_empalme)}"
-            )
+            lineas.append(f"- Balance: {format_pesos_ai(balance_empalme)}")
 
             if ctx.empalme_gastos:
                 lineas.append("DETALLE DE GASTOS DEL MES ANTERIOR:")
@@ -252,9 +251,7 @@ class AIAdvisorService:
                         monto = datos["total"]
                         cantidad = datos["cantidad"]
                         metodos = datos.get("metodos", {})
-                        metodo_str = ", ".join(
-                            f"{m}({c}x)" for m, c in metodos.items()
-                        )
+                        metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
                         if cantidad > 1:
                             lineas.append(
                                 f"    - {descripcion}: {format_pesos_ai(monto)}"
@@ -277,46 +274,55 @@ class AIAdvisorService:
             "DETALLE DE GASTOS CONSULTADOS (cada línea = una transacción real):",
         ]
 
-        total_filtrado = Decimal("0")
+        total_filtrado: dict[str, Decimal] = {}
 
         if not ctx.resumen_gastos:
             lineas.append("- No hay gastos registrados en este contexto.")
         else:
             for categoria, items in ctx.resumen_gastos.items():
-                total_categoria = sum(
-                    (Decimal(str(d["total"])) for d in items.values()),
-                    Decimal("0"),
-                )
-                cant_categoria = sum(d["cantidad"] for d in items.values())
-                total_filtrado += total_categoria
+                subtotales: dict[str, Decimal] = {}
+                cantidad_categoria: dict[str, int] = {}
+                for key, datos in items.items():
+                    ccy = key[1]
+                    subtotales[ccy] = subtotales.get(ccy, Decimal("0")) + Decimal(
+                        str(datos["total"])
+                    )
+                    cantidad_categoria[ccy] = (
+                        cantidad_categoria.get(ccy, 0) + datos["cantidad"]
+                    )
 
-                lineas.append(
-                    f"\n📂 {categoria}"
-                    f" → SUBTOTAL: {format_pesos_ai(total_categoria)}"
-                    f" ({cant_categoria} transacciones):"
-                )
-                for descripcion, datos in items.items():
+                for ccy in sorted(subtotales.keys()):
+                    total_filtrado[ccy] = (
+                        total_filtrado.get(ccy, Decimal("0")) + subtotales[ccy]
+                    )
+
+                lineas.append(f"\n📂 {categoria}")
+                for ccy in sorted(subtotales.keys()):
+                    lineas.append(
+                        f"  → SUBTOTAL {ccy}:"
+                        f" {format_pesos_ai(subtotales[ccy], currency=ccy)}"
+                        f" ({cantidad_categoria[ccy]} transacciones)"
+                    )
+                for (descripcion, ccy), datos in items.items():
                     monto = datos["total"]
                     cantidad = datos["cantidad"]
                     metodos = datos.get("metodos", {})
                     metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
+                    monto_str = format_pesos_ai(monto, currency=ccy)
                     if cantidad > 1:
                         lineas.append(
-                            f"  - {descripcion}: {format_pesos_ai(monto)} total"
+                            f"  - {descripcion}: {monto_str} total"
                             f" ({cantidad} transacciones separadas, {metodo_str})"
                         )
                     else:
-                        monto_str = format_pesos_ai(monto)
-                        lineas.append(
-                            f"  - {descripcion}:"
-                            f" {monto_str} ({metodo_str})"
-                        )
+                        lineas.append(f"  - {descripcion}: {monto_str} ({metodo_str})")
 
         lineas.append("")
-        lineas.append(
-            f"SUBTOTAL CONSULTADO: {format_pesos_ai(total_filtrado)}"
-            f" ({ctx.total_gastos_count} transacciones)"
-        )
+        lineas.append("SUBTOTAL CONSULTADO:")
+        for ccy in sorted(total_filtrado.keys()):
+            total_str = format_pesos_ai(total_filtrado[ccy], currency=ccy)
+            lineas.append(f"  * {ccy}: {total_str}")
+        lineas.append(f"({ctx.total_gastos_count} transacciones)")
 
         return "\n".join(lineas)
 
@@ -338,9 +344,11 @@ class AIAdvisorService:
             vtk = m.variacion_ticket_pct
             diag = m.diagnostico
 
+            ccy = getattr(m, "currency", "UYU")
             if vt is None:
+                actual_str = format_pesos_ai(m.total_actual, currency=ccy)
                 lineas.append(
-                    f"- {m.categoria}: {format_pesos_ai(m.total_actual)} este mes"
+                    f"- {m.categoria}: {actual_str} este mes"
                     f" (sin datos del mes anterior para comparar)."
                 )
                 continue
@@ -350,11 +358,11 @@ class AIAdvisorService:
             lineas.append(
                 f"- {m.categoria}:"
                 f" gasto total {signo_t}{vt:.1f}%"
-                f" ({format_pesos_ai(m.total_anterior)} ->"
-                f" {format_pesos_ai(m.total_actual)}),"
+                f" ({format_pesos_ai(m.total_anterior, currency=ccy)} ->"
+                f" {format_pesos_ai(m.total_actual, currency=ccy)}),"
                 f" ticket promedio {signo_tk}{vtk:.1f}%"
-                f" ({format_pesos_ai(m.ticket_anterior)} ->"
-                f" {format_pesos_ai(m.ticket_actual)})."
+                f" ({format_pesos_ai(m.ticket_anterior, currency=ccy)} ->"
+                f" {format_pesos_ai(m.ticket_actual, currency=ccy)})."
                 f" {diag}"
             )
 
@@ -433,10 +441,10 @@ REGLAS ESTRICTAS (NO LAS ROMPAS NUNCA):
 - La sección "CIERRE DEL MES ANTERIOR" es REFERENCIA: NO la mezcles con los datos del mes actual.
 
 SÍMBOLOS MONETARIOS (estricto):
+- Reportá cada moneda por separado: $ para UYU, USD para USD.
 - Usá $ para Pesos Uruguayos (moneda principal del usuario). Ejemplo: $ 650, $ 890, $ 173 720
 - Usá USD para Dólares. NUNCA uses U$S ni $U.
-- El total mensual SIEMPRE en $ (pesos).
-- Usá USD solo para contextualizar compras grandes o deudas en esa moneda.
+- NUNCA conviertas ni sumes monedas distintas
 
 TONO: Profesional pero de confianza. Evitá tecnicismos. Si algo está mal, decilo directo.
 {aviso_cuota}{prioridad}- Máximo {max_lineas} de respuesta.
@@ -702,9 +710,7 @@ RESPUESTA:"""
             ai_logger.info("📊 CONTEXTO ENVIADO AL MODELO:")
             ai_logger.info("  - Modelo: %s", modelo.upper())
             ai_logger.info("  - Pregunta: %s", request.pregunta)
-            ai_logger.info(
-                "  - Incluir gastos: %s", request.incluir_gastos_recientes
-            )
+            ai_logger.info("  - Incluir gastos: %s", request.incluir_gastos_recientes)
             ai_logger.info(
                 "  - Transacciones: %d", ctx.total_gastos_count if ctx else 0
             )
@@ -719,9 +725,7 @@ RESPUESTA:"""
             respuesta_texto = ""
 
             if modelo == "llama3":
-                respuesta_texto = await self._consultar_llama3(
-                    prompt, ai_logger
-                )
+                respuesta_texto = await self._consultar_llama3(prompt, ai_logger)
             else:
                 respuesta_texto = await self._consultar_gemma2(
                     prompt, ai_logger, cuota_agotada
@@ -739,9 +743,7 @@ RESPUESTA:"""
         except Exception as e:
             return Err(AppError(message=f"Error en el Contador Oriental: {str(e)}"))
 
-    async def _consultar_llama3(
-        self, prompt: str, ai_logger
-    ) -> str:
+    async def _consultar_llama3(self, prompt: str, ai_logger) -> str:
         """
         Llama a Llama 3 70B via NVIDIA API.
         Si falla, hace fallback automático a Gemma 2:2b.
@@ -761,9 +763,7 @@ RESPUESTA:"""
             ai_logger.warning("⚠️ NVIDIAClient falló: %s. Fallback a Gemma 2", e)
             return await self._consultar_gemma2(prompt, ai_logger, cuota_agotada=False)
         except Exception as e:
-            ai_logger.warning(
-                "⚠️ Error inesperado en NVIDIA: %s. Fallback a Gemma 2", e
-            )
+            ai_logger.warning("⚠️ Error inesperado en NVIDIA: %s. Fallback a Gemma 2", e)
             return await self._consultar_gemma2(prompt, ai_logger, cuota_agotada=False)
 
     async def _consultar_gemma2(
@@ -784,10 +784,10 @@ RESPUESTA:"""
                 "de IA. Verificar que Ollama esté corriendo en el host."
             )
         except Exception as e:
-            ai_logger.error("❌ Error inesperado en Ollama: %s:%s", type(e).__name__, str(e))
-            raise RuntimeError(
-                f"Error al consultar al Contador Oriental: {str(e)}"
+            ai_logger.error(
+                "❌ Error inesperado en Ollama: %s:%s", type(e).__name__, str(e)
             )
+            raise RuntimeError(f"Error al consultar al Contador Oriental: {str(e)}")
 
         if cuota_agotada:
             aviso = (

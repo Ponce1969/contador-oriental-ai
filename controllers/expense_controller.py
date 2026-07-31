@@ -42,7 +42,7 @@ class ExpenseController(BaseController):
         return "Gastos Familiares"
 
     def add_expense(self, expense: Expense) -> Result[Expense, AppError]:
-        """Agregar un nuevo gasto y publicar evento para memoria vectorial (fire-and-forget)"""
+        """Agregar un nuevo gasto y publicar evento para memoria vectorial."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
@@ -92,12 +92,15 @@ class ExpenseController(BaseController):
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, Decimal]:
-        """Obtener resumen de gastos por categoría del mes indicado."""
+        currency: str | None = None,
+    ) -> dict[tuple[str, str], Decimal]:
+        """Obtener resumen de gastos por (categoría, moneda) del mes indicado."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
-            return service.get_summary_by_categories(year=year, month=month)
+            return service.get_summary_by_categories(
+                year=year, month=month, currency=currency
+            )
 
     def update_expense(self, expense: Expense) -> Result[Expense, AppError]:
         """Actualizar un gasto existente"""
@@ -113,9 +116,11 @@ class ExpenseController(BaseController):
             service = ExpenseService(repo)
             return service.delete_expense(expense_id)
 
-    def get_total_by_month(self, year: int, month: int) -> Decimal:
-        """Obtener total de gastos de un mes específico"""
+    def get_total_by_month(
+        self, year: int, month: int, currency: str | None = None
+    ) -> dict[str, Decimal]:
+        """Obtener total de gastos de un mes específico, agrupado por moneda."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
-            return service.get_total_by_month(year, month)
+            return service.get_total_by_month(year, month, currency=currency)

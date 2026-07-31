@@ -106,11 +106,13 @@ class TestExpenseController:
             fecha=date.today(),
             descripcion="Monthly test",
             categoria=ExpenseCategory.OCIO,
+            currency="UYU",
         )
         controller.add_expense(expense)
 
         summary = controller.get_summary_by_categories()
         assert isinstance(summary, dict)
+        assert (ExpenseCategory.OCIO.value, "UYU") in summary
 
     def test_get_total_by_month(self, controller):
         """Test getting total by month through controller."""
@@ -120,11 +122,13 @@ class TestExpenseController:
             fecha=date.today(),
             descripcion="Test total",
             categoria=ExpenseCategory.ALMACEN,
+            currency="UYU",
         )
         controller.add_expense(expense)
 
-        total = controller.get_total_by_month(date.today().year, date.today().month)
-        assert total >= 500.00
+        totals = controller.get_total_by_month(date.today().year, date.today().month)
+        assert isinstance(totals, dict)
+        assert totals.get("UYU", 0) >= 500
 
     def test_delete_expense(self, controller):
         """Test deleting expense through controller."""
@@ -211,11 +215,13 @@ class TestIncomeController:
             fecha=date.today(),
             descripcion="Summary test",
             categoria=IncomeCategory.SUELDO,
+            currency="UYU",
         )
         controller.add_income(income)
 
         summary = controller.get_summary_by_categories()
         assert isinstance(summary, dict)
+        assert (IncomeCategory.SUELDO.value, "UYU") in summary
 
     def test_get_total_by_month(self, controller, family_member_id):
         """Test getting monthly total through controller."""
@@ -226,11 +232,13 @@ class TestIncomeController:
             fecha=date.today(),
             descripcion="Monthly income test",
             categoria=IncomeCategory.SUELDO,
+            currency="UYU",
         )
         controller.add_income(income)
 
-        total = controller.get_total_by_month(date.today().year, date.today().month)
-        assert total >= 3000.00
+        totals = controller.get_total_by_month(date.today().year, date.today().month)
+        assert isinstance(totals, dict)
+        assert totals.get("UYU", 0) >= 3000
 
     def test_delete_income(self, controller, family_member_id):
         """Test deleting income through controller."""

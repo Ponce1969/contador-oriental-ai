@@ -17,7 +17,6 @@ from controllers.installment_controller import InstallmentController
 from core.session import SessionManager
 from core.state import AppState
 from services.infrastructure.formatters import format_pesos
-from utils.formatters import format_currency
 from views.components.summary_renderer import SummaryRenderer
 from views.layouts.main_layout import MainLayout
 
@@ -78,38 +77,18 @@ class DashboardView:
         except Exception:
             pass  # No bloquear dashboard por error de cuotas
 
-        # Obtener totales
-        total_ingresos = self._get_total_ingresos(year, month)
-        total_gastos = self._get_total_gastos(year, month)
-        balance = total_ingresos - total_gastos
+        # Obtener totales por moneda
+        ingresos_uyu = self._get_total_ingresos(year, month, "UYU")
+        gastos_uyu = self._get_total_gastos(year, month, "UYU")
+        balance_uyu = ingresos_uyu - gastos_uyu
+
+        ingresos_usd = self._get_total_ingresos(year, month, "USD")
+        gastos_usd = self._get_total_gastos(year, month, "USD")
+        balance_usd = ingresos_usd - gastos_usd
 
         # Formatear montos
-        ingresos_fmt = format_currency(total_ingresos)
-        gastos_fmt = format_currency(total_gastos)
-        balance_fmt = format_currency(balance)
-
-        # Determinar color y mensaje del balance
-        if balance > 0:
-            balance_color = ft.Colors.GREEN
-            balance_icon = ft.Icons.TRENDING_UP
-            balance_msg = "¡Excelente! Tienes un superávit"
-        elif balance < 0:
-            balance_color = ft.Colors.RED
-            balance_icon = ft.Icons.TRENDING_DOWN
-            balance_msg = "⚠️ Atención: Gastos superan ingresos"
-        else:
-            balance_color = ft.Colors.ORANGE
-            balance_icon = ft.Icons.TRENDING_FLAT
-            balance_msg = "Balance equilibrado"
-
-        # Calcular porcentajes para barra de progreso (DEBEN ser float para Flet)
-        total = total_ingresos + total_gastos
-        if total > 0:
-            porcentaje_ingresos = float(total_ingresos / total)
-            porcentaje_gastos = float(total_gastos / total)
-        else:
-            porcentaje_ingresos = 0.5
-            porcentaje_gastos = 0.5
+        balance_uyu_fmt = format_pesos(balance_uyu, currency="UYU")
+        balance_usd_fmt = format_pesos(balance_usd, currency="USD")
 
         is_mobile = AppState.device == "mobile"
         title_size = 20 if is_mobile else 28
@@ -123,166 +102,54 @@ class DashboardView:
                 ),
                 self._build_history_hook(year, month),
                 ft.Divider(),
-                # Tarjeta de Balance Principal
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Row(
-                                controls=[
-                                    ft.Icon(
-                                        icon=balance_icon,
-                                        color=balance_color,
-                                        size=36 if is_mobile else 40,
-                                    ),
-                                    ft.Column(
-                                        controls=[
-                                            ft.Text(
-                                                value="Balance del mes",
-                                                size=14 if is_mobile else 16,
-                                                color=ft.Colors.BLUE_GREY_700,
-                                            ),
-                                            ft.Text(
-                                                value=f"${balance_fmt}",
-                                                size=28 if is_mobile else 36,
-                                                weight=ft.FontWeight.BOLD,
-                                                color=balance_color,
-                                            ),
-                                            ft.Text(
-                                                value=balance_msg,
-                                                size=12 if is_mobile else 14,
-                                                italic=True,
-                                                color=balance_color,
-                                            ),
-                                        ],
-                                        spacing=4,
-                                        expand=True,
-                                    ),
-                                ],
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                spacing=16,
-                            ),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=10,
-                    ),
-                    padding=20 if is_mobile else 30,
-                    bgcolor=ft.Colors.LIGHT_BLUE_50,
-                    border_radius=15,
-                    margin=ft.Margin.only(bottom=16),
-                    shadow=ft.BoxShadow(
-                        spread_radius=1,
-                        blur_radius=8,
-                        color=ft.Colors.BLUE_GREY_100,
-                    ),
+                # Tarjetas de Balance por moneda
+                ft.ResponsiveRow(
+                    controls=[
+                        self._build_balance_card(
+                            "Balance UYU",
+                            balance_uyu,
+                            balance_uyu_fmt,
+                            ft.Colors.LIGHT_BLUE_50,
+                            is_mobile,
+                        ),
+                        self._build_balance_card(
+                            "Balance USD",
+                            balance_usd,
+                            balance_usd_fmt,
+                            ft.Colors.BLUE_GREY_50,
+                            is_mobile,
+                        ),
+                    ],
+                    spacing=16,
+                    run_spacing=16,
                 ),
                 self._build_cuotas_card(),
                 # Tarjetas de Ingresos y Gastos — ResponsiveRow
                 ft.ResponsiveRow(
                     controls=[
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Row(
-                                        controls=[
-                                            ft.Icon(
-                                                icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
-                                                color=ft.Colors.TEAL_600,
-                                                size=28,
-                                            ),
-                                            ft.Text(
-                                                value="Ingresos",
-                                                size=16,
-                                                weight=ft.FontWeight.BOLD,
-                                                color=ft.Colors.TEAL_900,
-                                            ),
-                                        ],
-                                        spacing=10,
-                                    ),
-                                    ft.Text(
-                                        value=f"${ingresos_fmt}",
-                                        size=24 if is_mobile else 28,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.GREEN_600,
-                                    ),
-                                    ft.ProgressBar(
-                                        value=porcentaje_ingresos,
-                                        color=ft.Colors.TEAL_400,
-                                        bgcolor=ft.Colors.TEAL_100,
-                                        height=10,
-                                    ),
-                                    ft.Text(
-                                        value=(
-                                            f"{porcentaje_ingresos * 100:.1f}%"
-                                            " del total"
-                                        ),
-                                        size=12,
-                                        color=ft.Colors.TEAL_700,
-                                    ),
-                                ],
-                                spacing=10,
-                                horizontal_alignment=ft.CrossAxisAlignment.START,
-                            ),
-                            padding=16,
-                            bgcolor=ft.Colors.CYAN_50,
-                            border_radius=10,
-                            shadow=ft.BoxShadow(
-                                spread_radius=1,
-                                blur_radius=6,
-                                color=ft.Colors.TEAL_100,
-                            ),
-                            col=Responsive.COL_HALF,
+                        self._build_summary_total_card(
+                            title="Ingresos",
+                            icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
+                            icon_color=ft.Colors.TEAL_600,
+                            title_color=ft.Colors.TEAL_900,
+                            amount_color=ft.Colors.GREEN_600,
+                            bg_color=ft.Colors.CYAN_50,
+                            shadow_color=ft.Colors.TEAL_100,
+                            uyu_amount=ingresos_uyu,
+                            usd_amount=ingresos_usd,
+                            is_mobile=is_mobile,
                         ),
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Row(
-                                        controls=[
-                                            ft.Icon(
-                                                icon=ft.Icons.MONEY_OFF,
-                                                color=ft.Colors.ORANGE_600,
-                                                size=28,
-                                            ),
-                                            ft.Text(
-                                                value="Gastos",
-                                                size=16,
-                                                weight=ft.FontWeight.BOLD,
-                                                color=ft.Colors.ORANGE_900,
-                                            ),
-                                        ],
-                                        spacing=10,
-                                    ),
-                                    ft.Text(
-                                        value=f"${gastos_fmt}",
-                                        size=24 if is_mobile else 28,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.DEEP_ORANGE_600,
-                                    ),
-                                    ft.ProgressBar(
-                                        value=porcentaje_gastos,
-                                        color=ft.Colors.ORANGE_400,
-                                        bgcolor=ft.Colors.ORANGE_100,
-                                        height=10,
-                                    ),
-                                    ft.Text(
-                                        value=(
-                                            f"{porcentaje_gastos * 100:.1f}% del total"
-                                        ),
-                                        size=12,
-                                        color=ft.Colors.ORANGE_700,
-                                    ),
-                                ],
-                                spacing=10,
-                                horizontal_alignment=ft.CrossAxisAlignment.START,
-                            ),
-                            padding=16,
-                            bgcolor=ft.Colors.ORANGE_50,
-                            border_radius=10,
-                            shadow=ft.BoxShadow(
-                                spread_radius=1,
-                                blur_radius=6,
-                                color=ft.Colors.ORANGE_100,
-                            ),
-                            col=Responsive.COL_HALF,
+                        self._build_summary_total_card(
+                            title="Gastos",
+                            icon=ft.Icons.MONEY_OFF,
+                            icon_color=ft.Colors.ORANGE_600,
+                            title_color=ft.Colors.ORANGE_900,
+                            amount_color=ft.Colors.DEEP_ORANGE_600,
+                            bg_color=ft.Colors.ORANGE_50,
+                            shadow_color=ft.Colors.ORANGE_100,
+                            uyu_amount=gastos_uyu,
+                            usd_amount=gastos_usd,
+                            is_mobile=is_mobile,
                         ),
                     ],
                     spacing=16,
@@ -297,63 +164,29 @@ class DashboardView:
                 ),
                 ft.ResponsiveRow(
                     controls=[
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        value="💰 Ingresos por categoría",
-                                        size=14,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.TEAL_700,
-                                    ),
-                                    ft.Divider(),
-                                    SummaryRenderer.render(
-                                        self.income_controller.get_summary_by_categories(
-                                            year=year, month=month
-                                        ),
-                                        color=ft.Colors.GREEN,
-                                        color_bg=ft.Colors.GREEN_100,
-                                        empty_msg="No hay ingresos registrados",
-                                    ),
-                                ],
-                                spacing=10,
-                                scroll=ft.ScrollMode.AUTO,
+                        self._build_category_summary_card(
+                            title="💰 Ingresos por categoría",
+                            summary=self.income_controller.get_summary_by_categories(
+                                year=year, month=month
                             ),
-                            padding=14,
-                            bgcolor=ft.Colors.CYAN_50,
-                            border=ft.Border.all(2, ft.Colors.TEAL_200),
-                            border_radius=10,
-                            height=280,
-                            col=Responsive.COL_HALF,
+                            color=ft.Colors.GREEN,
+                            color_bg=ft.Colors.GREEN_100,
+                            title_color=ft.Colors.TEAL_700,
+                            border_color=ft.Colors.TEAL_200,
+                            bg_color=ft.Colors.CYAN_50,
+                            empty_msg="No hay ingresos registrados",
                         ),
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        value="💸 Gastos por categoría",
-                                        size=14,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.ORANGE_700,
-                                    ),
-                                    ft.Divider(),
-                                    SummaryRenderer.render(
-                                        self.expense_controller.get_summary_by_categories(
-                                            year=year, month=month
-                                        ),
-                                        color=ft.Colors.RED,
-                                        color_bg=ft.Colors.RED_100,
-                                        empty_msg="No hay gastos registrados",
-                                    ),
-                                ],
-                                spacing=10,
-                                scroll=ft.ScrollMode.AUTO,
+                        self._build_category_summary_card(
+                            title="💸 Gastos por categoría",
+                            summary=self.expense_controller.get_summary_by_categories(
+                                year=year, month=month
                             ),
-                            padding=14,
-                            bgcolor=ft.Colors.ORANGE_50,
-                            border=ft.Border.all(2, ft.Colors.ORANGE_200),
-                            border_radius=10,
-                            height=280,
-                            col=Responsive.COL_HALF,
+                            color=ft.Colors.RED,
+                            color_bg=ft.Colors.RED_100,
+                            title_color=ft.Colors.ORANGE_700,
+                            border_color=ft.Colors.ORANGE_200,
+                            bg_color=ft.Colors.ORANGE_50,
+                            empty_msg="No hay gastos registrados",
                         ),
                     ],
                     spacing=16,
@@ -370,6 +203,227 @@ class DashboardView:
             router=self.router,
         )
 
+    def _build_balance_card(
+        self,
+        title: str,
+        balance: Decimal,
+        balance_fmt: str,
+        bgcolor: str,
+        is_mobile: bool,
+    ) -> ft.Container:
+        """Construir tarjeta de balance para una moneda."""
+        color = self._balance_color(balance)
+        icon = self._balance_icon(balance)
+        msg = self._balance_msg(balance)
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(
+                                icon=icon,
+                                color=color,
+                                size=36 if is_mobile else 40,
+                            ),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        value=title,
+                                        size=14 if is_mobile else 16,
+                                        color=ft.Colors.BLUE_GREY_700,
+                                    ),
+                                    ft.Text(
+                                        value=balance_fmt,
+                                        size=28 if is_mobile else 36,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=color,
+                                    ),
+                                    ft.Text(
+                                        value=msg,
+                                        size=12 if is_mobile else 14,
+                                        italic=True,
+                                        color=color,
+                                    ),
+                                ],
+                                spacing=4,
+                                expand=True,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=16,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=10,
+            ),
+            padding=20 if is_mobile else 30,
+            bgcolor=bgcolor,
+            border_radius=15,
+            margin=ft.Margin.only(bottom=16),
+            shadow=ft.BoxShadow(
+                spread_radius=1,
+                blur_radius=8,
+                color=ft.Colors.BLUE_GREY_100,
+            ),
+            col=Responsive.COL_HALF,
+        )
+
+    def _balance_color(self, balance: Decimal) -> str:
+        if balance > 0:
+            return ft.Colors.GREEN
+        if balance < 0:
+            return ft.Colors.RED
+        return ft.Colors.ORANGE
+
+    def _balance_icon(self, balance: Decimal) -> str:
+        if balance > 0:
+            return ft.Icons.TRENDING_UP
+        if balance < 0:
+            return ft.Icons.TRENDING_DOWN
+        return ft.Icons.TRENDING_FLAT
+
+    def _balance_msg(self, balance: Decimal) -> str:
+        if balance > 0:
+            return "¡Excelente! Tienes un superávit"
+        if balance < 0:
+            return "⚠️ Atención: Gastos superan ingresos"
+        return "Balance equilibrado"
+
+    def _build_summary_total_card(
+        self,
+        title: str,
+        icon: str,
+        icon_color: str,
+        title_color: str,
+        amount_color: str,
+        bg_color: str,
+        shadow_color: str,
+        uyu_amount: Decimal,
+        usd_amount: Decimal,
+        is_mobile: bool,
+    ) -> ft.Container:
+        """Construir tarjeta de totales (Ingresos/Gastos) mostrando UYU y USD."""
+        amounts = []
+        if uyu_amount > 0 or usd_amount == 0:
+            amounts.append(
+                ft.Text(
+                    value=format_pesos(uyu_amount, currency="UYU"),
+                    size=24 if is_mobile else 28,
+                    weight=ft.FontWeight.BOLD,
+                    color=amount_color,
+                )
+            )
+        if usd_amount > 0:
+            amounts.append(
+                ft.Text(
+                    value=format_pesos(usd_amount, currency="USD"),
+                    size=20 if is_mobile else 24,
+                    weight=ft.FontWeight.BOLD,
+                    color=amount_color,
+                )
+            )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(
+                                icon=icon,
+                                color=icon_color,
+                                size=28,
+                            ),
+                            ft.Text(
+                                value=title,
+                                size=16,
+                                weight=ft.FontWeight.BOLD,
+                                color=title_color,
+                            ),
+                        ],
+                        spacing=10,
+                    ),
+                    *amounts,
+                ],
+                spacing=10,
+                horizontal_alignment=ft.CrossAxisAlignment.START,
+            ),
+            padding=16,
+            bgcolor=bg_color,
+            border_radius=10,
+            shadow=ft.BoxShadow(
+                spread_radius=1,
+                blur_radius=6,
+                color=shadow_color,
+            ),
+            col=Responsive.COL_HALF,
+        )
+
+    def _build_category_summary_card(
+        self,
+        title: str,
+        summary: dict[tuple[str, str], Decimal],
+        color: str,
+        color_bg: str,
+        title_color: str,
+        border_color: str,
+        bg_color: str,
+        empty_msg: str,
+    ) -> ft.Container:
+        """Construir card de resumen por categoría separado por moneda."""
+        by_currency: dict[str, dict[str, Decimal]] = {}
+        for (categoria, currency), monto in summary.items():
+            by_currency.setdefault(currency, {})[categoria] = monto
+
+        controls: list[ft.Control] = [
+            ft.Text(
+                value=title,
+                size=14,
+                weight=ft.FontWeight.BOLD,
+                color=title_color,
+            ),
+            ft.Divider(),
+        ]
+
+        if not by_currency:
+            controls.append(
+                ft.Text(value=empty_msg, italic=True, color=ft.Colors.GREY_600)
+            )
+        else:
+            for currency in sorted(by_currency.keys()):
+                controls.append(
+                    ft.Text(
+                        value="UYU" if currency == "UYU" else "USD",
+                        size=12,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.BLUE_GREY_600,
+                    )
+                )
+                controls.append(
+                    SummaryRenderer.render(
+                        by_currency[currency],
+                        color=color,
+                        color_bg=color_bg,
+                        currency=currency,
+                        empty_msg="No hay registros",
+                    )
+                )
+                controls.append(ft.Divider(height=8))
+
+        return ft.Container(
+            content=ft.Column(
+                controls=controls,
+                spacing=10,
+                scroll=ft.ScrollMode.AUTO,
+            ),
+            padding=14,
+            bgcolor=bg_color,
+            border=ft.Border.all(2, border_color),
+            border_radius=10,
+            height=280,
+            col=Responsive.COL_HALF,
+        )
+
     def _build_history_hook(self, year: int, month: int) -> ft.Container:
         """Strip con los últimos 3 meses y link al Historial completo."""
         try:
@@ -380,10 +434,14 @@ class DashboardView:
         if not data.meses:
             return ft.Container()
 
-        # Armar strip: "Mayo: $890 | Abril: $270.415 | Marzo: $5.177"
+        # Armar strip: "Mayo: $890 / USD 100 | ..."
         strip_parts: list[str] = []
         for m in data.meses:
-            strip_parts.append(f"{m.label}: {format_pesos(m.total_gastos)}")
+            gastos_uyu = m.total_gastos.get("UYU", Decimal("0"))
+            part = f"{m.label}: {format_pesos(gastos_uyu, currency='UYU')}"
+            if m.total_gastos.get("USD"):
+                part += f" / {format_pesos(m.total_gastos['USD'], currency='USD')}"
+            strip_parts.append(part)
 
         strip_text = "  |  ".join(strip_parts)
 
@@ -426,10 +484,16 @@ class DashboardView:
         if not planes:
             return ft.Container()  # Sin cuotas pendientes, no mostrar
 
-        total_mes = sum(
-            (p.monto_por_cuota for p in planes),
-            Decimal("0"),
-        )
+        total_mes: dict[str, Decimal] = {}
+        for p in planes:
+            total_mes[p.currency] = (
+                total_mes.get(p.currency, Decimal("0")) + p.monto_por_cuota
+            )
+
+        partes_cuotas = [
+            format_pesos(total_mes[ccy], currency=ccy)
+            for ccy in sorted(total_mes.keys())
+        ]
 
         return ft.Container(
             content=ft.Row(
@@ -440,7 +504,7 @@ class DashboardView:
                         size=22,
                     ),
                     ft.Text(
-                        f"Cuotas del mes: {format_pesos(total_mes)}",
+                        f"Cuotas del mes: {' / '.join(partes_cuotas)}",
                         size=14,
                         weight=ft.FontWeight.BOLD,
                         color=ft.Colors.BLUE_700,
@@ -460,13 +524,19 @@ class DashboardView:
             on_click=lambda _: self.router.navigate("/planes"),
         )
 
-    def _get_total_ingresos(self, year: int, month: int) -> Decimal:
-        """Obtener total de ingresos del mes"""
-        return Decimal(str(self.income_controller.get_total_by_month(year, month)))
+    def _get_total_ingresos(self, year: int, month: int, currency: str) -> Decimal:
+        """Obtener total de ingresos del mes para una moneda."""
+        totals = self.income_controller.get_total_by_month(
+            year, month, currency=currency
+        )
+        return totals.get(currency, Decimal("0"))
 
-    def _get_total_gastos(self, year: int, month: int) -> Decimal:
-        """Obtener total de gastos del mes"""
-        return Decimal(str(self.expense_controller.get_total_by_month(year, month)))
+    def _get_total_gastos(self, year: int, month: int, currency: str) -> Decimal:
+        """Obtener total de gastos del mes para una moneda."""
+        totals = self.expense_controller.get_total_by_month(
+            year, month, currency=currency
+        )
+        return totals.get(currency, Decimal("0"))
 
     def _get_month_name(self, month: int) -> str:
         """Obtener nombre del mes en español"""

@@ -10,6 +10,7 @@ Criterio de aceptación:
 - Consulta simple → 'gemma2'
 - Todas las keywords están cubiertas
 """
+
 from __future__ import annotations
 
 import pytest
@@ -153,8 +154,7 @@ class TestModelRouterDefaults:
     """Verifica defaults y edge cases."""
 
     def test_simple_question_default_gemma2(self, router: ModelRouter):
-        """Pregunta simple sin keywords → Gemma 2."
-        """
+        """Pregunta simple sin keywords → Gemma 2." """
         assert router.route("¿Cuánto gasté hoy?", has_quota=True) == "gemma2"
 
     def test_empty_question_gemma2(self, router: ModelRouter):
@@ -252,7 +252,9 @@ class TestModelRouterRangeMonths:
             == "gemma2"
         )
 
-    def test_range_months_overrides_empalme(self, router: ModelRouter, ctx_with_empalme):
+    def test_range_months_overrides_empalme(
+        self, router: ModelRouter, ctx_with_empalme
+    ):
         """Rango > 1 mes tiene prioridad sobre empalme."""
         assert (
             router.route(

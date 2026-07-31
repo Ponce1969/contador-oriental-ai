@@ -2,6 +2,7 @@
 Repositorio de cotizaciones de divisas
 No filtra por familia: la cotización es global para todas las familias.
 """
+
 from __future__ import annotations
 
 from datetime import date

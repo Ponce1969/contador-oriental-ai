@@ -96,10 +96,19 @@ class IncomeService:
                 return check  # type: ignore[return-value]
         return self._repo.update(income)
 
-    def get_total_by_month(self, year: int, month: int) -> Decimal:
-        """Total de ingresos del mes (recurrentes + no-recurrentes del mes)."""
+    def get_total_by_month(
+        self, year: int, month: int, currency: str | None = None
+    ) -> dict[str, Decimal]:
+        """Total de ingresos del mes, agrupado por moneda."""
         incomes = self.list_for_month(year, month)
-        return sum((income.monto for income in incomes), Decimal("0"))
+        totals: dict[str, Decimal] = {}
+        for income in incomes:
+            if currency is not None and income.currency != currency:
+                continue
+            totals[income.currency] = (
+                totals.get(income.currency, Decimal("0")) + income.monto
+            )
+        return totals
 
     def get_total_by_member(self, member_id: int) -> Decimal:
         """Calcular total de ingresos de un miembro"""
@@ -110,14 +119,17 @@ class IncomeService:
         self,
         year: int | None = None,
         month: int | None = None,
-    ) -> dict[str, Decimal]:
-        """Resumen de ingresos por categoría (recurrentes + no-recurrentes del mes)."""
+        currency: str | None = None,
+    ) -> dict[tuple[str, str], Decimal]:
+        """Resumen de ingresos por (categoría, moneda), filtrado opcionalmente."""
         if year is not None and month is not None:
             incomes = self.list_for_month(year, month)
         else:
             incomes = self.list_incomes()
-        summary: dict[str, Decimal] = {}
+        summary: dict[tuple[str, str], Decimal] = {}
         for income in incomes:
-            categoria = income.categoria.value
-            summary[categoria] = summary.get(categoria, Decimal("0")) + income.monto
+            if currency is not None and income.currency != currency:
+                continue
+            key = (income.categoria.value, income.currency)
+            summary[key] = summary.get(key, Decimal("0")) + income.monto
         return summary

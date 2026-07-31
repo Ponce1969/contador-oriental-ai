@@ -3,8 +3,10 @@ Tests for Expense model.
 """
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
 
 from models.categories import ExpenseCategory, PaymentMethod, RecurrenceFrequency
 from models.expense_model import Expense
@@ -140,3 +142,39 @@ class TestExpenseModel:
         )
 
         assert expense.id == 123
+
+
+class TestExpenseCurrency:
+    """Validación de moneda en gastos."""
+
+    def test_expense_default_currency_uyu(self):
+        """Cuando no se especifica moneda, el default es UYU."""
+        expense = Expense(
+            monto=Decimal("100"),
+            fecha=date.today(),
+            descripcion="Test",
+            categoria=ExpenseCategory.ALMACEN,
+        )
+        assert expense.currency == "UYU"
+
+    def test_expense_usd_is_valid(self):
+        """USD es una moneda válida."""
+        expense = Expense(
+            monto=Decimal("100"),
+            currency="USD",
+            fecha=date.today(),
+            descripcion="Test USD",
+            categoria=ExpenseCategory.ALMACEN,
+        )
+        assert expense.currency == "USD"
+
+    def test_expense_eur_is_rejected(self):
+        """EUR no es una moneda soportada y debe fallar validación."""
+        with pytest.raises(ValidationError):
+            Expense(
+                monto=Decimal("100"),
+                currency="EUR",
+                fecha=date.today(),
+                descripcion="Test EUR",
+                categoria=ExpenseCategory.ALMACEN,
+            )

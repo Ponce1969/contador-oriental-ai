@@ -2,6 +2,7 @@
 Vista de "Mis Planes" - Fintech Premium Dark Theme.
 Compras en cuotas con barras de progreso y glassmorphism.
 """
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -15,14 +16,14 @@ from services.infrastructure.formatters import format_pesos
 from views.layouts.main_layout import MainLayout
 
 # ── Fintech Dark Palette ─────────────────────────────────────────────
-_NAVY = "#0f172a"          # fondo principal
-_SLATE = "#1e293b"         # cards
-_EMERALD = "#10b981"       # positivo, progreso, totales
+_NAVY = "#0f172a"  # fondo principal
+_SLATE = "#1e293b"  # cards
+_EMERALD = "#10b981"  # positivo, progreso, totales
 _EMERALD_MINT = "#34d399"  # brillo del gradiente
-_RUBY = "#e11d48"          # alerta, deuda
-_AMBER = "#f59e0b"         # advertencia intermedia
-_SLATE_TEXT = "#94a3b8"    # texto secundario
-_WHITE = "#f8fafc"         # texto principal
+_RUBY = "#e11d48"  # alerta, deuda
+_AMBER = "#f59e0b"  # advertencia intermedia
+_SLATE_TEXT = "#94a3b8"  # texto secundario
+_WHITE = "#f8fafc"  # texto principal
 _BORDER = "rgba(255,255,255,0.05)"
 
 
@@ -176,10 +177,17 @@ class PlanesView:
             )
             return
 
-        # ── Header: total del mes ──
-        total_mes = Decimal("0")
+        # ── Header: total del mes por moneda ──
+        total_mes: dict[str, Decimal] = {}
         for plan in planes:
-            total_mes += plan.monto_por_cuota
+            total_mes[plan.currency] = (
+                total_mes.get(plan.currency, Decimal("0")) + plan.monto_por_cuota
+            )
+
+        partes_total = [
+            format_pesos(total_mes[ccy], currency=ccy)
+            for ccy in sorted(total_mes.keys())
+        ]
 
         self._planes_column.controls.append(
             ft.Container(
@@ -187,7 +195,7 @@ class PlanesView:
                     controls=[
                         ft.Icon(ft.Icons.CREDIT_CARD, color=_EMERALD, size=20),
                         ft.Text(
-                            f"Cuotas del mes: {format_pesos(total_mes)}",
+                            f"Cuotas del mes: {' / '.join(partes_total)}",
                             size=14,
                             weight=ft.FontWeight.W_600,
                             color=_EMERALD,
@@ -210,6 +218,7 @@ class PlanesView:
             ratio = float(pagadas / plan.numero_cuotas)
             celebrando = ratio >= 0.80
             color_acento = _color_semaforo(ratio)
+            cuota_fmt = format_pesos(plan.monto_por_cuota, currency=plan.currency)
 
             self._planes_column.controls.append(
                 ft.Container(
@@ -226,9 +235,10 @@ class PlanesView:
                                                 color=_WHITE,
                                             ),
                                             ft.Text(
-                                                f"{plan.nombre_tarjeta} · "
-                                                f"{format_pesos(plan.monto_por_cuota)}"
-                                                f" c/u",
+                                                (
+                                                    f"{plan.nombre_tarjeta} · "
+                                                    f"{cuota_fmt} c/u"
+                                                ),
                                                 size=11,
                                                 color=_SLATE_TEXT,
                                             ),
@@ -236,7 +246,10 @@ class PlanesView:
                                         expand=True,
                                     ),
                                     ft.Text(
-                                        format_pesos(plan.monto_total),
+                                        value=format_pesos(
+                                            plan.monto_total,
+                                            currency=plan.currency,
+                                        ),
                                         size=20,
                                         weight=ft.FontWeight.BOLD,
                                         color=color_acento,

@@ -3,6 +3,7 @@ Integration tests for complete user flows.
 """
 
 from datetime import date
+from decimal import Decimal
 
 from result import Ok
 
@@ -75,8 +76,9 @@ class TestIntegrationFlows:
         assert len(summary) > 0
 
         # Verify total
-        total = service.get_total_by_month(date.today().year, date.today().month)
-        assert total >= 350.00
+        totals = service.get_total_by_month(date.today().year, date.today().month)
+        assert isinstance(totals, dict)
+        assert totals.get("UYU", 0) >= 350
 
     def test_income_tracking_flow(self, db_session, family_member_id):
         """Test complete income tracking flow."""
@@ -95,6 +97,7 @@ class TestIntegrationFlows:
                 fecha=date.today(),
                 descripcion="Salary",
                 categoria=IncomeCategory.SUELDO,
+                currency="UYU",
             ),
             Income(
                 family_member_id=family_member_id,
@@ -102,6 +105,7 @@ class TestIntegrationFlows:
                 fecha=date.today(),
                 descripcion="Freelance work",
                 categoria=IncomeCategory.FREELANCE,
+                currency="UYU",
             ),
         ]
 
@@ -114,8 +118,9 @@ class TestIntegrationFlows:
         assert isinstance(summary, dict)
 
         # Verify total
-        total = service.get_total_by_month(date.today().year, date.today().month)
-        assert total >= 3000.00
+        totals = service.get_total_by_month(date.today().year, date.today().month)
+        assert isinstance(totals, dict)
+        assert totals.get("UYU", 0) >= 3000
 
     def test_budget_balance_calculation(self, db_session, family_member_id):
         """Test budget balance calculation (income - expenses)."""
@@ -137,6 +142,7 @@ class TestIntegrationFlows:
             fecha=date.today(),
             descripcion="Monthly salary",
             categoria=IncomeCategory.SUELDO,
+            currency="UYU",
         )
         income_service.create_income(income)
 
@@ -147,18 +153,21 @@ class TestIntegrationFlows:
                 fecha=date.today(),
                 descripcion="Rent",
                 categoria=ExpenseCategory.HOGAR,
+                currency="UYU",
             ),
             Expense(
                 monto=400.00,
                 fecha=date.today(),
                 descripcion="Groceries",
                 categoria=ExpenseCategory.ALMACEN,
+                currency="UYU",
             ),
             Expense(
                 monto=200.00,
                 fecha=date.today(),
                 descripcion="Utilities",
                 categoria=ExpenseCategory.HOGAR,
+                currency="UYU",
             ),
         ]
 
@@ -167,13 +176,13 @@ class TestIntegrationFlows:
 
         # Calculate balance
         total_income = income_service.get_total_by_month(
-            date.today().year, date.today().month
-        )
+            date.today().year, date.today().month, currency="UYU"
+        ).get("UYU", Decimal("0"))
         total_expenses = expense_service.get_total_by_month(
-            date.today().year, date.today().month
-        )
+            date.today().year, date.today().month, currency="UYU"
+        ).get("UYU", Decimal("0"))
         balance = total_income - total_expenses
 
-        assert total_income >= 3000.00
-        assert total_expenses >= 1400.00
+        assert total_income >= 3000
+        assert total_expenses >= 1400
         assert balance > 0  # Should have positive balance

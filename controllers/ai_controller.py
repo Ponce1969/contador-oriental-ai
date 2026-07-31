@@ -197,9 +197,7 @@ class AIController(BaseController):
             # ── Filtrado por categorías ───────────────────────────────────
             gastos_filtrados = filtrar_por_categorias(gastos_mes, intencion.categorias)
 
-            total_gastos_mes = sum(
-                (g.monto for g in gastos_mes), Decimal("0")
-            )
+            total_gastos_mes = sum((g.monto for g in gastos_mes), Decimal("0"))
             resumen_gastos: dict[str, dict[str, dict]] = {}
             total_gastos_count = 0
             if gastos_filtrados:
@@ -213,6 +211,7 @@ class AIController(BaseController):
                 fecha_min = date(anio_ini, mes_ini, 1)
                 # Ultimo día del mes de fin
                 import calendar
+
                 last_day = calendar.monthrange(anio_fin, mes_fin)[1]
                 fecha_max = date(anio_fin, mes_fin, last_day)
 
