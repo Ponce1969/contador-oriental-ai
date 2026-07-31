@@ -242,7 +242,8 @@ class ExchangeRateTable(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     currency_pair: Mapped[str] = mapped_column(String(10), default="USD/UYU")
-    rate: Mapped[Decimal] = mapped_column(Numeric(10, 4), nullable=False)
+    compra: Mapped[Decimal] = mapped_column(Numeric(10, 4), nullable=False)
+    venta: Mapped[Decimal] = mapped_column(Numeric(10, 4), nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 

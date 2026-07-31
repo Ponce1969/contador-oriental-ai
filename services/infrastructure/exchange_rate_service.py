@@ -21,12 +21,15 @@ class ExchangeRateService:
     _API_URL = "https://api.exchangerate-api.com/v4/latest/USD"
     _TIMEOUT = 10.0
 
-    async def fetch_rate(self) -> Result[Decimal, AppError]:
+    async def fetch_rate(self) -> Result[tuple[Decimal, Decimal], AppError]:
         """
-        Consulta la API y retorna el rate UYU como Decimal.
+        Consulta la cotización y retorna (compra, venta).
+        Por ahora, usamos la API intermedia y simulamos el spread del BROU
+        (aprox +/- 2.5% del valor intermedio) como fallback arquitectónico,
+        dejando la firma lista para conectar directo al SOAP del BCU.
 
         Returns:
-            Result[Decimal, AppError] — rate UYU o error descriptivo.
+            Result[tuple[Decimal, Decimal], AppError] — (compra, venta)
         """
         try:
             async with httpx.AsyncClient(timeout=self._TIMEOUT) as client:
@@ -35,8 +38,13 @@ class ExchangeRateService:
                 data = response.json()
 
                 raw_rate = data["rates"]["UYU"]
-                rate = Decimal(str(raw_rate))
-                return Ok(rate)
+                medio = Decimal(str(raw_rate))
+                
+                # Simulamos el spread oficial del BROU (aprox 1 peso de diferencia para cada lado)
+                compra = (medio - Decimal("1.20")).quantize(Decimal("0.01"))
+                venta = (medio + Decimal("1.20")).quantize(Decimal("0.01"))
+                
+                return Ok((compra, venta))
 
         except KeyError as e:
             return Err(AppError(message=f"Respuesta inválida de API: falta campo {e}"))

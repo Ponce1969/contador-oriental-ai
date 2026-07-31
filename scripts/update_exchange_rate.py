@@ -40,19 +40,19 @@ async def main() -> int:
         print(f"[ERROR] {result.err().message}")
         return 1
 
-    rate = result.ok()
+    compra, venta = result.ok()
     today = date.today()
 
     with get_db_session() as session:
         repo = ExchangeRateRepository(session)
         existing = repo.get_today()
         if existing:
-            print(f"[SKIP] Ya existe cotización para hoy ({today}): {existing.rate}")
+            print(f"[SKIP] Ya existe cotización para hoy ({today}): C {existing.compra} - V {existing.venta}")
             return 0
 
-        saved = repo.save(rate, today)
+        saved = repo.save(compra, venta, today)
         session.commit()
-        print(f"[OK] Cotización guardada: {saved.currency_pair} = {saved.rate} ({saved.date})")
+        print(f"[OK] Cotización guardada: {saved.currency_pair} = C {saved.compra} - V {saved.venta} ({saved.date})")
 
     return 0
 

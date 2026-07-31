@@ -25,7 +25,8 @@ class ExchangeRateRepository:
         return ExchangeRate(
             id=row.id,
             currency_pair=row.currency_pair,
-            rate=row.rate,
+            compra=row.compra,
+            venta=row.venta,
             date=row.date,
             created_at=row.created_at,
         )
@@ -48,7 +49,7 @@ class ExchangeRateRepository:
         )
         return self._to_domain(row) if row else None
 
-    def save(self, rate: Decimal, rate_date: date) -> ExchangeRate:
+    def save(self, compra: Decimal, venta: Decimal, rate_date: date) -> ExchangeRate:
         """Guarda una nueva cotización. Si ya existe para esa fecha, la actualiza."""
         existing = (
             self.session.query(ExchangeRateTable)
@@ -56,12 +57,14 @@ class ExchangeRateRepository:
             .first()
         )
         if existing:
-            existing.rate = rate
+            existing.compra = compra
+            existing.venta = venta
             self.session.flush()
             return self._to_domain(existing)
 
         table = ExchangeRateTable(
-            rate=rate,
+            compra=compra,
+            venta=venta,
             date=rate_date,
             currency_pair="USD/UYU",
         )

@@ -215,13 +215,13 @@ class MainLayout(ft.Column):
             from decimal import Decimal
 
             ctrl = ExchangeRateController()
-            rate, is_fresh = ctrl.get_display_rate()
-            if rate == Decimal("0"):
+            compra, venta, is_fresh = ctrl.get_display_rate()
+            if compra == Decimal("0") or venta == Decimal("0"):
                 return None
 
             color = ft.Colors.LIGHT_BLUE_300 if is_fresh else ft.Colors.AMBER_400
             icon = ft.Icons.TRENDING_UP if is_fresh else ft.Icons.WARNING_AMBER
-            label = f"1 USD = {format_cotizacion(rate)}"
+            label = f"USD: C {format_cotizacion(compra)} | V {format_cotizacion(venta)}"
             tooltip_text = (
                 "Cotización actualizada hoy"
                 if is_fresh

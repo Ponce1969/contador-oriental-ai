@@ -38,7 +38,7 @@ async def update_exchange_rate() -> None:
             )
             return
 
-        rate = result.ok()
+        compra, venta = result.ok()
         today = date.today()
 
         with get_db_session() as session:
@@ -46,15 +46,16 @@ async def update_exchange_rate() -> None:
             existing = repo.get_today()
             if existing:
                 logger.info(
-                    "[EXCHANGE_RATE] Cotización de hoy ya existe: %s", existing.rate
+                    "[EXCHANGE_RATE] Cotización de hoy ya existe: C %s - V %s", 
+                    existing.compra, existing.venta
                 )
                 return
 
-            repo.save(rate, today)
+            repo.save(compra, venta, today)
             session.commit()
             logger.info(
-                "[EXCHANGE_RATE] Cotización actualizada: 1 USD = $ %s",
-                format_cotizacion(rate),
+                "[EXCHANGE_RATE] Cotización actualizada: 1 USD = C $%s - V $%s",
+                format_cotizacion(compra), format_cotizacion(venta)
             )
 
     except Exception as e:

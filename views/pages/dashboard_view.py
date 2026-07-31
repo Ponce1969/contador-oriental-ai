@@ -11,6 +11,7 @@ import flet as ft
 
 from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
+from controllers.exchange_rate_controller import ExchangeRateController
 from controllers.history_controller import HistoryController
 from controllers.income_controller import IncomeController
 from controllers.installment_controller import InstallmentController
@@ -86,12 +87,29 @@ class DashboardView:
         gastos_usd = self._get_total_gastos(year, month, "USD")
         balance_usd = ingresos_usd - gastos_usd
 
+        # Cotización y Patrimonio Consolidado
+        exchange_ctrl = ExchangeRateController()
+        compra, venta, _ = exchange_ctrl.get_display_rate()
+        
+        patrimonio_total_uyu = balance_uyu
+        equivalencia_usd: Decimal | None = None
+        
+        if compra > 0 and venta > 0:
+            if balance_usd < 0:
+                equivalencia_usd = balance_usd * venta
+                patrimonio_total_uyu += equivalencia_usd
+            else:
+                equivalencia_usd = balance_usd * compra
+                patrimonio_total_uyu += equivalencia_usd
+
         # Formatear montos
         balance_uyu_fmt = format_pesos(balance_uyu, currency="UYU")
         balance_usd_fmt = format_pesos(balance_usd, currency="USD")
 
         is_mobile = AppState.device == "mobile"
         title_size = 20 if is_mobile else 28
+        
+        # Opcional: mostrar super card del patrimonio consolidado (por ahora lo usaremos solo para alertas y equivalencias como pide el plan ligero)
 
         content = ft.Column(
             controls=[
@@ -111,6 +129,9 @@ class DashboardView:
                             balance_uyu_fmt,
                             ft.Colors.LIGHT_BLUE_50,
                             is_mobile,
+                            "UYU",
+                            patrimonio_total_uyu=patrimonio_total_uyu,
+                            equivalencia=None,
                         ),
                         self._build_balance_card(
                             "Balance USD",
@@ -118,6 +139,9 @@ class DashboardView:
                             balance_usd_fmt,
                             ft.Colors.BLUE_GREY_50,
                             is_mobile,
+                            "USD",
+                            patrimonio_total_uyu=patrimonio_total_uyu,
+                            equivalencia=equivalencia_usd,
                         ),
                     ],
                     spacing=16,
@@ -210,11 +234,51 @@ class DashboardView:
         balance_fmt: str,
         bgcolor: str,
         is_mobile: bool,
+        currency: str,
+        patrimonio_total_uyu: Decimal = Decimal("0"),
+        equivalencia: Decimal | None = None,
     ) -> ft.Container:
         """Construir tarjeta de balance para una moneda."""
-        color = self._balance_color(balance)
-        icon = self._balance_icon(balance)
-        msg = self._balance_msg(balance)
+        color = self._balance_color(balance, patrimonio_total_uyu, currency)
+        icon = self._balance_icon(balance, patrimonio_total_uyu, currency)
+        msg = self._balance_msg(balance, currency, patrimonio_total_uyu)
+
+        # Si hay equivalencia, la mostramos chiquito al lado o abajo
+        equiv_text = None
+        if equivalencia is not None:
+            equiv_fmt = format_pesos(equivalencia, currency="UYU")
+            equiv_text = ft.Text(
+                value=f"(≈ {equiv_fmt})",
+                size=12 if is_mobile else 14,
+                color=ft.Colors.BLUE_GREY_400,
+                weight=ft.FontWeight.W_500,
+            )
+
+        column_controls = [
+            ft.Text(
+                value=title,
+                size=14 if is_mobile else 16,
+                color=ft.Colors.BLUE_GREY_700,
+            ),
+            ft.Text(
+                value=balance_fmt,
+                size=28 if is_mobile else 36,
+                weight=ft.FontWeight.BOLD,
+                color=color,
+            ),
+        ]
+        
+        if equiv_text:
+            column_controls.append(equiv_text)
+            
+        column_controls.append(
+            ft.Text(
+                value=msg,
+                size=12 if is_mobile else 14,
+                italic=True,
+                color=color,
+            )
+        )
 
         return ft.Container(
             content=ft.Column(
@@ -227,25 +291,7 @@ class DashboardView:
                                 size=36 if is_mobile else 40,
                             ),
                             ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        value=title,
-                                        size=14 if is_mobile else 16,
-                                        color=ft.Colors.BLUE_GREY_700,
-                                    ),
-                                    ft.Text(
-                                        value=balance_fmt,
-                                        size=28 if is_mobile else 36,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=color,
-                                    ),
-                                    ft.Text(
-                                        value=msg,
-                                        size=12 if is_mobile else 14,
-                                        italic=True,
-                                        color=color,
-                                    ),
-                                ],
+                                controls=column_controls,
                                 spacing=4,
                                 expand=True,
                             ),
@@ -269,25 +315,31 @@ class DashboardView:
             col=Responsive.COL_HALF,
         )
 
-    def _balance_color(self, balance: Decimal) -> str:
+    def _balance_color(self, balance: Decimal, patrimonio_total: Decimal, currency: str) -> str:
         if balance > 0:
             return ft.Colors.GREEN
         if balance < 0:
+            if currency == "USD" and patrimonio_total >= 0:
+                return ft.Colors.ORANGE_600  # Es negativo pero hay respaldo
             return ft.Colors.RED
         return ft.Colors.ORANGE
 
-    def _balance_icon(self, balance: Decimal) -> str:
+    def _balance_icon(self, balance: Decimal, patrimonio_total: Decimal, currency: str) -> str:
         if balance > 0:
             return ft.Icons.TRENDING_UP
         if balance < 0:
+            if currency == "USD" and patrimonio_total >= 0:
+                return ft.Icons.SWAP_HORIZ  # Refleja conversión
             return ft.Icons.TRENDING_DOWN
         return ft.Icons.TRENDING_FLAT
 
-    def _balance_msg(self, balance: Decimal) -> str:
+    def _balance_msg(self, balance: Decimal, currency: str, patrimonio_total: Decimal) -> str:
         if balance > 0:
             return "¡Excelente! Tienes un superávit"
         if balance < 0:
-            return "⚠️ Atención: Gastos superan ingresos"
+            if currency == "USD" and patrimonio_total >= 0:
+                return "Saldo cubierto por cuenta en pesos"
+            return f"⚠️ Atención: Gastos superan ingresos en {currency}"
         return "Balance equilibrado"
 
     def _build_summary_total_card(

@@ -15,6 +15,7 @@ class ExchangeRate(BaseModel):
 
     id: int | None = None
     currency_pair: str = "USD/UYU"
-    rate: Decimal = Field(gt=0, description="Cotización del dólar")
+    compra: Decimal = Field(gt=0, description="Cotización de compra del dólar")
+    venta: Decimal = Field(gt=0, description="Cotización de venta del dólar")
     date: date
     created_at: datetime = Field(default_factory=datetime.now)
