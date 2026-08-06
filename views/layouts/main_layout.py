@@ -168,7 +168,7 @@ class MainLayout(ft.Column):
                         expand=True,
                     ),
                     ft.TextButton(
-                        text="Ir a Configuración",
+                        "Ir a Configuración",
                         on_click=lambda e: self._router.navigate("/settings"),
                         style=ft.ButtonStyle(color=ft.Colors.BLUE_700),
                     ),
