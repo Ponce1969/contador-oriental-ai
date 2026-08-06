@@ -55,7 +55,6 @@ class HouseholdMembersView:
         return MainLayout(
             page=self.page,
             router=self.router,
-            title="Miembros del Hogar",
             content=ft.Container(
                 content=content,
                 padding=20,

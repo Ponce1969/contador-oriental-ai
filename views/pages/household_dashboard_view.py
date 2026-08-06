@@ -92,7 +92,6 @@ class HouseholdDashboardView:
         return MainLayout(
             page=self.page,
             router=self.router,
-            title="Hogar Compartido",
             content=ft.Container(
                 content=content,
                 padding=20,
