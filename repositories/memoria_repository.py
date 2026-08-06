@@ -176,3 +176,89 @@ class MemoriaRepository:
         except Exception as e:
             logger.error("[MEMORIA_REPO] Error al contar: %s", str(e))
             return 0
+
+    def guardar_con_household(
+        self,
+        content: str,
+        embedding: list[float],
+        household_id: int,
+        source_type: str | None = None,
+        source_id: int | None = None,
+    ) -> int | None:
+        try:
+            result = self.session.execute(
+                text("""
+                    INSERT INTO ai_vector_memory
+                        (familia_id, household_id, content, embedding, source_type, source_id)
+                    VALUES
+                        (:fam_id, :house_id, :content, :emb, :src_type, :src_id)
+                    RETURNING id
+                """),
+                {
+                    "fam_id": self.familia_id,
+                    "house_id": household_id,
+                    "content": content,
+                    "emb": str(embedding),
+                    "src_type": source_type,
+                    "src_id": source_id,
+                },
+            )
+            row = result.fetchone()
+            return row[0] if row else None
+        except Exception as e:
+            logger.error("[MEMORIA_REPO] Error guardando household vector: %s", str(e))
+            return None
+
+    def eliminar_household_vector(self, household_id: int, source_type: str, source_id: int) -> bool:
+        try:
+            result = self.session.execute(
+                text("""
+                    DELETE FROM ai_vector_memory 
+                    WHERE household_id = :house_id
+                      AND source_type = :src_type
+                      AND source_id = :src_id
+                """),
+                {
+                    "house_id": household_id,
+                    "src_type": source_type,
+                    "src_id": source_id,
+                },
+            )
+            return result.rowcount > 0
+        except Exception as e:
+            logger.error("[MEMORIA_REPO] Error eliminando household vector: %s", str(e))
+            return False
+
+    def buscar_similares_por_household(
+        self, query_embedding: list[float], household_id: int, limit: int = 5
+    ) -> list[dict[str, Any]]:
+        try:
+            result = self.session.execute(
+                text("""
+                    SELECT id, content, source_type, source_id,
+                           1 - (embedding <=> :query_emb) as similarity
+                    FROM ai_vector_memory
+                    WHERE household_id = :house_id
+                    ORDER BY embedding <=> :query_emb
+                    LIMIT :lim
+                """),
+                {
+                    "query_emb": str(query_embedding),
+                    "house_id": household_id,
+                    "lim": limit,
+                },
+            )
+            rows = result.fetchall()
+            return [
+                {
+                    "id": r[0],
+                    "content": r[1],
+                    "source_type": r[2],
+                    "source_id": r[3],
+                    "similarity": float(r[4]) if r[4] is not None else 0.0,
+                }
+                for r in rows
+            ]
+        except Exception as e:
+            logger.error("[MEMORIA_REPO] Error en buscar_similares_por_household: %s", str(e))
+            return []
