@@ -6,11 +6,14 @@ from views.layouts.main_layout import MainLayout
 if TYPE_CHECKING:
     from core.router import Router
 
+from core.session import SessionManager
+
 class HouseholdMembersView:
     def __init__(self, page: ft.Page, router: 'Router'):
         self.page = page
         self.router = router
-        self.controller = HouseholdController()
+        familia_id = SessionManager.get_familia_id(page)
+        self.controller = HouseholdController(familia_id=familia_id)
         self.members = []
         
     def render(self) -> ft.Control:

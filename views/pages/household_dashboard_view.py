@@ -9,11 +9,16 @@ from decimal import Decimal
 if TYPE_CHECKING:
     from core.router import Router
 
+from core.session import SessionManager
+
 class HouseholdDashboardView:
     def __init__(self, page: ft.Page, router: 'Router'):
         self.page = page
         self.router = router
-        self.controller = HouseholdController()
+        
+        # Obtener familia_id de la sesión
+        familia_id = SessionManager.get_familia_id(page)
+        self.controller = HouseholdController(familia_id=familia_id)
         
         self.household = None
         self.members = []
@@ -71,8 +76,8 @@ class HouseholdDashboardView:
                 ft.Container(height=20),
                 ft.Card(
                     elevation=4,
-                    color=ft.Colors.WHITE,
                     content=ft.Container(
+                        bgcolor=ft.Colors.WHITE,
                         padding=30,
                         content=ft.Column([
                             ft.Text("Crear un nuevo Hogar Compartido", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_800),
