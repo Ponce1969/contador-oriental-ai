@@ -71,6 +71,11 @@ def _setup_memory_observer() -> None:
         event_system.subscribe(EventType.COMPRA_CUOTAS_CREADA, _dispatch_cuota)
         logger.info("[MEMORY] Observer de cuotas suscrito al EventSystem ✅")
 
+        from services.ai.household_memory_handler import HouseholdMemoryHandler
+        # El HouseholdMemoryHandler se suscribe automáticamente a sus eventos en el constructor
+        HouseholdMemoryHandler(embedding_service)
+        logger.info("[MEMORY] Observer de Household suscrito al EventSystem ✅")
+
     except Exception as e:
         logger.warning("[MEMORY] No se pudo inicializar el observer: %s", str(e))
 

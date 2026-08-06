@@ -23,6 +23,9 @@ class EventType(Enum):
     OCR_PROCESADO = "ocr_procesado"
     COMPRA_CUOTAS_CREADA = "compra_cuotas_creada"
     CUOTA_PAGADA = "cuota_pagada"
+    SHARED_EXPENSE_LINK_CREADO = "shared_expense_link_creado"
+    SHARED_EXPENSE_LINK_ELIMINADO = "shared_expense_link_eliminado"
+    SETTLEMENT_CREADO = "settlement_creado"
 
 
 @dataclass
