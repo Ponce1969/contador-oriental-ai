@@ -34,27 +34,69 @@ class HouseholdDashboardView:
                 self.balances = balances_res.unwrap()
 
     def create_household_ui(self):
-        nombre_field = ft.TextField(label="Nombre del nuevo hogar")
+        nombre_field = ft.TextField(
+            label="Ej: Depto Pocitos, Viaje a Rocha...", 
+            border_color=ft.Colors.INDIGO_400,
+            focused_border_color=ft.Colors.INDIGO_700,
+            border_radius=8,
+            width=300
+        )
         
         def on_create(e):
             if not nombre_field.value:
                 return
             res = self.controller.create_household(nombre_field.value)
             if res.is_ok():
-                self.page.snack_bar = ft.SnackBar(ft.Text("Hogar creado con éxito"))
+                self.page.snack_bar = ft.SnackBar(ft.Text("Hogar creado con éxito", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN_600)
                 self.page.snack_bar.open = True
                 self.router.navigate("/household")
             else:
-                self.page.snack_bar = ft.SnackBar(ft.Text(f"Error: {res.unwrap_err()}"))
+                self.page.snack_bar = ft.SnackBar(ft.Text(f"Error: {res.unwrap_err()}", color=ft.Colors.WHITE), bgcolor=ft.Colors.RED_600)
                 self.page.snack_bar.open = True
             self.page.update()
 
-        return ft.Column([
-            ft.Text("No pertenecés a ningún hogar.", size=20, weight=ft.FontWeight.BOLD),
-            ft.Text("Creá uno nuevo para compartir gastos con amigos o familia."),
-            nombre_field,
-            ft.ElevatedButton("Crear Hogar", on_click=on_create)
-        ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        return ft.Container(
+            content=ft.Column([
+                ft.Icon(ft.Icons.GROUPS, size=64, color=ft.Colors.INDIGO_500),
+                ft.Text("Compartí gastos con otras personas", size=28, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_900),
+                ft.Text(
+                    "¿Te mudaste con un compañero? ¿Te vas de viaje con amigos? ¿Querés dividir las cuentas con tu pareja?\n\n"
+                    "Un 'Hogar Compartido' te permite vincular tu cuenta con la cuenta de otros usuarios de Contador Oriental "
+                    "para que todos puedan sumar gastos al pozo común y ver automáticamente quién le debe a quién.",
+                    size=16, 
+                    color=ft.Colors.BLUE_GREY_700,
+                    text_align=ft.TextAlign.CENTER,
+                    width=600
+                ),
+                ft.Container(height=20),
+                ft.Card(
+                    elevation=4,
+                    color=ft.Colors.WHITE,
+                    content=ft.Container(
+                        padding=30,
+                        content=ft.Column([
+                            ft.Text("Crear un nuevo Hogar Compartido", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_800),
+                            ft.Text("Elegí un nombre para el grupo:", color=ft.Colors.BLUE_GREY_600, size=14),
+                            ft.Container(height=10),
+                            nombre_field,
+                            ft.Container(height=10),
+                            ft.ElevatedButton(
+                                "Crear Hogar y Empezar", 
+                                icon=ft.Icons.ADD_HOME_WORK,
+                                style=ft.ButtonStyle(
+                                    color=ft.Colors.WHITE,
+                                    bgcolor=ft.Colors.INDIGO_600,
+                                    padding=20,
+                                ),
+                                on_click=on_create
+                            )
+                        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                    )
+                )
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            expand=True,
+            alignment=ft.alignment.center
+        )
 
     def render(self) -> ft.Control:
         self.load_data()
