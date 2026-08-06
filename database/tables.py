@@ -319,3 +319,134 @@ class PasswordResetTokensTable(Base):
         Index("idx_password_reset_tokens_token", "token"),
         Index("idx_password_reset_tokens_user_id", "user_id"),
     )
+
+
+class HogarTable(Base):
+    __tablename__ = "hogares"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nombre: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    # status: "active" | "disbanded"
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    __table_args__ = (
+        Index("idx_hogares_status", "status"),
+    )
+
+
+class HouseholdMemberTable(Base):
+    __tablename__ = "household_members"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("hogares.id", ondelete="CASCADE"), nullable=False
+    )
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id", ondelete="CASCADE"), nullable=False
+    )
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    # role: "admin" | "member"
+    joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        UniqueConstraint("household_id", "familia_id", name="uq_household_member"),
+        Index("idx_household_members_familia", "familia_id"),
+        Index("idx_household_members_household", "household_id"),
+    )
+
+
+class HouseholdInvitationTable(Base):
+    __tablename__ = "household_invitations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("hogares.id", ondelete="CASCADE"), nullable=False
+    )
+    token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    # status: "pending" | "accepted" | "revoked" | "expired"
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    accepted_by_familia_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("familias.id", ondelete="SET NULL"), nullable=True
+    )
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index("idx_invitations_token", "token"),
+        Index("idx_invitations_household_status", "household_id", "status"),
+    )
+
+
+class SharedExpenseLinkTable(Base):
+    __tablename__ = "shared_expense_links"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("hogares.id", ondelete="CASCADE"), nullable=False
+    )
+    gasto_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("expenses.id", ondelete="CASCADE"), nullable=False
+    )
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id", ondelete="CASCADE"), nullable=False
+    )
+    linked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        UniqueConstraint("household_id", "gasto_id", name="uq_household_gasto_link"),
+        Index("idx_shared_links_household", "household_id"),
+        Index("idx_shared_links_familia", "familia_id"),
+        Index("idx_shared_links_gasto", "gasto_id"),
+    )
+
+
+class HouseholdSettlementTable(Base):
+    __tablename__ = "household_settlements"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("hogares.id", ondelete="RESTRICT"), nullable=False
+    )
+    payer_familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id", ondelete="RESTRICT"), nullable=False
+    )
+    recipient_familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id", ondelete="RESTRICT"), nullable=False
+    )
+    monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    fecha: Mapped[date] = mapped_column(Date, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index("idx_settlements_household", "household_id"),
+        Index("idx_settlements_payer", "payer_familia_id"),
+        Index("idx_settlements_recipient", "recipient_familia_id"),
+        Index("idx_settlements_fecha", "household_id", "fecha"),
+    )
+
+
+class HouseholdAuditLogTable(Base):
+    __tablename__ = "household_audit_log"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("hogares.id", ondelete="CASCADE"), nullable=False
+    )
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id", ondelete="CASCADE"), nullable=False
+    )
+    gasto_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    # gasto_id is stored as plain int — if the expense is deleted, the audit record remains
+    action: Mapped[str] = mapped_column(String(20), nullable=False)
+    # action: "created" | "deleted"
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        Index("idx_audit_log_household", "household_id"),
+        Index("idx_audit_log_familia", "familia_id"),
+    )
