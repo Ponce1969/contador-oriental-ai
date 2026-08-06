@@ -14,6 +14,22 @@ logger = logging.getLogger(__name__)
 
 ROUTES = [
     {
+        "path": "/household",
+        "view": "views.pages.household_dashboard_view.HouseholdDashboardView",
+        "label": "🏠 Hogar",
+        "icon": ft.Icons.HOME_WORK,
+        "show_in_top": True,
+        "show_in_bottom": True,
+    },
+    {
+        "path": "/household/members",
+        "view": "views.pages.household_members_view.HouseholdMembersView",
+        "label": "Miembros",
+        "icon": ft.Icons.PEOPLE,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
+    {
         "path": "/login",
         "view": "views.pages.login_view.LoginView",
         "label": "🔐 Login",
