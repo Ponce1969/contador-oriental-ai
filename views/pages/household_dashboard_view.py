@@ -100,7 +100,7 @@ class HouseholdDashboardView:
                 )
             ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
             expand=True,
-            alignment=ft.alignment.center
+            alignment=ft.Alignment(0, 0)
         )
 
     def render(self) -> ft.Control:
