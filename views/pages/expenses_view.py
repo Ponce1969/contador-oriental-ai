@@ -13,6 +13,7 @@ from result import Err, Ok
 from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
 from controllers.installment_controller import InstallmentController
+from controllers.household_controller import HouseholdController
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
@@ -41,6 +42,15 @@ class ExpensesView:
         # Controller con gestión automática de sesión
         self.controller = ExpenseController(familia_id=familia_id)
         self.installment_controller = InstallmentController(familia_id=familia_id)
+        self.household_controller = HouseholdController(familia_id=familia_id)
+
+        # Toggle para compartir
+        self.share_household_switch = ft.Switch(
+            label="Compartir gasto con el hogar",
+            value=False,
+            active_color=ft.Colors.TEAL_600,
+            visible=False,
+        )
 
         # Estado de edición
         self.editing_expense_id = None
@@ -194,6 +204,15 @@ class ExpensesView:
         """Renderizar la vista completa"""
         is_mobile = AppState.device == "mobile"
 
+        # Validar membresía para habilitar/deshabilitar el toggle
+        household_res = self.household_controller.get_current_household()
+        if household_res.is_ok() and household_res.unwrap() is not None:
+            self.share_household_switch.visible = True
+            self.share_household_switch.label = f"Compartir con: {household_res.unwrap().nombre}"
+        else:
+            self.share_household_switch.visible = False
+            self.share_household_switch.value = False
+
         content = ft.Column(
             controls=[
                 ft.Row(
@@ -267,6 +286,9 @@ class ExpensesView:
                                 spacing=10,
                                 run_spacing=10,
                             ),
+                            ft.Container(height=10),
+                            self.share_household_switch,
+                            ft.Container(height=10),
                             self._cuotas_container,
                             CorrectElevatedButton(
                                 "💾 Guardar gasto",
@@ -501,6 +523,13 @@ class ExpensesView:
 
             match result:
                 case Ok(expense_ok):
+                    # Compartir con el hogar si corresponde
+                    if self.share_household_switch.visible and self.share_household_switch.value:
+                        share_res = self.household_controller.share_expense(expense_ok.id)
+                        if share_res.is_err():
+                            self.page.overlay.append(ft.SnackBar(ft.Text(f"Gasto guardado, pero no se pudo compartir: {share_res.unwrap_err()}"), open=True, bgcolor=ft.Colors.RED_600))
+                            self.page.update()
+
                     # Si es tarjeta de crédito, crear compra en cuotas
                     if (
                         selected_metodo == PaymentMethod.TARJETA_CREDITO
@@ -788,6 +817,7 @@ class ExpensesView:
         self.monto_input.value = ""
         self.categoria_dropdown.value = None
         self.metodo_pago_dropdown.value = PaymentMethod.EFECTIVO.value
+        self.share_household_switch.value = False
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""
