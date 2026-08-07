@@ -8,9 +8,9 @@ Sistema de gestión financiera familiar con **Python 3.12 + Flet + PostgreSQL + 
 
 - **🔐 Autenticación** — Login y registro de familias (hash Argon2id), multi-tenant completo
 - **🔑 Recuperación de contraseña** — Reset por email con Resend, tokens de un solo uso con expiración de 1 hora, protección contra enumeración de emails
-- **👨‍👩‍👧‍👦 Familia** — Personas (parentesco, edad, estado laboral) y mascotas
+- **👨‍👩‍👧‍👦 Familia y Hogares Compartidos** — Gestión de miembros de la familia y creación de 'Hogares Compartidos' para vincular cuentas de distintos usuarios, sumar gastos al pozo común y ver balances automáticos.
 - **💰 Ingresos** — Por miembro, múltiples tipos (sueldo, jubilación, freelance, etc.)
-- **💳 Gastos** — Categorías uruguayas, métodos de pago, recurrencia
+- **💳 Gastos** — Categorías uruguayas, métodos de pago, recurrencia, y vinculación a hogares compartidos.
 - **💱 Multi-moneda** — Soporta UYU y USD; cada registro conserva su moneda original sin conversiones automáticas
 - **📊 Dashboard** — Balance mensual automático, comparativa vs mes anterior por categoría
 - **🤖 Contador Oriental** — Asistente IA local (Gemma 2:2b), streaming token a token, RAG con normativa uruguaya
