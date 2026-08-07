@@ -54,7 +54,9 @@ class HouseholdDashboardView:
             if res.is_ok():
                 self.page.snack_bar = ft.SnackBar(ft.Text("Hogar creado con éxito", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN_600)
                 self.page.snack_bar.open = True
-                self.router.navigate("/household")
+                self.page.controls.clear()
+                self.page.add(self.render())
+                self.page.update()
             else:
                 self.page.snack_bar = ft.SnackBar(ft.Text(f"Error: {res.unwrap_err()}", color=ft.Colors.WHITE), bgcolor=ft.Colors.RED_600)
                 self.page.snack_bar.open = True
@@ -98,7 +100,7 @@ class HouseholdDashboardView:
                         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                     )
                 )
-            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll=ft.ScrollMode.AUTO),
             expand=True,
             alignment=ft.Alignment(0, 0)
         )
@@ -134,7 +136,7 @@ class HouseholdDashboardView:
                 ft.Divider(),
                 ft.ElevatedButton("Gestionar Miembros e Invitaciones", 
                                  on_click=lambda _: self.router.navigate("/household/members"))
-            ])
+            ], scroll=ft.ScrollMode.AUTO)
 
         return MainLayout(
             page=self.page,
