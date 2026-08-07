@@ -40,7 +40,7 @@ class HouseholdMembersView:
                 ft.ListTile(
                     leading=ft.Icon(ft.Icons.PERSON),
                     title=ft.Text(f"Familia {m.familia_id}"),
-                    subtitle=ft.Text(f"Rol: {m.role} - Estado: {m.status}"),
+                    subtitle=ft.Text(f"Rol: {m.role}"),
                 )
             )
 
