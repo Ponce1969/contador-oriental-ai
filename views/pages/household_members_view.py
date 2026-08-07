@@ -26,12 +26,10 @@ class HouseholdMembersView:
             if inv_res.is_ok():
                 inv = inv_res.unwrap()
                 # En un entorno real se mostraría un link de invitación
-                self.page.clipboard.set(inv.token)
-                self.page.snack_bar = ft.SnackBar(ft.Text("Token de invitación copiado al portapapeles."))
-                self.page.snack_bar.open = True
+                self.page.run_task(self.page.clipboard.set, inv.token)
+                self.page.overlay.append(ft.SnackBar(ft.Text("Token de invitación copiado al portapapeles."), open=True))
             else:
-                self.page.snack_bar = ft.SnackBar(ft.Text(f"Error: {inv_res.unwrap_err()}"))
-                self.page.snack_bar.open = True
+                self.page.overlay.append(ft.SnackBar(ft.Text(f"Error: {inv_res.unwrap_err()}"), open=True))
             self.page.update()
 
         member_list = ft.ListView(expand=1, spacing=10, padding=20)

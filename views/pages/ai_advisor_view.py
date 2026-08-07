@@ -492,8 +492,8 @@ class AIAdvisorView:
         )
 
         def copiar(e: object) -> None:
-            self.page.clipboard.set(reporte)
-            self.page.snack_bar = CorrectSnackBar(
+            self.page.run_task(self.page.clipboard.set, reporte)
+            snack = CorrectSnackBar(
                 content=ft.Text("✅ Copiado al portapapeles"),
                 open=True,
             )
