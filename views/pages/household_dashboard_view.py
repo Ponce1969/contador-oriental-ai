@@ -62,6 +62,27 @@ class HouseholdDashboardView:
                 self.page.snack_bar.open = True
             self.page.update()
 
+        token_field = ft.TextField(
+            label="Ej: abc123def456", 
+            border_color=ft.Colors.TEAL_400,
+            focused_border_color=ft.Colors.TEAL_700,
+            border_radius=8,
+            width=300
+        )
+
+        def on_join(e):
+            if not token_field.value:
+                return
+            res = self.controller.accept_invitation(token_field.value.strip())
+            if res.is_ok():
+                self.page.overlay.append(ft.SnackBar(ft.Text("Te uniste al Hogar con éxito", color=ft.Colors.WHITE), bgcolor=ft.Colors.GREEN_600, open=True))
+                self.page.controls.clear()
+                self.page.add(self.render())
+                self.page.update()
+            else:
+                self.page.overlay.append(ft.SnackBar(ft.Text(f"Error: {res.unwrap_err()}", color=ft.Colors.WHITE), bgcolor=ft.Colors.RED_600, open=True))
+                self.page.update()
+
         return ft.Container(
             content=ft.Column([
                 ft.Icon(ft.Icons.GROUPS, size=64, color=ft.Colors.INDIGO_500),
@@ -96,6 +117,31 @@ class HouseholdDashboardView:
                                     padding=20,
                                 ),
                                 on_click=on_create
+                            )
+                        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                    )
+                ),
+                ft.Container(height=20),
+                ft.Card(
+                    elevation=4,
+                    content=ft.Container(
+                        bgcolor=ft.Colors.WHITE,
+                        padding=30,
+                        content=ft.Column([
+                            ft.Text("Unirse a un Hogar Existente", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_800),
+                            ft.Text("Pegá el token de invitación acá:", color=ft.Colors.BLUE_GREY_600, size=14),
+                            ft.Container(height=10),
+                            token_field,
+                            ft.Container(height=10),
+                            ft.ElevatedButton(
+                                "Unirse al Hogar", 
+                                icon=ft.Icons.GROUP_ADD,
+                                style=ft.ButtonStyle(
+                                    color=ft.Colors.WHITE,
+                                    bgcolor=ft.Colors.TEAL_600,
+                                    padding=20,
+                                ),
+                                on_click=on_join
                             )
                         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                     )
