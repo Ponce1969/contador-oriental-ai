@@ -174,8 +174,22 @@ class HouseholdDashboardView:
                     )
                 )
                 
+            def on_leave(e):
+                res = self.controller.leave_household()
+                if res.is_ok():
+                    self.page.overlay.append(ft.SnackBar(ft.Text("Abandonaste el hogar exitosamente."), bgcolor=ft.Colors.GREEN_600, open=True))
+                    self.page.controls.clear()
+                    self.page.add(self.render())
+                else:
+                    self.page.overlay.append(ft.SnackBar(ft.Text(f"No podés salir: {res.unwrap_err()}"), bgcolor=ft.Colors.RED_600, open=True))
+                self.page.update()
+
             content = ft.Column([
-                ft.Text(f"Hogar: {self.household.nombre}", size=24, weight=ft.FontWeight.BOLD),
+                ft.Row([
+                    ft.Text(f"Hogar: {self.household.nombre}", size=24, weight=ft.FontWeight.BOLD),
+                    ft.Container(expand=True),
+                    ft.ElevatedButton("Abandonar Hogar", icon=ft.Icons.EXIT_TO_APP, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED_600, on_click=on_leave)
+                ]),
                 ft.Divider(),
                 ft.Text("Balances", size=18, weight=ft.FontWeight.BOLD),
                 ft.Row(balance_cards, wrap=True),
