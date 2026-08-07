@@ -26,7 +26,7 @@ class HouseholdMembersView:
             if inv_res.is_ok():
                 inv = inv_res.unwrap()
                 # En un entorno real se mostraría un link de invitación
-                self.page.set_clipboard(inv.token)
+                self.page.clipboard.set(inv.token)
                 self.page.snack_bar = ft.SnackBar(ft.Text("Token de invitación copiado al portapapeles."))
                 self.page.snack_bar.open = True
             else:
