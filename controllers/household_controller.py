@@ -192,16 +192,20 @@ class HouseholdController(BaseController):
                 link = service.create_link(membership.household_id, gasto_id, familia_id)
                 session.commit()
                 
-                self._event_system.fire_and_forget(
-                    Event(
-                        type=EventType.SHARED_EXPENSE_LINK_CREADO,
-                        familia_id=familia_id,
-                        data={
-                            "household_id": membership.household_id,
-                            "gasto_id": gasto_id,
-                        },
+                try:
+                    self._event_system.fire_and_forget(
+                        Event(
+                            type=EventType.SHARED_EXPENSE_LINK_CREADO,
+                            familia_id=familia_id,
+                            data={
+                                "household_id": membership.household_id,
+                                "gasto_id": gasto_id,
+                            },
+                        )
                     )
-                )
+                except Exception as ev_err:
+                    logger.warning(f"[HouseholdController] No se pudo emitir LINK_CREADO: {ev_err}")
+                
                 return Ok(link)
         except Exception as e:
             logger.error(f"[HouseholdController] share_expense error: {e}")
@@ -223,16 +227,20 @@ class HouseholdController(BaseController):
                 service.delete_link(membership.household_id, gasto_id, familia_id)
                 session.commit()
                 
-                self._event_system.fire_and_forget(
-                    Event(
-                        type=EventType.SHARED_EXPENSE_LINK_ELIMINADO,
-                        familia_id=familia_id,
-                        data={
-                            "household_id": membership.household_id,
-                            "gasto_id": gasto_id,
-                        },
+                try:
+                    self._event_system.fire_and_forget(
+                        Event(
+                            type=EventType.SHARED_EXPENSE_LINK_ELIMINADO,
+                            familia_id=familia_id,
+                            data={
+                                "household_id": membership.household_id,
+                                "gasto_id": gasto_id,
+                            },
+                        )
                     )
-                )
+                except Exception as ev_err:
+                    logger.warning(f"[HouseholdController] No se pudo emitir LINK_ELIMINADO: {ev_err}")
+                    
                 return Ok(None)
         except Exception as e:
             logger.error(f"[HouseholdController] unshare_expense error: {e}")
@@ -309,18 +317,21 @@ class HouseholdController(BaseController):
                 )
                 session.commit()
                 
-                self._event_system.fire_and_forget(
-                    Event(
-                        type=EventType.SETTLEMENT_CREADO,
-                        familia_id=familia_id,
-                        data={
-                            "household_id": membership.household_id,
-                            "payer_familia_id": familia_id,
-                            "recipient_familia_id": recipient_familia_id,
-                            "monto": float(monto),
-                        },
+                try:
+                    self._event_system.fire_and_forget(
+                        Event(
+                            type=EventType.SETTLEMENT_CREADO,
+                            familia_id=familia_id,
+                            data={
+                                "household_id": membership.household_id,
+                                "payer_familia_id": familia_id,
+                                "recipient_familia_id": recipient_familia_id,
+                                "monto": float(monto),
+                            },
+                        )
                     )
-                )
+                except Exception as ev_err:
+                    logger.warning(f"[HouseholdController] No se pudo emitir SETTLEMENT_CREADO: {ev_err}")
                 
                 return Ok(settlement)
         except Exception as e:
