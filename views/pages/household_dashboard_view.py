@@ -163,8 +163,8 @@ class HouseholdDashboardView:
             destinatario_dropdown = ft.Dropdown(
                 label="A quién le pagaste",
                 options=[
-                    ft.dropdown.Option(key=str(m.familia_id), text=m.familia_nombre)
-                    for m in self.members if m.familia_id != current_familia_id
+                    ft.dropdown.Option(key=str(b.familia_id), text=b.familia_nombre)
+                    for b in self.balances if b.familia_id != current_familia_id
                 ]
             )
             monto_field = ft.TextField(
