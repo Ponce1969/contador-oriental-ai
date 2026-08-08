@@ -158,6 +158,77 @@ class HouseholdDashboardView:
             content = self.create_household_ui()
         else:
             # Simple dashboard
+            current_familia_id = SessionManager.get_familia_id(self.page)
+            
+            destinatario_dropdown = ft.Dropdown(
+                label="A quién le pagaste",
+                options=[
+                    ft.dropdown.Option(key=str(m.familia_id), text=m.familia_nombre)
+                    for m in self.members if m.familia_id != current_familia_id
+                ]
+            )
+            monto_field = ft.TextField(
+                label="Monto ($)",
+                keyboard_type=ft.KeyboardType.NUMBER
+            )
+            
+            def close_dialog(e):
+                self.page.dialog.open = False
+                self.page.update()
+
+            def on_settle(e):
+                if not destinatario_dropdown.value or not monto_field.value:
+                    self.page.overlay.append(ft.SnackBar(ft.Text("Completá ambos campos"), bgcolor=ft.Colors.RED_600, open=True))
+                    self.page.update()
+                    return
+                try:
+                    monto = Decimal(monto_field.value)
+                    res = self.controller.record_settlement(
+                        recipient_familia_id=int(destinatario_dropdown.value),
+                        monto=monto,
+                        fecha=datetime.date.today()
+                    )
+                    if res.is_ok():
+                        self.page.overlay.append(ft.SnackBar(ft.Text("Pago registrado con éxito"), bgcolor=ft.Colors.GREEN_600, open=True))
+                        close_dialog(None)
+                        self.page.controls.clear()
+                        self.page.add(self.render())
+                    else:
+                        self.page.overlay.append(ft.SnackBar(ft.Text(f"Error: {res.unwrap_err()}"), bgcolor=ft.Colors.RED_600, open=True))
+                except Exception as err:
+                    self.page.overlay.append(ft.SnackBar(ft.Text("Monto inválido"), bgcolor=ft.Colors.RED_600, open=True))
+                self.page.update()
+
+            settlement_dialog = ft.AlertDialog(
+                title=ft.Text("Saldar Deuda"),
+                content=ft.Container(
+                    bgcolor=ft.Colors.GREEN_50,
+                    border=ft.Border(
+                        top=ft.BorderSide(2, ft.Colors.GREEN_200),
+                        bottom=ft.BorderSide(2, ft.Colors.GREEN_200),
+                        left=ft.BorderSide(2, ft.Colors.GREEN_200),
+                        right=ft.BorderSide(2, ft.Colors.GREEN_200),
+                    ),
+                    border_radius=8,
+                    padding=20,
+                    content=ft.Column([
+                        ft.Text("Registrá un pago que le hiciste a otro miembro por fuera de la app."),
+                        ft.Container(height=10),
+                        destinatario_dropdown,
+                        monto_field
+                    ], tight=True)
+                ),
+                actions=[
+                    ft.TextButton("Cancelar", on_click=close_dialog),
+                    ft.ElevatedButton("Confirmar Pago", bgcolor=ft.Colors.GREEN_600, color=ft.Colors.WHITE, on_click=on_settle)
+                ]
+            )
+
+            def open_dialog(e):
+                self.page.dialog = settlement_dialog
+                settlement_dialog.open = True
+                self.page.update()
+
             balance_cards = []
             for b in self.balances:
                 balance_cards.append(
@@ -194,8 +265,10 @@ class HouseholdDashboardView:
                 ft.Text("Balances", size=18, weight=ft.FontWeight.BOLD),
                 ft.Row(balance_cards, wrap=True),
                 ft.Divider(),
-                ft.ElevatedButton("Gestionar Miembros e Invitaciones", 
-                                 on_click=lambda _: self.router.navigate("/household/members"))
+                ft.Row([
+                    ft.ElevatedButton("Saldar Deuda (Registrar Pago)", icon=ft.Icons.PAYMENTS, color=ft.Colors.WHITE, bgcolor=ft.Colors.GREEN_600, on_click=open_dialog),
+                    ft.ElevatedButton("Gestionar Miembros e Invitaciones", on_click=lambda _: self.router.navigate("/household/members"))
+                ], alignment=ft.MainAxisAlignment.START, wrap=True)
             ], scroll=ft.ScrollMode.AUTO)
 
         return MainLayout(
