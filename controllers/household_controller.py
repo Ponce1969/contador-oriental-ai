@@ -195,10 +195,10 @@ class HouseholdController(BaseController):
                 self._event_system.fire_and_forget(
                     Event(
                         type=EventType.SHARED_EXPENSE_LINK_CREADO,
-                        payload={
+                        familia_id=familia_id,
+                        data={
                             "household_id": membership.household_id,
                             "gasto_id": gasto_id,
-                            "familia_id": familia_id,
                         },
                     )
                 )
@@ -226,10 +226,10 @@ class HouseholdController(BaseController):
                 self._event_system.fire_and_forget(
                     Event(
                         type=EventType.SHARED_EXPENSE_LINK_ELIMINADO,
-                        payload={
+                        familia_id=familia_id,
+                        data={
                             "household_id": membership.household_id,
                             "gasto_id": gasto_id,
-                            "familia_id": familia_id,
                         },
                     )
                 )
@@ -312,7 +312,8 @@ class HouseholdController(BaseController):
                 self._event_system.fire_and_forget(
                     Event(
                         type=EventType.SETTLEMENT_CREADO,
-                        payload={
+                        familia_id=familia_id,
+                        data={
                             "household_id": membership.household_id,
                             "payer_familia_id": familia_id,
                             "recipient_familia_id": recipient_familia_id,
