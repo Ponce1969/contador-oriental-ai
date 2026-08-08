@@ -25,9 +25,16 @@ class HouseholdMembersView:
             inv_res = self.controller.create_invitation()
             if inv_res.is_ok():
                 inv = inv_res.unwrap()
-                # En un entorno real se mostraría un link de invitación
-                self.page.run_task(self.page.clipboard.set, inv.token)
-                self.page.overlay.append(ft.SnackBar(ft.Text("Token de invitación copiado al portapapeles."), open=True))
+                
+                # Obtener la URL base desde el cliente Flet o usar valor por defecto
+                domain = self.page.client_url or "https://app4.loquinto.com"
+                if not domain.startswith("http"):
+                    domain = "https://" + domain
+                domain = domain.rstrip('/')
+                
+                invite_msg = f"¡Hola! Te invito a compartir gastos en Contador Oriental. Hacé clic acá para unirte a mi grupo:\n\n{domain}/invite?token={inv.token}"
+                self.page.run_task(self.page.clipboard.set, invite_msg)
+                self.page.overlay.append(ft.SnackBar(ft.Text("Enlace de invitación copiado al portapapeles."), open=True))
             else:
                 self.page.overlay.append(ft.SnackBar(ft.Text(f"Error: {inv_res.unwrap_err()}"), open=True))
             self.page.update()

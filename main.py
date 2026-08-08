@@ -157,7 +157,7 @@ async def main(page: ft.Page):
         from core.session import SessionManager
 
         router = Router(page)
-        public_routes = ["/forgot-password", "/reset-password", "/register"]
+        public_routes = ["/forgot-password", "/reset-password", "/register", "/invite"]
 
         def on_resize(e: object) -> None:
             new_device = get_device_type(page.width)
@@ -171,11 +171,15 @@ async def main(page: ft.Page):
             """
             clean_route = route.split("?")[0]
             if SessionManager.is_logged_in(page):
-                # Logged in — always go to dashboard
-                page.banner.open = True  # type: ignore
-                router.navigate("/")
+                if clean_route == "/invite":
+                    # Even if logged in, let them go to the invite page to accept it
+                    router.navigate(route)
+                else:
+                    # Logged in — always go to dashboard
+                    page.banner.open = True  # type: ignore
+                    router.navigate("/")
             elif clean_route in public_routes:
-                # Public routes (forgot-password, reset-password, register)
+                # Public routes (forgot-password, reset-password, register, invite)
                 # No auth required — navigate directly, preserving query params
                 router.navigate(route)
             else:

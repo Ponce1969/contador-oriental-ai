@@ -30,6 +30,14 @@ ROUTES = [
         "show_in_bottom": False,
     },
     {
+        "path": "/invite",
+        "view": "views.pages.invite_view.InviteView",
+        "label": "Invitación",
+        "icon": ft.Icons.MAIL,
+        "show_in_top": False,
+        "show_in_bottom": False,
+    },
+    {
         "path": "/login",
         "view": "views.pages.login_view.LoginView",
         "label": "🔐 Login",

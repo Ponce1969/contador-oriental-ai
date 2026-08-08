@@ -48,6 +48,13 @@ class DashboardView:
         if not SessionManager.is_logged_in(page):
             router.navigate("/login")
             return
+            
+        pending_invite = page.session.get("pending_invite_token")
+        if pending_invite:
+            page.session.remove("pending_invite_token")
+            # Redirigir de manera segura
+            page.run_task(lambda: router.navigate(f"/invite?token={pending_invite}"))
+            return
 
         # Obtener familia_id de la sesión
         familia_id = SessionManager.get_familia_id(page)
