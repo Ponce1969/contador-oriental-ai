@@ -48,7 +48,10 @@ class ExpensesView:
         self.share_household_switch = ft.Switch(
             label="Compartir gasto con el hogar",
             value=False,
-            active_color=ft.Colors.TEAL_600,
+            active_color=ft.Colors.GREEN_600,
+            active_track_color=ft.Colors.GREEN_200,
+            inactive_thumb_color=ft.Colors.ORANGE_400,
+            inactive_track_color=ft.Colors.ORANGE_100,
             visible=False,
         )
 

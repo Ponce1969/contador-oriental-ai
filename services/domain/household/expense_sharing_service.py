@@ -5,7 +5,8 @@ if TYPE_CHECKING:
     from repositories.household.link_repository import SharedExpenseLinkRepository
     from repositories.household.member_repository import HouseholdMemberRepository
     from repositories.household.audit_repository import HouseholdAuditLogRepository
-    from database.tables import ExpenseTable
+
+from database.tables import ExpenseTable
 
 from models.household_model import SharedExpenseLink
 from models.errors import UnauthorizedError, NotFoundError, DuplicateLinkError, NotAMemberError
