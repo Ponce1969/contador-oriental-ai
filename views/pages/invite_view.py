@@ -50,7 +50,7 @@ class InviteView:
                         ft.Text("No se encontró ningún token en el enlace."),
                         ft.ElevatedButton("Ir al Inicio", on_click=lambda _: self.router.navigate("/"))
                     ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),
                     expand=True
                 )
             )
@@ -73,7 +73,7 @@ class InviteView:
                             ft.ElevatedButton("Registrarse", icon=ft.Icons.PERSON_ADD, on_click=lambda _: self.router.navigate("/register")),
                         ], alignment=ft.MainAxisAlignment.CENTER)
                     ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),
                     expand=True
                 )
             )
@@ -113,7 +113,7 @@ class InviteView:
                         ft.TextButton("Rechazar", on_click=on_decline),
                     ], alignment=ft.MainAxisAlignment.CENTER)
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                alignment=ft.alignment.center,
+                alignment=ft.Alignment(0, 0),
                 expand=True
             )
         )
