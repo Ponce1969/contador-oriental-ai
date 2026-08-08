@@ -26,8 +26,11 @@ class HouseholdMembersView:
             if inv_res.is_ok():
                 inv = inv_res.unwrap()
                 
-                # Obtener la URL base desde el cliente Flet o usar valor por defecto
-                domain = self.page.client_url or "https://app4.loquinto.com"
+                # Obtener la URL base de forma segura sin romper versiones anteriores de Flet
+                domain = getattr(self.page, "client_url", None)
+                if not domain:
+                    domain = "https://app4.loquinto.com"
+                    
                 if not domain.startswith("http"):
                     domain = "https://" + domain
                 domain = domain.rstrip('/')
