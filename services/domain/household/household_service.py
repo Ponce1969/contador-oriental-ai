@@ -53,12 +53,15 @@ class HouseholdService:
         if not membership or membership.household_id != household_id:
             raise NotAMemberError("No sos miembro de este hogar.")
 
-        balances = self.balance_service.compute_balance(household_id, familia_id, None, None)
-        my_balance = next((b for b in balances if b.familia_id == familia_id), None)
-        if my_balance and my_balance.net_balance != 0:
-            raise BalanceNotZeroError("Tenés un balance pendiente (deuda o te deben). Debés saldar cuentas antes de salir.")
-
         all_members = self.member_repo.get_members(household_id)
+        
+        # Si hay más de un miembro, verificamos que no haya deudas
+        if len(all_members) > 1:
+            balances = self.balance_service.compute_balance(household_id, familia_id, None, None)
+            my_balance = next((b for b in balances if b.familia_id == familia_id), None)
+            if my_balance and my_balance.net_balance != 0:
+                raise BalanceNotZeroError("Tenés un balance pendiente (deuda o te deben). Debés saldar cuentas antes de salir.")
+
         if membership.role == "admin":
             if len(all_members) > 1:
                 raise AdminMustTransferError("Sos el único admin pero hay más miembros. Transferí el rol de administrador antes de salir.")

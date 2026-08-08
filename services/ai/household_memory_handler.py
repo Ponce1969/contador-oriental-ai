@@ -20,9 +20,9 @@ class HouseholdMemoryHandler:
 
     async def handle_shared_expense_link_creado(self, event: Event) -> None:
         try:
-            household_id = event.payload["household_id"]
-            gasto_id = event.payload["gasto_id"]
-            familia_id = event.payload["familia_id"]
+            household_id = event.data["household_id"]
+            gasto_id = event.data["gasto_id"]
+            familia_id = event.data["familia_id"]
             
             with UnitOfWork() as uow:
                 expense_repo = ExpenseRepository(uow.session, familia_id=familia_id)
@@ -53,9 +53,9 @@ class HouseholdMemoryHandler:
 
     async def handle_shared_expense_link_eliminado(self, event: Event) -> None:
         try:
-            household_id = event.payload["household_id"]
-            gasto_id = event.payload["gasto_id"]
-            familia_id = event.payload["familia_id"]
+            household_id = event.data["household_id"]
+            gasto_id = event.data["gasto_id"]
+            familia_id = event.data["familia_id"]
             
             with UnitOfWork() as uow:
                 memoria_repo = MemoriaRepository(uow.session, familia_id=familia_id)
@@ -71,10 +71,10 @@ class HouseholdMemoryHandler:
 
     async def handle_settlement_creado(self, event: Event) -> None:
         try:
-            household_id = event.payload["household_id"]
-            payer_id = event.payload["payer_familia_id"]
-            recipient_id = event.payload["recipient_familia_id"]
-            monto = event.payload["monto"]
+            household_id = event.data["household_id"]
+            payer_id = event.data["payer_familia_id"]
+            recipient_id = event.data["recipient_familia_id"]
+            monto = event.data["monto"]
             
             content = (
                 f"Se registró un pago/liquidación (settlement) en el hogar {household_id}. "
