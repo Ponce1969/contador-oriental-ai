@@ -57,7 +57,7 @@ class InviteView:
 
         if not SessionManager.is_logged_in(self.page):
             # Guardamos el token para que al iniciar sesión lo redirijamos
-            self.page.session.set("pending_invite_token", self.token)
+            SessionManager.set_pending_invite(self.page, self.token)
             
             return MainLayout(
                 page=self.page,
@@ -88,7 +88,7 @@ class InviteView:
             res = controller.join_household(self.token)
             
             if res.is_ok():
-                self.page.session.remove("pending_invite_token")
+                SessionManager.clear_pending_invite(self.page)
                 self.page.overlay.append(ft.SnackBar(ft.Text("¡Invitación aceptada exitosamente!"), bgcolor=ft.Colors.GREEN_600, open=True))
                 self.router.navigate("/household")
             else:
@@ -96,7 +96,7 @@ class InviteView:
             self.page.update()
             
         def on_decline(e):
-            self.page.session.remove("pending_invite_token")
+            SessionManager.clear_pending_invite(self.page)
             self.router.navigate("/")
 
         return MainLayout(

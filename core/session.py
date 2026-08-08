@@ -98,4 +98,24 @@ class SessionManager:
             router = Router(page)
             router.navigate("/login")
             return False
+            
         return True
+
+    @staticmethod
+    def get_pending_invite(page: ft.Page) -> str | None:
+        """Obtener token de invitación pendiente si existe"""
+        session_data = SessionManager._get_session_data(page)
+        return session_data.get("pending_invite_token")
+
+    @staticmethod
+    def set_pending_invite(page: ft.Page, token: str) -> None:
+        """Guardar token de invitación pendiente"""
+        session_data = SessionManager._get_session_data(page)
+        session_data["pending_invite_token"] = token
+
+    @staticmethod
+    def clear_pending_invite(page: ft.Page) -> None:
+        """Limpiar token de invitación pendiente"""
+        session_data = SessionManager._get_session_data(page)
+        if "pending_invite_token" in session_data:
+            del session_data["pending_invite_token"]

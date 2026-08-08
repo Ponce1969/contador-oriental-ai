@@ -49,9 +49,9 @@ class DashboardView:
             router.navigate("/login")
             return
             
-        pending_invite = page.session.get("pending_invite_token")
+        pending_invite = SessionManager.get_pending_invite(page)
         if pending_invite:
-            page.session.remove("pending_invite_token")
+            SessionManager.clear_pending_invite(page)
             # Redirigir de manera segura
             page.run_task(lambda: router.navigate(f"/invite?token={pending_invite}"))
             return
