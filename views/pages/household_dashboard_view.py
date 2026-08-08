@@ -173,7 +173,7 @@ class HouseholdDashboardView:
             )
             
             def close_dialog(e):
-                self.page.dialog.open = False
+                settlement_dialog.open = False
                 self.page.update()
 
             def on_settle(e):
@@ -225,7 +225,8 @@ class HouseholdDashboardView:
             )
 
             def open_dialog(e):
-                self.page.dialog = settlement_dialog
+                if settlement_dialog not in self.page.overlay:
+                    self.page.overlay.append(settlement_dialog)
                 settlement_dialog.open = True
                 self.page.update()
 
