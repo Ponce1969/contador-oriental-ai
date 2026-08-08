@@ -192,7 +192,7 @@ class HouseholdController(BaseController):
                 link = service.create_link(membership.household_id, gasto_id, familia_id)
                 session.commit()
                 
-                self._event_system.emit(
+                self._event_system.fire_and_forget(
                     Event(
                         type=EventType.SHARED_EXPENSE_LINK_CREADO,
                         payload={
@@ -223,7 +223,7 @@ class HouseholdController(BaseController):
                 service.delete_link(membership.household_id, gasto_id, familia_id)
                 session.commit()
                 
-                self._event_system.emit(
+                self._event_system.fire_and_forget(
                     Event(
                         type=EventType.SHARED_EXPENSE_LINK_ELIMINADO,
                         payload={
@@ -309,7 +309,7 @@ class HouseholdController(BaseController):
                 )
                 session.commit()
                 
-                self._event_system.emit(
+                self._event_system.fire_and_forget(
                     Event(
                         type=EventType.SETTLEMENT_CREADO,
                         payload={
