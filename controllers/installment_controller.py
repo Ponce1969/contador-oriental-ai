@@ -172,12 +172,13 @@ class InstallmentController(BaseController):
         return creados
 
     def proyectar_meses(self, meses: int = 6) -> dict[str, Decimal]:
-        """Proyectar pagos de cuotas para N meses futuros."""
+        """Proyectar pagos de cuotas para N meses futuros, separado por moneda."""
         proyeccion: dict[str, Decimal] = {}
         planes = self.obtener_cuotas_pendientes()
 
         for plan in planes:
             cuota_actual = plan.cuotas_pagadas + 1
+            ccy = getattr(plan, "currency", "UYU") or "UYU"
             for i in range(plan.cuotas_restantes):
                 fecha = _add_months(
                     plan.mes_inicio_pago or plan.fecha_compra,
@@ -185,7 +186,7 @@ class InstallmentController(BaseController):
                 )
                 if i >= meses:
                     break
-                key = f"{fecha.year}-{fecha.month:02d}"
+                key = f"{ccy}-{fecha.year}-{fecha.month:02d}"
                 proyeccion[key] = (
                     proyeccion.get(key, Decimal("0")) + plan.monto_por_cuota
                 )

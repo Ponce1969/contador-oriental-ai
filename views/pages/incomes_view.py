@@ -557,6 +557,7 @@ class IncomesView:
         self.recurrente_checkbox.value = False
         self.frecuencia_dropdown.value = None
         self.frecuencia_dropdown.visible = False
+        self.currency_dropdown.value = "UYU"
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

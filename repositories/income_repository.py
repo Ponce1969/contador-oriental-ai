@@ -35,6 +35,7 @@ class IncomeRepository(BaseTableRepository[Income, IncomeTable]):
         table_row.frecuencia = income.frecuencia.value if income.frecuencia else None
         # Campo específico de ingresos
         table_row.family_member_id = income.family_member_id
+        table_row.currency = income.currency
 
     def get_by_member(self, member_id: int) -> Sequence[Income]:
         """Obtener ingresos de un miembro específico de la familia"""

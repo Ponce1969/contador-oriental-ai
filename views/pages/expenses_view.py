@@ -821,6 +821,7 @@ class ExpensesView:
         self.categoria_dropdown.value = None
         self.metodo_pago_dropdown.value = PaymentMethod.EFECTIVO.value
         self.share_household_switch.value = False
+        self.currency_dropdown.value = "UYU"
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

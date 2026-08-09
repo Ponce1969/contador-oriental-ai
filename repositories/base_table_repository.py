@@ -133,6 +133,8 @@ class BaseTableRepository(ABC, Generic[T, TTable]):
                 row.descripcion = entity.descripcion
             if hasattr(entity, "notas"):
                 row.notas = entity.notas
+            if hasattr(entity, "currency"):
+                row.currency = entity.currency
 
             # Las subclases deben implementar actualizaciones específicas
             self._update_specific_fields(row, entity)

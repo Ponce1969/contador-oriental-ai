@@ -62,19 +62,20 @@ class SharedExpenseLinkRepository:
         )
         self.session.execute(stmt)
 
-    def sum_contributions_per_member(self, household_id: int) -> dict[int, Decimal]:
-        """Returns dict of familia_id -> total_amount."""
+    def sum_contributions_per_member(self, household_id: int) -> dict[tuple[int, str], Decimal]:
+        """Returns dict of (familia_id, currency) -> total_amount, per-currency."""
         stmt = (
             select(
                 SharedExpenseLinkTable.familia_id,
+                ExpenseTable.currency,
                 func.sum(ExpenseTable.monto)
             )
             .join(ExpenseTable, ExpenseTable.id == SharedExpenseLinkTable.gasto_id)
             .where(SharedExpenseLinkTable.household_id == household_id)
-            .group_by(SharedExpenseLinkTable.familia_id)
+            .group_by(SharedExpenseLinkTable.familia_id, ExpenseTable.currency)
         )
         rows = self.session.execute(stmt).all()
-        return {r[0]: Decimal(r[1]) if r[1] else Decimal("0") for r in rows}
+        return {(r[0], r[1] or "UYU"): Decimal(r[2]) if r[2] else Decimal("0") for r in rows}
 
     def get_feed(
         self,

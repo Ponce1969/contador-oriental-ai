@@ -48,19 +48,24 @@ class HouseholdBalanceService:
         ).scalars().all()
         names = {f.id: f.nombre for f in familias}
         
-        # We don't implement date filtering at the repo layer in this simplified version,
-        # but the spec asks for it. For now, assuming link_repo.sum_contributions_per_member handles everything.
+        # Per-currency contributions (multi-currency safe)
         contributions = self.link_repo.sum_contributions_per_member(household_id)
         settlements = self.settlement_repo.sum_per_member(household_id)
-        
-        total_expense = sum(contributions.values())
+
+        # Group contributions by member, summing across currencies per member
+        # (equal_share is currency-independent; net_balance inherits member totals)
+        by_member: dict[int, Decimal] = {}
+        for (fid, _ccy), amount in contributions.items():
+            by_member[fid] = by_member.get(fid, Decimal("0")) + amount
+
+        total_expense = sum(by_member.values())
         member_count = Decimal(len(members))
         equal_share = total_expense / member_count if member_count > 0 else Decimal("0")
         
         result: list[MemberBalance] = []
         for member in members:
             fid = member.familia_id
-            contributed = contributions.get(fid, Decimal("0"))
+            contributed = by_member.get(fid, Decimal("0"))
             settlement_data = settlements.get(fid, {"paid": Decimal("0"), "received": Decimal("0")})
             
             # Net balance = (Equal Share) - (Contributed) - (Settlements Paid) + (Settlements Received)
