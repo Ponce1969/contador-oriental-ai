@@ -1,6 +1,6 @@
 """
-Vista de "Mis Planes" - Fintech Premium Dark Theme.
-Compras en cuotas con barras de progreso y glassmorphism.
+Vista de "Mis Planes" - Compras en cuotas con barras de progreso.
+Diseño claro y cálido, alineado con el resto de la app.
 """
 
 from __future__ import annotations
@@ -15,16 +15,16 @@ from core.state import AppState
 from services.infrastructure.formatters import format_pesos
 from views.layouts.main_layout import MainLayout
 
-# ── Fintech Dark Palette ─────────────────────────────────────────────
-_NAVY = "#0f172a"  # fondo principal
-_SLATE = "#1e293b"  # cards
-_EMERALD = "#10b981"  # positivo, progreso, totales
+# ── Light Palette ───────────────────────────────────────────────────
+_BG = "#F8F6FA"       # fondo general
+_CARD = "#FAF8F5"     # fondo tarjetas
+_DARK = "#1E293B"     # texto principal
+_GREY = "#64748B"     # texto secundario
+_EMERALD = "#10b981"  # positivo, progreso
 _EMERALD_MINT = "#34d399"  # brillo del gradiente
-_RUBY = "#e11d48"  # alerta, deuda
-_AMBER = "#f59e0b"  # advertencia intermedia
-_SLATE_TEXT = "#94a3b8"  # texto secundario
-_WHITE = "#f8fafc"  # texto principal
-_BORDER = "rgba(255,255,255,0.05)"
+_RUBY = "#e11d48"     # alerta, deuda
+_AMBER = "#f59e0b"    # advertencia intermedia
+_BORDER = "#E8E2D9"   # borde de tarjetas
 
 
 def _color_semaforo(ratio: float) -> str:
@@ -65,7 +65,7 @@ def _barra_progreso(pagadas: int, total: int) -> ft.Control:
                     ),
                 ),
                 border_radius=10,
-                bgcolor="#334155",
+                bgcolor="#E5E7EB",
                 height=8,
                 animate=ft.Animation(600, ft.AnimationCurve.EASE_OUT),
             ),
@@ -103,6 +103,7 @@ class PlanesView:
         is_mobile = AppState.device == "mobile"
 
         content = ft.Container(
+            bgcolor=_BG,
             content=ft.Column(
                 controls=[
                     ft.Container(
@@ -112,7 +113,7 @@ class PlanesView:
                                     value="Mis Planes",
                                     size=22 if is_mobile else 28,
                                     weight=ft.FontWeight.BOLD,
-                                    color=_WHITE,
+                                    color=_DARK,
                                 ),
                             ],
                         ),
@@ -121,9 +122,9 @@ class PlanesView:
                     ft.Text(
                         "Compras en cuotas activas y su progreso",
                         size=12,
-                        color=_SLATE_TEXT,
+                        color=_GREY,
                     ),
-                    ft.Divider(color="#334155", height=24),
+                    ft.Divider(color="#E5E7EB", height=24),
                     self._planes_column,
                 ],
                 spacing=10,
@@ -160,12 +161,12 @@ class PlanesView:
                                 "No tenes cuotas pendientes",
                                 size=16,
                                 weight=ft.FontWeight.W_600,
-                                color=_WHITE,
+                                color=_DARK,
                             ),
                             ft.Text(
                                 "Todas tus compras estan pagas.",
                                 size=12,
-                                color=_SLATE_TEXT,
+                                color=_GREY,
                             ),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -203,7 +204,7 @@ class PlanesView:
                         ft.Text(
                             f"({len(planes)} compras activas)",
                             size=12,
-                            color=_SLATE_TEXT,
+                            color=_GREY,
                         ),
                     ],
                     spacing=8,
@@ -232,7 +233,7 @@ class PlanesView:
                                                 plan.descripcion,
                                                 size=15,
                                                 weight=ft.FontWeight.BOLD,
-                                                color=_WHITE,
+                                    color=_DARK,
                                             ),
                                             ft.Text(
                                                 (
@@ -240,7 +241,7 @@ class PlanesView:
                                                     f"{cuota_fmt} c/u"
                                                 ),
                                                 size=11,
-                                                color=_SLATE_TEXT,
+                        color=_GREY,
                                             ),
                                         ],
                                         expand=True,
@@ -264,7 +265,7 @@ class PlanesView:
                                     ft.Text(
                                         f"Restan {plan.cuotas_restantes} cuotas",
                                         size=11,
-                                        color=_SLATE_TEXT,
+                                        color=_GREY,
                                     ),
                                     (
                                         ft.Container(
@@ -295,21 +296,14 @@ class PlanesView:
                         spacing=2,
                     ),
                     padding=18,
-                    border_radius=16,
-                    bgcolor=_SLATE,
+                    border_radius=12,
+                    bgcolor=_CARD,
                     border=ft.Border.all(1, _BORDER),
-                    shadow=(
-                        ft.BoxShadow(
-                            spread_radius=0,
-                            blur_radius=12,
-                            color=f"{_EMERALD}22",
-                        )
-                        if celebrando
-                        else ft.BoxShadow(
-                            spread_radius=0,
-                            blur_radius=4,
-                            color="#00000022",
-                        )
+                    shadow=ft.BoxShadow(
+                        spread_radius=0,
+                        blur_radius=8,
+                        color="#0000001F",
+                        offset=ft.Offset(0, 2),
                     ),
                     animate=ft.Animation(500, ft.AnimationCurve.EASE_OUT),
                 )
