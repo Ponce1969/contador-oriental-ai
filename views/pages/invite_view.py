@@ -85,7 +85,7 @@ class InviteView:
                 return
                 
             controller = HouseholdController(familia_id=familia_id)
-            res = controller.join_household(self.token)
+            res = controller.accept_invitation(self.token)
             
             if res.is_ok():
                 SessionManager.clear_pending_invite(self.page)
