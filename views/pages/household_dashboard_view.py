@@ -292,7 +292,7 @@ class HouseholdDashboardView:
                     expand=True,
                     padding=10,
                     bgcolor="#EDE7F6",
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),
                 ),
             ], expand=True, spacing=20, alignment=ft.MainAxisAlignment.START)
 
