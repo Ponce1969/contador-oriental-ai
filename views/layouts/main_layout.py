@@ -355,4 +355,5 @@ class MainLayout(ft.Column):
             destinations=destinations,
             selected_index=current_index,
             on_change=on_change,
+            bgcolor="#FAF7FC",
         )
