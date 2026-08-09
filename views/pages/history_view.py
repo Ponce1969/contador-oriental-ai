@@ -57,9 +57,6 @@ class HistoryView:
             var_str = HistoryController.format_variacion(
                 data.variacion_gastos if m == data.meses[0] else None
             )
-            var_color = HistoryController.variacion_color(
-                data.variacion_gastos if m == data.meses[0] else None
-            )
 
             gastos_uyu = m.total_gastos.get("UYU", Decimal("0"))
             ingresos_uyu = m.total_ingresos.get("UYU", Decimal("0"))
@@ -113,20 +110,33 @@ class HistoryView:
                             if ingresos_usd
                             else ft.Container()
                         ),
-                        ft.Text(
-                            value=f"Balance: {balance_uyu_fmt}",
-                            size=12,
-                            color=ft.Colors.GREEN_700
-                            if balance_uyu >= 0
-                            else ft.Colors.RED_700,
+                        # Balance — micro-contenedor verde tenue
+                        ft.Container(
+                            content=ft.Text(
+                                value=f"Balance: {balance_uyu_fmt}",
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=ft.Colors.GREEN_700
+                                if balance_uyu >= 0
+                                else ft.Colors.RED_700,
+                            ),
+                            bgcolor="#ECFDF5",
+                            padding=ft.Padding(left=12, top=6, right=12, bottom=6),
+                            border_radius=6,
                         ),
                         (
-                            ft.Text(
-                                value=f"Balance USD: {balance_usd_fmt}",
-                                size=12,
-                                color=ft.Colors.GREEN_700
-                                if balance_usd >= 0
-                                else ft.Colors.RED_700,
+                            ft.Container(
+                                content=ft.Text(
+                                    value=f"Balance USD: {balance_usd_fmt}",
+                                    size=12,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.GREEN_700
+                                    if balance_usd >= 0
+                                    else ft.Colors.RED_700,
+                                ),
+                                bgcolor="#ECFDF5",
+                                padding=ft.Padding(left=12, top=6, right=12, bottom=6),
+                                border_radius=6,
                             )
                             if balance_usd
                             else ft.Container()
@@ -136,11 +146,11 @@ class HistoryView:
                                 value=var_str,
                                 size=11,
                                 weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.WHITE,
+                                color="#DC2626",
                             ),
-                            bgcolor=var_color,
+                            bgcolor="#FEE2E2",
                             border_radius=6,
-                            padding=ft.Padding.symmetric(horizontal=8, vertical=3),
+                            padding=ft.Padding(left=8, top=3, right=8, bottom=3),
                             alignment=ft.Alignment(0, 0),
                         )
                         if m == data.meses[0] and data.variacion_gastos is not None
@@ -154,9 +164,9 @@ class HistoryView:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
                 padding=16 if is_mobile else 20,
-                bgcolor=ft.Colors.WHITE,
+                bgcolor="#FAF8F5",
                 border_radius=12,
-                border=ft.Border.all(1, ft.Colors.BLUE_GREY_100),
+                border=ft.Border.all(1, "#E5E7EB"),
                 shadow=ft.BoxShadow(
                     spread_radius=0,
                     blur_radius=4,
@@ -167,7 +177,7 @@ class HistoryView:
             mes_cards.append(card)
 
         content_controls.append(
-            ft.ResponsiveRow(controls=mes_cards, spacing=12, run_spacing=12)
+            ft.ResponsiveRow(controls=mes_cards, spacing=16, run_spacing=16)
         )
 
         # ── Barra comparativa de gastos ───────────────────────────────────
@@ -208,9 +218,7 @@ class HistoryView:
                                     ),
                                     bgcolor=ft.Colors.DEEP_ORANGE_400,
                                     border_radius=6,
-                                    padding=ft.Padding.symmetric(
-                                        horizontal=10, vertical=6
-                                    ),
+                                    padding=ft.Padding(left=10, top=6, right=10, bottom=6),
                                     width=max(int(ancho_barra * 300), 80),
                                 ),
                             ],
@@ -223,7 +231,8 @@ class HistoryView:
         content_controls.append(
             ft.Container(
                 content=ft.Column(controls=bar_controls, spacing=12),
-                padding=16 if is_mobile else 20,
+                width=float("inf"),
+                padding=20,
                 bgcolor=ft.Colors.ORANGE_50,
                 border_radius=12,
                 border=ft.Border.all(1, ft.Colors.ORANGE_200),
