@@ -361,7 +361,7 @@ class FamilyMembersView:
                                 on_click=lambda e, mm=m: self._on_edit(mm),
                             ),
                             ft.IconButton(
-                                icon=ft.Icons.PERSON_REMOVE_OUTLINE,
+                                icon=ft.Icons.PERSON_OFF,
                                 tooltip="Desvincular",
                                 icon_color=ft.Colors.RED_400,
                                 on_click=lambda e, mm=m: self._on_unlink_confirm(mm),
