@@ -95,3 +95,5 @@ fix_password.sql
 # Docker volumes data (local only)
 postgres_data/
 app_data/
+# Local AI runtime state
+.atl/

@@ -398,13 +398,16 @@ async def upload_form_submit(
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
         content = await file.read()
+        if len(content) > settings.max_upload_size:
+            return JSONResponse(
+                {"success": False, "error": f"Archivo excede {settings.max_upload_size // (1024*1024)}MB"},
+                status_code=413,
+            )
         tmp.write(content)
         tmp_path = Path(tmp.name)
 
     try:
         texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
-
-        if not texto_crudo or len(texto_crudo) < 20:
             result = {
                 "success": False,
                 "error": "No se pudo extraer texto",
@@ -539,6 +542,10 @@ async def upload_ocr(
     # Guardar archivo temporal
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
         content = await file.read()
+        if len(content) > settings.max_upload_size:
+            raise HTTPException(
+                413, f"Archivo excede {settings.max_upload_size // (1024*1024)}MB"
+            )
         tmp.write(content)
         tmp_path = Path(tmp.name)
 

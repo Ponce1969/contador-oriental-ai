@@ -108,6 +108,21 @@ async def main(page: ft.Page):
         page.run_task(exchange_rate_scheduler)
         logger.info("[EXCHANGE_RATE] Scheduler de cotización iniciado")
 
+        # Iniciar cleanup de sesiones abandonadas (evita memory leak)
+        from core.session import cleanup_expired_sessions
+
+        async def _session_cleanup_loop() -> None:
+            while True:
+                await asyncio.sleep(1800)  # cada 30 minutos
+                try:
+                    cleaned = cleanup_expired_sessions()
+                    if cleaned:
+                        logger.info("[SESSION] Cleanup: %d sesiones expiradas eliminadas", cleaned)
+                except Exception as exc:
+                    logger.warning("[SESSION] Error en cleanup de sesiones: %s", exc)
+
+        page.run_task(_session_cleanup_loop)
+
         # Banner de bienvenida
         def close_welcome_banner(e):
             page.banner.open = False  # type: ignore

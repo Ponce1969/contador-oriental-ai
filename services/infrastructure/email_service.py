@@ -26,9 +26,11 @@ class ResendEmailService:
     """Servicio de email usando la API de Resend"""
 
     def __init__(self) -> None:
-        self._api_key = os.environ.get("RESEND_API_KEY") or None
-        self._from_email = os.environ["RESEND_FROM_EMAIL"]
-        self._base_url = os.environ["APP_BASE_URL"]
+        self._api_key = os.getenv("RESEND_API_KEY")
+        self._from_email = os.getenv("RESEND_FROM_EMAIL", "")
+        self._base_url = os.getenv("APP_BASE_URL", "")
+        if not self._base_url:
+            raise ValueError("APP_BASE_URL no configurado")
 
     def send_password_reset(self, to_email: str, reset_url: str) -> Result[None, str]:
         """Enviar email de reseteo de contraseña via Resend"""

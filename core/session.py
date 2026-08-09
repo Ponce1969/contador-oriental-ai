@@ -2,13 +2,33 @@
 Sistema de sesión - Manejo de autenticación y estado del usuario
 """
 
+import time
+
 import flet as ft
 
 from core.security import limpiar_sesion, registrar_actividad, sesion_expirada
 from models.user_model import User
 
 # Diccionario global para almacenar sesiones por session_id
-_sessions = {}
+_sessions: dict[str, dict] = {}
+
+# TTL para sesiones abandonadas (sin logout explícito)
+_SESSION_ABANDON_TTL = 8 * 3600  # 8 horas
+_CREATED_AT = "_created_at"
+
+
+def cleanup_expired_sessions() -> int:
+    """Elimina sesiones abandonadas que excedieron el TTL. Retorna cuántas limpió."""
+    now = time.time()
+    expired = [
+        sid
+        for sid, data in _sessions.items()
+        if now - data.get(_CREATED_AT, 0) > _SESSION_ABANDON_TTL
+    ]
+    for sid in expired:
+        del _sessions[sid]
+        limpiar_sesion(sid)
+    return len(expired)
 
 
 class SessionManager:
@@ -23,7 +43,7 @@ class SessionManager:
         """Obtener o crear datos de sesión para esta página"""
         session_id = page.session.id
         if session_id not in _sessions:
-            _sessions[session_id] = {}
+            _sessions[session_id] = {_CREATED_AT: time.time()}
         return _sessions[session_id]
 
     @staticmethod
