@@ -128,7 +128,11 @@ class LoginView:
             ),
             expand=True,
             alignment=ft.Alignment(0, 0),
-            bgcolor="#F8F9FA",
+            gradient=ft.LinearGradient(
+                begin=ft.Alignment(0, -1),
+                end=ft.Alignment(0, 1),
+                colors=["#EEF2FF", "#FAF8F5"],
+            ),
             padding=20,
         )
 
