@@ -257,39 +257,44 @@ class HouseholdDashboardView:
                 self.page.update()
 
             content = ft.Column([
-                # ── Cabecera: crema cálido, ancho completo ──────────────
+                # ── Cabecera: crema cálido, ancho 100% ──────────────────
                 ft.Container(
                     content=ft.Row([
                         ft.Text(f"Hogar: {self.household.nombre}", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_800),
                         ft.ElevatedButton("Abandonar Hogar", icon=ft.Icons.EXIT_TO_APP, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED_600, on_click=on_leave)
                     ], wrap=True, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                    expand=True,
                     bgcolor="#FFFBEB",
-                    padding=ft.Padding(left=24, top=16, right=24, bottom=16),
+                    padding=ft.Padding(left=16, top=16, right=16, bottom=16),
+                    border_radius=10,
                 ),
-                # ── Balances: lila pálido, ancho completo ───────────────
+                # ── Balances: lila suave, ancho 100% ────────────────────
                 ft.Container(
                     content=ft.Column([
                         ft.Text("Balances", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_800),
                         ft.Row(balance_cards, wrap=True) if balance_cards else ft.Text("No hay balances todavía", italic=True, color=ft.Colors.BLUE_GREY_400),
                     ]),
+                    expand=True,
                     bgcolor="#F5EDFF",
-                    padding=20,
-                    margin=ft.Margin(left=0, top=0, right=0, bottom=16),
+                    padding=ft.Padding(left=20, top=20, right=20, bottom=20),
+                    border_radius=10,
                 ),
                 # ── Acciones: sin contenedor, sobre el fondo base ───────
                 ft.Row([
                     ft.ElevatedButton("Saldar Deuda (Registrar Pago)", icon=ft.Icons.PAYMENTS, color=ft.Colors.WHITE, bgcolor=ft.Colors.GREEN_600, on_click=open_dialog),
                     ft.ElevatedButton("Gestionar Miembros e Invitaciones", on_click=lambda _: self.router.navigate("/household/members"))
-                ], alignment=ft.MainAxisAlignment.START, wrap=True),
-                # ── Footer: lila suave ──────────────────────────────────
+                ], spacing=10, alignment=ft.MainAxisAlignment.START, wrap=True),
+                # ── Spacer: empuja el footer al fondo ───────────────────
+                ft.Container(expand=True),
+                # ── Footer: lila suave, ancho 100%, al fondo ────────────
                 ft.Container(
-                    content=ft.Row([
-                        ft.Text("Contador Oriental · Hogares Compartidos", size=11, color=ft.Colors.BLUE_GREY_400, italic=True)
-                    ], alignment=ft.MainAxisAlignment.CENTER),
+                    content=ft.Text("Contador Oriental · Hogares Compartidos", size=11, color=ft.Colors.BLUE_GREY_400, italic=True),
+                    expand=True,
+                    padding=10,
                     bgcolor="#EDE7F6",
-                    padding=ft.Padding(left=0, top=14, right=0, bottom=14),
+                    alignment=ft.alignment.center,
                 ),
-            ], spacing=0, scroll=ft.ScrollMode.AUTO)
+            ], expand=True, spacing=20, alignment=ft.MainAxisAlignment.START)
 
         return MainLayout(
             page=self.page,
