@@ -264,7 +264,7 @@ class HouseholdDashboardView:
                         ft.ElevatedButton("Abandonar Hogar", icon=ft.Icons.EXIT_TO_APP, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED_600, on_click=on_leave)
                     ], wrap=True, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                     bgcolor="#FFFBEB",
-                    padding=ft.padding.symmetric(horizontal=24, vertical=16),
+                    padding=ft.padding.only(left=24, top=16, right=24, bottom=16),
                 ),
                 # ── Balances: lila pálido, ancho completo ───────────────
                 ft.Container(
@@ -287,7 +287,7 @@ class HouseholdDashboardView:
                         ft.Text("Contador Oriental · Hogares Compartidos", size=11, color=ft.Colors.BLUE_GREY_400, italic=True)
                     ], alignment=ft.MainAxisAlignment.CENTER),
                     bgcolor="#EDE7F6",
-                    padding=ft.padding.symmetric(vertical=14),
+                    padding=ft.padding.only(top=14, bottom=14),
                 ),
             ], spacing=0, scroll=ft.ScrollMode.AUTO)
 
