@@ -198,7 +198,7 @@ class ExpensesView:
         )
 
         # Lista de gastos
-        self.expenses_column = ft.Column(spacing=10)
+        self.expenses_column = ft.Column(spacing=12)
 
         # Resumen por categorías
         self.summary_column = ft.Column(spacing=5)
@@ -607,6 +607,9 @@ class ExpensesView:
                                         icon=ft.Icons.ATTACH_MONEY,
                                         color=ft.Colors.GREEN,
                                     ),
+                                    bgcolor="#ECFDF5",
+                                    padding=8,
+                                    border_radius=8,
                                     col={"xs": 1, "sm": 1},
                                     alignment=ft.Alignment.CENTER_LEFT,
                                 ),
@@ -665,7 +668,7 @@ class ExpensesView:
                                             ),
                                             ft.IconButton(
                                                 icon=ft.Icons.DELETE,
-                                                icon_color=ft.Colors.RED,
+                                                icon_color="#EF4444",
                                                 tooltip="Eliminar gasto",
                                                 on_click=lambda e, exp=expense: self._on_delete_expense(
                                                     exp
@@ -682,8 +685,14 @@ class ExpensesView:
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
                         padding=10,
-                        border=ft.Border.all(1, ft.Colors.OUTLINE),
-                        border_radius=5,
+                        bgcolor="#FAF8F5",
+                        border=ft.Border.all(1, "#E8E2D9"),
+                        border_radius=10,
+                        shadow=ft.BoxShadow(
+                            spread_radius=0,
+                            blur_radius=6,
+                            color="#0000001F",
+                        ),
                     )
                 )
 
