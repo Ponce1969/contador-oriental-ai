@@ -72,6 +72,10 @@ class DashboardView:
 
     def render(self):
         """Renderizar la vista completa"""
+        # Si __init__ abortó temprano por una redirección, los controllers no existirán
+        if not hasattr(self, 'income_controller'):
+            return ft.Container()
+
         # Obtener mes y año actual
         today = date.today()
         year = today.year
