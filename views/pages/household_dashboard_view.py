@@ -235,7 +235,8 @@ class HouseholdDashboardView:
                 balance_cards.append(
                     ft.Card(
                         content=ft.Container(
-                            padding=10,
+                            padding=15,
+                            bgcolor=ft.Colors.WHITE,
                             content=ft.Column([
                                 ft.Text(b.familia_nombre, weight=ft.FontWeight.BOLD),
                                 ft.Text(f"Aportó: $ {b.total_contributed:.2f}"),
@@ -263,7 +264,7 @@ class HouseholdDashboardView:
                         ft.Text(f"Hogar: {self.household.nombre}", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_800),
                         ft.ElevatedButton("Abandonar Hogar", icon=ft.Icons.EXIT_TO_APP, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED_600, on_click=on_leave)
                     ], wrap=True, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    expand=True,
+                    width=float("inf"),
                     bgcolor="#FFFBEB",
                     padding=ft.Padding(left=16, top=16, right=16, bottom=16),
                     border_radius=10,
@@ -274,7 +275,7 @@ class HouseholdDashboardView:
                         ft.Text("Balances", size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_800),
                         ft.Row(balance_cards, wrap=True) if balance_cards else ft.Text("No hay balances todavía", italic=True, color=ft.Colors.BLUE_GREY_400),
                     ]),
-                    expand=True,
+                    width=float("inf"),
                     bgcolor="#F5EDFF",
                     padding=ft.Padding(left=20, top=20, right=20, bottom=20),
                     border_radius=10,
@@ -294,7 +295,7 @@ class HouseholdDashboardView:
                     bgcolor="#EDE7F6",
                     alignment=ft.Alignment(0, 0),
                 ),
-            ], expand=True, spacing=20, alignment=ft.MainAxisAlignment.START)
+            ], expand=True, spacing=20, scroll=ft.ScrollMode.AUTO, alignment=ft.MainAxisAlignment.START)
 
         return MainLayout(
             page=self.page,
