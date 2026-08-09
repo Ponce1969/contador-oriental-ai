@@ -22,6 +22,9 @@ class LoginView:
             label="Usuario",
             hint_text="Ingrese su nombre de usuario",
             prefix_icon=ft.Icons.PERSON_OUTLINE,
+            bgcolor=ft.Colors.WHITE,
+            border_color="#CBD5E1",
+            border_radius=8,
             autofocus=True,
         )
 
@@ -31,6 +34,9 @@ class LoginView:
             password=True,
             can_reveal_password=True,
             prefix_icon=ft.Icons.LOCK_OUTLINE,
+            bgcolor=ft.Colors.WHITE,
+            border_color="#CBD5E1",
+            border_radius=8,
             on_submit=self._on_login,
         )
 
@@ -114,11 +120,11 @@ class LoginView:
                         width=420,
                         padding=ft.Padding(left=32, top=32, right=32, bottom=32),
                         border_radius=16,
-                        bgcolor=ft.Colors.WHITE,
+                        bgcolor="#FAF8F5",
                         shadow=ft.BoxShadow(
                             spread_radius=1,
-                            blur_radius=10,
-                            color=ft.Colors.BLUE_GREY_100,
+                            blur_radius=15,
+                            color="#0000001F",
                             offset=ft.Offset(0, 2),
                         ),
                     ),
