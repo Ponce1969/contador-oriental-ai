@@ -40,7 +40,7 @@ class LoginView:
         # Botón de login
         self.login_button = ft.ElevatedButton(
             content=ft.Row([
-                ft.Icon(name=ft.Icons.LOGIN, color=ft.Colors.WHITE, size=20),
+                ft.Icon(ft.Icons.LOGIN, color=ft.Colors.WHITE, size=20),
                 ft.Text(value="Iniciar Sesión", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
             ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
             on_click=self._on_login,
