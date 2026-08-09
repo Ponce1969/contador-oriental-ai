@@ -146,9 +146,8 @@ class MainLayout(ft.Column):
             )
         )
 
-        # BOTTOM BAR — solo en desktop y tablet (en mobile el hamburger menu ya navega)
-        if not self._is_mobile:
-            self.controls.append(self._bottom_bar())
+        # BOTTOM BAR — siempre visible para navegación rápida entre pestañas
+        self.controls.append(self._bottom_bar())
 
     # ---------- EXCHANGE RATE BADGE ----------
     def _email_banner(self) -> ft.Control | None:
