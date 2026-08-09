@@ -164,13 +164,14 @@ class HistoryView:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
                 padding=16 if is_mobile else 20,
-                bgcolor="#FAF8F5",
+                bgcolor="#FFFFFF",
                 border_radius=12,
                 border=ft.Border.all(1, "#E5E7EB"),
+                height=240,
                 shadow=ft.BoxShadow(
-                    spread_radius=0,
-                    blur_radius=4,
-                    color=ft.Colors.BLUE_GREY_100,
+                    spread_radius=1,
+                    blur_radius=10,
+                    color="#0000001F",
                 ),
                 col=Responsive.COL_THIRD if not is_mobile else Responsive.COL_FULL,
             )
@@ -233,9 +234,14 @@ class HistoryView:
                 content=ft.Column(controls=bar_controls, spacing=12),
                 width=float("inf"),
                 padding=20,
-                bgcolor=ft.Colors.ORANGE_50,
+                bgcolor="#FFFBEB",
                 border_radius=12,
                 border=ft.Border.all(1, ft.Colors.ORANGE_200),
+                shadow=ft.BoxShadow(
+                    spread_radius=1,
+                    blur_radius=10,
+                    color="#0000001F",
+                ),
             )
         )
 
@@ -345,7 +351,11 @@ class HistoryView:
 
         return MainLayout(
             page=self.page,
-            content=content,
+            content=ft.Container(
+                content=content,
+                bgcolor="#F8F6FA",
+                expand=True,
+            ),
             router=self.router,
         )
 
