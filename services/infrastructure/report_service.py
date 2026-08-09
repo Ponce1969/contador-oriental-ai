@@ -165,13 +165,12 @@ class ReportService:
 
         # Aplanar y ordenar filas por moneda para acumular totales por divisa
         filas: list[tuple[str, str, str, Decimal, int]] = []
-        for categoria, items in ctx.resumen_gastos.items():
+        for (categoria, descripcion, ccy), datos in ctx.resumen_gastos.items():
             cat_limpia = self._limpiar_emojis(categoria)
-            for (descripcion, ccy), datos in items.items():
-                desc_limpia = self._limpiar_emojis(descripcion)
-                filas.append(
-                    (cat_limpia, desc_limpia, ccy, datos["total"], datos["cantidad"])
-                )
+            desc_limpia = self._limpiar_emojis(descripcion)
+            filas.append(
+                (cat_limpia, desc_limpia, ccy, datos["total"], datos["cantidad"])
+            )
 
         if not filas:
             return
