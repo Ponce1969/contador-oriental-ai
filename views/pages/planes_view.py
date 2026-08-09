@@ -67,7 +67,7 @@ def _barra_progreso(pagadas: int, total: int) -> ft.Control:
                 border_radius=10,
                 bgcolor="#E5E7EB",
                 height=8,
-                animate=ft.Animation(600, ft.AnimationCurve.EASE_OUT),
+                width=300,
             ),
             ft.Row(
                 controls=[
@@ -199,7 +199,7 @@ class PlanesView:
                             f"Cuotas del mes: {' / '.join(partes_total)}",
                             size=14,
                             weight=ft.FontWeight.W_600,
-                            color=_EMERALD,
+                            color=_DARK,
                         ),
                         ft.Text(
                             f"({len(planes)} compras activas)",
@@ -209,7 +209,11 @@ class PlanesView:
                     ],
                     spacing=8,
                 ),
-                padding=ft.Padding.only(bottom=12),
+                bgcolor="#ECFDF5",
+                padding=ft.Padding(left=16, top=10, right=16, bottom=10),
+                border_radius=8,
+                border=ft.Border.all(1, "#A7F3D0"),
+                margin=ft.Margin(left=0, top=0, right=0, bottom=12),
             ),
         )
 
@@ -253,7 +257,7 @@ class PlanesView:
                                         ),
                                         size=20,
                                         weight=ft.FontWeight.BOLD,
-                                        color=color_acento,
+                                        color=_DARK,
                                     ),
                                 ],
                             ),
@@ -262,11 +266,12 @@ class PlanesView:
                             ft.Container(height=4),
                             ft.Row(
                                 controls=[
-                                    ft.Text(
-                                        f"Restan {plan.cuotas_restantes} cuotas",
-                                        size=11,
-                                        color=_GREY,
-                                    ),
+                    ft.Text(
+                        f"Restan {plan.cuotas_restantes} cuotas",
+                        size=11,
+                        weight=ft.FontWeight.W_600,
+                        color=_EMERALD,
+                    ),
                                     (
                                         ft.Container(
                                             content=ft.Row(
@@ -295,7 +300,7 @@ class PlanesView:
                         ],
                         spacing=2,
                     ),
-                    padding=18,
+                    padding=20,
                     border_radius=12,
                     bgcolor=_CARD,
                     border=ft.Border.all(1, _BORDER),
