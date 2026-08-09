@@ -55,6 +55,26 @@ class InviteView:
                 )
             )
 
+        # Validar token antes de pedir login o mostrar botón
+        from controllers.household_controller import HouseholdController
+        is_valid_res = HouseholdController.is_invitation_valid(self.token)
+        if is_valid_res.is_err() or not is_valid_res.unwrap():
+            return MainLayout(
+                page=self.page,
+                router=self.router,
+                content=ft.Container(
+                    content=ft.Column([
+                        ft.Icon(ft.Icons.TIMER_OFF, size=64, color=ft.Colors.ORANGE_400),
+                        ft.Text("El enlace expiró o ya fue usado", size=24, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
+                        ft.Text("Pedile un nuevo enlace a tu amigo para unirte al grupo.", text_align=ft.TextAlign.CENTER),
+                        ft.Container(height=20),
+                        ft.ElevatedButton("Ir al Inicio", on_click=lambda _: self.router.navigate("/"))
+                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                    alignment=ft.Alignment(0, 0),
+                    expand=True
+                )
+            )
+
         if not SessionManager.is_logged_in(self.page):
             # Guardamos el token para que al iniciar sesión lo redirijamos
             SessionManager.set_pending_invite(self.page, self.token)

@@ -157,6 +157,28 @@ class HouseholdController(BaseController):
             logger.error(f"[HouseholdController] accept_invitation error: {e}")
             return Err(e)
 
+    @classmethod
+    def is_invitation_valid(cls, token: str) -> Result[bool, Exception]:
+        try:
+            from core.sqlalchemy_session import get_db_session
+            from repositories.household.invitation_repository import HouseholdInvitationRepository
+            from datetime import datetime
+            
+            with get_db_session() as session:
+                repo = HouseholdInvitationRepository(session)
+                invitation = repo.get_by_token(token)
+                
+                if not invitation:
+                    return Ok(False)
+                
+                if invitation.status != "pending" or invitation.expires_at < datetime.now():
+                    return Ok(False)
+                    
+                return Ok(True)
+        except Exception as e:
+            logging.error(f"[HouseholdController] is_invitation_valid error: {e}")
+            return Err(e)
+
     def revoke_invitation(self, token: str) -> Result[None, Exception]:
         try:
             familia_id = self._ensure_familia_id()
