@@ -295,7 +295,8 @@ class AIController(BaseController):
 
             # ── Cotización del dólar ──────────────────────────────────────
             exchange_ctrl = ExchangeRateController()
-            cotizacion, _ = exchange_ctrl.get_display_rate()
+            compra, venta, is_fresh = exchange_ctrl.get_display_rate()
+            cotizacion = compra if is_fresh else Decimal("0")
 
             # ── Etiqueta del período consultado ──────────────────────────
             if intencion.rango:
