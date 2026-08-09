@@ -39,20 +39,21 @@ class LoginView:
 
         # Botón de login
         self.login_button = ft.ElevatedButton(
-            content=ft.Text(value="Iniciar Sesión", size=16, weight=ft.FontWeight.BOLD),
+            content=ft.Row([
+                ft.Icon(name=ft.Icons.LOGIN, color=ft.Colors.WHITE, size=20),
+                ft.Text(value="Iniciar Sesión", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
             on_click=self._on_login,
             width=float("inf"),
-            height=48,
+            height=50,
             bgcolor="#1A56DB",
-            color=ft.Colors.WHITE,
             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
         )
 
         # Link de recuperar contraseña
         self.forgot_password_link = ft.TextButton(
-            content=ft.Text("¿Olvidaste tu contraseña?"),
+            content=ft.Text("¿Olvidaste tu contraseña?", size=12, color=ft.Colors.GREY_600),
             on_click=self._on_forgot_password_click,
-            style=ft.ButtonStyle(color=ft.Colors.BLUE_700),
         )
 
     def render(self):
@@ -60,36 +61,32 @@ class LoginView:
         return ft.Container(
             content=ft.Column(
                 controls=[
-                    # ── Logo / Cabecera ────────────────────────────────
-                    ft.Column(
-                        controls=[
-                            ft.Icon(
-                                icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
-                                size=64,
-                                color="#1A56DB",
-                            ),
-                            ft.Text(
-                                value="Auditor Familiar",
-                                size=24,
-                                weight=ft.FontWeight.BOLD,
-                                color="#1A56DB",
-                            ),
-                            ft.Text(
-                                value="Sistema de Gestión de Finanzas",
-                                size=14,
-                                color=ft.Colors.GREY_500,
-                            ),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=8,
-                    ),
-                    # ── Card de Login ──────────────────────────────────
+                    # ── Card de Login (logo + formulario unificados) ──
                     ft.Container(
                         content=ft.Column(
                             controls=[
+                                # Logo
+                                ft.Icon(
+                                    icon=ft.Icons.ACCOUNT_BALANCE_WALLET,
+                                    size=56,
+                                    color="#1A56DB",
+                                ),
+                                ft.Text(
+                                    value="Auditor Familiar",
+                                    size=22,
+                                    weight=ft.FontWeight.BOLD,
+                                    color="#1A56DB",
+                                ),
+                                ft.Text(
+                                    value="Sistema de Gestión de Finanzas",
+                                    size=13,
+                                    color=ft.Colors.GREY_500,
+                                ),
+                                ft.Divider(height=24, color=ft.Colors.GREY_200),
+                                # Formulario
                                 ft.Text(
                                     value="Iniciar Sesión",
-                                    size=20,
+                                    size=18,
                                     weight=ft.FontWeight.BOLD,
                                     color="#1A56DB",
                                 ),
@@ -97,21 +94,22 @@ class LoginView:
                                 self.password_input,
                                 self.error_text,
                                 self.login_button,
+                                # Links secundarios
                                 ft.Container(
                                     content=self.forgot_password_link,
                                     alignment=ft.Alignment(0, 0),
                                 ),
-                                ft.Container(
-                                    content=ft.TextButton(
-                                        content=ft.Text("¿No tienes cuenta? Regístrate aquí"),
+                                ft.Divider(height=20, color=ft.Colors.GREY_200),
+                                ft.Row([
+                                    ft.Text("¿No tienes cuenta? ", size=13, color=ft.Colors.GREY_700),
+                                    ft.TextButton(
+                                        content=ft.Text("Regístrate aquí", size=13, weight=ft.FontWeight.BOLD, color="#1A56DB"),
                                         on_click=self._on_register_click,
-                                        style=ft.ButtonStyle(color=ft.Colors.BLUE_700),
                                     ),
-                                    alignment=ft.Alignment(0, 0),
-                                ),
+                                ], alignment=ft.MainAxisAlignment.CENTER, spacing=2),
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            spacing=16,
+                            spacing=14,
                         ),
                         width=420,
                         padding=ft.Padding(left=32, top=32, right=32, bottom=32),
@@ -127,11 +125,10 @@ class LoginView:
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 alignment=ft.MainAxisAlignment.CENTER,
-                spacing=32,
             ),
             expand=True,
             alignment=ft.Alignment(0, 0),
-            bgcolor="#F4F6F9",
+            bgcolor="#F8F9FA",
             padding=20,
         )
 
