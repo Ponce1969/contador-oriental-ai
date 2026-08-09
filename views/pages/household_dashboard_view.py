@@ -259,9 +259,8 @@ class HouseholdDashboardView:
             content = ft.Column([
                 ft.Row([
                     ft.Text(f"Hogar: {self.household.nombre}", size=24, weight=ft.FontWeight.BOLD),
-                    ft.Container(expand=True),
                     ft.ElevatedButton("Abandonar Hogar", icon=ft.Icons.EXIT_TO_APP, color=ft.Colors.WHITE, bgcolor=ft.Colors.RED_600, on_click=on_leave)
-                ]),
+                ], wrap=True, alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                 ft.Divider(),
                 ft.Text("Balances", size=18, weight=ft.FontWeight.BOLD),
                 ft.Row(balance_cards, wrap=True),
