@@ -236,28 +236,33 @@ class AIAdvisorService:
 
             if ctx.empalme_gastos:
                 lineas.append("DETALLE DE GASTOS DEL MES ANTERIOR:")
-                _empalme_vistas: set[str] = set()
-                for (categoria, descripcion, ccy), datos in ctx.empalme_gastos.items():
-                    monto = Decimal(str(datos["total"]))
-                    cantidad = datos["cantidad"]
-                    metodos = datos.get("metodos", {})
-                    metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
-                    monto_str = format_pesos_ai(monto, currency=ccy)
-
-                    if categoria not in _empalme_vistas:
-                        lineas.append(f"  📂 {categoria}")
-                        _empalme_vistas.add(categoria)
-
-                    if cantidad > 1:
-                        lineas.append(
-                            f"    - {descripcion}: {monto_str}"
-                            f" ({cantidad}x, {metodo_str})"
-                        )
-                    else:
-                        lineas.append(
-                            f"    - {descripcion}: {monto_str}"
-                            f" ({metodo_str})"
-                        )
+                for categoria, items in ctx.empalme_gastos.items():
+                    total_cat = sum(
+                        (Decimal(str(d["total"])) for d in items.values()),
+                        Decimal("0"),
+                    )
+                    cant_cat = sum(d["cantidad"] for d in items.values())
+                    lineas.append(
+                        f"  📂 {categoria}"
+                        f" → {format_pesos_ai(total_cat)}"
+                        f" ({cant_cat} transacciones):"
+                    )
+                    for (descripcion, ccy), datos in items.items():
+                        monto = Decimal(str(datos["total"]))
+                        cantidad = datos["cantidad"]
+                        metodos = datos.get("metodos", {})
+                        metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
+                        monto_str = format_pesos_ai(monto, currency=ccy)
+                        if cantidad > 1:
+                            lineas.append(
+                                f"    - {descripcion}: {monto_str}"
+                                f" ({cantidad}x, {metodo_str})"
+                            )
+                        else:
+                            lineas.append(
+                                f"    - {descripcion}: {monto_str}"
+                                f" ({metodo_str})"
+                            )
 
             lineas.append(
                 "NOTA: Estos datos son del mes anterior ("
@@ -271,31 +276,41 @@ class AIAdvisorService:
         ]
 
         total_filtrado: dict[str, Decimal] = {}
-        _categorias_vistas: set[str] = set()
 
         if not ctx.resumen_gastos:
             lineas.append("- No hay gastos registrados en este contexto.")
         else:
-            for (categoria, descripcion, ccy), datos in ctx.resumen_gastos.items():
-                monto = datos["total"]
-                cantidad = datos["cantidad"]
-                metodos = datos.get("metodos", {})
-                total_filtrado[ccy] = total_filtrado.get(ccy, Decimal("0")) + Decimal(str(monto))
-                metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
-                monto_str = format_pesos_ai(Decimal(str(monto)), currency=ccy)
+            for categoria, items in ctx.resumen_gastos.items():
+                total_categoria: dict[str, Decimal] = {}
+                cant_categoria: dict[str, int] = {}
+                for (descripcion, ccy), datos in items.items():
+                    monto = Decimal(str(datos["total"]))
+                    cantidad = datos["cantidad"]
+                    metodos = datos.get("metodos", {})
+                    total_categoria[ccy] = total_categoria.get(ccy, Decimal("0")) + monto
+                    cant_categoria[ccy] = cant_categoria.get(ccy, 0) + cantidad
+                    total_filtrado[ccy] = total_filtrado.get(ccy, Decimal("0")) + monto
 
-                # Agrupar por categoría para el encabezado
-                if categoria not in _categorias_vistas:
-                    lineas.append(f"\n📂 {categoria}")
-                    _categorias_vistas.add(categoria)
-
-                if cantidad > 1:
+                lineas.append(f"\n📂 {categoria}")
+                for ccy in sorted(total_categoria.keys()):
                     lineas.append(
-                        f"  - {descripcion}: {monto_str} total"
-                        f" ({cantidad} transacciones separadas, {metodo_str})"
+                        f"  → SUBTOTAL {ccy}:"
+                        f" {format_pesos_ai(total_categoria[ccy], currency=ccy)}"
+                        f" ({cant_categoria[ccy]} transacciones)"
                     )
-                else:
-                    lineas.append(f"  - {descripcion}: {monto_str} ({metodo_str})")
+                for (descripcion, ccy), datos in items.items():
+                    monto = Decimal(str(datos["total"]))
+                    cantidad = datos["cantidad"]
+                    metodos = datos.get("metodos", {})
+                    metodo_str = ", ".join(f"{m}({c}x)" for m, c in metodos.items())
+                    monto_str = format_pesos_ai(monto, currency=ccy)
+                    if cantidad > 1:
+                        lineas.append(
+                            f"  - {descripcion}: {monto_str} total"
+                            f" ({cantidad} transacciones separadas, {metodo_str})"
+                        )
+                    else:
+                        lineas.append(f"  - {descripcion}: {monto_str} ({metodo_str})")
 
         lineas.append("")
         lineas.append("SUBTOTAL CONSULTADO:")
