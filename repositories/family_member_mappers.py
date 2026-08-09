@@ -19,6 +19,7 @@ def family_member_to_domain(row: FamilyMemberTable) -> FamilyMember:
         edad=row.edad if hasattr(row, "edad") else None,
         estado_laboral=row.estado_laboral if hasattr(row, "estado_laboral") else None,
         activo=row.activo,
+        unlinked_at=row.unlinked_at if hasattr(row, "unlinked_at") else None,
         notas=row.notas,
     )
 
@@ -33,5 +34,6 @@ def family_member_to_table(member: FamilyMember) -> FamilyMemberTable:
         edad=member.edad,
         estado_laboral=member.estado_laboral,
         activo=member.activo,
+        unlinked_at=member.unlinked_at,
         notas=member.notas,
     )

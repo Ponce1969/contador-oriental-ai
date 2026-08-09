@@ -76,6 +76,7 @@ class FamilyMemberTable(Base):
 
     # Estado
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    unlinked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Notas
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)

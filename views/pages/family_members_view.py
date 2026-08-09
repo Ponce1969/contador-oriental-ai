@@ -360,6 +360,12 @@ class FamilyMembersView:
                                 icon_color=ft.Colors.DEEP_PURPLE_400,
                                 on_click=lambda e, mm=m: self._on_edit(mm),
                             ),
+                            ft.IconButton(
+                                icon=ft.Icons.PERSON_REMOVE_OUTLINE,
+                                tooltip="Desvincular",
+                                icon_color=ft.Colors.RED_400,
+                                on_click=lambda e, mm=m: self._on_unlink_confirm(mm),
+                            ),
                         ]
                     ),
                     padding=15,
@@ -401,6 +407,57 @@ class FamilyMembersView:
         self.state["selected_id"] = str(member.id)
 
         self._sync_ui()
+
+    def _on_unlink_confirm(self, member: FamilyMember):
+        """Mostrar diálogo de confirmación antes de desvincular."""
+
+        def on_confirm(e):
+            dlg.open = False
+            self.page.update()
+            self._on_unlink(member)
+
+        def on_cancel(e):
+            dlg.open = False
+            self.page.update()
+
+        dlg = ft.AlertDialog(
+            title=ft.Text(f"¿Desvincular a {member.nombre}?"),
+            content=ft.Text(
+                "El miembro ya no aparecerá en las listas activas ni generará "
+                "ingresos/gastos recurrentes. Su historial pasado se conservará "
+                "para mantener la precisión de los balances."
+            ),
+            actions=[
+                ft.TextButton("Cancelar", on_click=on_cancel),
+                ft.ElevatedButton(
+                    "Confirmar Desvinculación",
+                    bgcolor=ft.Colors.RED_600,
+                    color=ft.Colors.WHITE,
+                    on_click=on_confirm,
+                ),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        self.page.overlay.append(dlg)
+        dlg.open = True
+        self.page.update()
+
+    def _on_unlink(self, member: FamilyMember):
+        """Ejecutar desvinculación del miembro."""
+        result = self.controller.deactivate_member(member.id)
+        if result.is_err():
+            self._error(f"Error al desvincular: {result.err().message}")
+            return
+
+        # Recargar lista
+        self.state["members"] = self.controller.list_active_members()
+        self._render_members()
+        self.page.snack_bar = ft.SnackBar(
+            ft.Text(f"{member.nombre} desvinculado correctamente"),
+            bgcolor=ft.Colors.GREEN_600,
+        )
+        self.page.snack_bar.open = True
+        self.page.update()
 
     def _on_type_change(self, e):
         self._update_visibility()

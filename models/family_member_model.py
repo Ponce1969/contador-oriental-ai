@@ -4,6 +4,8 @@ Modelo de dominio para miembros de la familia
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -56,6 +58,9 @@ class FamilyMember(BaseModel):
     # Estado
     activo: bool = Field(
         default=True, description="Indica si el miembro está activo en el sistema"
+    )
+    unlinked_at: datetime | None = Field(
+        default=None, description="Fecha de desvinculación (soft delete)"
     )
 
     # Notas

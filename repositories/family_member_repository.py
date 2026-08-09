@@ -105,8 +105,14 @@ class FamilyMemberRepository:
             return Err(DatabaseError(message=f"Error al actualizar miembro: {e}"))
 
     def delete(self, member_id: int) -> Result[None, DatabaseError]:
-        """Eliminar un miembro de la familia (soft delete - marcar como inactivo)"""
+        """Desvincular un miembro de la familia (soft delete).
+        
+        Marca activo=False y registra la fecha de desvinculación.
+        El historial pasado del miembro permanece intacto.
+        """
         try:
+            from datetime import datetime
+
             query = self._session.query(FamilyMemberTable).filter(
                 FamilyMemberTable.id == member_id
             )
@@ -118,10 +124,11 @@ class FamilyMemberRepository:
                 return Err(DatabaseError(message=f"Miembro {member_id} no encontrado"))
 
             row.activo = False
+            row.unlinked_at = datetime.now()
             self._session.flush()
             return Ok(None)
         except Exception as e:
-            return Err(DatabaseError(message=f"Error al eliminar miembro: {e}"))
+            return Err(DatabaseError(message=f"Error al desvincular miembro: {e}"))
 
     def exists_by_name(
         self, familia_id: int, nombre: str, exclude_id: int | None = None
