@@ -174,6 +174,7 @@ class NVIDIAClient:
         headers = {
             "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
+            "Accept": "text/event-stream",
         }
         payload = {
             "model": self._model,
@@ -194,7 +195,8 @@ class NVIDIAClient:
             len(prompt),
         )
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        timeout = httpx.Timeout(120.0, connect=15.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
             try:
                 async with client.stream(
                     "POST", url, json=payload, headers=headers
