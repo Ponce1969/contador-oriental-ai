@@ -108,15 +108,22 @@ ADD COLUMN IF NOT EXISTS modo_finanzas VARCHAR(30) DEFAULT 'basico'; -- 'basico'
 
 ---
 
-## 5. Lógica de Cálculo y Asistencia de la IA
+## 5. Lógica de Cálculo y Asistencia de la IA (Reglas Estrictas)
 
-1. **Calculador de Proyección de Aguinaldo**:
-   $$\text{Aguinaldo Estimado} = \frac{\sum \text{Sueldos e Ingresos Variables del Semestre}}{12}$$
-   - En **Mayo**: El sistema sugiere: *"En Junio cobrás tu 1ª cuota de aguinaldo estimada en \$ X."*
-   - En **Noviembre**: El sistema sugiere: *"En Diciembre cobrás tu 2ª cuota de aguinaldo estimada en \$ Y."*
-2. **Contexto para el Contador Oriental IA**:
-   El prompt inyecta el desglose laboral para responder con propiedad:
-   > *"Veo que como dependiente de comercio tu ingreso líquido de este mes fue de \$ 45.000 y tenés proyectado un aguinaldo en junio de \$ 22.500..."*
+### Regla de Oro: Aritmética 100% en Python con `Decimal`
+- **CERO `float`**: Todo cálculo financiero, sueldo, retención, aguinaldo o acumulador se computa en Python usando `Decimal` (evitando imprecisiones de punto flotante IEEE 754).
+- **CERO Aritmética en el LLM**: La IA (tanto Gemma 2:2b local como Llama 70B) **NUNCA debe hacer sumas, restas, divisiones ni cálculos de aguinaldo**. 
+- **Pre-cálculo determinístico**: El backend de Python calcula de forma exacta los montos proyectados, subtotales por régimen y retenciones, inyectándolos en el prompt con los valores finales ya resueltos.
+- **Rol del LLM / Fine-Tuning**: El modelo únicamente **lee, narra y explica** en español rioplatense, fundamentando en la normativa uruguaya sin riesgo de alucinación numérica.
+
+1. **Calculador de Proyección de Aguinaldo (Python Engine)**:
+   $$\text{Aguinaldo Estimado} = \text{quantize}\left(\frac{\sum \text{Sueldos e Ingresos Variables del Semestre (Decimal)}}{12}\right)$$
+   - En **Mayo**: Python calcula la 1ª fracción y la pasa al prompt como dato exacto.
+   - En **Noviembre**: Python calcula la 2ª fracción y la pasa al prompt como dato exacto.
+2. **Contexto Inyectado para el Contador Oriental IA**:
+   El prompt recibe los números exactos pre-formateados:
+   > *"DATOS CALCULADOS: Ingreso líquido: $ 45.000, Aguinaldo proyectado junio: $ 22.500 (calculado sobre 6 meses devengados)."*
+
 
 ---
 
