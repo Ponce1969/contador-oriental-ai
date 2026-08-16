@@ -494,7 +494,7 @@ RESPUESTA:"""
         return await self.nvidia_client.generate(
             prompt=prompt,
             temperature=0.1,
-            max_tokens=1024,
+            max_tokens=2048,
         )
 
     async def _call_nvidia_stream(self, prompt: str):
@@ -505,7 +505,7 @@ RESPUESTA:"""
         async for token in self.nvidia_client.generate_stream(
             prompt=prompt,
             temperature=0.1,
-            max_tokens=1024,
+            max_tokens=2048,
         ):
             yield token
 

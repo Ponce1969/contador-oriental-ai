@@ -319,6 +319,11 @@ class AIAdvisorView:
                     self.page.update()
                     _buffer_count = 0
 
+            # Flush final del buffer y actualización garantizada de UI
+            if stream_bubble is not None:
+                stream_bubble.value = escape_markdown_pesos(respuesta_acumulada)
+                self.page.update()
+
             # Stream completado: guardar en historial
             self._last_respuesta = respuesta_acumulada
             self.pdf_button.visible = True
