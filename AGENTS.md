@@ -11,6 +11,7 @@ This file provides references to the specification documents for AI agents.
 | [CODING_STANDARDS_SPEC.md](AGENTS/CODING_STANDARDS_SPEC.md) | Code conventions, type hints, error handling |
 | [IMPLEMENTATION_SPEC.md](AGENTS/IMPLEMENTATION_SPEC.md) | OCR flow, AI system, database schema |
 | [INSTALLMENT_EXPENSES_SPEC.md](AGENTS/INSTALLMENT_EXPENSES_SPEC.md) | Credit card installment tracking feature |
+| [PWA_SPEC.md](AGENTS/PWA_SPEC.md) | Progressive Web App & mobile/desktop branding spec |
 | [openspec/changes/add-multi-currency/specs/currency/spec.md](openspec/changes/add-multi-currency/specs/currency/spec.md) | Multi-currency support (UYU/USD) design rules |
 | [.kiro/specs/shared-household-expenses/design.md](.kiro/specs/shared-household-expenses/design.md) | Shared Household Expenses feature design and data structures |
 

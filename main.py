@@ -82,7 +82,7 @@ def _setup_memory_observer() -> None:
 
 async def main(page: ft.Page):
     try:
-        page.title = "Auditor Familiar"
+        page.title = "Contador Oriental"
         page.window.width = 1000
         page.window.height = 700
         page.window.resizable = True
