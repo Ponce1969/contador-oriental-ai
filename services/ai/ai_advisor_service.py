@@ -600,9 +600,7 @@ RESPUESTA:"""
                     yield "Se renueva a medianoche.\n\n"
                 async for token in self._call_ollama_stream(prompt):
                     yield token
-        except (ConnectionError, TimeoutError, RuntimeError):
-            raise
-        except Exception as e:
+        except (ConnectionError, TimeoutError, RuntimeError, Exception) as e:
             ai_logger.error("❌ Error en stream: %s", e)
             # Fallback a Ollama si NVIDIA falla
             if modelo == "llama3":
