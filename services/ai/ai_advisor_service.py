@@ -319,7 +319,14 @@ class AIAdvisorService:
             lineas.append(f"  * {ccy}: {total_str}")
         lineas.append(f"({ctx.total_gastos_count} transacciones)")
 
+        if ctx.resumen_laboral:
+            lineas.append("")
+            lineas.append("### CONTEXTO Y BENEFICIOS LABORALES (PRE-CALCULADO POR PYTHON) ###")
+            lineas.append(ctx.resumen_laboral)
+            lineas.append("REGLA ESTRICTA PARA LA IA: Utilizar los números laborales anteriores de forma textual. NO realizar recálculos aritméticos.")
+
         return "\n".join(lineas)
+
 
     def _formatear_comparativa(self, ctx: AIContext) -> str:
         """

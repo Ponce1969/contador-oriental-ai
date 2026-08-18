@@ -13,8 +13,10 @@ def income_to_domain(row: IncomeTable) -> Income:
     return Income(
         id=row.id,
         family_member_id=row.family_member_id,
+        economic_activity_id=row.economic_activity_id,
+        concept=row.concept,
         monto=row.monto,
-        currency=row.currency,
+        currency=row.currency or "UYU",
         fecha=row.fecha,
         descripcion=row.descripcion,
         categoria=IncomeCategory(row.categoria),
@@ -28,6 +30,8 @@ def income_to_table(income: Income) -> IncomeTable:
     """Convertir modelo de dominio Income a tabla de base de datos"""
     return IncomeTable(
         family_member_id=income.family_member_id,
+        economic_activity_id=income.economic_activity_id,
+        concept=income.concept,
         monto=income.monto,
         currency=income.currency,
         fecha=income.fecha,
@@ -37,3 +41,4 @@ def income_to_table(income: Income) -> IncomeTable:
         frecuencia=income.frecuencia.value if income.frecuencia else None,
         notas=income.notas,
     )
+

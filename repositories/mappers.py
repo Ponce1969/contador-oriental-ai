@@ -14,7 +14,7 @@ def to_domain(row: ExpenseTable) -> Expense:
     return Expense(
         id=row.id,
         monto=row.monto,
-        currency=row.currency,
+        currency=row.currency or "UYU",
         fecha=row.fecha,
         descripcion=row.descripcion,
         categoria=ExpenseCategory(row.categoria),
@@ -24,7 +24,7 @@ def to_domain(row: ExpenseTable) -> Expense:
         frecuencia=(RecurrenceFrequency(row.frecuencia) if row.frecuencia else None),
         notas=row.notas,
         installment_purchase_id=row.installment_purchase_id,
-        pendiente=row.pendiente,
+        pendiente=bool(row.pendiente) if row.pendiente is not None else False,
     )
 
 

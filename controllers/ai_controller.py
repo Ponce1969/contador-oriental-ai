@@ -293,6 +293,58 @@ class AIController(BaseController):
             except Exception as proy_err:
                 logger.warning("Proyeccion no disponible: %s", proy_err)
 
+            # ── Beneficios y contexto laboral pre-calculado ────────────────
+            resumen_laboral = ""
+            try:
+                from controllers.labor_controller import LaborController
+                from services.labor.domain.periods import AguinaldoPeriod
+
+                labor_ctrl = LaborController(session=session, familia_id=self._familia_id)
+                activities = labor_ctrl.list_all_activities()
+                if activities:
+                    labor_lines = []
+                    today = date.today()
+                    current_period = AguinaldoPeriod.for_date(today)
+                    for act in activities:
+                        if not act.is_active:
+                            continue
+                        member_name = "Integrante"
+                        for m in miembros:
+                            if m.id == act.family_member_id:
+                                member_name = m.nombre
+                                break
+
+                        aguinaldo_res = labor_ctrl.calculate_aguinaldo(
+                            activity_id=act.id,
+                            year=current_period.year,
+                            semester=current_period.semester,
+                            today=today,
+                        )
+                        vacational_res = labor_ctrl.calculate_vacation_pay(
+                            activity_id=act.id,
+                            requested_days=20,
+                        )
+
+                        sem_label = "Junio" if current_period.semester == 1 else "Diciembre"
+                        labor_lines.append(
+                            f"- Integrante: {member_name} | Actividad: {act.title} ({act.nature.value})"
+                        )
+                        if aguinaldo_res.is_ok():
+                            c = aguinaldo_res.unwrap()
+                            labor_lines.append(
+                                f"  * Aguinaldo estimado {sem_label} {current_period.year}: $ {c.final_amount:.2f} (Estado: {c.status.value})"
+                            )
+                        if vacational_res.is_ok():
+                            v = vacational_res.unwrap()
+                            if v.final_amount > 0:
+                                labor_lines.append(
+                                    f"  * Salario Vacacional orientativo (20 días): $ {v.final_amount:.2f}"
+                                )
+                    if labor_lines:
+                        resumen_laboral = "\n".join(labor_lines)
+            except Exception as labor_err:
+                logger.warning("Contexto laboral no disponible: %s", labor_err)
+
             # ── Cotización del dólar ──────────────────────────────────────
             exchange_ctrl = ExchangeRateController()
             compra, venta, is_fresh = exchange_ctrl.get_display_rate()
@@ -318,6 +370,7 @@ class AIController(BaseController):
                 subtotal_descripcion=subtotal_desc if subtotal_desc else None,
                 terminos_buscados=label_desc,
                 proyeccion_cuotas=proyeccion,
+                resumen_laboral=resumen_laboral,
                 cotizacion_dolar=cotizacion if cotizacion > 0 else None,
                 empalme_gastos=empalme_gastos,
                 empalme_ingresos_total=empalme_ingresos_total,
@@ -325,6 +378,7 @@ class AIController(BaseController):
                 empalme_total_gastos=empalme_total_gastos,
                 periodo_label=periodo_label,
             )
+
 
     async def _buscar_memoria_vectorial(self, pregunta: str, ctx: AIContext) -> str:
         """Recupera contexto de memoria vectorial RAG para enriquecer la respuesta.

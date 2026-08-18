@@ -174,6 +174,11 @@ class AIContext(BaseModel):
         default="del mes",
         description="Etiqueta del período: 'del mes' o 'de Marzo 2026 a Mayo 2026'",
     )
+    resumen_laboral: str = Field(
+        default="",
+        description="Resumen pre-calculado por Python de actividades y beneficios laborales (aguinaldo, salario vacacional)",
+    )
+
 
 
 class AIResponse(BaseModel):

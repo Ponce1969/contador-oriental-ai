@@ -38,6 +38,9 @@ class FamiliaTable(Base):
     nombre: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str | None] = mapped_column(String(100), unique=True)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    modo_finanzas: Mapped[str] = mapped_column(
+        String(30), server_default="basic", default="basic"
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 
@@ -82,6 +85,55 @@ class FamilyMemberTable(Base):
     notas: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class EconomicActivityTable(Base):
+    """
+    Tabla de actividades económicas o relaciones laborales de integrantes familiares (1:N)
+    """
+
+    __tablename__ = "economic_activities"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Relación con familia (multi-tenant)
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id"), nullable=False
+    )
+
+    # Relación con miembro de la familia
+    family_member_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("family_members.id"), nullable=False
+    )
+
+    nature: Mapped[str] = mapped_column(String(50), nullable=False, default="dependiente")
+    title: Mapped[str] = mapped_column(String(100), nullable=False, default="Comercio / Servicios")
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    __table_args__ = (
+        Index("idx_economic_activities_member", "familia_id", "family_member_id"),
+    )
+
+
+class DependentDetailsTable(Base):
+    """
+    Detalle especializado para trabajadores dependientes
+    """
+
+    __tablename__ = "dependent_details"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    economic_activity_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("economic_activities.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    remuneration_type: Mapped[str] = mapped_column(String(30), nullable=False, default="mensual")
+    weekly_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=40)
+    estimated_monthly_nominal: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
 class IncomeTable(Base):
     """
     Tabla de ingresos familiares
@@ -100,6 +152,14 @@ class IncomeTable(Base):
     family_member_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("family_members.id"), nullable=False
     )
+
+    # Relación opcional con actividad económica
+    economic_activity_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("economic_activities.id", ondelete="SET NULL"), nullable=True
+    )
+
+    # Concepto laboral / financiero
+    concept: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Datos básicos del ingreso
     monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
@@ -122,6 +182,7 @@ class IncomeTable(Base):
     __table_args__ = (
         Index("idx_incomes_familia_fecha", "familia_id", "fecha"),
         Index("idx_incomes_familia_categoria", "familia_id", "categoria"),
+        Index("idx_incomes_concept", "familia_id", "concept"),
     )
 
 
