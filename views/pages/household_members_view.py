@@ -1,5 +1,7 @@
-import flet as ft
 from typing import TYPE_CHECKING
+
+import flet as ft
+
 from controllers.household_controller import HouseholdController
 from views.layouts.main_layout import MainLayout
 
@@ -7,6 +9,7 @@ if TYPE_CHECKING:
     from core.router import Router
 
 from core.session import SessionManager
+
 
 class HouseholdMembersView:
     def __init__(self, page: ft.Page, router: 'Router'):

@@ -1,13 +1,14 @@
-import pytest
-from decimal import Decimal
-from result import Ok, Err
-from models.errors import UnauthorizedError, AppError
-from services.domain.household.household_service import HouseholdService
-from repositories.household.household_repository import HouseholdRepository
-from repositories.household.member_repository import HouseholdMemberRepository
-from repositories.household.link_repository import SharedExpenseLinkRepository
-from services.domain.household.balance_service import HouseholdBalanceService
 from unittest.mock import MagicMock
+
+import pytest
+
+from models.errors import AppError
+from repositories.household.household_repository import HouseholdRepository
+from repositories.household.link_repository import SharedExpenseLinkRepository
+from repositories.household.member_repository import HouseholdMemberRepository
+from services.domain.household.balance_service import HouseholdBalanceService
+from services.domain.household.household_service import HouseholdService
+
 
 class TestHouseholdService:
     def setup_method(self):

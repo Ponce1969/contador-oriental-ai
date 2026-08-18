@@ -222,7 +222,6 @@ class PlanesView:
             pagadas = plan.cuotas_pagadas_calculada
             ratio = float(pagadas / plan.numero_cuotas)
             celebrando = ratio >= 0.80
-            color_acento = _color_semaforo(ratio)
             cuota_fmt = format_pesos(plan.monto_por_cuota, currency=plan.currency)
 
             self._planes_column.controls.append(

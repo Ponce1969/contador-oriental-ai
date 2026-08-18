@@ -9,9 +9,17 @@ from __future__ import annotations
 
 from core.unit_of_work import UnitOfWork, get_db_session, get_db_session_injected
 
+__all__ = [
+    "UnitOfWork",
+    "get_db_session",
+    "get_db_session_injected",
+    "create_tables",
+]
+
 
 def create_tables() -> None:
     """Crear todas las tablas de la base de datos."""
+
     from database.base import Base
     from database.engine import engine
     from database.tables import (  # noqa: F401

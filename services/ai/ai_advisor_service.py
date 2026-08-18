@@ -283,8 +283,9 @@ class AIAdvisorService:
             for categoria, items in ctx.resumen_gastos.items():
                 total_categoria: dict[str, Decimal] = {}
                 cant_categoria: dict[str, int] = {}
-                for (descripcion, ccy), datos in items.items():
+                for (_, ccy), datos in items.items():
                     monto = Decimal(str(datos["total"]))
+
                     cantidad = datos["cantidad"]
                     metodos = datos.get("metodos", {})
                     total_categoria[ccy] = total_categoria.get(ccy, Decimal("0")) + monto
@@ -782,12 +783,13 @@ RESPUESTA:"""
             raise ConnectionError(
                 "El Contador Oriental no puede conectarse al servidor "
                 "de IA. Verificar que Ollama esté corriendo en el host."
-            )
+            ) from e
         except Exception as e:
             ai_logger.error(
                 "❌ Error inesperado en Ollama: %s:%s", type(e).__name__, str(e)
             )
-            raise RuntimeError(f"Error al consultar al Contador Oriental: {str(e)}")
+            raise RuntimeError(f"Error al consultar al Contador Oriental: {str(e)}") from e
+
 
         if cuota_agotada:
             aviso = (

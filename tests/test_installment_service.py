@@ -9,7 +9,6 @@ from datetime import date
 import pytest
 
 from models.expense_model import Expense
-from models.installment_model import InstallmentPayment, InstallmentPurchase
 from repositories.installment_repository import (
     InstallmentPaymentRepository,
     InstallmentPurchaseRepository,

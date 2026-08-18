@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 
 class AppError(Exception):
     def __init__(self, message: str):

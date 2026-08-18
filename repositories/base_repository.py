@@ -138,6 +138,7 @@ class BaseRepository(Generic[T]):
 
         # Filtrar por activo si el modelo tiene el campo
         if hasattr(self.model, "active"):
-            query = query.filter(self.model.active == True)
+            query = query.filter(self.model.active.is_(True))
 
         return query.all()
+

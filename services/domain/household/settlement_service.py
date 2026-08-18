@@ -5,11 +5,14 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from repositories.household.settlement_repository import HouseholdSettlementRepository
     from repositories.household.member_repository import HouseholdMemberRepository
+    from repositories.household.settlement_repository import (
+        HouseholdSettlementRepository,
+    )
 
+from models.errors import NotAMemberError, UnauthorizedError, ValidationError
 from models.household_model import HouseholdSettlement
-from models.errors import UnauthorizedError, ValidationError, NotAMemberError
+
 # from core.events import event_system, EventType # We will use it later in the controller or inject it
 
 class SettlementService:

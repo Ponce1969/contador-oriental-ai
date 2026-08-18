@@ -6,12 +6,13 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class KnowledgeFile(str, Enum):
+class KnowledgeFile(StrEnum):
+
     """Archivos de conocimiento disponibles"""
 
     INCLUSION_FINANCIERA = "inclusion_financiera_uy.md"

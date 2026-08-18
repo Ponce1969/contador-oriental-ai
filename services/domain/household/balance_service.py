@@ -5,14 +5,18 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from repositories.household.link_repository import SharedExpenseLinkRepository
-    from repositories.household.settlement_repository import HouseholdSettlementRepository
     from repositories.household.member_repository import HouseholdMemberRepository
+    from repositories.household.settlement_repository import (
+        HouseholdSettlementRepository,
+    )
 
-from models.household_model import MemberBalance
-from models.errors import NotAMemberError
-from database.tables import FamiliaTable
-from sqlalchemy.orm import Session
 from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from database.tables import FamiliaTable
+from models.errors import NotAMemberError
+from models.household_model import MemberBalance
+
 
 class HouseholdBalanceService:
     def __init__(

@@ -75,6 +75,7 @@ class MemoryEventHandler:
         if expense_id is None:
             return
         from result import Err
+
         from database.engine import get_session
         from repositories.expense_repository import ExpenseRepository
 

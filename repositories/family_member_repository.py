@@ -146,9 +146,10 @@ class FamilyMemberRepository:
         """
         query = self._session.query(FamilyMemberTable).filter(
             FamilyMemberTable.familia_id == familia_id,
-            FamilyMemberTable.activo == True,
+            FamilyMemberTable.activo.is_(True),
             FamilyMemberTable.nombre.ilike(nombre),
         )
+
         if exclude_id is not None:
             query = query.filter(FamilyMemberTable.id != exclude_id)
         return query.first() is not None

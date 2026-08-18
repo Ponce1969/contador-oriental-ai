@@ -1,8 +1,10 @@
-import flet as ft
 from typing import TYPE_CHECKING
-from views.layouts.main_layout import MainLayout
-from core.session import SessionManager
+
+import flet as ft
+
 from controllers.household_controller import HouseholdController
+from core.session import SessionManager
+from views.layouts.main_layout import MainLayout
 
 if TYPE_CHECKING:
     from core.router import Router
@@ -18,7 +20,9 @@ class InviteView:
         try:
             if hasattr(self.page, "query") and self.page.query:
                 val = self.page.query.get("token")
-                if val: return val
+                if val:
+                    return val
+
         except Exception:
             pass
 
@@ -56,7 +60,6 @@ class InviteView:
             )
 
         # Validar token antes de pedir login o mostrar botón
-        from controllers.household_controller import HouseholdController
         is_valid_res = HouseholdController.is_invitation_valid(self.token)
         if is_valid_res.is_err() or not is_valid_res.unwrap():
             return MainLayout(

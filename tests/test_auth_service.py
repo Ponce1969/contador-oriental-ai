@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from result import Err, Ok
+from sqlalchemy import text
 
 from models.errors import ValidationError
 from models.user_model import UserCreate, UserLogin
@@ -179,15 +180,18 @@ class TestPasswordReset:
         password_hash = ph.hash("testpassword")
 
         result = db_session.execute(
-            """
-            INSERT INTO usuarios
-                (familia_id, username, password_hash, nombre_completo, email, activo)
-            VALUES (1, 'resetemailuser', :password_hash, 'Reset Email User',
-                    'test@example.com', true)
-            RETURNING id
-            """,
+            text(
+                """
+                INSERT INTO usuarios
+                    (familia_id, username, password_hash, nombre_completo, email, activo)
+                VALUES (1, 'resetemailuser', :password_hash, 'Reset Email User',
+                        'test@example.com', true)
+                RETURNING id
+                """
+            ),
             {"password_hash": password_hash},
         )
+
         db_session.flush()
         return result.scalar()
 

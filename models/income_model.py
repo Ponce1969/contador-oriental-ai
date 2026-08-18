@@ -6,12 +6,12 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class IncomeCategory(str, Enum):
+class IncomeCategory(StrEnum):
     """Categorías de ingresos"""
 
     SUELDO = "💼 Sueldo"
@@ -26,7 +26,8 @@ class IncomeCategory(str, Enum):
     OTRO = "💵 Otro"
 
 
-class RecurrenceFrequency(str, Enum):
+class RecurrenceFrequency(StrEnum):
+
     """Frecuencia de ingresos recurrentes"""
 
     DIARIA = "Diaria"

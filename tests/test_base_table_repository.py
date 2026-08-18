@@ -2,19 +2,16 @@
 Tests para BaseTableRepository - Corazón del CRUD genérico del Escudo Charrúa
 """
 
-import pytest
-from sqlalchemy.orm import Session
+from datetime import date
+
 from result import Err, Ok
 
-from repositories.base_table_repository import BaseTableRepository
+from database.tables import ExpenseTable
+from models.categories import ExpenseCategory, PaymentMethod
+from models.expense_model import Expense
+from models.income_model import Income, IncomeCategory
 from repositories.expense_repository import ExpenseRepository
 from repositories.income_repository import IncomeRepository
-from models.expense_model import Expense
-from models.income_model import Income
-from models.categories import ExpenseCategory, PaymentMethod
-from models.income_model import IncomeCategory
-from database.tables import ExpenseTable, IncomeTable
-from datetime import date
 
 
 def _make_expense(

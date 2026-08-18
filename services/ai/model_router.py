@@ -12,7 +12,6 @@ Lógica de routing:
 from __future__ import annotations
 
 import logging
-import os
 
 from models.ai_model import AIContext
 

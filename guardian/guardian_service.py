@@ -9,7 +9,7 @@ import os
 import signal
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum, auto
 from typing import (
     Any,
@@ -104,7 +104,7 @@ class ContainerStatus:
     state: ContainerState
     health_status: HealthStatus
     details: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __str__(self) -> str:
         status_emoji = "✅" if self.is_healthy else "❌"
@@ -118,7 +118,7 @@ class DiscordEmbed:
     title: str
     description: str
     color: DiscordColor
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -554,7 +554,7 @@ class GuardianService:
                         self._shutdown_event.wait(),
                         timeout=self._config.check_interval,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue  # Normal, continuar con siguiente check
 
             except asyncio.CancelledError:

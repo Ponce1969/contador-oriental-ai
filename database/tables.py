@@ -355,9 +355,11 @@ class AiUsageTable(Base):
     model: Mapped[str] = mapped_column(String(20), nullable=False)
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    requests_count: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     __table_args__ = (
+
         Index("idx_ai_usage_lookup", "familia_id", "date"),
         UniqueConstraint("familia_id", "date", "model", name="uq_ai_usage_daily"),
     )

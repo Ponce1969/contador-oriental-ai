@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from sqlalchemy import select, delete, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
-from database.tables import HouseholdMemberTable, HogarTable
+from database.tables import HogarTable, HouseholdMemberTable
 from models.household_model import HouseholdMember
 
 

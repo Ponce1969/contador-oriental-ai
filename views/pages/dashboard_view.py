@@ -10,8 +10,8 @@ from decimal import Decimal
 import flet as ft
 
 from constants.responsive import Responsive
-from controllers.expense_controller import ExpenseController
 from controllers.exchange_rate_controller import ExchangeRateController
+from controllers.expense_controller import ExpenseController
 from controllers.history_controller import HistoryController
 from controllers.income_controller import IncomeController
 from controllers.installment_controller import InstallmentController

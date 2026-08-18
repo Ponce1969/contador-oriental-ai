@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import select, func, update
+
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from database.tables import HouseholdInvitationTable

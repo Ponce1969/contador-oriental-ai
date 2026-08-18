@@ -4,11 +4,6 @@ Test para verificar que _sessions es thread-safe y no hay fuga de datos entre se
 
 from __future__ import annotations
 
-import threading
-import time
-
-import pytest
-
 from core.session import SessionManager, _sessions
 
 
@@ -134,8 +129,8 @@ class TestRepositoryFamiliaIdFiltering:
         """Repository.add debe setear familia_id en la fila插入."""
         from unittest.mock import MagicMock
 
-        from repositories.family_member_repository import FamilyMemberRepository
         from models.family_member_model import FamilyMember
+        from repositories.family_member_repository import FamilyMemberRepository
 
         mock_session = MagicMock()
         repo = FamilyMemberRepository(mock_session, familia_id=42)

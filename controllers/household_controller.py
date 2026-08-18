@@ -3,36 +3,32 @@ from __future__ import annotations
 import logging
 from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 from result import Err, Ok, Result
 
 from controllers.base_controller import BaseController
 from core.events import Event, EventType
-
+from models.errors import AppError, UnauthorizedError
+from models.household_model import (
+    ExpenseFeedPage,
+    Household,
+    HouseholdInvitation,
+    HouseholdMember,
+    HouseholdSettlement,
+    MemberBalance,
+    SharedExpenseLink,
+)
+from repositories.household.audit_repository import HouseholdAuditLogRepository
 from repositories.household.household_repository import HouseholdRepository
-from repositories.household.member_repository import HouseholdMemberRepository
 from repositories.household.invitation_repository import HouseholdInvitationRepository
 from repositories.household.link_repository import SharedExpenseLinkRepository
+from repositories.household.member_repository import HouseholdMemberRepository
 from repositories.household.settlement_repository import HouseholdSettlementRepository
-from repositories.household.audit_repository import HouseholdAuditLogRepository
-
+from services.domain.household.balance_service import HouseholdBalanceService
+from services.domain.household.expense_sharing_service import ExpenseSharingService
 from services.domain.household.household_service import HouseholdService
 from services.domain.household.invitation_service import InvitationService
-from services.domain.household.expense_sharing_service import ExpenseSharingService
-from services.domain.household.balance_service import HouseholdBalanceService
 from services.domain.household.settlement_service import SettlementService
-
-from models.household_model import (
-    Household, 
-    HouseholdInvitation, 
-    SharedExpenseLink, 
-    MemberBalance, 
-    HouseholdSettlement, 
-    HouseholdMember,
-    ExpenseFeedPage
-)
-from models.errors import AppError, UnauthorizedError
 
 logger = logging.getLogger(__name__)
 
@@ -126,9 +122,9 @@ class HouseholdController(BaseController):
             with self._get_session() as session:
                 invitation_repo = HouseholdInvitationRepository(session)
                 member_repo = HouseholdMemberRepository(session)
-                household_repo = HouseholdRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
+
                 if not membership:
                     raise AppError("No sos miembro de un hogar activo.")
                     
@@ -160,9 +156,12 @@ class HouseholdController(BaseController):
     @classmethod
     def is_invitation_valid(cls, token: str) -> Result[bool, Exception]:
         try:
-            from core.sqlalchemy_session import get_db_session
-            from repositories.household.invitation_repository import HouseholdInvitationRepository
             from datetime import datetime
+
+            from core.sqlalchemy_session import get_db_session
+            from repositories.household.invitation_repository import (
+                HouseholdInvitationRepository,
+            )
             
             with get_db_session() as session:
                 repo = HouseholdInvitationRepository(session)

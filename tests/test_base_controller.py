@@ -2,11 +2,9 @@
 Tests para BaseController - Pilar de herencia del Escudo Charrúa
 """
 
-import pytest
 from sqlalchemy.orm import Session
 
 from controllers.base_controller import BaseController
-from models.errors import DatabaseError
 
 
 class TestBaseController:
@@ -26,7 +24,7 @@ class TestBaseController:
         # Verificar atributos base
         assert controller._familia_id == 42
         assert hasattr(controller, "_get_session")
-        assert callable(getattr(controller, "_get_session"))
+        assert callable(controller._get_session)
 
     def test_base_controller_sin_familia_id(self):
         """Test BaseController sin familia_id (opcional)"""
@@ -63,13 +61,10 @@ class TestBaseController:
 
         controller = TestController(familia_id=1)
 
-        session_dentro = None
-        session_fuera = None
-
         # Usar el context manager
         with controller._get_session() as session:
-            session_dentro = session
             assert session.is_active
+
 
         # Después del context, la sesión debería cerrarse
         # Nota: En SQLAlchemy, la sesión puede permanecer activa pero el transaction termina

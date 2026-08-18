@@ -2,8 +2,8 @@ import logging
 
 from core.events import Event, EventType, event_system
 from core.unit_of_work import UnitOfWork
-from repositories.memoria_repository import MemoriaRepository
 from repositories.expense_repository import ExpenseRepository
+from repositories.memoria_repository import MemoriaRepository
 from services.ai.embedding_service import EmbeddingService
 
 logger = logging.getLogger(__name__)

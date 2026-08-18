@@ -12,8 +12,8 @@ from result import Err, Ok
 
 from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
-from controllers.installment_controller import InstallmentController
 from controllers.household_controller import HouseholdController
+from controllers.installment_controller import InstallmentController
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar

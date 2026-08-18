@@ -498,11 +498,14 @@ class AIAdvisorView:
 
         def copiar(e: object) -> None:
             self.page.run_task(self.page.clipboard.set, reporte)
-            snack = CorrectSnackBar(
-                content=ft.Text("✅ Copiado al portapapeles"),
-                open=True,
+            self.page.overlay.append(
+                CorrectSnackBar(
+                    content=ft.Text("✅ Copiado al portapapeles"),
+                    open=True,
+                )
             )
             self.page.update()
+
 
         def cerrar(e: object) -> None:
             dlg.open = False

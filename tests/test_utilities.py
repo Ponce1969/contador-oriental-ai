@@ -16,6 +16,7 @@ class TestDatabaseConfig:
     def test_get_database_url_sqlite(self):
         """Test getting SQLite database URL."""
         import unittest.mock
+
         from configs.database_config import DatabaseConfig
 
         with unittest.mock.patch.object(DatabaseConfig, "DB_TYPE", "sqlite"):
@@ -25,6 +26,7 @@ class TestDatabaseConfig:
     def test_is_postgresql(self):
         """Test is_postgresql check."""
         import unittest.mock
+
         from configs.database_config import DatabaseConfig
 
         with unittest.mock.patch.object(DatabaseConfig, "DB_TYPE", "sqlite"):

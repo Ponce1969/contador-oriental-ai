@@ -59,7 +59,7 @@ class PasswordResetRepository:
 
         try:
             return self._use_session(_query)
-        except Exception as e:
+        except Exception:
             return Err(DatabaseError(message="Error al crear token de reseteo"))
 
     def find_valid_token(
@@ -94,7 +94,7 @@ class PasswordResetRepository:
 
         try:
             return self._use_session(_query)
-        except Exception as e:
+        except Exception:
             return Err(DatabaseError(message="Error al buscar token"))
 
     def claim_token(
@@ -137,7 +137,7 @@ class PasswordResetRepository:
 
         try:
             return self._use_session(_query)
-        except Exception as e:
+        except Exception:
             return Err(DatabaseError(message="Error al reclamar token"))
 
     def mark_used(self, token_id: int) -> Result[None, DatabaseError]:
@@ -156,5 +156,5 @@ class PasswordResetRepository:
 
         try:
             return self._use_session(_query)
-        except Exception as e:
+        except Exception:
             return Err(DatabaseError(message="Error al marcar token como usado"))

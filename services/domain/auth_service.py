@@ -31,8 +31,11 @@ class AuthService:
 
     def __init__(self, user_repo: UserRepository):
         self._user_repo = user_repo
-        self._reset_repo = PasswordResetRepository()
+        self._reset_repo = PasswordResetRepository(
+            session=getattr(user_repo, "_session", None)
+        )
         self._ph = PasswordHasher(time_cost=2, memory_cost=65536, parallelism=2)
+
         self._email_service: EmailService | None = None
 
     def set_email_service(self, email_service: EmailService) -> None:

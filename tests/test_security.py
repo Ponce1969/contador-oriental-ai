@@ -149,8 +149,9 @@ class TestAuthServiceConSecurity:
         return AuthService(repo)
 
     def test_bloqueo_tras_max_intentos(self):
-        from models.user_model import UserLogin
         from result import Err
+
+        from models.user_model import UserLogin
 
         svc = self._make_service()
         svc._ph = MagicMock()
@@ -163,9 +164,9 @@ class TestAuthServiceConSecurity:
         assert "minuto" in result.err_value.message.lower()
 
     def test_login_exitoso_limpia_fallos(self):
-        from models.user_model import User, UserLogin
         from result import Ok
 
+        from models.user_model import User, UserLogin
         from services.domain.auth_service import AuthService
 
         user_mock = MagicMock(spec=User)
