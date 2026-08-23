@@ -13,8 +13,10 @@ This file provides references to the specification documents for AI agents.
 | [INSTALLMENT_EXPENSES_SPEC.md](AGENTS/INSTALLMENT_EXPENSES_SPEC.md) | Credit card installment tracking feature |
 | [PWA_SPEC.md](AGENTS/PWA_SPEC.md) | Progressive Web App & mobile/desktop branding spec |
 | [LABOR_INCOME_SPEC.md](AGENTS/LABOR_INCOME_SPEC.md) | Uruguayan labor regimes, aguinaldos, and income modes spec |
+| [FINE_TUNING_GUIDE.md](AGENTS/FINE_TUNING_GUIDE.md) | Gemma 2:2b Unsloth fine-tuning guide and workflow |
 | [openspec/changes/add-multi-currency/specs/currency/spec.md](openspec/changes/add-multi-currency/specs/currency/spec.md) | Multi-currency support (UYU/USD) design rules |
 | [.kiro/specs/shared-household-expenses/design.md](.kiro/specs/shared-household-expenses/design.md) | Shared Household Expenses feature design and data structures |
+
 
 ## Quick Commands
 

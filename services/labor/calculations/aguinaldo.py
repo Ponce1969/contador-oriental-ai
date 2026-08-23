@@ -210,8 +210,6 @@ class AguinaldoCalculator:
                 f"Cálculo exacto (${total_computable:.2f} / 12) Ley 12.840."
             )
 
-
-
         return CalculationResult(
             request_summary={
                 "familia_id": request.familia_id,

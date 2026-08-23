@@ -97,3 +97,4 @@ postgres_data/
 app_data/
 # Local AI runtime state
 .atl/
+*.gguf

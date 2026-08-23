@@ -107,4 +107,3 @@ class VacationPayCalculator:
                 f"(Jornal: ${jornal_liquido:.2f}/día) según Ley 16.101."
             ],
         )
-

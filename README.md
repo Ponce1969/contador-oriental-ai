@@ -4,21 +4,26 @@ Sistema de gestión financiera familiar con **Python 3.12 + Flet + PostgreSQL + 
 
 ---
 
-## 🚀 Funcionalidades
+## 🚀 Funcionalidades Principales
 
-- **🔐 Autenticación** — Login y registro de familias (hash Argon2id), multi-tenant completo
-- **🔑 Recuperación de contraseña** — Reset por email con Resend, tokens de un solo uso con expiración de 1 hora, protección contra enumeración de emails
-- **👨‍👩‍👧‍👦 Familia y Hogares Compartidos** — Gestión de miembros de la familia y creación de 'Hogares Compartidos' para vincular cuentas de distintos usuarios, sumar gastos al pozo común y ver balances automáticos.
-- **💰 Ingresos** — Por miembro, múltiples tipos (sueldo, jubilación, freelance, etc.)
-- **💳 Gastos** — Categorías uruguayas, métodos de pago, recurrencia, y vinculación a hogares compartidos.
-- **💱 Multi-moneda** — Soporta UYU y USD; cada registro conserva su moneda original sin conversiones automáticas
-- **📊 Dashboard** — Balance mensual automático, comparativa vs mes anterior por categoría
-- **🤖 Contador Oriental** — Asistente IA local (Gemma 2:2b), streaming token a token, RAG con normativa uruguaya
-- **🧠 Memoria Vectorial** — Cada gasto se vectoriza automáticamente; el Contador recuerda el historial completo con búsqueda semántica (pgvector + HNSW)
-- **🔍 Búsqueda Semántica** — `expenses.embedding` vector(768): el subtotal se calcula por similitud cosine, no por keywords. "supermercado" encuentra "almacén", "verdulería", "delivery"
-- **📅 Consultas Históricas** — Detecta automáticamente meses específicos ("octubre"), "mes pasado" y "últimos N meses" y carga los gastos reales de BD
-- **📱 Soporte WhatsApp** — Botón de ayuda directo en la app (código Uruguay +598)
-- **🛡️ Guardian** — Monitoreo automático de contenedores con alertas a Discord
+- **🔐 Autenticación & Seguridad** — Login y registro de familias (hash Argon2id), multi-tenant estricto con aislamiento por `familia_id`.
+- **🔑 Recuperación de Contraseña** — Reset por email con Resend, tokens criptográficos de un solo uso con expiración de 1 hora.
+- **👨‍👩‍👧‍👦 Familia y Hogares Compartidos** — Gestión de miembros y creación de 'Hogares Compartidos' para vincular cuentas de distintos usuarios, sumar gastos al pozo común y ver balances automáticos.
+- **💰 Ingresos & Múltiples Actividades** — Modelo `EconomicActivity` (1:N) que soporta ingresos dependientes, independientes, pasividades y rentas del capital.
+- **💳 Gastos & Cuotas** — Categorías uruguayas, métodos de pago, recurrencia, control de cuotas de tarjetas de crédito y vinculación a hogares compartidos.
+- **💱 Multi-moneda (UYU / USD)** — Soporta Pesos Uruguayos (`$`) y Dólares (`USD`), conservando la moneda original en cada registro sin mezclar balances.
+- **📊 Dashboard Financiero** — Balances independientes en UYU y USD, métricas y comparativas mensuales.
+- **🇺🇾 Motor Laboral y Previsional Uruguayo (100% Determinístico Decimal)**:
+  - **Trabajo Dependiente**: Aguinaldo en dos cuotas (Ley 12.840), Salario Vacacional (Ley 16.101), Retenciones a la Seguridad Social (Montepío 15% Ley 16.713/20.130, FONASA 3% a 8% Ley 18.211, FRL 0.1% Ley 18.406), IRPF Categoría II mensual con 6% ficto, liquidación anual DGI y submotor de cálculo inverso (Líquido a Nominal) por bisección determinística ($\le \$0.01$).
+  - **Servicios Personales / Independientes**: IVA servicios personales (22% / 10%) con retenciones CEDE (60%), IRPF anticipos bimestrales con deducción ficta del 30% o gastos reales, y aportes a la Caja Profesional CJPPU (10 categorías trienales al 16.5% Ley 17.738/20.212).
+  - **Pequeña Empresa (Literal E)**: Control de tope anual de 305.000 UI con cotización dinámica, cuota mensual escalonada DGI (25% / 50% / 100% Ley 19.996) y aportes patronales BPS.
+  - **Monotributo Común y Social MIDES**: Verificación de elegibilidad física ($\le 15\text{ m}^2$, $\le 1$ dependiente, topes 183.000 / 305.000 UI), cuota única BPS+DGI y subsidio progresivo MIDES en 4 años ($25\%, 50\%, 75\%, 100\%$) con validación de certificado social.
+  - **Pasividades, Jubilaciones y Pensiones**: Liquidación de IASS con Mínimo No Imponible de 9 BPC (Ley 20.124), escala progresiva de 5 tramos, deducciones de salud (14% / 8%), retenciones FONASA pasivos (Ley 18.731) y consolidación multicaixa proporcional (BPS + Cajas Paraestatales).
+- **🤖 Contador Oriental (IA Local con Ollama)** — Asistente explicativo local impulsado por Gemma 2:2b con streaming de respuestas. Principio rector: **Python calcula con 100% de precisión matemática y la IA explica el contexto legal**. Cada respuesta incorpora un descargo de responsabilidad jurídica orientativa.
+- **🧠 Memoria Vectorial & Búsqueda Semántica** — Cada gasto se vectoriza en background (`expenses.embedding` vector(768) con `nomic-embed-text` + pgvector HNSW).
+- **📱 Soporte WhatsApp & PWA** — Botón de contacto directo y empaquetado para despliegue web/móvil/desktop.
+- **🛡️ Guardian** — Monitoreo automático de salud de contenedores y alertas en Discord.
+
 
 ---
 
@@ -254,10 +259,20 @@ Gemma **nunca calcula** — solo narra los datos que Python le prepara. Esto evi
 ```dockerfile
 FROM gemma2:2b
 PARAMETER temperature 0.2
-PARAMETER num_ctx 4096
-PARAMETER num_predict 250
-PARAMETER repeat_penalty 1.2
+PARAMETER top_p 0.9
+
+SYSTEM """Sos el Contador Oriental, un asistente experto en finanzas familiares y microemprendimientos en Uruguay.
+REGLAS ABSOLUTAS:
+- Tu única fuente de verdad son los DATOS CONTABLES Y LABORALES que el sistema te proporciona.
+- NUNCA hagas cálculos matemáticos propios ni inventes números.
+- Conocés y fundamentás con la legislación uruguaya (Ley 12.840, Ley 16.101, Ley 18.083, Ley 19.996, Ley 18.874, Ley 20.124).
+- Respondé en español rioplatense cálido, claro y profesional.
+- Toda respuesta explicativa sobre impuestos o sueldos DEBE finalizar con el descargo legal orientativo."""
 ```
+
+> 🛡️ **Invariante de Responsabilidad Jurídica:** Toda respuesta del asistente incluye de forma preceptiva:
+> *"Aviso: Este cálculo y explicación son de carácter meramente informativo y orientativo según la normativa vigente en Uruguay. No constituyen asesoramiento contable ni jurídico vinculante. Para decisiones formales o declaraciones juradas ante DGI/BPS/CJPPU, consulte a un profesional contable matriculado."*
+
 
 ---
 
@@ -273,6 +288,18 @@ contador-oriental/
 │   └── family_member_controller.py
 ├── 📁 services/
 │   ├── __init__.py               # Re-exports para compatibilidad
+│   ├── 📁 labor/                 # Submotor laboral y tributario uruguayo (100% Decimal)
+│   │   ├── engine.py             # Fachada LaborCalculationEngine
+│   │   ├── labor_service.py      # Servicio orquestador de dominio
+│   │   ├── 📁 domain/            # TaxRuleSets, DTOs inmutables, Modelos
+│   │   │   ├── tax_rules.py      # IRPF, FONASA, BPS, CJPPU, Literal E, Monotributo, IASS
+│   │   │   └── dtos.py           # CalculableIncomeDTO, Payloads auditables
+│   │   └── 📁 calculations/      # Algoritmos determinísticos
+│   │       ├── aguinaldo.py      # Cómputo de SAC (Ley 12.840)
+│   │       ├── vacation_pay.py   # Salario Vacacional (Ley 16.101)
+│   │       ├── 📁 withholdings/  # Submotor dependiente e inverso por bisección
+│   │       ├── 📁 independent/   # Servicios Personales, Literal E, Monotributo
+│   │       └── 📁 pension/       # IASS y consolidación multicaixa
 │   ├── 📁 domain/                # Reglas de negocio puras
 │   │   ├── expense_service.py
 │   │   ├── income_service.py
@@ -287,6 +314,7 @@ contador-oriental/
 │   │   ├── ia_memory_service.py  # Orquesta embedding + búsqueda semántica
 │   │   └── memory_event_handler.py  # Observer: vectoriza eventos en background
 │   └── 📁 infrastructure/        # Integraciones externas
+
 │       ├── ocr_service.py        # Tesseract + preprocesado OpenCV
 │       ├── ticket_service.py     # Parseo de tickets con Gemma
 │       └── report_service.py     # Generación de reportes PDF
