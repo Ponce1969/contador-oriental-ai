@@ -18,7 +18,7 @@ class TestIncomeModel:
         """Test basic income creation."""
         income = Income(
             family_member_id=1,
-            monto=2500.00,
+            monto=Decimal("2500.00"),
             fecha=date.today(),
             descripcion="Sueldo",
             categoria=IncomeCategory.SUELDO,
@@ -43,7 +43,7 @@ class TestIncomeModel:
         """Test string representation of income."""
         income = Income(
             family_member_id=1,
-            monto=3000.00,
+            monto=Decimal("3000.00"),
             fecha=date.today(),
             descripcion="Sueldo",
             categoria=IncomeCategory.SUELDO,
@@ -57,7 +57,7 @@ class TestIncomeModel:
         """Test categoria_nombre property."""
         income = Income(
             family_member_id=1,
-            monto=2500.00,
+            monto=Decimal("2500.00"),
             fecha=date.today(),
             descripcion="Test",
             categoria=IncomeCategory.SUELDO,
@@ -81,7 +81,7 @@ class TestIncomeModel:
         for category in categories:
             income = Income(
                 family_member_id=1,
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=category,
@@ -94,7 +94,7 @@ class TestIncomeModel:
         """Test string representation."""
         income = Income(
             family_member_id=1,
-            monto=3000.00,
+            monto=Decimal("3000.00"),
             fecha=date.today(),
             descripcion="Mi sueldo",
             categoria=IncomeCategory.SUELDO,
@@ -108,7 +108,7 @@ class TestIncomeModel:
         """Test recurrent income creation."""
         income = Income(
             family_member_id=1,
-            monto=500.00,
+            monto=Decimal("500.00"),
             fecha=date.today(),
             descripcion="Alquiler recibido",
             categoria=IncomeCategory.ALQUILER,
@@ -126,7 +126,7 @@ class TestIncomeModel:
         with pytest.raises(ValidationError):
             Income(
                 family_member_id=1,
-                monto=-100,
+                monto=Decimal("-100"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=IncomeCategory.SUELDO,
@@ -136,7 +136,7 @@ class TestIncomeModel:
         """Test default values for optional fields."""
         income = Income(
             family_member_id=1,
-            monto=1000.00,
+            monto=Decimal("1000.00"),
             descripcion="Test",
             categoria=IncomeCategory.SUELDO,
         )
@@ -163,7 +163,7 @@ class TestIncomeModel:
         for category in categories:
             income = Income(
                 family_member_id=1,
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=category,

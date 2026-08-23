@@ -42,8 +42,9 @@ class AIAdvisorView:
             router.navigate("/login")
             return
 
-        familia_id = SessionManager.get_familia_id(page)
+        familia_id = SessionManager.get_familia_id(page) or 1
         self.controller = AIController(familia_id=familia_id)
+
         self.report_service = ReportService()
         self.chat_history: list[ChatMessage] = []
         self._last_respuesta: str = ""
@@ -505,7 +506,6 @@ class AIAdvisorView:
                 )
             )
             self.page.update()
-
 
         def cerrar(e: object) -> None:
             dlg.open = False

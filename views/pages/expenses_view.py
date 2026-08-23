@@ -18,7 +18,7 @@ from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.categories import ExpenseCategory, PaymentMethod
-from models.errors import AppError
+from models.errors import AppError, ValidationError
 from models.expense_model import Expense
 from services.infrastructure.formatters import format_pesos
 from views.layouts.main_layout import MainLayout
@@ -209,9 +209,14 @@ class ExpensesView:
 
         # Validar membresía para habilitar/deshabilitar el toggle
         household_res = self.household_controller.get_current_household()
-        if household_res.is_ok() and household_res.unwrap() is not None:
-            self.share_household_switch.visible = True
-            self.share_household_switch.label = f"Compartir con: {household_res.unwrap().nombre}"
+        if household_res.is_ok():
+            household = household_res.unwrap()
+            if household is not None:
+                self.share_household_switch.visible = True
+                self.share_household_switch.label = f"Compartir con: {household.nombre}"
+            else:
+                self.share_household_switch.visible = False
+                self.share_household_switch.value = False
         else:
             self.share_household_switch.visible = False
             self.share_household_switch.value = False
@@ -527,10 +532,24 @@ class ExpensesView:
             match result:
                 case Ok(expense_ok):
                     # Compartir con el hogar si corresponde
-                    if self.share_household_switch.visible and self.share_household_switch.value:
-                        share_res = self.household_controller.share_expense(expense_ok.id)
+                    if (
+                        self.share_household_switch.visible
+                        and self.share_household_switch.value
+                    ):
+                        share_res = self.household_controller.share_expense(
+                            expense_ok.id
+                        )
                         if share_res.is_err():
-                            self.page.overlay.append(ft.SnackBar(ft.Text(f"Gasto guardado, pero no se pudo compartir: {share_res.unwrap_err()}"), open=True, bgcolor=ft.Colors.RED_600))
+                            self.page.overlay.append(
+                                ft.SnackBar(
+                                    ft.Text(
+                                        f"Gasto guardado, pero no se pudo compartir: "
+                                        f"{share_res.unwrap_err()}"
+                                    ),
+                                    open=True,
+                                    bgcolor=ft.Colors.RED_600,
+                                )
+                            )
                             self.page.update()
 
                     # Si es tarjeta de crédito, crear compra en cuotas
@@ -662,16 +681,16 @@ class ExpensesView:
                                                 icon=ft.Icons.EDIT,
                                                 icon_color=ft.Colors.BLUE,
                                                 tooltip="Editar gasto",
-                                                on_click=lambda e, exp=expense: self._on_edit_expense(
-                                                    exp
+                                                on_click=lambda e, exp=expense: (
+                                                    self._on_edit_expense(exp)
                                                 ),
                                             ),
                                             ft.IconButton(
                                                 icon=ft.Icons.DELETE,
                                                 icon_color="#EF4444",
                                                 tooltip="Eliminar gasto",
-                                                on_click=lambda e, exp=expense: self._on_delete_expense(
-                                                    exp
+                                                on_click=lambda e, exp=expense: (
+                                                    self._on_delete_expense(exp)
                                                 ),
                                             ),
                                         ],
@@ -810,8 +829,9 @@ class ExpensesView:
     def _on_delete_expense(self, expense: Expense) -> None:
         """Eliminar un gasto"""
         if expense.id is None:
-            self._show_error("El gasto no tiene ID válido")
+            self._show_error(ValidationError("El gasto no tiene ID válido"))
             return
+
         result = self.controller.delete_expense(expense.id)
 
         match result:

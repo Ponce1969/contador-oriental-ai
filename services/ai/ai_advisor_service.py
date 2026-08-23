@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import os
 from decimal import Decimal
+from typing import Any
 
 from result import Err, Ok, Result
 
@@ -135,14 +136,16 @@ class AIAdvisorService:
         scores = {}
 
         for archivo, config in self.mapa_conocimiento.items():
+            kws = config.get("keywords") if isinstance(config, dict) else []
+            keywords_list = kws if isinstance(kws, list) else []
+            raw_peso = config.get("peso", 1) if isinstance(config, dict) else 1
+            peso: int = int(raw_peso) if isinstance(raw_peso, (int, float, str)) else 1
             score = sum(
-                config["peso"]
-                for palabra in config["keywords"]
-                if palabra in pregunta_lower
+                peso for palabra in keywords_list if str(palabra) in pregunta_lower
             )
             scores[archivo] = score
 
-        archivo_seleccionado = max(scores, key=scores.get)
+        archivo_seleccionado = max(scores, key=lambda k: scores[k])
 
         if scores[archivo_seleccionado] > 0:
             ruta = os.path.join(self.knowledge_path, archivo_seleccionado)
@@ -260,8 +263,7 @@ class AIAdvisorService:
                             )
                         else:
                             lineas.append(
-                                f"    - {descripcion}: {monto_str}"
-                                f" ({metodo_str})"
+                                f"    - {descripcion}: {monto_str} ({metodo_str})"
                             )
 
             lineas.append(
@@ -288,7 +290,9 @@ class AIAdvisorService:
 
                     cantidad = datos["cantidad"]
                     metodos = datos.get("metodos", {})
-                    total_categoria[ccy] = total_categoria.get(ccy, Decimal("0")) + monto
+                    total_categoria[ccy] = (
+                        total_categoria.get(ccy, Decimal("0")) + monto
+                    )
                     cant_categoria[ccy] = cant_categoria.get(ccy, 0) + cantidad
                     total_filtrado[ccy] = total_filtrado.get(ccy, Decimal("0")) + monto
 
@@ -322,12 +326,16 @@ class AIAdvisorService:
 
         if ctx.resumen_laboral:
             lineas.append("")
-            lineas.append("### CONTEXTO Y BENEFICIOS LABORALES (PRE-CALCULADO POR PYTHON) ###")
+            lineas.append(
+                "### CONTEXTO Y BENEFICIOS LABORALES (PRE-CALCULADO POR PYTHON) ###"
+            )
             lineas.append(ctx.resumen_laboral)
-            lineas.append("REGLA ESTRICTA PARA LA IA: Utilizar los números laborales anteriores de forma textual. NO realizar recálculos aritméticos.")
+            lineas.append(
+                "REGLA ESTRICTA PARA LA IA: Utilizar los números laborales "
+                "anteriores de forma textual. NO realizar recálculos aritméticos."
+            )
 
         return "\n".join(lineas)
-
 
     def _formatear_comparativa(self, ctx: AIContext) -> str:
         """
@@ -358,14 +366,15 @@ class AIAdvisorService:
 
             signo_t = "+" if vt >= 0 else ""
             signo_tk = "+" if (vtk or 0) >= 0 else ""
+            ant_tot = format_pesos_ai(m.total_anterior or Decimal("0"), currency=ccy)
+            act_tot = format_pesos_ai(m.total_actual, currency=ccy)
+            ant_tck = format_pesos_ai(m.ticket_anterior or Decimal("0"), currency=ccy)
+            act_tck = format_pesos_ai(m.ticket_actual, currency=ccy)
             lineas.append(
-                f"- {m.categoria}:"
-                f" gasto total {signo_t}{vt:.1f}%"
-                f" ({format_pesos_ai(m.total_anterior, currency=ccy)} ->"
-                f" {format_pesos_ai(m.total_actual, currency=ccy)}),"
+                f"- {m.categoria}: gasto total {signo_t}{vt:.1f}%"
+                f" ({ant_tot} -> {act_tot}),"
                 f" ticket promedio {signo_tk}{vtk:.1f}%"
-                f" ({format_pesos_ai(m.ticket_anterior, currency=ccy)} ->"
-                f" {format_pesos_ai(m.ticket_actual, currency=ccy)})."
+                f" ({ant_tck} -> {act_tck})."
                 f" {diag}"
             )
 
@@ -436,20 +445,25 @@ TU ROL:
 
 REGLAS ESTRICTAS (NO LAS ROMPAS NUNCA):
 - NUNCA inventar números. NUNCA hacer cálculos. NUNCA dividir ni derivar valores.
-- NUNCA decir "la mitad" o "un tercio" o porcentajes inventados. Solo usá los números exactos que aparecen en los datos.
-- Si una cuota es $ 650 y otra es $ 240, NO digas "la mitad". Decí "$ 650 y $ 240 respectivamente".
+- NUNCA decir "la mitad" o "un tercio" o porcentajes inventados.
+  Solo usá los números exactos que aparecen en los datos.
+- Si una cuota es $ 650 y otra es $ 240, NO digas "la mitad".
+  Decí "$ 650 y $ 240 respectivamente".
 - Los totales, balances y sumas YA están calculados por el sistema. Solo leer y narrar.
 - Si un dato no aparece explícitamente en los datos, NO lo menciones ni lo calcules.
-- Si hay pocos gastos este mes (principio de mes), usá la sección "CIERRE DEL MES ANTERIOR" para dar contexto del cierre del mes pasado.
-- La sección "CIERRE DEL MES ANTERIOR" es REFERENCIA: NO la mezcles con los datos del mes actual.
+- Si hay pocos gastos este mes (principio de mes), usá la sección
+  "CIERRE DEL MES ANTERIOR" para dar contexto del cierre del mes pasado.
+- La sección "CIERRE DEL MES ANTERIOR" es REFERENCIA:
+  NO la mezcles con los datos del mes actual.
 
 SÍMBOLOS MONETARIOS (estricto):
 - Reportá cada moneda por separado: $ para UYU, USD para USD.
-- Usá $ para Pesos Uruguayos (moneda principal del usuario). Ejemplo: $ 650, $ 890, $ 173 720
+- Usá $ para Pesos Uruguayos (moneda principal del usuario).
+  Ejemplo: $ 650, $ 890, $ 173 720
 - Usá USD para Dólares. NUNCA uses U$S ni $U.
 - NUNCA conviertas ni sumes monedas distintas
 
-TONO: Profesional pero de confianza. Evitá tecnicismos. Si algo está mal, decilo directo.
+TONO: Profesional pero de confianza. Evitá tecnicismos.
 {aviso_cuota}{prioridad}- Máximo {max_lineas} de respuesta.
 
 {seccion_rag}{seccion_memoria}{seccion_gastos}PREGUNTA: {pregunta}
@@ -458,7 +472,7 @@ RESPUESTA:"""
 
         return prompt
 
-    async def _call_ollama(self, prompt: str) -> dict:
+    async def _call_ollama(self, prompt: str) -> Any:
         """
         Llama a Ollama (Gemma 2:2b local) sin streaming.
         Retorna el dict completo con 'response' key.
@@ -788,8 +802,9 @@ RESPUESTA:"""
             ai_logger.error(
                 "❌ Error inesperado en Ollama: %s:%s", type(e).__name__, str(e)
             )
-            raise RuntimeError(f"Error al consultar al Contador Oriental: {str(e)}") from e
-
+            raise RuntimeError(
+                f"Error al consultar al Contador Oriental: {str(e)}"
+            ) from e
 
         if cuota_agotada:
             aviso = (

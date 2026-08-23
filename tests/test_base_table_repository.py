@@ -3,6 +3,7 @@ Tests para BaseTableRepository - Corazón del CRUD genérico del Escudo Charrúa
 """
 
 from datetime import date
+from decimal import Decimal
 
 from result import Err, Ok
 
@@ -16,7 +17,7 @@ from repositories.income_repository import IncomeRepository
 
 def _make_expense(
     descripcion="Test expense",
-    monto=1000.0,
+    monto=Decimal("1000.0"),
     familia_id=1,
 ):
     return Expense(
@@ -31,7 +32,7 @@ def _make_expense(
 
 def _make_income(
     descripcion="Sueldo",
-    monto=50000.0,
+    monto=Decimal("50000.0"),
     family_member_id=1,
 ):
     return Income(
@@ -80,13 +81,13 @@ class TestBaseTableRepositoryCRUD:
     def test_add_expense(self, db_session, setup_test_data):
         """Test agregar un expense usando ExpenseRepository real"""
         repo = ExpenseRepository(db_session, familia_id=1)
-        expense = _make_expense(descripcion="Test expense", monto=1000)
+        expense = _make_expense(descripcion="Test expense", monto=Decimal("1000"))
         result = repo.add(expense)
         assert isinstance(result, Ok)
-        saved = result.ok_value
+        saved = result.unwrap()
         assert saved.id is not None
         assert saved.descripcion == "Test expense"
-        assert saved.monto == 1000
+        assert saved.monto == Decimal("1000")
 
     def test_add_income(self, db_session):
         """Test agregar un income usando IncomeRepository real"""
@@ -101,19 +102,20 @@ class TestBaseTableRepositoryCRUD:
         db_session.flush()
         member_id = db_session.execute(
             text(
-                "SELECT id FROM family_members WHERE familia_id=1 AND nombre='Test Member' LIMIT 1"
+                "SELECT id FROM family_members "
+                "WHERE familia_id=1 AND nombre='Test Member' LIMIT 1"
             )
         ).scalar()
         repo = IncomeRepository(db_session, familia_id=1)
         income = _make_income(
-            descripcion="Sueldo", monto=50000, family_member_id=member_id
+            descripcion="Sueldo", monto=Decimal("50000"), family_member_id=member_id
         )
         result = repo.add(income)
         assert isinstance(result, Ok)
-        saved = result.ok_value
+        saved = result.unwrap()
         assert saved.id is not None
         assert saved.descripcion == "Sueldo"
-        assert saved.monto == 50000
+        assert saved.monto == Decimal("50000")
 
     def test_get_all_con_filtro_familia(self, db_session, setup_test_data):
         """Test get_all filtra por familia_id correctamente"""
@@ -133,39 +135,39 @@ class TestBaseTableRepositoryCRUD:
     def test_get_by_id_existente(self, db_session, setup_test_data):
         """Test get_by_id con un registro existente"""
         repo = ExpenseRepository(db_session, familia_id=1)
-        expense = _make_expense(descripcion="Test get by ID", monto=500)
+        expense = _make_expense(descripcion="Test get by ID", monto=Decimal("500"))
         add_result = repo.add(expense)
-        saved = add_result.ok_value
-        get_result = repo.get_by_id(saved.id)
+        saved = add_result.unwrap()
+        get_result = repo.get_by_id(saved.id or 0)
         assert isinstance(get_result, Ok)
-        assert get_result.ok_value.descripcion == "Test get by ID"
+        assert get_result.unwrap().descripcion == "Test get by ID"
 
     def test_get_by_id_no_existente(self, db_session):
         """Test get_by_id con un ID que no existe"""
         repo = ExpenseRepository(db_session, familia_id=1)
         result = repo.get_by_id(99999)
         assert isinstance(result, Err)
-        assert "no encontrado" in result.err_value.message.lower()
+        assert "no encontrado" in result.unwrap_err().message.lower()
 
     def test_delete_expense(self, db_session, setup_test_data):
         """Test eliminar un expense"""
         repo = ExpenseRepository(db_session, familia_id=1)
         expense = _make_expense(descripcion="Para eliminar", monto=200)
-        saved = repo.add(expense).ok_value
-        assert isinstance(repo.delete(saved.id), Ok)
-        assert isinstance(repo.get_by_id(saved.id), Err)
+        saved = repo.add(expense).unwrap()
+        assert isinstance(repo.delete(saved.id or 0), Ok)
+        assert isinstance(repo.get_by_id(saved.id or 0), Err)
 
     def test_update_expense(self, db_session, setup_test_data):
         """Test actualizar un expense"""
         repo = ExpenseRepository(db_session, familia_id=1)
         expense = _make_expense(descripcion="Original", monto=300)
-        saved = repo.add(expense).ok_value
-        saved.monto = 400
+        saved = repo.add(expense).unwrap()
+        saved.monto = Decimal("400")
         saved.descripcion = "Modificado"
         update_result = repo.update(saved)
         assert isinstance(update_result, Ok)
-        assert update_result.ok_value.monto == 400
-        assert update_result.ok_value.descripcion == "Modificado"
+        assert update_result.unwrap().monto == Decimal("400")
+        assert update_result.unwrap().descripcion == "Modificado"
 
 
 class TestBaseTableRepositorySeguridad:
@@ -175,7 +177,7 @@ class TestBaseTableRepositorySeguridad:
         """Test que una familia no puede ver datos de otra"""
         repo_f1 = ExpenseRepository(db_session, familia_id=1)
         repo_f2 = ExpenseRepository(db_session, familia_id=2)
-        repo_f1.add(_make_expense(descripcion="Gasto familia 1", monto=1000))
+        repo_f1.add(_make_expense(descripcion="Gasto familia 1", monto=Decimal("1000")))
         repo_f2.add(_make_expense(descripcion="Gasto familia 2", monto=2000))
         desc_f1 = [e.descripcion for e in repo_f1.get_all()]
         desc_f2 = [e.descripcion for e in repo_f2.get_all()]
@@ -206,18 +208,18 @@ class TestBaseTableRepositoryErrorHandling:
         expense = _make_expense(descripcion="Sin ID", monto=100)
         result = repo.update(expense)
         assert isinstance(result, Err)
-        assert "id" in result.err_value.message.lower()
+        assert "id" in result.unwrap_err().message.lower()
 
     def test_delete_con_id_no_existente(self, db_session):
         """Test delete con ID que no existe"""
         repo = ExpenseRepository(db_session, familia_id=1)
         result = repo.delete(99999)
         assert isinstance(result, Err)
-        assert "no encontrado" in result.err_value.message.lower()
+        assert "no encontrado" in result.unwrap_err().message.lower()
 
     def test_operaciones_con_session_invalida(self):
         """Test comportamiento con sesión inválida"""
-        repo = ExpenseRepository(None, familia_id=1)
+        repo = ExpenseRepository(None, familia_id=1)  # type: ignore[arg-type]
         expense = _make_expense(descripcion="Test", monto=100)
         result = repo.add(expense)
         assert isinstance(result, Err)

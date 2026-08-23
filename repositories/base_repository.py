@@ -5,15 +5,16 @@ Elimina duplicación de CRUD en todos los repositorios
 
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Any, TypeVar
 
 from sqlalchemy.orm import Session
 
 T = TypeVar("T")
 
 
-class BaseRepository(Generic[T]):
+class BaseRepository[T]:
     """
+
     Repositorio base genérico que provee operaciones CRUD comunes.
 
     Usa Generics de Python para funcionar con cualquier modelo:
@@ -24,9 +25,14 @@ class BaseRepository(Generic[T]):
     Automáticamente filtra por familia_id si el modelo tiene ese atributo.
     """
 
-    def __init__(self, session: Session, model: type[T], familia_id: int | None = None):
+    def __init__(
+        self,
+        session: Session,
+        model: type[T],
+        familia_id: int | None = None,
+    ) -> None:
         self.session = session
-        self.model = model
+        self.model: Any = model
         self.familia_id = familia_id
 
     def get_by_id(self, id: int) -> T | None:
@@ -138,7 +144,6 @@ class BaseRepository(Generic[T]):
 
         # Filtrar por activo si el modelo tiene el campo
         if hasattr(self.model, "active"):
-            query = query.filter(self.model.active.is_(True))
+            query = query.filter(self.model.active == True)  # noqa: E712
 
         return query.all()
-

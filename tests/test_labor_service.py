@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database.tables import (
+    Base,
     DependentDetailsTable,
     EconomicActivityTable,
     FamiliaTable,
@@ -35,11 +36,21 @@ def db_session():
     engine = create_engine("sqlite:///:memory:")
 
     # Crear solo las tablas relevantes para aislar el test
-    FamiliaTable.__table__.create(engine)
-    FamilyMemberTable.__table__.create(engine)
-    EconomicActivityTable.__table__.create(engine)
-    DependentDetailsTable.__table__.create(engine)
-    IncomeTable.__table__.create(engine)
+    from typing import Any, cast
+
+    Base.metadata.create_all(
+        engine,
+        tables=cast(
+            Any,
+            [
+                FamiliaTable.__table__,
+                FamilyMemberTable.__table__,
+                EconomicActivityTable.__table__,
+                DependentDetailsTable.__table__,
+                IncomeTable.__table__,
+            ],
+        ),
+    )
 
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -88,10 +99,12 @@ def test_create_and_get_economic_activity(db_session):
     assert created.dependent_details.estimated_monthly_nominal == Decimal("55000.00")
 
     # Recuperar por ID
+    assert created.id is not None
     get_res = service.get_activity(created.id)
     assert get_res.is_ok()
     retrieved = get_res.unwrap()
     assert retrieved.id == created.id
+    assert retrieved.dependent_details is not None
     assert retrieved.dependent_details.weekly_hours == 44
 
 
@@ -112,6 +125,7 @@ def test_multitenancy_isolation(db_session):
     created = service_f1.create_activity(activity).unwrap()
 
     # Familia 2 intenta obtener la actividad de Familia 1
+    assert created.id is not None
     assert service_f2.get_activity(created.id).is_err()
     assert len(service_f2.list_all_activities()) == 0
 
@@ -155,6 +169,7 @@ def test_calculate_aguinaldo_service_orchestration(db_session):
         )
         income_repo.add(inc)
 
+    assert saved_act.id is not None
     res = service.calculate_member_aguinaldo(
         activity_id=saved_act.id,
         year=2026,

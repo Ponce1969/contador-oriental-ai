@@ -87,7 +87,8 @@ class FamilyMemberTable(Base):
 
 class EconomicActivityTable(Base):
     """
-    Tabla de actividades económicas o relaciones laborales de integrantes familiares (1:N)
+    Tabla de actividades económicas o relaciones laborales
+    de integrantes familiares (1:N).
     """
 
     __tablename__ = "economic_activities"
@@ -104,13 +105,19 @@ class EconomicActivityTable(Base):
         Integer, ForeignKey("family_members.id"), nullable=False
     )
 
-    nature: Mapped[str] = mapped_column(String(50), nullable=False, default="dependiente")
-    title: Mapped[str] = mapped_column(String(100), nullable=False, default="Comercio / Servicios")
+    nature: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="dependiente"
+    )
+    title: Mapped[str] = mapped_column(
+        String(100), nullable=False, default="Comercio / Servicios"
+    )
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
 
     __table_args__ = (
         Index("idx_economic_activities_member", "familia_id", "family_member_id"),
@@ -126,11 +133,18 @@ class DependentDetailsTable(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     economic_activity_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("economic_activities.id", ondelete="CASCADE"), unique=True, nullable=False
+        Integer,
+        ForeignKey("economic_activities.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
     )
-    remuneration_type: Mapped[str] = mapped_column(String(30), nullable=False, default="mensual")
+    remuneration_type: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="mensual"
+    )
     weekly_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=40)
-    estimated_monthly_nominal: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    estimated_monthly_nominal: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 2), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 
@@ -155,7 +169,9 @@ class IncomeTable(Base):
 
     # Relación opcional con actividad económica
     economic_activity_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("economic_activities.id", ondelete="SET NULL"), nullable=True
+        Integer,
+        ForeignKey("economic_activities.id", ondelete="SET NULL"),
+        nullable=True,
     )
 
     # Concepto laboral / financiero
@@ -233,7 +249,8 @@ class ExpenseTable(Base):
         nullable=True,
     )
 
-    # Embedding semántico para búsqueda cosine via pgvector (Vector en PG, Text en otros)
+    # Embedding semántico para búsqueda cosine via pgvector
+    # (Vector en PG, Text en otros)
     embedding = Column(_VECTOR_TYPE, nullable=True)
 
     # Campos OCR de ticket
@@ -359,7 +376,6 @@ class AiUsageTable(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     __table_args__ = (
-
         Index("idx_ai_usage_lookup", "familia_id", "date"),
         UniqueConstraint("familia_id", "date", "model", name="uq_ai_usage_daily"),
     )
@@ -397,9 +413,7 @@ class HogarTable(Base):
         DateTime, default=datetime.now, onupdate=datetime.now
     )
 
-    __table_args__ = (
-        Index("idx_hogares_status", "status"),
-    )
+    __table_args__ = (Index("idx_hogares_status", "status"),)
 
 
 class HouseholdMemberTable(Base):
@@ -505,8 +519,10 @@ class HouseholdAuditLogTable(Base):
         Integer, ForeignKey("familias.id", ondelete="CASCADE"), nullable=False
     )
     gasto_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    # gasto_id is stored as plain int — if the expense is deleted, the audit record remains
+    # gasto_id is stored as plain int — if the expense is deleted,
+    # the audit record remains
     action: Mapped[str] = mapped_column(String(20), nullable=False)
+
     # action: "created" | "deleted"
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 

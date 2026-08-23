@@ -82,7 +82,6 @@ def _connect_postgresql():
             "PostgreSQL support requires `psycopg2`: uv add psycopg2-binary"
         ) from err
 
-
     cfg = DATABASE.get("POSTGRESQL", {})
     conn = psycopg2.connect(
         host=cfg.get("HOST", "localhost"),

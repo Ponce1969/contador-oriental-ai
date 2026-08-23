@@ -9,7 +9,8 @@ def up(db):
 
     db.execute(
         text(
-            "ALTER TABLE family_members ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT TRUE"
+            "ALTER TABLE family_members "
+            "ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT TRUE"
         )
     )
     print("✅ Columna activo agregada a family_members")

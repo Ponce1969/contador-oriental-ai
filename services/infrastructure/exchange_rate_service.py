@@ -24,7 +24,7 @@ _SPREAD_PCT = Decimal("0.025")  # 2.5%
 
 class ExchangeRateService:
     """Consulta la cotización USD/UYU desde exchangerate-api.com
-    
+
     Aplica un spread porcentual (2.5% cada lado) sobre el mid interbancario
     para obtener compra y venta realistas. La firma (compra, venta) está lista
     para ser reemplazada por scraping directo del BROU cuando esté disponible.
@@ -50,8 +50,12 @@ class ExchangeRateService:
                 mid = Decimal(str(raw_rate))
 
                 # Spread porcentual realista (~2.5% cada lado, total ~5%)
-                spread = (mid * _SPREAD_PCT).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-                compra = (mid - spread).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                spread = (mid * _SPREAD_PCT).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+                compra = (mid - spread).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
                 venta = (mid + spread).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
                 return Ok((compra, venta))

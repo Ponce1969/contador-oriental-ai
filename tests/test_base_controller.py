@@ -2,6 +2,9 @@
 Tests para BaseController - Pilar de herencia del Escudo Charrúa
 """
 
+from __future__ import annotations
+
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from controllers.base_controller import BaseController
@@ -65,9 +68,9 @@ class TestBaseController:
         with controller._get_session() as session:
             assert session.is_active
 
-
         # Después del context, la sesión debería cerrarse
-        # Nota: En SQLAlchemy, la sesión puede permanecer activa pero el transaction termina
+        # Nota: En SQLAlchemy, la sesión puede permanecer activa
+        # pero el transaction termina
         # Lo importante es que el context manager maneje el ciclo de vida
 
     def test_get_session_con_error_hace_rollback(self, db_session):
@@ -120,7 +123,6 @@ class TestBaseControllerIntegration:
                 """Método de prueba para probar queries"""
                 with self._get_session() as session:
                     # Query simple para probar que la conexión funciona
-                    from sqlalchemy import text
 
                     result = session.execute(text("SELECT 1 as test")).fetchone()
                     return result[0] if result else None
@@ -144,7 +146,7 @@ class TestBaseControllerIntegration:
                         "SELECT COUNT(*) FROM test_table WHERE familia_id = :familia_id"
                     )
                     result = session.execute(
-                        query, {"familia_id": self._familia_id}
+                        text(query), {"familia_id": self._familia_id}
                     ).fetchone()
                     return result[0] if result else 0
 
@@ -187,7 +189,7 @@ class TestBaseControllerErrorHandling:
         assert controller._familia_id == 0
 
         # Familia_id string (inválido pero posible)
-        controller = TestController(familia_id="invalid")
+        controller = TestController(familia_id="invalid")  # type: ignore[arg-type]
         assert controller._familia_id == "invalid"
 
 

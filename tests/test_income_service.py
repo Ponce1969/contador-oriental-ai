@@ -3,6 +3,7 @@ Tests for IncomeService.
 """
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
 from result import Ok
@@ -28,8 +29,8 @@ class TestIncomeService:
         result = service.create_income(income)
 
         assert isinstance(result, Ok)
-        assert result.ok_value.monto == 2500.00
-        assert result.ok_value.descripcion == "Sueldo mensual"
+        assert result.unwrap().monto == 2500.00
+        assert result.unwrap().descripcion == "Sueldo mensual"
 
     def test_create_income_validation_error(self, service):
         """Test income creation with invalid data."""
@@ -38,7 +39,7 @@ class TestIncomeService:
         with pytest.raises(PydanticError):
             Income(
                 family_member_id=1,
-                monto=0,
+                monto=Decimal("0"),
                 fecha=date.today(),
                 descripcion="Invalid",
                 categoria=IncomeCategory.SUELDO,
@@ -59,7 +60,7 @@ class TestIncomeService:
         created = service.create_income(income)
 
         if created.is_ok():
-            income_id = created.ok_value.id
+            income_id = created.unwrap().id
             result = service.get_income(income_id)
             assert isinstance(result, Ok)
 
@@ -69,7 +70,7 @@ class TestIncomeService:
         created = service.create_income(income)
 
         if created.is_ok():
-            income_id = created.ok_value.id
+            income_id = created.unwrap().id
             result = service.delete_income(income_id)
             assert isinstance(result, Ok)
 
@@ -77,7 +78,7 @@ class TestIncomeService:
         """Test getting total by month grouped by currency."""
         income1 = Income(
             family_member_id=family_member_id,
-            monto=2500.00,
+            monto=Decimal("2500.00"),
             fecha=date.today(),
             descripcion="Sueldo 1",
             categoria=IncomeCategory.SUELDO,
@@ -85,7 +86,7 @@ class TestIncomeService:
         )
         income2 = Income(
             family_member_id=family_member_id,
-            monto=500.00,
+            monto=Decimal("500.00"),
             fecha=date.today(),
             descripcion="Extra",
             categoria=IncomeCategory.EXTRA,
@@ -111,7 +112,7 @@ class TestIncomeService:
         """Test getting summary by categories and currency."""
         income1 = Income(
             family_member_id=family_member_id,
-            monto=2500.00,
+            monto=Decimal("2500.00"),
             fecha=date.today(),
             descripcion="Sueldo",
             categoria=IncomeCategory.SUELDO,
@@ -119,7 +120,7 @@ class TestIncomeService:
         )
         income2 = Income(
             family_member_id=family_member_id,
-            monto=3000.00,
+            monto=Decimal("3000.00"),
             fecha=date.today(),
             descripcion="Sueldo 2",
             categoria=IncomeCategory.SUELDO,

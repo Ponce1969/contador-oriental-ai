@@ -40,7 +40,6 @@ class TestPasswordResetRepository:
         db_session.flush()
         return result.scalar()
 
-
     def test_create_token_success(self, repo, user_id):
         """Test successful token creation."""
         token = "test_token_123"

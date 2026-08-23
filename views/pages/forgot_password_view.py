@@ -119,8 +119,9 @@ class ForgotPasswordView:
         result = self.auth_controller.request_password_reset(self.email_input.value)
 
         if result.is_ok():
-            self._show_message(result.ok_value, error=False)
+            self._show_message(result.unwrap(), error=False)
             # Disable the button to prevent spam
+
             self.submit_button.disabled = True
             self.page.update()
         else:

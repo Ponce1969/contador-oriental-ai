@@ -21,22 +21,22 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
     def __init__(self, session: Session, familia_id: int | None = None) -> None:
         super().__init__(session, ExpenseTable, familia_id)
 
-    def _to_domain(self, table_row):
+    def _to_domain(self, table_row: ExpenseTable) -> Expense:
         """Convertir tabla ExpenseTable a dominio Expense"""
         return to_domain(table_row)
 
-    def _to_table(self, expense):
+    def _to_table(self, entity: Expense) -> ExpenseTable:
         """Convertir dominio Expense a tabla ExpenseTable"""
-        return to_table(expense)
+        return to_table(entity)
 
-    def _update_specific_fields(self, table_row, expense: Expense) -> None:
+    def _update_specific_fields(self, table_row: ExpenseTable, entity: Expense) -> None:
         """Actualizar campos específicos de gastos."""
-        table_row.categoria = expense.categoria.value
-        table_row.subcategoria = expense.subcategoria
-        table_row.metodo_pago = expense.metodo_pago.value
-        table_row.es_recurrente = expense.es_recurrente
-        table_row.frecuencia = expense.frecuencia.value if expense.frecuencia else None
-        table_row.currency = expense.currency
+        table_row.categoria = entity.categoria.value
+        table_row.subcategoria = entity.subcategoria
+        table_row.metodo_pago = entity.metodo_pago.value
+        table_row.es_recurrente = entity.es_recurrente
+        table_row.frecuencia = entity.frecuencia.value if entity.frecuencia else None
+        table_row.currency = entity.currency
 
     def get_by_category(self, categoria: str) -> Sequence[Expense]:
         """Obtener gastos por categoría de la familia"""

@@ -3,6 +3,7 @@ Tests for Controllers.
 """
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
 from result import Ok
@@ -58,22 +59,20 @@ class TestExpenseController:
     def test_add_expense(self, controller):
         """Test adding expense through controller."""
         expense = Expense(
-            familia_id=1,
-            monto=150.00,
+            monto=Decimal("150.00"),
             fecha=date.today(),
             descripcion="Test expense",
             categoria=ExpenseCategory.ALMACEN,
         )
         result = controller.add_expense(expense)
         assert isinstance(result, Ok)
-        assert result.ok_value.monto == 150.00
+        assert result.unwrap().monto == Decimal("150.00")
 
     def test_list_expenses(self, controller):
         """Test listing expenses through controller."""
         # Create an expense first
         expense = Expense(
-            familia_id=1,
-            monto=200.00,
+            monto=Decimal("200.00"),
             fecha=date.today(),
             descripcion="Another expense",
             categoria=ExpenseCategory.HOGAR,
@@ -87,8 +86,7 @@ class TestExpenseController:
     def test_list_by_category(self, controller):
         """Test listing expenses by category."""
         expense = Expense(
-            familia_id=1,
-            monto=300.00,
+            monto=Decimal("300.00"),
             fecha=date.today(),
             descripcion="Category test",
             categoria=ExpenseCategory.OCIO,
@@ -101,8 +99,7 @@ class TestExpenseController:
     def test_get_summary_by_categories(self, controller):
         """Test getting summary by categories through controller."""
         expense = Expense(
-            familia_id=1,
-            monto=300.00,
+            monto=Decimal("300.00"),
             fecha=date.today(),
             descripcion="Monthly test",
             categoria=ExpenseCategory.OCIO,
@@ -117,8 +114,7 @@ class TestExpenseController:
     def test_get_total_by_month(self, controller):
         """Test getting total by month through controller."""
         expense = Expense(
-            familia_id=1,
-            monto=500.00,
+            monto=Decimal("500.00"),
             fecha=date.today(),
             descripcion="Test total",
             categoria=ExpenseCategory.ALMACEN,
@@ -133,8 +129,7 @@ class TestExpenseController:
     def test_delete_expense(self, controller):
         """Test deleting expense through controller."""
         expense = Expense(
-            familia_id=1,
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=date.today(),
             descripcion="To delete",
             categoria=ExpenseCategory.OTROS,
@@ -142,7 +137,7 @@ class TestExpenseController:
         created = controller.add_expense(expense)
 
         if created.is_ok():
-            expense_id = created.ok_value.id
+            expense_id = created.unwrap().id
             result = controller.delete_expense(expense_id)
             assert isinstance(result, Ok)
 
@@ -165,23 +160,21 @@ class TestIncomeController:
     def test_add_income(self, controller, family_member_id):
         """Test adding income through controller."""
         income = Income(
-            familia_id=1,
             family_member_id=family_member_id,
-            monto=2500.00,
+            monto=Decimal("2500.00"),
             fecha=date.today(),
             descripcion="Test income",
             categoria=IncomeCategory.SUELDO,
         )
         result = controller.add_income(income)
         assert isinstance(result, Ok)
-        assert result.ok_value.monto == 2500.00
+        assert result.unwrap().monto == 2500.00
 
     def test_list_incomes(self, controller, family_member_id):
         """Test listing incomes through controller."""
         income = Income(
-            familia_id=1,
             family_member_id=family_member_id,
-            monto=1500.00,
+            monto=Decimal("1500.00"),
             fecha=date.today(),
             descripcion="Another income",
             categoria=IncomeCategory.FREELANCE,
@@ -194,9 +187,8 @@ class TestIncomeController:
     def test_list_by_member(self, controller, family_member_id):
         """Test listing incomes by member."""
         income = Income(
-            familia_id=1,
             family_member_id=family_member_id,
-            monto=2000.00,
+            monto=Decimal("2000.00"),
             fecha=date.today(),
             descripcion="Member income",
             categoria=IncomeCategory.SUELDO,
@@ -209,9 +201,8 @@ class TestIncomeController:
     def test_get_summary_by_categories(self, controller, family_member_id):
         """Test getting income summary by categories."""
         income = Income(
-            familia_id=1,
             family_member_id=family_member_id,
-            monto=1800.00,
+            monto=Decimal("1800.00"),
             fecha=date.today(),
             descripcion="Summary test",
             categoria=IncomeCategory.SUELDO,
@@ -226,9 +217,8 @@ class TestIncomeController:
     def test_get_total_by_month(self, controller, family_member_id):
         """Test getting monthly total through controller."""
         income = Income(
-            familia_id=1,
             family_member_id=family_member_id,
-            monto=3000.00,
+            monto=Decimal("3000.00"),
             fecha=date.today(),
             descripcion="Monthly income test",
             categoria=IncomeCategory.SUELDO,
@@ -243,9 +233,8 @@ class TestIncomeController:
     def test_delete_income(self, controller, family_member_id):
         """Test deleting income through controller."""
         income = Income(
-            familia_id=1,
             family_member_id=family_member_id,
-            monto=500.00,
+            monto=Decimal("500.00"),
             fecha=date.today(),
             descripcion="To delete",
             categoria=IncomeCategory.FREELANCE,
@@ -253,16 +242,15 @@ class TestIncomeController:
         created = controller.add_income(income)
 
         if created.is_ok():
-            income_id = created.ok_value.id
+            income_id = created.unwrap().id
             result = controller.delete_income(income_id)
             assert isinstance(result, Ok)
 
     def test_update_income(self, controller, family_member_id):
         """Test updating income through controller."""
         income = Income(
-            familia_id=1,
             family_member_id=family_member_id,
-            monto=1000.00,
+            monto=Decimal("1000.00"),
             fecha=date.today(),
             descripcion="Original",
             categoria=IncomeCategory.SUELDO,
@@ -270,11 +258,11 @@ class TestIncomeController:
         created = controller.add_income(income)
 
         if created.is_ok():
-            updated_income = created.ok_value
+            updated_income = created.unwrap()
             updated_income.descripcion = "Updated"
             result = controller.update_income(updated_income)
             assert isinstance(result, Ok)
-            assert result.ok_value.descripcion == "Updated"
+            assert result.unwrap().descripcion == "Updated"
 
     def test_get_title(self, controller):
         """Test getting controller title."""

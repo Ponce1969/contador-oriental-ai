@@ -32,7 +32,7 @@ class AuthController:
         result = self._auth_service.login(credentials)
 
         if result.is_err():
-            error = result.err_value
+            error = result.unwrap_err()
             if isinstance(error, ValidationError):
                 return Err(AppError(message=error.message))
             elif isinstance(error, DatabaseError):
@@ -68,5 +68,5 @@ class AuthController:
                 return Ok("Email actualizado correctamente")
             return Ok("Email eliminado")
         else:
-            error = result.err_value
+            error = result.unwrap_err()
             return Err(AppError(message=error.message))

@@ -12,6 +12,8 @@ import asyncio
 import logging
 import os
 
+from sqlalchemy.orm import Session
+
 from database.engine import get_session
 from database.tables import ExpenseTable
 from repositories.memoria_repository import MemoriaRepository
@@ -34,7 +36,11 @@ def _get_familia_id(session) -> int:
 
 
 def _formatear_gasto(g: ExpenseTable) -> str:
-    """Genera el texto narrativo del gasto para vectorizar (mismo formato que MemoryEventHandler)."""
+    """
+    Genera el texto narrativo del gasto para vectorizar
+    (mismo formato que MemoryEventHandler).
+    """
+
     return (
         f"Gasto registrado: {g.descripcion} "
         f"por ${g.monto:,.0f} "
@@ -44,7 +50,8 @@ def _formatear_gasto(g: ExpenseTable) -> str:
     )
 
 
-async def _poblar(session) -> int:
+async def _poblar(session: Session) -> tuple[int, int]:
+    """Genera embeddings para gastos existentes usando Ollama."""
     familia_id = _get_familia_id(session)
     memoria_repo = MemoriaRepository(session, familia_id)
     embedding_service = EmbeddingService()
@@ -73,7 +80,7 @@ async def _poblar(session) -> int:
 
     if not gastos:
         print("  ⚠️  No hay gastos del seed. Ejecutá primero: uv run fleting db seed")
-        return 0
+        return 0, familia_id
 
     print(f"  📦 Generando embeddings para {len(gastos)} gastos...")
     ok_count = 0
@@ -106,8 +113,10 @@ def run(db):
     try:
         total, familia_id = asyncio.run(_poblar(session))
         print(
-            f"\n  🧠 {total} embeddings guardados en ai_vector_memory para familia_id={familia_id}"
+            f"\n  🧠 {total} embeddings guardados en ai_vector_memory "
+            f"para familia_id={familia_id}"
         )
+
     except Exception as e:
         session.rollback()
         print(f"  ❌ Error en seed vectorial: {e}")

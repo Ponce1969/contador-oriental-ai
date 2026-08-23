@@ -16,7 +16,8 @@ def up(db):
         CREATE TABLE IF NOT EXISTS economic_activities (
             id SERIAL PRIMARY KEY,
             familia_id INTEGER NOT NULL REFERENCES familias(id) ON DELETE CASCADE,
-            family_member_id INTEGER NOT NULL REFERENCES family_members(id) ON DELETE CASCADE,
+            family_member_id INTEGER NOT NULL
+                REFERENCES family_members(id) ON DELETE CASCADE,
             nature VARCHAR(50) NOT NULL DEFAULT 'dependiente',
             title VARCHAR(100) NOT NULL DEFAULT 'Comercio / Servicios',
             start_date DATE NULL,
@@ -35,7 +36,8 @@ def up(db):
     db.execute("""
         CREATE TABLE IF NOT EXISTS dependent_details (
             id SERIAL PRIMARY KEY,
-            economic_activity_id INTEGER NOT NULL UNIQUE REFERENCES economic_activities(id) ON DELETE CASCADE,
+            economic_activity_id INTEGER NOT NULL UNIQUE
+                REFERENCES economic_activities(id) ON DELETE CASCADE,
             remuneration_type VARCHAR(30) NOT NULL DEFAULT 'mensual',
             weekly_hours INTEGER NOT NULL DEFAULT 40,
             estimated_monthly_nominal NUMERIC(12, 2) NULL,
@@ -50,7 +52,8 @@ def up(db):
     """)
     db.execute("""
         ALTER TABLE incomes 
-        ADD COLUMN IF NOT EXISTS economic_activity_id INTEGER REFERENCES economic_activities(id) ON DELETE SET NULL
+        ADD COLUMN IF NOT EXISTS economic_activity_id INTEGER
+        REFERENCES economic_activities(id) ON DELETE SET NULL
     """)
     db.execute("""
         CREATE INDEX IF NOT EXISTS idx_incomes_concept 

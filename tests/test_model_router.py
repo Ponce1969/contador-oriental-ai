@@ -13,6 +13,8 @@ Criterio de aceptación:
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 import pytest
 
 from models.ai_model import AIContext
@@ -36,8 +38,8 @@ def ctx_with_empalme() -> AIContext:
     """Contexto con empalme del mes anterior."""
     return AIContext(
         empalme_mes_label="Abril 2025",
-        empalme_total_gastos=100000,
-        empalme_ingresos_total=150000,
+        empalme_total_gastos=Decimal("100000"),
+        empalme_ingresos_total=Decimal("150000"),
     )
 
 

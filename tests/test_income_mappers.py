@@ -3,10 +3,10 @@ Tests for income_mappers.
 """
 
 from datetime import date
+from decimal import Decimal
 
 from database.tables import IncomeTable
-from models.categories import RecurrenceFrequency
-from models.income_model import Income, IncomeCategory
+from models.income_model import Income, IncomeCategory, RecurrenceFrequency
 from repositories.income_mappers import income_to_domain, income_to_table
 
 
@@ -19,7 +19,7 @@ class TestIncomeMappers:
             id=1,
             familia_id=1,
             family_member_id=1,
-            monto=2500.00,
+            monto=Decimal("2500.00"),
             fecha=date.today(),
             descripcion="Sueldo",
             categoria="💼 Sueldo",
@@ -38,7 +38,7 @@ class TestIncomeMappers:
         """Test converting domain model to IncomeTable."""
         income = Income(
             family_member_id=1,
-            monto=3000.00,
+            monto=Decimal("3000.00"),
             fecha=date.today(),
             descripcion="Freelance",
             categoria=IncomeCategory.FREELANCE,
@@ -55,7 +55,7 @@ class TestIncomeMappers:
         """Test converting income with recurrence frequency."""
         income = Income(
             family_member_id=1,
-            monto=1500.00,
+            monto=Decimal("1500.00"),
             fecha=date.today(),
             descripcion="Alquiler",
             categoria=IncomeCategory.ALQUILER,
@@ -72,7 +72,7 @@ class TestIncomeMappers:
         for category in IncomeCategory:
             income = Income(
                 family_member_id=1,
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=category,

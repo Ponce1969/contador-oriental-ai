@@ -163,7 +163,7 @@ class TestAuthServiceConSecurity:
         assert isinstance(result, Err)
         assert "minuto" in result.err_value.message.lower()
 
-    def test_login_exitoso_limpia_fallos(self):
+    def test_login_exitoso_limpia_fallos(self, monkeypatch):
         from result import Ok
 
         from models.user_model import User, UserLogin
@@ -182,7 +182,7 @@ class TestAuthServiceConSecurity:
         repo.update_last_login = MagicMock()
 
         svc = AuthService(repo)
-        svc._verify_password = MagicMock(return_value=True)
+        monkeypatch.setattr(svc, "_verify_password", MagicMock(return_value=True))
 
         svc.login(UserLogin(username="usuario", password="password123"))
         svc.login(UserLogin(username="usuario", password="password123"))

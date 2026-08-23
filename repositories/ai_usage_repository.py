@@ -52,7 +52,10 @@ class AiUsageRepository:
         prompt_tokens: int = 0,
         completion_tokens: int = 0,
     ) -> AiUsage:
-        """Registra una consulta. Upsert: si ya existe para hoy, suma tokens e incrementa contador."""
+        """
+        Registra una consulta.
+        Upsert: si ya existe para hoy, suma tokens e incrementa contador.
+        """
         existing = (
             self.session.query(AiUsageTable)
             .filter(
@@ -86,4 +89,3 @@ class AiUsageRepository:
         """Retorna cuántas consultas quedan hoy para el modelo dado."""
         count = self.get_count_today(model)
         return max(0, daily_limit - count)
-

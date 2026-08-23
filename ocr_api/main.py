@@ -13,7 +13,7 @@ from html import escape as html_escape
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import cv2
+import cv2  # type: ignore[import-not-found]
 import httpx
 import numpy as np
 import pytesseract
@@ -112,7 +112,7 @@ app = FastAPI(
 )
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type: ignore[arg-type]
     allow_origins=[os.getenv("OCR_ALLOWED_ORIGIN", "http://app:8550")],
     allow_credentials=False,
     allow_methods=["POST"],
@@ -552,9 +552,7 @@ async def upload_ocr(
         content = await file.read()
         if len(content) > settings.max_upload_size:
             max_mb = settings.max_upload_size // (1024 * 1024)
-            raise HTTPException(
-                413, f"Archivo excede {max_mb}MB"
-            )
+            raise HTTPException(413, f"Archivo excede {max_mb}MB")
         tmp.write(content)
         tmp_path = Path(tmp.name)
 
@@ -618,7 +616,6 @@ async def upload_ocr(
             os.unlink(tmp_path)
         except Exception:
             pass
-
 
 
 def main() -> None:

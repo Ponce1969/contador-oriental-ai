@@ -31,7 +31,7 @@ class TestSessionIsolation:
             session = MockSession()
 
         page = MockPage()
-        SessionManager.login(page, MockUser())
+        SessionManager.login(page, MockUser())  # type: ignore[arg-type]
 
         assert "test-session-123" in _sessions
         assert _sessions["test-session-123"]["familia_id"] == 100
@@ -55,7 +55,7 @@ class TestSessionIsolation:
             session = MockSession()
 
         page = MockPage()
-        SessionManager.login(page, MockUser())
+        SessionManager.login(page, MockUser())  # type: ignore[arg-type]
         assert "test-session-456" in _sessions
 
         SessionManager.logout(page)
@@ -92,8 +92,8 @@ class TestSessionIsolation:
         page1 = MockPage1()
         page2 = MockPage2()
 
-        SessionManager.login(page1, MockUser1())
-        SessionManager.login(page2, MockUser2())
+        SessionManager.login(page1, MockUser1())  # type: ignore[arg-type]
+        SessionManager.login(page2, MockUser2())  # type: ignore[arg-type]
 
         assert _sessions["session-A"]["familia_id"] == 100
         assert _sessions["session-B"]["familia_id"] == 200

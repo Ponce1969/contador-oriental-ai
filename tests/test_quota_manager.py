@@ -183,7 +183,6 @@ class TestAiUsageRepository:
         count = repo.get_count_today(model="llama3")
         assert count == 2  # Two requests registered in upserted row
 
-
     def test_get_count_today_empty(self, db_session, familia_ids):
         """Sin uso previo, get_count_today debe ser 0."""
         repo = AiUsageRepository(db_session, familia_ids["fam_1"])

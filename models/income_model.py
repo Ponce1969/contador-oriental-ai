@@ -27,7 +27,6 @@ class IncomeCategory(StrEnum):
 
 
 class RecurrenceFrequency(StrEnum):
-
     """Frecuencia de ingresos recurrentes"""
 
     DIARIA = "Diaria"

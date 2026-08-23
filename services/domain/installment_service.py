@@ -96,7 +96,7 @@ class InstallmentService:
 
         purchase = InstallmentPurchase(
             expense_id=expense.id,
-            familia_id=expense.familia_id if hasattr(expense, "familia_id") else 0,
+            familia_id=int(getattr(expense, "familia_id", 0) or 0),
             nombre_tarjeta=nombre_tarjeta,
             monto_total=monto_total,
             currency=expense.currency,

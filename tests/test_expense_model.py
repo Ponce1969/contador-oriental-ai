@@ -18,7 +18,7 @@ class TestExpenseModel:
     def test_expense_creation_basic(self):
         """Test basic expense creation."""
         expense = Expense(
-            monto=100.50,
+            monto=Decimal("100.50"),
             fecha=date.today(),
             descripcion="Test expense",
             categoria=ExpenseCategory.ALMACEN,
@@ -43,7 +43,7 @@ class TestExpenseModel:
     def test_expense_str_representation(self):
         """Test string representation of expense."""
         expense = Expense(
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=date.today(),
             descripcion="Compra test",
             categoria=ExpenseCategory.ALMACEN,
@@ -57,7 +57,7 @@ class TestExpenseModel:
     def test_expense_categoria_nombre(self):
         """Test categoria_nombre property."""
         expense = Expense(
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=date.today(),
             descripcion="Test",
             categoria=ExpenseCategory.ALMACEN,
@@ -70,7 +70,7 @@ class TestExpenseModel:
         """Test categoria_nombre for all categories."""
         for category in ExpenseCategory:
             expense = Expense(
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=category,
@@ -82,7 +82,7 @@ class TestExpenseModel:
     def test_expense_recurrente(self):
         """Test recurrent expense creation."""
         expense = Expense(
-            monto=500.00,
+            monto=Decimal("500.00"),
             fecha=date.today(),
             descripcion="Alquiler",
             categoria=ExpenseCategory.HOGAR,
@@ -99,7 +99,7 @@ class TestExpenseModel:
 
         with pytest.raises(ValidationError):
             Expense(
-                monto=0,
+                monto=Decimal("0"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=ExpenseCategory.ALMACEN,
@@ -111,7 +111,7 @@ class TestExpenseModel:
 
         with pytest.raises(ValidationError):
             Expense(
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="",
                 categoria=ExpenseCategory.ALMACEN,
@@ -120,7 +120,7 @@ class TestExpenseModel:
     def test_expense_default_values(self):
         """Test default values for optional fields."""
         expense = Expense(
-            monto=100.00,
+            monto=Decimal("100.00"),
             descripcion="Test",
             categoria=ExpenseCategory.ALMACEN,
         )
@@ -135,7 +135,7 @@ class TestExpenseModel:
         """Test that expense id can be assigned."""
         expense = Expense(
             id=123,
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=date.today(),
             descripcion="Test",
             categoria=ExpenseCategory.ALMACEN,

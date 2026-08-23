@@ -45,10 +45,19 @@ class LoginView:
 
         # Botón de login
         self.login_button = ft.ElevatedButton(
-            content=ft.Row([
-                ft.Icon(ft.Icons.LOGIN, color=ft.Colors.WHITE, size=20),
-                ft.Text(value="Iniciar Sesión", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-            ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.LOGIN, color=ft.Colors.WHITE, size=20),
+                    ft.Text(
+                        value="Iniciar Sesión",
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.WHITE,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=8,
+            ),
             on_click=self._on_login,
             width=float("inf"),
             height=50,
@@ -58,7 +67,9 @@ class LoginView:
 
         # Link de recuperar contraseña
         self.forgot_password_link = ft.TextButton(
-            content=ft.Text("¿Olvidaste tu contraseña?", size=12, color=ft.Colors.GREY_600),
+            content=ft.Text(
+                "¿Olvidaste tu contraseña?", size=12, color=ft.Colors.GREY_600
+            ),
             on_click=self._on_forgot_password_click,
         )
 
@@ -106,13 +117,26 @@ class LoginView:
                                     alignment=ft.Alignment(0, 0),
                                 ),
                                 ft.Divider(height=20, color=ft.Colors.GREY_200),
-                                ft.Row([
-                                    ft.Text("¿No tienes cuenta? ", size=13, color=ft.Colors.GREY_700),
-                                    ft.TextButton(
-                                        content=ft.Text("Regístrate aquí", size=13, weight=ft.FontWeight.BOLD, color="#1A56DB"),
-                                        on_click=self._on_register_click,
-                                    ),
-                                ], alignment=ft.MainAxisAlignment.CENTER, spacing=2),
+                                ft.Row(
+                                    [
+                                        ft.Text(
+                                            "¿No tienes cuenta? ",
+                                            size=13,
+                                            color=ft.Colors.GREY_700,
+                                        ),
+                                        ft.TextButton(
+                                            content=ft.Text(
+                                                "Regístrate aquí",
+                                                size=13,
+                                                weight=ft.FontWeight.BOLD,
+                                                color="#1A56DB",
+                                            ),
+                                            on_click=self._on_register_click,
+                                        ),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    spacing=2,
+                                ),
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=14,

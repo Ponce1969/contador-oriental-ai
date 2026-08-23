@@ -3,6 +3,7 @@ import flet as ft
 from controllers.auth_controller import AuthController
 from controllers.settings_controller import SettingsController
 from core.i18n import I18n
+from core.session import SessionManager
 from core.state import AppState
 from repositories.user_repository import UserRepository
 from views.layouts.main_layout import MainLayout
@@ -21,7 +22,7 @@ class SettingsView:
         if user_id:
             user_result = UserRepository().get_by_id(user_id)
             if user_result.is_ok():
-                self._current_email = user_result.ok_value.email or ""
+                self._current_email = user_result.unwrap().email or ""
 
         self._email_input = ft.TextField(
             label="Email para recuperación de contraseña",
@@ -33,34 +34,20 @@ class SettingsView:
         )
 
         self._email_info = ft.Text(
-            value=(
-                "Si olvidás tu contraseña, enviamos un link de recuperación "
-                "a este email. Sin email registrado, no es posible recuperar "
-                "la contraseña automáticamente."
-            ),
+            "Guardá tu email para poder restablecer la contraseña si la olvidás.",
             size=12,
-            color=ft.Colors.GREY_500,
-            width=350,
+            color=ft.Colors.GREY_600,
         )
 
-        self._email_status = ft.Text(value="", size=13, visible=False)
+        self._email_status = ft.Text(value="", visible=False, size=13)
 
-        self._save_email_button = ft.ElevatedButton(
-            content=ft.Row(
-                controls=[
-                    ft.Icon(icon=ft.Icons.SAVE),
-                    ft.Text(value="Guardar email"),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=10,
-            ),
+        self._save_email_btn = ft.ElevatedButton(
+            text="Guardar Email",
+            icon=ft.Icons.SAVE_OUTLINED,
             on_click=self._on_save_email,
-            width=350,
         )
 
     def _get_user_id(self) -> int | None:
-        from core.session import SessionManager
-
         return SessionManager.get_user_id(self.page)
 
     def _change_language(self, lang: str):
@@ -70,7 +57,7 @@ class SettingsView:
     def _on_save_email(self, e):
         user_id = self._get_user_id()
         if not user_id:
-            self._show_email_status("Error: sesión no encontrada", error=True)
+            self._show_email_status("Sesión no válida", error=True)
             return
 
         email_value = self._email_input.value.strip() or None
@@ -78,7 +65,7 @@ class SettingsView:
 
         if result.is_ok():
             self._current_email = email_value or ""
-            self._show_email_status(result.ok_value, error=False)
+            self._show_email_status(result.unwrap(), error=False)
             # Dismiss email banner in session since user now has email
             if email_value:
                 from core.session import _sessions
@@ -87,7 +74,7 @@ class SettingsView:
                 if session_id in _sessions:
                     _sessions[session_id]["email_banner_dismissed"] = True
         else:
-            self._show_email_status(result.err_value.message, error=True)
+            self._show_email_status(result.unwrap_err().message, error=True)
 
     def _show_email_status(self, message: str, error: bool = False):
         self._email_status.value = f"{'❌' if error else '✅'} {message}"
@@ -152,7 +139,7 @@ class SettingsView:
                             self._email_status,
                             ft.Row(
                                 controls=[
-                                    self._save_email_button,
+                                    self._save_email_btn,
                                     ft.OutlinedButton(
                                         content=ft.Text("Eliminar email"),
                                         on_click=self._on_remove_email,

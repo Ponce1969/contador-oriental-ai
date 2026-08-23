@@ -36,7 +36,7 @@ class TestAuthService:
         result = service.create_user(user_data)
 
         assert isinstance(result, Ok)
-        assert result.ok_value.username == "newuser"
+        assert result.unwrap().username == "newuser"
 
     def test_create_user_duplicate_username(self, service):
         """Test creating user with duplicate username fails."""
@@ -58,7 +58,7 @@ class TestAuthService:
         result = service.create_user(user_data2)
 
         assert isinstance(result, Err)
-        assert isinstance(result.err_value, ValidationError)
+        assert isinstance(result.unwrap_err(), ValidationError)
 
     def test_login_success(self, service):
         """Test successful login."""
@@ -79,7 +79,7 @@ class TestAuthService:
         result = service.login(credentials)
 
         assert isinstance(result, Ok)
-        assert result.ok_value.username == "logintest"
+        assert result.unwrap().username == "logintest"
 
     def test_login_wrong_password(self, service):
         """Test login with wrong password fails."""
@@ -100,7 +100,7 @@ class TestAuthService:
         result = service.login(credentials)
 
         assert isinstance(result, Err)
-        assert isinstance(result.err_value, ValidationError)
+        assert isinstance(result.unwrap_err(), ValidationError)
 
     def test_login_nonexistent_user(self, service):
         """Test login with non-existent user fails."""
@@ -111,7 +111,7 @@ class TestAuthService:
         result = service.login(credentials)
 
         assert isinstance(result, Err)
-        assert isinstance(result.err_value, ValidationError)
+        assert isinstance(result.unwrap_err(), ValidationError)
 
     def test_change_password_success(self, service):
         """Test successful password change."""
@@ -125,7 +125,7 @@ class TestAuthService:
         created = service.create_user(user_data)
 
         if created.is_ok():
-            user_id = created.ok_value.id
+            user_id = created.unwrap().id
             result = service.change_password(
                 user_id,
                 "oldpassword",
@@ -146,7 +146,7 @@ class TestAuthService:
         created = service.create_user(user_data)
 
         if created.is_ok():
-            user_id = created.ok_value.id
+            user_id = created.unwrap().id
             result = service.change_password(
                 user_id,
                 "wrongoldpass",
@@ -154,7 +154,7 @@ class TestAuthService:
             )
 
             assert isinstance(result, Err)
-            assert isinstance(result.err_value, ValidationError)
+            assert isinstance(result.unwrap_err(), ValidationError)
 
 
 class TestPasswordReset:
@@ -183,7 +183,8 @@ class TestPasswordReset:
             text(
                 """
                 INSERT INTO usuarios
-                    (familia_id, username, password_hash, nombre_completo, email, activo)
+                    (familia_id, username, password_hash,
+                     nombre_completo, email, activo)
                 VALUES (1, 'resetemailuser', :password_hash, 'Reset Email User',
                         'test@example.com', true)
                 RETURNING id
@@ -202,7 +203,7 @@ class TestPasswordReset:
         result = service_with_mock_email.request_password_reset("test@example.com")
 
         assert result.is_ok()
-        assert "Si tu email está registrado" in result.ok_value
+        assert "Si tu email está registrado" in result.unwrap()
 
         # Verify email was sent
         email_service = service_with_mock_email._email_service
@@ -218,7 +219,7 @@ class TestPasswordReset:
 
         assert result.is_ok()
         # Should return generic success message (email enumeration protection)
-        assert "Si tu email está registrado" in result.ok_value
+        assert "Si tu email está registrado" in result.unwrap()
 
         # No email should be sent
         email_service = service_with_mock_email._email_service
@@ -239,7 +240,7 @@ class TestPasswordReset:
         result = service_with_mock_email.request_password_reset(email)
 
         assert result.is_ok()
-        assert "Esperá" in result.ok_value
+        assert "Esperá" in result.unwrap()
 
     def test_reset_password_valid_token(self, service_with_mock_email, user_with_email):
         """Reset password with valid token succeeds."""
@@ -284,7 +285,7 @@ class TestPasswordReset:
         result = service_with_mock_email.reset_password(token, "newpassword123")
 
         assert result.is_err()
-        assert "inválido o expirado" in str(result.err_value.message)
+        assert "inválido o expirado" in str(result.unwrap_err().message)
 
     def test_reset_password_used_token(self, service_with_mock_email, user_with_email):
         """Reset password with already used token fails."""
@@ -301,13 +302,15 @@ class TestPasswordReset:
             token=token,
             expires_at=expires_at,
         )
-        reset_repo.mark_used(create_result.ok_value.id)
+        created_token = create_result.unwrap()
+        assert created_token.id is not None
+        reset_repo.mark_used(created_token.id)
 
         # Try to reset password
         result = service_with_mock_email.reset_password(token, "newpassword123")
 
         assert result.is_err()
-        assert "inválido o expirado" in str(result.err_value.message)
+        assert "inválido o expirado" in str(result.unwrap_err().message)
 
     def test_reset_password_invalid_token(self, service_with_mock_email):
         """Reset password with non-existent token fails."""
@@ -317,7 +320,7 @@ class TestPasswordReset:
         )
 
         assert result.is_err()
-        assert "inválido o expirado" in str(result.err_value.message)
+        assert "inválido o expirado" in str(result.unwrap_err().message)
 
     def test_reset_password_short_password(
         self, service_with_mock_email, user_with_email
@@ -341,4 +344,4 @@ class TestPasswordReset:
         result = service_with_mock_email.reset_password(token, "123")
 
         assert result.is_err()
-        assert "al menos 6 caracteres" in str(result.err_value.message)
+        assert "al menos 6 caracteres" in str(result.unwrap_err().message)

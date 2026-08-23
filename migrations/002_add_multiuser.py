@@ -96,7 +96,7 @@ def up(db):
                     "ALTER TABLE family_members ADD COLUMN familia_id INTEGER DEFAULT 1"
                 )
             )
-        except:
+        except Exception:
             pass
 
     # Agregar familia_id a incomes (solo si no existe)
@@ -119,7 +119,7 @@ def up(db):
             db.execute(
                 text("ALTER TABLE incomes ADD COLUMN familia_id INTEGER DEFAULT 1")
             )
-        except:
+        except Exception:
             pass
 
     # Agregar familia_id a expenses (solo si no existe)
@@ -142,7 +142,7 @@ def up(db):
             db.execute(
                 text("ALTER TABLE expenses ADD COLUMN familia_id INTEGER DEFAULT 1")
             )
-        except:
+        except Exception:
             pass
 
     # Crear familia por defecto para datos existentes (solo si no existe)
@@ -150,7 +150,9 @@ def up(db):
         db.execute(
             text("""
             INSERT INTO familias (id, nombre, email, activo, created_at)
-            VALUES (1, 'Familia Principal', 'admin@loquinto.com', TRUE, CURRENT_TIMESTAMP)
+            VALUES (
+                1, 'Familia Principal', 'admin@loquinto.com', TRUE, CURRENT_TIMESTAMP
+            )
             ON CONFLICT (id) DO NOTHING
         """)
         )
@@ -188,12 +190,14 @@ def up(db):
         )
         db.execute(
             text(
-                "SELECT setval('familias_id_seq', (SELECT COALESCE(MAX(id), 0) FROM familias))"
+                "SELECT setval('familias_id_seq', "
+                "(SELECT COALESCE(MAX(id), 0) FROM familias))"
             )
         )
         db.execute(
             text(
-                "SELECT setval('usuarios_id_seq', (SELECT COALESCE(MAX(id), 0) FROM usuarios))"
+                "SELECT setval('usuarios_id_seq', "
+                "(SELECT COALESCE(MAX(id), 0) FROM usuarios))"
             )
         )
     else:

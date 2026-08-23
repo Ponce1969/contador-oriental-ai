@@ -273,7 +273,6 @@ class TestAguinaldoCalculator:
         assert result.final_amount == Decimal("25833.33")
         assert 3 not in result.input_income_ids  # El ID 3 de aguinaldo no se incluyó
 
-
     def test_unclassified_legacy_incomes_trigger_requires_review(self):
         """Un ingreso sin concepto en el período produce REQUIRES_REVIEW."""
         request = CalculationRequest(
@@ -357,7 +356,6 @@ class TestAguinaldoCalculator:
         # 4 meses reales (240k) + 2 proyectados a 60k (120k) = 360k / 12 = 30k
         assert result.total_computable == Decimal("360000.00")
         assert result.final_amount == Decimal("30000.00")
-
 
 
 class TestVacationPayCalculator:

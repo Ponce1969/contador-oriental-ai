@@ -84,4 +84,4 @@ class TestResendEmailService:
             )
 
             assert result.is_err()
-            assert "Error al enviar email" in result.err_value
+            assert "Error al enviar email" in result.unwrap_err()

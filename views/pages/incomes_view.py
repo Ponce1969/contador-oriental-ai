@@ -100,7 +100,6 @@ class IncomesView:
             ],
         )
 
-
         self.fecha_input = ft.TextField(
             label="Fecha (YYYY-MM-DD)",
             hint_text=str(date.today()),

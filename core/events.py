@@ -57,7 +57,9 @@ class EventSystem:
             self._handlers[event_type] = []
         self._handlers[event_type].append(handler)
         logger.debug(
-            "Handler suscrito a '%s': %s", event_type.value, handler.__qualname__
+            "Handler suscrito a '%s': %s",
+            event_type.value,
+            getattr(handler, "__qualname__", repr(handler)),
         )
 
     async def publish(self, event: Event) -> None:
@@ -102,7 +104,7 @@ async def _safe_handle(handler: AsyncHandler, event: Event) -> None:
             "[MEMORY_EVENT_FAILED] familia_id=%s event_type=%s handler=%s error=%s",
             event.familia_id,
             event.type.value,
-            handler.__qualname__,
+            getattr(handler, "__qualname__", repr(handler)),
             str(e),
         )
 

@@ -109,7 +109,8 @@ class ReportService:
         pdf.cell(
             0,
             6,
-            f"  Informe Mensual  |  Familia: {self._limpiar_emojis(familia_nombre)}  |  "
+            f"  Informe Mensual  |  Familia: "
+            f"{self._limpiar_emojis(familia_nombre)}  |  "
             f"{datetime.now().strftime('%d/%m/%Y %H:%M')}",
             align="C",
             new_x="LMARGIN",

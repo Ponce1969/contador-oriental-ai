@@ -106,7 +106,7 @@ class FamilyMemberRepository:
 
     def delete(self, member_id: int) -> Result[None, DatabaseError]:
         """Desvincular un miembro de la familia (soft delete).
-        
+
         Marca activo=False y registra la fecha de desvinculación.
         El historial pasado del miembro permanece intacto.
         """

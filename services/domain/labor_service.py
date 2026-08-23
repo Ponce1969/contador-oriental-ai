@@ -1,10 +1,12 @@
 """
-Servicio de dominio para la gestión laboral y cálculo de beneficios de integrantes familiares.
+Servicio de dominio para la gestión laboral y cálculo de
+beneficios de integrantes familiares.
 """
 
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 from result import Err, Ok, Result
 
@@ -16,6 +18,8 @@ from services.labor.domain.models import (
     CalculationRequest,
     CalculationResult,
     EconomicActivity,
+    NominalEstimationResult,
+    TaxProfile,
 )
 from services.labor.domain.periods import AguinaldoPeriod
 from services.labor.engine import LaborCalculationEngine
@@ -37,7 +41,11 @@ class LaborService:
     ) -> Result[EconomicActivity, ValidationError | DatabaseError]:
         """Crear una nueva actividad económica con validaciones."""
         if not activity.title.strip():
-            return Err(ValidationError(message="El título o descripción de la actividad es requerido."))
+            return Err(
+                ValidationError(
+                    message="El título o descripción de la actividad es requerido."
+                )
+            )
         if activity.family_member_id <= 0:
             return Err(ValidationError(message="El integrante familiar es requerido."))
 
@@ -60,9 +68,15 @@ class LaborService:
     ) -> Result[EconomicActivity, ValidationError | DatabaseError]:
         """Actualizar una actividad económica existente."""
         if activity.id is None:
-            return Err(ValidationError(message="ID requerido para actualizar la actividad."))
+            return Err(
+                ValidationError(message="ID requerido para actualizar la actividad.")
+            )
         if not activity.title.strip():
-            return Err(ValidationError(message="El título o descripción de la actividad es requerido."))
+            return Err(
+                ValidationError(
+                    message="El título o descripción de la actividad es requerido."
+                )
+            )
 
         return self._activity_repo.update(activity)
 
@@ -94,7 +108,10 @@ class LaborService:
         period_incomes: list[dict] = []
         for inc in all_member_incomes:
             # Si el ingreso está asociado a otra actividad económica distinta, omitirlo
-            if inc.economic_activity_id is not None and inc.economic_activity_id != activity.id:
+            if (
+                inc.economic_activity_id is not None
+                and inc.economic_activity_id != activity.id
+            ):
                 continue
 
             if period.start_date <= inc.fecha <= period.end_date:
@@ -108,13 +125,16 @@ class LaborService:
                 )
 
         estimated_base = None
-        if activity.dependent_details and activity.dependent_details.estimated_monthly_nominal:
+        if (
+            activity.dependent_details
+            and activity.dependent_details.estimated_monthly_nominal
+        ):
             estimated_base = activity.dependent_details.estimated_monthly_nominal
 
         request = CalculationRequest(
             familia_id=activity.familia_id,
             family_member_id=activity.family_member_id,
-            economic_activity_id=activity.id,
+            economic_activity_id=activity.id or 0,
             calculation_type=f"AGUINALDO_{'JUNIO' if semester == 1 else 'DICIEMBRE'}",
             period_year=year,
             period_semester=semester,
@@ -135,7 +155,8 @@ class LaborService:
         requested_days: int = 20,
     ) -> Result[CalculationResult, ValidationError | DatabaseError]:
         """
-        Ejecuta el cálculo orientativo de salario vacacional para una actividad económica.
+        Ejecuta el cálculo orientativo de salario vacacional para una
+        actividad económica.
         """
         activity_res = self._activity_repo.get_by_id(activity_id)
         if activity_res.is_err():
@@ -164,7 +185,7 @@ class LaborService:
         request = CalculationRequest(
             familia_id=activity.familia_id,
             family_member_id=activity.family_member_id,
-            economic_activity_id=activity.id,
+            economic_activity_id=activity.id or 0,
             calculation_type="SALARIO_VACACIONAL",
             period_year=date.today().year,
             period_semester=1,
@@ -176,5 +197,72 @@ class LaborService:
             requested_vacation_days=requested_days,
         )
 
-        result = LaborCalculationEngine.calculate_vacation_pay(request, remuneration_type=rem_type)
+        result = LaborCalculationEngine.calculate_vacation_pay(
+            request, remuneration_type=rem_type
+        )
+        return Ok(result)
+
+    def calculate_activity_withholdings(
+        self,
+        activity_id: int,
+        nominal: Decimal | None = None,
+        fiscal_year: int = 2026,
+    ) -> Result[CalculationResult, ValidationError | DatabaseError]:
+        """
+        Calcula el desglose de aportes a la seguridad social y retención de IRPF
+        para una actividad laboral dependiente.
+        """
+        activity_res = self._activity_repo.get_by_id(activity_id)
+        if activity_res.is_err():
+            return activity_res  # type: ignore[return-value]
+
+        activity = activity_res.unwrap()
+        dep = activity.dependent_details
+        profile = dep.tax_profile if dep else TaxProfile()
+        base_nominal = nominal or (dep.estimated_monthly_nominal if dep else None)
+
+        if base_nominal is None or base_nominal <= Decimal("0.00"):
+            return Err(
+                ValidationError(
+                    message="Se requiere salario nominal mayor a 0 para retenciones."
+                )
+            )
+
+        result = LaborCalculationEngine.calculate_withholdings(
+            nominal=base_nominal,
+            profile=profile,
+            fiscal_year=fiscal_year,
+        )
+        return Ok(result)
+
+    def estimate_activity_nominal(
+        self,
+        activity_id: int,
+        liquid: Decimal,
+        fiscal_year: int = 2026,
+    ) -> Result[NominalEstimationResult, ValidationError | DatabaseError]:
+        """
+        Estima determinísticamente el salario nominal necesario para obtener
+        un salario líquido objetivo en una actividad dependiente.
+        """
+        activity_res = self._activity_repo.get_by_id(activity_id)
+        if activity_res.is_err():
+            return activity_res  # type: ignore[return-value]
+
+        activity = activity_res.unwrap()
+        dep = activity.dependent_details
+        profile = dep.tax_profile if dep else TaxProfile()
+
+        if liquid <= Decimal("0.00"):
+            return Err(
+                ValidationError(
+                    message="El salario líquido objetivo debe ser mayor a 0."
+                )
+            )
+
+        result = LaborCalculationEngine.estimate_nominal(
+            liquid=liquid,
+            profile=profile,
+            fiscal_year=fiscal_year,
+        )
         return Ok(result)

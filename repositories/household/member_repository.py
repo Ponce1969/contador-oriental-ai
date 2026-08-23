@@ -12,7 +12,9 @@ class HouseholdMemberRepository:
         self.session = session
 
     def get_active_membership(self, familia_id: int) -> HouseholdMember | None:
-        """Returns the member record if the familia is currently in an active household."""
+        """
+        Returns the member record if the familia is currently in an active household.
+        """
         stmt = (
             select(HouseholdMemberTable)
             .join(HogarTable, HogarTable.id == HouseholdMemberTable.household_id)
@@ -33,7 +35,9 @@ class HouseholdMemberRepository:
         )
 
     def get_members(self, household_id: int) -> list[HouseholdMember]:
-        stmt = select(HouseholdMemberTable).where(HouseholdMemberTable.household_id == household_id)
+        stmt = select(HouseholdMemberTable).where(
+            HouseholdMemberTable.household_id == household_id
+        )
         rows = self.session.execute(stmt).scalars().all()
         return [
             HouseholdMember(
@@ -46,8 +50,12 @@ class HouseholdMemberRepository:
             for r in rows
         ]
 
-    def add_member(self, household_id: int, familia_id: int, role: str) -> HouseholdMember:
-        member = HouseholdMemberTable(household_id=household_id, familia_id=familia_id, role=role)
+    def add_member(
+        self, household_id: int, familia_id: int, role: str
+    ) -> HouseholdMember:
+        member = HouseholdMemberTable(
+            household_id=household_id, familia_id=familia_id, role=role
+        )
         self.session.add(member)
         self.session.flush()
         return HouseholdMember(

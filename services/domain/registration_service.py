@@ -77,9 +77,10 @@ class RegistrationService:
         admin_password: str,
         admin_nombre_completo: str,
     ) -> Result[User, str]:
-        with self._uow as uow:
+        uow = self._uow if self._uow is not None else UnitOfWork()
+        with uow as active_uow:
             return self._do_registration(
-                uow,
+                active_uow,
                 familia_nombre,
                 familia_email,
                 admin_username,
@@ -122,7 +123,10 @@ class RegistrationService:
             """),
             {"nombre": familia_nombre, "email": familia_email},
         )
-        familia_id = result.fetchone()[0]
+        fam_row = result.fetchone()
+        if not fam_row:
+            return Err("Error al registrar familia")
+        familia_id = fam_row[0]
 
         password_hash = self._ph.hash(admin_password)
 
@@ -146,9 +150,12 @@ class RegistrationService:
                 "email": familia_email,
             },
         )
-        usuario_id = result.fetchone()[0]
+        usr_row = result.fetchone()
+        if not usr_row:
+            return Err("Error al registrar usuario")
+        usuario_id = usr_row[0]
 
-        uow.flush()
+        session.flush()
 
         return Ok(
             User(

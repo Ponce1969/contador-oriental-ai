@@ -146,7 +146,6 @@ class NVIDIAClient:
                     "Verifique la conexión a internet."
                 ) from err
 
-
     async def generate_stream(
         self,
         prompt: str,
@@ -228,4 +227,3 @@ class NVIDIAClient:
                 ) from e
             except httpx.ConnectError as err:
                 raise ConnectionError("No se pudo conectar a NVIDIA API.") from err
-

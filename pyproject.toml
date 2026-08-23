@@ -68,21 +68,11 @@ src = ["."]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "PYI"]
-ignore = ["E501"]
-
-[tool.ruff.lint.per-file-ignores]
-"main.py" = ["E402"]
-"migrations/*" = ["E722"]
-"ocr_api/*" = ["B008", "ASYNC240", "E501"]
-"ocr_api/main.py" = ["B008", "ASYNC240", "E501"]
-"guardian/**" = ["UP040", "PYI036"]
-"guardian/*" = ["UP040", "PYI036"]
-"repositories/base_repository.py" = ["UP046"]
-"repositories/base_table_repository.py" = ["UP046"]
-
+ignore = []
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
 
 

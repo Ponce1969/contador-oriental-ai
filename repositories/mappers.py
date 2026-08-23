@@ -1,8 +1,7 @@
-from __future__ import annotations
-
+from datetime import date
 from decimal import Decimal
 
-from database.tables import ExpenseTable, ShoppingItemTable
+from database.tables import ExpenseTable
 from models.expense_model import Expense
 from models.shopping_model import ShoppingItem
 
@@ -47,24 +46,24 @@ def to_table(expense: Expense) -> ExpenseTable:
 
 
 # Funciones legacy para compatibilidad con ShoppingItem
-def shopping_to_domain(row: ShoppingItemTable) -> ShoppingItem:
+def shopping_to_domain(row: ExpenseTable) -> ShoppingItem:
     """Convertir tabla antigua a ShoppingItem (legacy)"""
     return ShoppingItem(
         id=row.id,
-        name=row.name or "",
-        price=Decimal(str(row.price)) if row.price is not None else Decimal("0"),
-        category=row.category or "",
-        purchased=row.purchased,
-        purchase_date=row.purchase_date or row.fecha,
+        name=row.descripcion or "",
+        price=Decimal(str(row.monto)) if row.monto is not None else Decimal("0"),
+        category=row.categoria or "",
+        purchased=not row.pendiente if row.pendiente is not None else True,
+        purchase_date=row.fecha,
     )
 
 
-def shopping_to_table(item: ShoppingItem) -> ShoppingItemTable:
+def shopping_to_table(item: ShoppingItem) -> ExpenseTable:
     """Convertir ShoppingItem a tabla (legacy)"""
-    return ShoppingItemTable(
-        name=item.name,
-        price=item.price,
-        category=item.category,
-        purchased=item.purchased,
-        purchase_date=item.purchase_date,
+    return ExpenseTable(
+        descripcion=item.name,
+        monto=item.price,
+        categoria=item.category,
+        fecha=item.purchase_date or date.today(),
+        pendiente=not item.purchased,
     )

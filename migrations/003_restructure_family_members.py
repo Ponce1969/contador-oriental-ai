@@ -84,7 +84,7 @@ def up(db):
                 ALTER TABLE family_members ADD COLUMN parentesco TEXT DEFAULT 'otro'
             """)
             )
-        except:
+        except Exception:
             pass
 
         try:
@@ -93,16 +93,17 @@ def up(db):
                 ALTER TABLE family_members ADD COLUMN edad INTEGER
             """)
             )
-        except:
+        except Exception:
             pass
 
         try:
             db.execute(
                 text("""
-                ALTER TABLE family_members ADD COLUMN estado_laboral TEXT DEFAULT 'empleado'
+                ALTER TABLE family_members
+                ADD COLUMN estado_laboral TEXT DEFAULT 'empleado'
             """)
             )
-        except:
+        except Exception:
             pass
 
     # 3. Mejorar columna tipo_ingreso en incomes (si no existe, agregarla)
@@ -128,7 +129,7 @@ def up(db):
                 ALTER TABLE incomes ADD COLUMN tipo_ingreso TEXT DEFAULT 'sueldo'
             """)
             )
-        except:
+        except Exception:
             pass
 
     print("✅ Reestructuración completada exitosamente")

@@ -48,7 +48,7 @@ class DashboardView:
         if not SessionManager.is_logged_in(page):
             router.navigate("/login")
             return
-            
+
         pending_invite = SessionManager.get_pending_invite(page)
         if pending_invite:
             SessionManager.clear_pending_invite(page)
@@ -73,7 +73,7 @@ class DashboardView:
     def render(self):
         """Renderizar la vista completa"""
         # Si __init__ abortó temprano por una redirección, los controllers no existirán
-        if not hasattr(self, 'income_controller'):
+        if not hasattr(self, "income_controller"):
             return ft.Container()
 
         # Obtener mes y año actual
@@ -100,10 +100,10 @@ class DashboardView:
         # Cotización y Patrimonio Consolidado
         exchange_ctrl = ExchangeRateController()
         compra, venta, _ = exchange_ctrl.get_display_rate()
-        
+
         patrimonio_total_uyu = balance_uyu
         equivalencia_usd: Decimal | None = None
-        
+
         if compra > 0 and venta > 0:
             if balance_usd < 0:
                 equivalencia_usd = balance_usd * venta
@@ -118,8 +118,9 @@ class DashboardView:
 
         is_mobile = AppState.device == "mobile"
         title_size = 20 if is_mobile else 28
-        
-        # Opcional: mostrar super card del patrimonio consolidado (por ahora lo usaremos solo para alertas y equivalencias como pide el plan ligero)
+
+        # Opcional: mostrar super card del patrimonio consolidado (por ahora lo usaremos
+        # solo para alertas y equivalencias como pide el plan ligero)
 
         content = ft.Column(
             controls=[
@@ -277,10 +278,10 @@ class DashboardView:
                 color=color,
             ),
         ]
-        
+
         if equiv_text:
             column_controls.append(equiv_text)
-            
+
         column_controls.append(
             ft.Text(
                 value=msg,
@@ -325,7 +326,9 @@ class DashboardView:
             col=Responsive.COL_HALF,
         )
 
-    def _balance_color(self, balance: Decimal, patrimonio_total: Decimal, currency: str) -> str:
+    def _balance_color(
+        self, balance: Decimal, patrimonio_total: Decimal, currency: str
+    ) -> str:
         if balance > 0:
             return ft.Colors.GREEN
         if balance < 0:
@@ -334,7 +337,9 @@ class DashboardView:
             return ft.Colors.RED
         return ft.Colors.ORANGE
 
-    def _balance_icon(self, balance: Decimal, patrimonio_total: Decimal, currency: str) -> str:
+    def _balance_icon(
+        self, balance: Decimal, patrimonio_total: Decimal, currency: str
+    ) -> str:
         if balance > 0:
             return ft.Icons.TRENDING_UP
         if balance < 0:
@@ -343,7 +348,9 @@ class DashboardView:
             return ft.Icons.TRENDING_DOWN
         return ft.Icons.TRENDING_FLAT
 
-    def _balance_msg(self, balance: Decimal, currency: str, patrimonio_total: Decimal) -> str:
+    def _balance_msg(
+        self, balance: Decimal, currency: str, patrimonio_total: Decimal
+    ) -> str:
         if balance > 0:
             return "¡Excelente! Tienes un superávit"
         if balance < 0:

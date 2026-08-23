@@ -41,4 +41,3 @@ def income_to_table(income: Income) -> IncomeTable:
         frecuencia=income.frecuencia.value if income.frecuencia else None,
         notas=income.notas,
     )
-

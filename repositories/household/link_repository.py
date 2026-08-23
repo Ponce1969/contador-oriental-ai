@@ -13,7 +13,9 @@ class SharedExpenseLinkRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def create(self, household_id: int, gasto_id: int, familia_id: int) -> SharedExpenseLink:
+    def create(
+        self, household_id: int, gasto_id: int, familia_id: int
+    ) -> SharedExpenseLink:
         link = SharedExpenseLinkTable(
             household_id=household_id, gasto_id=gasto_id, familia_id=familia_id
         )
@@ -27,7 +29,9 @@ class SharedExpenseLinkRepository:
             linked_at=link.linked_at,
         )
 
-    def get_by_gasto_and_household(self, gasto_id: int, household_id: int) -> SharedExpenseLink | None:
+    def get_by_gasto_and_household(
+        self, gasto_id: int, household_id: int
+    ) -> SharedExpenseLink | None:
         stmt = select(SharedExpenseLinkTable).where(
             SharedExpenseLinkTable.gasto_id == gasto_id,
             SharedExpenseLinkTable.household_id == household_id,
@@ -63,20 +67,24 @@ class SharedExpenseLinkRepository:
         )
         self.session.execute(stmt)
 
-    def sum_contributions_per_member(self, household_id: int) -> dict[tuple[int, str], Decimal]:
+    def sum_contributions_per_member(
+        self, household_id: int
+    ) -> dict[tuple[int, str], Decimal]:
         """Returns dict of (familia_id, currency) -> total_amount, per-currency."""
         stmt = (
             select(
                 SharedExpenseLinkTable.familia_id,
                 ExpenseTable.currency,
-                func.sum(ExpenseTable.monto)
+                func.sum(ExpenseTable.monto),
             )
             .join(ExpenseTable, ExpenseTable.id == SharedExpenseLinkTable.gasto_id)
             .where(SharedExpenseLinkTable.household_id == household_id)
             .group_by(SharedExpenseLinkTable.familia_id, ExpenseTable.currency)
         )
         rows = self.session.execute(stmt).all()
-        return {(r[0], r[1] or "UYU"): Decimal(r[2]) if r[2] else Decimal("0") for r in rows}
+        return {
+            (r[0], r[1] or "UYU"): Decimal(r[2]) if r[2] else Decimal("0") for r in rows
+        }
 
     def get_feed(
         self,
@@ -92,7 +100,7 @@ class SharedExpenseLinkRepository:
             .join(FamiliaTable, FamiliaTable.id == SharedExpenseLinkTable.familia_id)
             .where(SharedExpenseLinkTable.household_id == household_id)
         )
-        
+
         if familia_id:
             base_stmt = base_stmt.where(SharedExpenseLinkTable.familia_id == familia_id)
 
@@ -102,13 +110,12 @@ class SharedExpenseLinkRepository:
 
         # Fetch page
         paginated_stmt = (
-            base_stmt
-            .order_by(desc(ExpenseTable.fecha), desc(ExpenseTable.id))
+            base_stmt.order_by(desc(ExpenseTable.fecha), desc(ExpenseTable.id))
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
         rows = self.session.execute(paginated_stmt).all()
-        
+
         items = [
             SharedExpenseFeedItem(
                 gasto_id=exp.id,
@@ -123,5 +130,5 @@ class SharedExpenseLinkRepository:
             )
             for link, exp, fam in rows
         ]
-        
+
         return items, total_count

@@ -3,6 +3,7 @@ Tests for edge cases and error handling.
 """
 
 from datetime import date, timedelta
+from decimal import Decimal
 
 import pytest
 from pydantic import ValidationError as PydanticError
@@ -21,8 +22,7 @@ class TestValidationEdgeCases:
         """Test expense with zero amount fails validation."""
         with pytest.raises(PydanticError):
             Expense(
-                familia_id=1,
-                monto=0,
+                monto=Decimal("0"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=ExpenseCategory.ALMACEN,
@@ -32,8 +32,7 @@ class TestValidationEdgeCases:
         """Test expense with negative amount fails validation."""
         with pytest.raises(PydanticError):
             Expense(
-                familia_id=1,
-                monto=-100.00,
+                monto=Decimal("-100.00"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=ExpenseCategory.ALMACEN,
@@ -43,8 +42,7 @@ class TestValidationEdgeCases:
         """Test expense with empty description fails validation."""
         with pytest.raises(PydanticError):
             Expense(
-                familia_id=1,
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="",
                 categoria=ExpenseCategory.ALMACEN,
@@ -54,8 +52,7 @@ class TestValidationEdgeCases:
         """Test expense with future date is allowed."""
         future_date = date.today() + timedelta(days=30)
         expense = Expense(
-            familia_id=1,
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=future_date,
             descripcion="Future expense",
             categoria=ExpenseCategory.HOGAR,
@@ -66,9 +63,8 @@ class TestValidationEdgeCases:
         """Test income with zero amount fails validation."""
         with pytest.raises(PydanticError):
             Income(
-                familia_id=1,
                 family_member_id=1,
-                monto=0,
+                monto=Decimal("0"),
                 fecha=date.today(),
                 descripcion="Test",
                 categoria=IncomeCategory.SUELDO,
@@ -106,7 +102,7 @@ class TestRepositoryErrorHandling:
         result = repo.get_by_id(99999)  # Non-existent ID
 
         assert result.is_err()
-        assert "no encontrado" in result.err_value.message.lower()
+        assert "no encontrado" in result.unwrap_err().message.lower()
 
     def test_get_nonexistent_income(self, db_session):
         """Test getting non-existent income returns error."""
@@ -116,7 +112,7 @@ class TestRepositoryErrorHandling:
         result = repo.get_by_id(99999)  # Non-existent ID
 
         assert result.is_err()
-        assert "no encontrado" in result.err_value.message.lower()
+        assert "no encontrado" in result.unwrap_err().message.lower()
 
     def test_get_nonexistent_family_member(self, db_session):
         """Test getting non-existent family member returns error."""
@@ -126,7 +122,7 @@ class TestRepositoryErrorHandling:
         result = repo.get_by_id(99999)  # Non-existent ID
 
         assert result.is_err()
-        assert "no encontrado" in result.err_value.message.lower()
+        assert "no encontrado" in result.unwrap_err().message.lower()
 
 
 class TestBusinessRules:
@@ -141,8 +137,7 @@ class TestBusinessRules:
         service = ExpenseService(repo)
 
         expense = Expense(
-            familia_id=1,
-            monto=500.00,
+            monto=Decimal("500.00"),
             fecha=date.today(),
             descripcion="Alquiler",
             categoria=ExpenseCategory.HOGAR,
@@ -163,9 +158,8 @@ class TestBusinessRules:
         service = IncomeService(repo)
 
         income = Income(
-            familia_id=1,
             family_member_id=1,
-            monto=2000.00,
+            monto=Decimal("2000.00"),
             fecha=date.today(),
             descripcion="Sueldo",
             categoria=IncomeCategory.SUELDO,

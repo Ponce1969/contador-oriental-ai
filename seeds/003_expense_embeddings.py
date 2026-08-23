@@ -69,9 +69,10 @@ async def _poblar(session) -> tuple[int, int]:
     for g in gastos:
         texto = _formatear_gasto(g)
         result = await embedding_service.generar_embedding(texto)
-        if hasattr(result, "ok") and result.ok():
-            repo.guardar_embedding(g.id, result.ok())
+        if result.is_ok():
+            repo.guardar_embedding(g.id, result.unwrap())
             ok_count += 1
+
             print(
                 f"  ✅ [{ok_count:02d}/{len(gastos)}] {g.fecha} | {g.descripcion[:45]}"
             )
@@ -89,8 +90,10 @@ def run(db):
     try:
         total, familia_id = asyncio.run(_poblar(session))
         print(
-            f"\n  🔍 {total} embeddings guardados en expenses.embedding para familia_id={familia_id}"
+            f"\n  🔍 {total} embeddings guardados en expenses.embedding "
+            f"para familia_id={familia_id}"
         )
+
     except Exception as e:
         session.rollback()
         print(f"  ❌ Error en seed de embeddings: {e}")

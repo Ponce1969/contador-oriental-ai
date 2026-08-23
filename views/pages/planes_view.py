@@ -16,15 +16,15 @@ from services.infrastructure.formatters import format_pesos
 from views.layouts.main_layout import MainLayout
 
 # ── Light Palette ───────────────────────────────────────────────────
-_BG = "#F8F6FA"       # fondo general
-_CARD = "#FAF8F5"     # fondo tarjetas
-_DARK = "#1E293B"     # texto principal
-_GREY = "#64748B"     # texto secundario
+_BG = "#F8F6FA"  # fondo general
+_CARD = "#FAF8F5"  # fondo tarjetas
+_DARK = "#1E293B"  # texto principal
+_GREY = "#64748B"  # texto secundario
 _EMERALD = "#10b981"  # positivo, progreso
 _EMERALD_MINT = "#34d399"  # brillo del gradiente
-_RUBY = "#e11d48"     # alerta, deuda
-_AMBER = "#f59e0b"    # advertencia intermedia
-_BORDER = "#E8E2D9"   # borde de tarjetas
+_RUBY = "#e11d48"  # alerta, deuda
+_AMBER = "#f59e0b"  # advertencia intermedia
+_BORDER = "#E8E2D9"  # borde de tarjetas
 
 
 def _color_semaforo(ratio: float) -> str:
@@ -236,7 +236,7 @@ class PlanesView:
                                                 plan.descripcion,
                                                 size=15,
                                                 weight=ft.FontWeight.BOLD,
-                                    color=_DARK,
+                                                color=_DARK,
                                             ),
                                             ft.Text(
                                                 (
@@ -244,7 +244,7 @@ class PlanesView:
                                                     f"{cuota_fmt} c/u"
                                                 ),
                                                 size=11,
-                        color=_GREY,
+                                                color=_GREY,
                                             ),
                                         ],
                                         expand=True,
@@ -265,12 +265,12 @@ class PlanesView:
                             ft.Container(height=4),
                             ft.Row(
                                 controls=[
-                    ft.Text(
-                        f"Restan {plan.cuotas_restantes} cuotas",
-                        size=11,
-                        weight=ft.FontWeight.W_600,
-                        color=_EMERALD,
-                    ),
+                                    ft.Text(
+                                        f"Restan {plan.cuotas_restantes} cuotas",
+                                        size=11,
+                                        weight=ft.FontWeight.W_600,
+                                        color=_EMERALD,
+                                    ),
                                     (
                                         ft.Container(
                                             content=ft.Row(

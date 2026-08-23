@@ -2,6 +2,8 @@
 Tests for core utilities and configuration.
 """
 
+from decimal import Decimal
+
 
 class TestDatabaseConfig:
     """Test cases for database configuration."""
@@ -56,7 +58,7 @@ class TestMappers:
 
         table_row = ExpenseTable(
             id=1,
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=date.today(),
             descripcion="Test",
             categoria="🛒 Almacén",
@@ -79,7 +81,7 @@ class TestMappers:
         from repositories.mappers import to_table
 
         expense = Expense(
-            monto=150.00,
+            monto=Decimal("150.00"),
             fecha=date.today(),
             descripcion="Test expense",
             categoria=ExpenseCategory.ALMACEN,

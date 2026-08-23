@@ -26,7 +26,7 @@ class CorrectElevatedButton(ft.ElevatedButton):
     def __init__(self, text: str, on_click: ButtonType = None, **kwargs) -> None:
         # Llamamos al constructor real con los tipos correctos
         # Forzamos los tipos correctos ignorando las definiciones incorrectas de Flet
-        super().__init__(text, on_click=on_click, **kwargs)  # type: ignore[arg-type]
+        super().__init__(text, on_click=on_click, **kwargs)
 
 
 class CorrectSnackBar(ft.SnackBar):

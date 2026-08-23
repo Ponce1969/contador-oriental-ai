@@ -47,19 +47,19 @@ class TestIntegrationFlows:
         # Add expenses
         expenses = [
             Expense(
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="Grocery shopping",
                 categoria=ExpenseCategory.ALMACEN,
             ),
             Expense(
-                monto=50.00,
+                monto=Decimal("50.00"),
                 fecha=date.today(),
                 descripcion="Bus ticket",
                 categoria=ExpenseCategory.VEHICULOS,
             ),
             Expense(
-                monto=200.00,
+                monto=Decimal("200.00"),
                 fecha=date.today(),
                 descripcion="Electric bill",
                 categoria=ExpenseCategory.HOGAR,
@@ -93,7 +93,7 @@ class TestIntegrationFlows:
         incomes = [
             Income(
                 family_member_id=family_member_id,
-                monto=2500.00,
+                monto=Decimal("2500.00"),
                 fecha=date.today(),
                 descripcion="Salary",
                 categoria=IncomeCategory.SUELDO,
@@ -101,7 +101,7 @@ class TestIntegrationFlows:
             ),
             Income(
                 family_member_id=family_member_id,
-                monto=500.00,
+                monto=Decimal("500.00"),
                 fecha=date.today(),
                 descripcion="Freelance work",
                 categoria=IncomeCategory.FREELANCE,
@@ -138,7 +138,7 @@ class TestIntegrationFlows:
         # Add income
         income = Income(
             family_member_id=family_member_id,
-            monto=3000.00,
+            monto=Decimal("3000.00"),
             fecha=date.today(),
             descripcion="Monthly salary",
             categoria=IncomeCategory.SUELDO,
@@ -149,21 +149,21 @@ class TestIntegrationFlows:
         # Add expenses
         expenses = [
             Expense(
-                monto=800.00,
+                monto=Decimal("800.00"),
                 fecha=date.today(),
                 descripcion="Rent",
                 categoria=ExpenseCategory.HOGAR,
                 currency="UYU",
             ),
             Expense(
-                monto=400.00,
+                monto=Decimal("400.00"),
                 fecha=date.today(),
                 descripcion="Groceries",
                 categoria=ExpenseCategory.ALMACEN,
                 currency="UYU",
             ),
             Expense(
-                monto=200.00,
+                monto=Decimal("200.00"),
                 fecha=date.today(),
                 descripcion="Utilities",
                 categoria=ExpenseCategory.HOGAR,

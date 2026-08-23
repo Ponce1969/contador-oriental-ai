@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 
 
 class KnowledgeFile(StrEnum):
-
     """Archivos de conocimiento disponibles"""
 
     INCLUSION_FINANCIERA = "inclusion_financiera_uy.md"
@@ -157,7 +156,10 @@ class AIContext(BaseModel):
     # Empalme: cierre del mes anterior cuando el mes actual tiene pocos movimientos
     empalme_gastos: dict = Field(
         default_factory=dict,
-        description="Gastos del mes anterior agrupados por categoría (solo cuando mes actual < 5 gastos)",
+        description=(
+            "Gastos del mes anterior agrupados por categoría "
+            "(solo cuando mes actual < 5 gastos)"
+        ),
     )
     empalme_ingresos_total: Decimal = Field(
         default=Decimal("0"),
@@ -177,9 +179,11 @@ class AIContext(BaseModel):
     )
     resumen_laboral: str = Field(
         default="",
-        description="Resumen pre-calculado por Python de actividades y beneficios laborales (aguinaldo, salario vacacional)",
+        description=(
+            "Resumen pre-calculado por Python de actividades y "
+            "beneficios laborales (aguinaldo, salario vacacional)"
+        ),
     )
-
 
 
 class AIResponse(BaseModel):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 
 from result import Result
 
@@ -55,6 +56,7 @@ class AIController(BaseController):
 
     def __init__(self, familia_id: int):
         super().__init__(familia_id=familia_id)
+        self.familia_id: int = familia_id
         self.ai_service = AIAdvisorService()
         self.embedding_service = EmbeddingService()
         self.last_context: AIContext = AIContext()
@@ -62,7 +64,8 @@ class AIController(BaseController):
 
     def _get_memory_service(self, session) -> IAMemoryService:
         """Crear IAMemoryService con sesión activa."""
-        repo = MemoriaRepository(session, self._familia_id or 0)
+        repo = MemoriaRepository(session, self.familia_id)
+
         return IAMemoryService(repo, self.embedding_service)
 
     async def _calcular_subtotal_semantico(
@@ -95,7 +98,7 @@ class AIController(BaseController):
             return Decimal("0"), ""
 
         emb = embedding_result.ok()
-        repo = ExpenseRepository(session, self._familia_id)
+        repo = ExpenseRepository(session, self.familia_id)
         resultados = repo.buscar_por_similitud(
             emb,
             umbral_cosine=umbral_cosine,
@@ -136,9 +139,9 @@ class AIController(BaseController):
             mes_actual = ahora.month
             anio_actual = ahora.year
 
-            expense_repo = ExpenseRepository(session, self._familia_id)
+            expense_repo = ExpenseRepository(session, self.familia_id)
             expense_service = ExpenseService(expense_repo)
-            income_repo = IncomeRepository(session, self._familia_id)
+            income_repo = IncomeRepository(session, self.familia_id)
             income_service = IncomeService(income_repo)
 
             intencion = QueryAnalyzer.detectar_intenciones(pregunta)
@@ -198,7 +201,7 @@ class AIController(BaseController):
             gastos_filtrados = filtrar_por_categorias(gastos_mes, intencion.categorias)
 
             total_gastos_mes = sum((g.monto for g in gastos_mes), Decimal("0"))
-            resumen_gastos: dict[str, dict[str, dict]] = {}
+            resumen_gastos: dict[str, Any] = {}
             total_gastos_count = 0
             if gastos_filtrados:
                 resumen_gastos = agrupar_gastos(gastos_filtrados)
@@ -223,7 +226,7 @@ class AIController(BaseController):
             )
 
             # ── Miembros ──────────────────────────────────────────────────
-            member_repo = FamilyMemberRepository(session, self._familia_id)
+            member_repo = FamilyMemberRepository(session, self.familia_id)
             member_service = FamilyMemberService(member_repo)
             miembros = member_service.list_members()
 
@@ -237,7 +240,7 @@ class AIController(BaseController):
             mes_prev = mes_target - 1 if mes_target > 1 else 12
             anio_prev = anio_target if mes_target > 1 else anio_target - 1
 
-            snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
+            snapshot_repo = MonthlySnapshotRepository(session, self.familia_id)
             comparativa: list = []
             try:
                 snapshot_repo.upsert_mes_actual(anio_target, mes_target)
@@ -288,7 +291,7 @@ class AIController(BaseController):
             # ── Proyección de cuotas futuras ───────────────────────────────
             proyeccion = {}
             try:
-                inst_ctrl = InstallmentController(familia_id=self._familia_id)
+                inst_ctrl = InstallmentController(familia_id=self.familia_id)
                 proyeccion = inst_ctrl.proyectar_meses(6)
             except Exception as proy_err:
                 logger.warning("Proyeccion no disponible: %s", proy_err)
@@ -299,14 +302,16 @@ class AIController(BaseController):
                 from controllers.labor_controller import LaborController
                 from services.labor.domain.periods import AguinaldoPeriod
 
-                labor_ctrl = LaborController(session=session, familia_id=self._familia_id)
+                labor_ctrl = LaborController(
+                    session=session, familia_id=self.familia_id
+                )
                 activities = labor_ctrl.list_all_activities()
                 if activities:
                     labor_lines = []
                     today = date.today()
                     current_period = AguinaldoPeriod.for_date(today)
                     for act in activities:
-                        if not act.is_active:
+                        if not act.is_active or act.id is None:
                             continue
                         member_name = "Integrante"
                         for m in miembros:
@@ -325,21 +330,28 @@ class AIController(BaseController):
                             requested_days=20,
                         )
 
-                        sem_label = "Junio" if current_period.semester == 1 else "Diciembre"
+                        sem_label = (
+                            "Junio" if current_period.semester == 1 else "Diciembre"
+                        )
                         labor_lines.append(
-                            f"- Integrante: {member_name} | Actividad: {act.title} ({act.nature.value})"
+                            f"- Integrante: {member_name} | "
+                            f"Actividad: {act.title} ({act.nature.value})"
                         )
                         if aguinaldo_res.is_ok():
                             c = aguinaldo_res.unwrap()
                             labor_lines.append(
-                                f"  * Aguinaldo estimado {sem_label} {current_period.year}: $ {c.final_amount:.2f} (Estado: {c.status.value})"
+                                f"  * Aguinaldo estimado {sem_label} "
+                                f"{current_period.year}: $ {c.final_amount:.2f} "
+                                f"(Estado: {c.status.value})"
                             )
                         if vacational_res.is_ok():
                             v = vacational_res.unwrap()
                             if v.final_amount > 0:
                                 labor_lines.append(
-                                    f"  * Salario Vacacional orientativo (20 días): $ {v.final_amount:.2f}"
+                                    f"  * Salario Vacacional orientativo (20 días): "
+                                    f"$ {v.final_amount:.2f}"
                                 )
+
                     if labor_lines:
                         resumen_laboral = "\n".join(labor_lines)
             except Exception as labor_err:
@@ -378,7 +390,6 @@ class AIController(BaseController):
                 empalme_total_gastos=empalme_total_gastos,
                 periodo_label=periodo_label,
             )
-
 
     async def _buscar_memoria_vectorial(self, pregunta: str, ctx: AIContext) -> str:
         """Recupera contexto de memoria vectorial RAG para enriquecer la respuesta.
@@ -436,13 +447,13 @@ class AIController(BaseController):
         with self._get_session() as session:
             from services.infrastructure.quota_manager import QuotaManager
 
-            quota = QuotaManager(session, self._familia_id)
+            quota = QuotaManager(session, self.familia_id)
             has_quota = quota.can_use_llama3()
 
         # Crear request
         request = AIRequest(
             pregunta=pregunta,
-            familia_id=self._familia_id,
+            familia_id=self.familia_id,
             incluir_gastos_recientes=incluir_gastos,
         )
 
@@ -472,7 +483,7 @@ class AIController(BaseController):
             with self._get_session() as session:
                 from services.infrastructure.quota_manager import QuotaManager
 
-                quota = QuotaManager(session, self._familia_id)
+                quota = QuotaManager(session, self.familia_id)
                 if modelo_usado == "llama3":
                     quota.register_llama3_usage()
                 else:
@@ -514,12 +525,12 @@ class AIController(BaseController):
         with self._get_session() as session:
             from services.infrastructure.quota_manager import QuotaManager
 
-            quota = QuotaManager(session, self._familia_id)
+            quota = QuotaManager(session, self.familia_id)
             has_quota = quota.can_use_llama3()
 
         request = AIRequest(
             pregunta=pregunta,
-            familia_id=self._familia_id,
+            familia_id=self.familia_id,
             incluir_gastos_recientes=incluir_gastos,
         )
 
@@ -558,7 +569,7 @@ class AIController(BaseController):
         with self._get_session() as session:
             from services.infrastructure.quota_manager import QuotaManager
 
-            quota = QuotaManager(session, self._familia_id)
+            quota = QuotaManager(session, self.familia_id)
             if modelo == "llama3":
                 quota.register_llama3_usage()
             else:
