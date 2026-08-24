@@ -14,6 +14,7 @@ def up(db):
             model VARCHAR(20) NOT NULL,
             prompt_tokens INTEGER NOT NULL DEFAULT 0,
             completion_tokens INTEGER NOT NULL DEFAULT 0,
+            requests_count INTEGER NOT NULL DEFAULT 1,
             created_at TIMESTAMP NOT NULL DEFAULT NOW(),
             CONSTRAINT uq_ai_usage_daily UNIQUE (familia_id, date, model)
         )
