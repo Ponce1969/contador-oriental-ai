@@ -218,12 +218,50 @@ class AIController(BaseController):
                 last_day = calendar.monthrange(anio_fin, mes_fin)[1]
                 fecha_max = date(anio_fin, mes_fin, last_day)
 
-            subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
-                pregunta,
-                session,
-                fecha_min=fecha_min,
-                fecha_max=fecha_max,
+            # ── Subtotal semántico con filtro de fechas (solo si es consulta de gastos)
+            palabras_gasto = (
+                "gast",
+                "compr",
+                "pag",
+                "cost",
+                "cuanto",
+                "cuánto",
+                "subtotal",
+                "total",
+                "saldo",
             )
+            palabras_normativas = (
+                "ley",
+                "iass",
+                "aguinaldo",
+                "vacacional",
+                "irpf",
+                "literal e",
+                "monotributo",
+                "cjppu",
+                "fonasa",
+                "bps",
+                "dgi",
+                "patente",
+            )
+            pregunta_lower = pregunta.lower()
+            es_consulta_normativa = any(
+                n in pregunta_lower for n in palabras_normativas
+            )
+            es_consulta_gasto = (
+                any(g in pregunta_lower for g in palabras_gasto)
+                and not es_consulta_normativa
+            )
+
+            subtotal_desc = Decimal("0")
+            label_desc = ""
+            if es_consulta_gasto or intencion.categorias or intencion.rango:
+                subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
+                    pregunta,
+                    session,
+                    fecha_min=fecha_min,
+                    fecha_max=fecha_max,
+                )
 
             # ── Miembros ──────────────────────────────────────────────────
             member_repo = FamilyMemberRepository(session, self.familia_id)

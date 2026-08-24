@@ -123,6 +123,51 @@ class AIAdvisorService:
                 ],
                 "peso": 2,
             },
+            "iass_pasividades_uy.md": {
+                "keywords": [
+                    "iass",
+                    "pasividad",
+                    "pasividades",
+                    "jubilacion",
+                    "jubilado",
+                    "pension",
+                    "pensiones",
+                    "retiro",
+                    "9 bpc",
+                    "multicaixa",
+                ],
+                "peso": 3,
+            },
+            "aguinaldo_vacacional_uy.md": {
+                "keywords": [
+                    "aguinaldo",
+                    "sueldo anual complementario",
+                    "sac",
+                    "junio",
+                    "diciembre",
+                    "vacacional",
+                    "salario vacacional",
+                    "licencia",
+                    "12.840",
+                    "16.101",
+                ],
+                "peso": 3,
+            },
+            "independientes_regimenes_uy.md": {
+                "keywords": [
+                    "literal e",
+                    "pequeña empresa",
+                    "monotributo",
+                    "mides",
+                    "cjppu",
+                    "caja profesional",
+                    "servicios personales",
+                    "anticipo irpf",
+                    "305.000 ui",
+                    "183.000 ui",
+                ],
+                "peso": 3,
+            },
         }
 
     def _seleccionar_contexto(self, pregunta: str) -> tuple[str, str | None]:
@@ -456,7 +501,6 @@ TONO: Profesional pero cercano y pedagógico.
 {seccion_rag}{seccion_memoria}{seccion_gastos}PREGUNTA DEL USUARIO: {pregunta}
 
 RESPUESTA DIRECTA:"""
-
 
         return prompt
 
