@@ -64,8 +64,9 @@ def up(db):
     db.execute("""
         UPDATE incomes 
         SET concept = 'salary' 
-        WHERE categoria LIKE '%Sueldo%' AND concept IS NULL
+        WHERE categoria LIKE '%%Sueldo%%' AND concept IS NULL
     """)
+
 
 
 def down(db):
