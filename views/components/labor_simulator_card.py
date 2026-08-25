@@ -816,7 +816,7 @@ class LaborSimulatorCard:
         border_color = ft.Colors.GREEN_300 if is_income else ft.Colors.INDIGO_300
         icon_bg = ft.Colors.GREEN_100 if is_income else ft.Colors.INDIGO_100
         icon_color = ft.Colors.GREEN_800 if is_income else ft.Colors.INDIGO_800
-        title_color = ft.Colors.GREEN_950 if is_income else ft.Colors.INDIGO_950
+        title_color = ft.Colors.GREEN_900 if is_income else ft.Colors.INDIGO_900
         amount_color = ft.Colors.GREEN_900 if is_income else ft.Colors.INDIGO_900
         sub_color = ft.Colors.GREEN_800 if is_income else ft.Colors.INDIGO_700
         icon_name = (
@@ -932,7 +932,7 @@ class LaborSimulatorCard:
                                     "antes de tomar decisiones laborales.",
                                     size=12,
                                     weight=ft.FontWeight.W_500,
-                                    color=ft.Colors.AMBER_950,
+                                    color=ft.Colors.AMBER_900,
                                     expand=True,
                                 ),
                             ],
