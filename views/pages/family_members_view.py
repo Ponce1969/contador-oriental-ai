@@ -217,28 +217,33 @@ class FamilyMembersView:
                 self.members_column,
                 ft.Divider(),
                 ft.ExpansionTile(
-                    leading=ft.Icons.CALCULATE_OUTLINED,
+                    leading=ft.Icon(
+                        ft.Icons.CALCULATE_OUTLINED,
+                        color=ft.Colors.INDIGO_700,
+                    ),
                     title=ft.Text(
                         "Simulador de Sueldos y Regímenes Laborales",
                         weight=ft.FontWeight.BOLD,
                         size=15,
-                        color=ft.Colors.BLUE_900,
+                        color=ft.Colors.INDIGO_900,
                     ),
                     subtitle=ft.Text(
                         "Abrir para calcular retenciones IRPF, "
                         "BPS/CJPPU y líquido en mano",
                         size=12,
-                        color=ft.Colors.GREY_600,
+                        color=ft.Colors.INDIGO_700,
                     ),
                     expanded=False,
                     controls=[
                         ft.Container(
                             content=self.simulator_card.render(),
-                            padding=ft.Padding.only(top=8, bottom=8),
+                            padding=ft.Padding.only(top=6, bottom=6),
                         )
                     ],
-                    bgcolor=ft.Colors.BLUE_50,
-                    collapsed_bgcolor=ft.Colors.BLUE_50,
+                    bgcolor=ft.Colors.INDIGO_50,
+                    collapsed_bgcolor=ft.Colors.INDIGO_50,
+                    collapsed_icon_color=ft.Colors.INDIGO_700,
+                    icon_color=ft.Colors.INDIGO_700,
                     shape=ft.RoundedRectangleBorder(radius=10),
                     collapsed_shape=ft.RoundedRectangleBorder(radius=10),
                 ),

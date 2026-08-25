@@ -608,33 +608,32 @@ class LaborSimulatorCard:
                     format_currency(res.nominal_amount, "UYU"),
                     is_bold=True,
                 ),
-                ft.Divider(height=1),
+                ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
                 self._make_row(
                     "(-) Aporte Jubilatorio Montepío (15%):",
                     f"- {format_currency(res.montepio_amount, 'UYU')}",
-                    color=ft.Colors.RED_600,
+                    color=ft.Colors.RED_700,
                 ),
                 self._make_row(
                     "(-) Fondo Reconversión Laboral (0.1%):",
                     f"- {format_currency(res.frl_amount, 'UYU')}",
-                    color=ft.Colors.RED_600,
+                    color=ft.Colors.RED_700,
                 ),
                 self._make_row(
                     f"(-) Seguro de Salud FONASA ({fonasa_pct:.1f}%):",
                     f"- {format_currency(res.fonasa_amount, 'UYU')}",
-                    color=ft.Colors.RED_600,
+                    color=ft.Colors.RED_700,
                 ),
                 self._make_row(
                     f"(-) Retención Anticipo IRPF ({irpf_pct:.0f}% marg.):",
                     f"- {format_currency(res.irpf_net_withholding, 'UYU')}",
-                    color=ft.Colors.RED_600,
+                    color=ft.Colors.RED_700,
                 ),
-                ft.Divider(height=2),
-                self._make_row(
-                    "(=) Líquido Estimado en Mano:",
+                self._make_hero_result(
+                    "Líquido Estimado en Mano",
                     format_currency(res.liquid_amount, "UYU"),
-                    is_bold=True,
-                    is_highlight=True,
+                    "Dinero real que ingresa al bolsillo",
+                    is_income=True,
                 ),
             ]
         elif self.selected_regime == ActivityNature.INDEPENDIENTE:
@@ -650,7 +649,7 @@ class LaborSimulatorCard:
                         format_currency(p.vat_gross_billed, "UYU"),
                         is_bold=True,
                     ),
-                    ft.Divider(height=1),
+                    ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
                     self._make_row(
                         "IVA Débito Fiscal Neto a Pagar:",
                         format_currency(p.vat_net_payable, "UYU"),
@@ -679,7 +678,7 @@ class LaborSimulatorCard:
                         f"{sales_fmt} ({p.annual_gross_sales_ui:.0f} UI)",
                         is_bold=True,
                     ),
-                    ft.Divider(height=1),
+                    ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
                     self._make_row(
                         "Cuota Fija Mensual DGI (IVA Exento):",
                         format_currency(p.dgi_monthly_fee, "UYU"),
@@ -688,12 +687,11 @@ class LaborSimulatorCard:
                         "Aporte Patronal BPS Estimado:",
                         format_currency(p.bps_patronal_monthly_fee, "UYU"),
                     ),
-                    ft.Divider(height=1),
-                    self._make_row(
-                        "Total Obligaciones Mensuales:",
+                    self._make_hero_result(
+                        "Total Obligaciones Mensuales",
                         format_currency(p.total_monthly_obligations, "UYU"),
-                        is_bold=True,
-                        is_highlight=True,
+                        "Total cuota DGI + BPS mensual",
+                        is_income=False,
                     ),
                 ]
             elif res.monotributo_payload:
@@ -710,12 +708,11 @@ class LaborSimulatorCard:
                         "Ventas Brutas Anuales:",
                         f"{sales_fmt} ({p.annual_gross_sales_ui:.0f} UI)",
                     ),
-                    ft.Divider(height=1),
-                    self._make_row(
-                        "Cuota Unificada Mensual BPS/DGI:",
+                    self._make_hero_result(
+                        "Cuota Unificada Mensual BPS/DGI",
                         format_currency(p.final_monthly_monotributo_fee, "UYU"),
-                        is_bold=True,
-                        is_highlight=True,
+                        "Aporte unificado mensual",
+                        is_income=False,
                     ),
                 ]
         elif self.selected_regime == ActivityNature.PASIVIDAD and res.iass_payload:
@@ -727,23 +724,22 @@ class LaborSimulatorCard:
                     format_currency(p.gross_pension_amount, "UYU"),
                     is_bold=True,
                 ),
-                ft.Divider(height=1),
+                ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
                 self._make_row(
                     "(-) Retención FONASA Pasivo:",
                     f"- {format_currency(p.fonasa_pension_withholding, 'UYU')}",
-                    color=ft.Colors.RED_600,
+                    color=ft.Colors.RED_700,
                 ),
                 self._make_row(
                     f"(-) Retención IASS ({iass_pct:.0f}% marg.):",
                     f"- {format_currency(p.iass_net_withholding, 'UYU')}",
-                    color=ft.Colors.RED_600,
+                    color=ft.Colors.RED_700,
                 ),
-                ft.Divider(height=2),
-                self._make_row(
-                    "(=) Pasividad Líquida Mensual:",
+                self._make_hero_result(
+                    "Pasividad Líquida Mensual",
                     format_currency(p.net_pension_liquid, "UYU"),
-                    is_bold=True,
-                    is_highlight=True,
+                    "Monto neto mensual a cobrar",
+                    is_income=True,
                 ),
             ]
 
@@ -752,24 +748,25 @@ class LaborSimulatorCard:
             ft.Text(
                 f"Regla Aplicada: {res.rule_version}",
                 size=11,
-                color=ft.Colors.GREY_700,
+                color=ft.Colors.BLUE_GREY_800,
             ),
             ft.Text(
                 f"Fecha/Hora UTC: {utc_str}",
                 size=11,
-                color=ft.Colors.GREY_700,
+                color=ft.Colors.BLUE_GREY_800,
             ),
         ]
         for ref in res.legal_references:
             audit_controls.append(
-                ft.Text(f"📖 {ref}", size=11, color=ft.Colors.BLUE_900)
+                ft.Text(f"📖 {ref}", size=11, color=ft.Colors.INDIGO_900)
             )
 
         audit_container = ft.Container(
             content=ft.Column(audit_controls, spacing=3),
-            padding=8,
-            bgcolor=ft.Colors.BLUE_50,
+            padding=10,
+            bgcolor=ft.Colors.BLUE_GREY_50,
             border_radius=6,
+            border=ft.Border.all(1, ft.Colors.BLUE_GREY_100),
         )
 
         result_card = ft.Container(
@@ -781,17 +778,19 @@ class LaborSimulatorCard:
                     ),
                     *([ft.Column(alerts, spacing=4)] if alerts else []),
                     *breakdown_rows,
-                    ft.Divider(height=1),
+                    ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
                     ft.ExpansionTile(
+                        leading=ft.Icons.GAVEL_OUTLINED,
                         title=ft.Text(
-                            "🔍 Trazabilidad y Fundamento Legal (Auditoría)",
+                            "Trazabilidad y Fundamento Legal (Auditoría)",
                             size=12,
                             weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLUE_GREY_800,
                         ),
                         controls=[audit_container],
                     ),
                 ],
-                spacing=8,
+                spacing=10,
             ),
             padding=16,
             bgcolor=ft.Colors.WHITE,
@@ -805,6 +804,78 @@ class LaborSimulatorCard:
         except Exception:
             pass
 
+    def _make_hero_result(
+        self,
+        title: str,
+        amount_str: str,
+        subtitle: str,
+        is_income: bool = True,
+    ) -> ft.Container:
+        """Crea un bloque visual destacado (Hero Box) para el monto neto final."""
+        bg_color = ft.Colors.GREEN_50 if is_income else ft.Colors.INDIGO_50
+        border_color = ft.Colors.GREEN_300 if is_income else ft.Colors.INDIGO_300
+        icon_bg = ft.Colors.GREEN_100 if is_income else ft.Colors.INDIGO_100
+        icon_color = ft.Colors.GREEN_800 if is_income else ft.Colors.INDIGO_800
+        title_color = ft.Colors.GREEN_950 if is_income else ft.Colors.INDIGO_950
+        amount_color = ft.Colors.GREEN_900 if is_income else ft.Colors.INDIGO_900
+        sub_color = ft.Colors.GREEN_800 if is_income else ft.Colors.INDIGO_700
+        icon_name = (
+            ft.Icons.ACCOUNT_BALANCE_WALLET if is_income else ft.Icons.RECEIPT_LONG
+        )
+
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Container(
+                                content=ft.Icon(
+                                    icon_name,
+                                    color=icon_color,
+                                    size=22,
+                                ),
+                                padding=8,
+                                bgcolor=icon_bg,
+                                border_radius=8,
+                            ),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        title,
+                                        size=13,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=title_color,
+                                    ),
+                                    ft.Text(
+                                        subtitle,
+                                        size=11,
+                                        color=sub_color,
+                                    ),
+                                ],
+                                spacing=1,
+                            ),
+                        ],
+                        spacing=10,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        expand=True,
+                    ),
+                    ft.Text(
+                        amount_str,
+                        size=20,
+                        weight=ft.FontWeight.BOLD,
+                        color=amount_color,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            padding=ft.Padding.symmetric(horizontal=14, vertical=10),
+            bgcolor=bg_color,
+            border=ft.Border.all(1.5, border_color),
+            border_radius=10,
+            margin=ft.Margin.only(top=6),
+        )
+
     def _make_row(
         self,
         label: str,
@@ -813,16 +884,29 @@ class LaborSimulatorCard:
         is_highlight: bool = False,
         color: str | None = None,
     ) -> ft.Row:
-        text_size = 15 if is_highlight else 13
-        weight = (
-            ft.FontWeight.BOLD if (is_bold or is_highlight) else ft.FontWeight.NORMAL
-        )
-        val_color = color or (ft.Colors.BLUE_900 if is_highlight else ft.Colors.BLACK87)
+        text_size = 14 if is_bold else 13
+        weight = ft.FontWeight.BOLD if is_bold else ft.FontWeight.NORMAL
+        val_color = color or ft.Colors.BLUE_GREY_900
 
         return ft.Row(
             controls=[
-                ft.Text(label, size=text_size, weight=weight, expand=True),
-                ft.Text(value, size=text_size, weight=weight, color=val_color),
+                ft.Text(
+                    label,
+                    size=text_size,
+                    weight=weight,
+                    color=(
+                        ft.Colors.BLUE_GREY_700
+                        if not is_bold
+                        else ft.Colors.BLUE_GREY_900
+                    ),
+                    expand=True,
+                ),
+                ft.Text(
+                    value,
+                    size=text_size,
+                    weight=weight,
+                    color=val_color,
+                ),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
@@ -839,32 +923,31 @@ class LaborSimulatorCard:
                             controls=[
                                 ft.Icon(
                                     ft.Icons.LIGHTBULB_OUTLINE,
-                                    color=ft.Colors.AMBER_800,
-                                    size=18,
+                                    color=ft.Colors.AMBER_900,
+                                    size=20,
                                 ),
                                 ft.Text(
                                     "Proyectá el dinero líquido en mano, "
                                     "aportes de seguridad social y retenciones "
                                     "antes de tomar decisiones laborales.",
                                     size=12,
-                                    color=ft.Colors.BLUE_GREY_800,
+                                    weight=ft.FontWeight.W_500,
+                                    color=ft.Colors.AMBER_950,
                                     expand=True,
                                 ),
                             ],
-                            spacing=8,
+                            spacing=10,
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
-                        bgcolor=ft.Colors.WHITE,
-                        padding=ft.Padding.symmetric(
-                            horizontal=12, vertical=8
-                        ),
+                        bgcolor=ft.Colors.AMBER_50,
+                        padding=ft.Padding.symmetric(horizontal=14, vertical=10),
                         border_radius=8,
-                        border=ft.Border.all(1, ft.Colors.BLUE_100),
+                        border=ft.Border.all(1, ft.Colors.AMBER_200),
                     ),
                     self.regime_dropdown,
                     self.independent_subregime_dropdown,
                     self.inputs_container,
-                    ft.Divider(),
+                    ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
                     self.results_container,
                 ],
                 spacing=12,
