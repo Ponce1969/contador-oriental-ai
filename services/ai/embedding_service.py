@@ -50,10 +50,15 @@ class EmbeddingService:
         texto_limpio = texto.strip()[:8000]
 
         try:
+            keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", "24h")
             async with httpx.AsyncClient(timeout=EMBEDDING_TIMEOUT) as client:
                 response = await client.post(
                     f"{self.ollama_url}/api/embeddings",
-                    json={"model": self.model, "prompt": texto_limpio},
+                    json={
+                        "model": self.model,
+                        "prompt": texto_limpio,
+                        "keep_alive": keep_alive,
+                    },
                 )
                 if response.status_code == 200:
                     embedding = response.json().get("embedding", [])

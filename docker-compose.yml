@@ -52,6 +52,8 @@ services:
 
       # Ollama IA
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-24h}
+      OLLAMA_NUM_THREADS: ${OLLAMA_NUM_THREADS:-4}
 
       # NVIDIA API (Llama 3 70B)
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}

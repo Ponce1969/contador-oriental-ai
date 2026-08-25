@@ -512,12 +512,19 @@ RESPUESTA DIRECTA:"""
         from ollama import AsyncClient
 
         _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        _keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", "24h")
+        _threads = int(os.getenv("OLLAMA_NUM_THREADS", "4"))
         client = AsyncClient(host=_ollama_url)
 
         return await client.generate(
             model="contador-oriental",
             prompt=prompt,
-            options={"temperature": 0.0, "num_predict": 512},
+            keep_alive=_keep_alive,
+            options={
+                "temperature": 0.0,
+                "num_predict": 512,
+                "num_thread": _threads,
+            },
         )
 
     async def _call_ollama_stream(self, prompt: str):
@@ -528,13 +535,20 @@ RESPUESTA DIRECTA:"""
         from ollama import AsyncClient
 
         _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        _keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", "24h")
+        _threads = int(os.getenv("OLLAMA_NUM_THREADS", "4"))
         client = AsyncClient(host=_ollama_url)
 
         async for part in await client.generate(
             model="contador-oriental",
             prompt=prompt,
             stream=True,
-            options={"temperature": 0.0, "num_predict": 512},
+            keep_alive=_keep_alive,
+            options={
+                "temperature": 0.0,
+                "num_predict": 512,
+                "num_thread": _threads,
+            },
         ):
             token: str = part.get("response", "")
             if token:
