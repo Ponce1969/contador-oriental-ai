@@ -350,6 +350,10 @@ class AIController(BaseController):
                     labor_lines = []
                     today = date.today()
                     current_period = AguinaldoPeriod.for_date(today)
+                    total_liquido_mensual_hogar = Decimal("0")
+                    total_aguinaldo_hogar = Decimal("0")
+                    total_vacacional_hogar = Decimal("0")
+
                     for act in activities:
                         if not act.is_active or act.id is None:
                             continue
@@ -401,6 +405,7 @@ class AIController(BaseController):
                                 labor_lines.append(
                                     f"  * Líquido en Mano: $ {withh.liquid_amount:.2f}"
                                 )
+                                total_liquido_mensual_hogar += withh.liquid_amount
 
                         # Desglose para Pasividades / Jubilaciones
                         elif (
@@ -430,6 +435,7 @@ class AIController(BaseController):
                                     f"  * Pasividad Líquida: "
                                     f"$ {p.net_pension_liquid:.2f}"
                                 )
+                                total_liquido_mensual_hogar += p.net_pension_liquid
 
                         # Aguinaldo y Salario Vacacional
                         aguinaldo_res = labor_ctrl.calculate_aguinaldo(
@@ -454,6 +460,7 @@ class AIController(BaseController):
                                     f"{current_period.year}: $ {c.final_amount:.2f} "
                                     f"(Estado: {c.status.value})"
                                 )
+                                total_aguinaldo_hogar += c.final_amount
                         if vacational_res.is_ok():
                             v = vacational_res.unwrap()
                             if v.final_amount > 0:
@@ -461,8 +468,26 @@ class AIController(BaseController):
                                     f"  * Salario Vacacional orientativo (20 días): "
                                     f"$ {v.final_amount:.2f}"
                                 )
+                                total_vacacional_hogar += v.final_amount
 
                     if labor_lines:
+                        labor_lines.append("")
+                        labor_lines.append("=== TOTALES CONSOLIDADOS DEL HOGAR ===")
+                        labor_lines.append(
+                            f"- Total Sueldos/Pasividades Líquidas Mensuales del Hogar (en mano): $ {total_liquido_mensual_hogar:.2f}"
+                        )
+                        labor_lines.append(
+                            f"- Total Próximo Aguinaldo del Hogar ({sem_label} {current_period.year}): $ {total_aguinaldo_hogar:.2f}"
+                        )
+                        total_fin_anio = (
+                            total_liquido_mensual_hogar + total_aguinaldo_hogar
+                        )
+                        labor_lines.append(
+                            f"- Total Cobro Estimado en Diciembre (Sueldos del Mes + Aguinaldo): $ {total_fin_anio:.2f}"
+                        )
+                        labor_lines.append(
+                            f"- Total Salario Vacacional del Hogar (20 días anuales): $ {total_vacacional_hogar:.2f}"
+                        )
                         resumen_laboral = "\n".join(labor_lines)
             except Exception as labor_err:
                 logger.warning("Contexto laboral no disponible: %s", labor_err)

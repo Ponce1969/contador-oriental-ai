@@ -50,16 +50,18 @@ def test_ai_advisor_labor_context_injection():
         contexto_legal="",
         gastos_formateados=gastos_fmt,
         modelo="gemma2",
+        ctx=ctx,
     )
 
     # Verificaciones de inyección estricta
     assert (
-        "### CONTEXTO Y BENEFICIOS LABORALES (PRE-CALCULADO POR PYTHON) ###" in prompt
+        "### CONTEXTO, SUELDOS Y BENEFICIOS LABORALES DEL HOGAR (PRE-CALCULADO POR PYTHON) ###"
+        in prompt
     )
     assert "Sueldo Nominal Mensual: $ 80000.00" in prompt
     assert "Retención IRPF Anticipo Mensual (10% marg.): $ 2450.00" in prompt
     assert "Líquido Estimado en Mano: $ 60670.00" in prompt
-    assert "NO realizar recálculos aritméticos" in prompt
+    assert "NUNCA inventes cálculos ni discrepes" in prompt
 
 
 def test_labor_engine_withholdings_integration():

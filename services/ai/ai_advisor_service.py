@@ -369,18 +369,23 @@ class AIAdvisorService:
             lineas.append(f"  * {ccy}: {total_str}")
         lineas.append(f"({ctx.total_gastos_count} transacciones)")
 
-        if ctx.resumen_laboral:
-            lineas.append("")
-            lineas.append(
-                "### CONTEXTO Y BENEFICIOS LABORALES (PRE-CALCULADO POR PYTHON) ###"
-            )
-            lineas.append(ctx.resumen_laboral)
-            lineas.append(
-                "REGLA ESTRICTA PARA LA IA: Utilizar los números laborales "
-                "anteriores de forma textual. NO realizar recálculos aritméticos."
-            )
-
         return "\n".join(lineas)
+
+    def _formatear_datos_laborales(self, ctx: AIContext | None) -> str:
+        """
+        Formatea los datos de sueldos, beneficios y aguinaldos del hogar
+        pre-calculados por Python para el prompt de la IA.
+        """
+        if not ctx or not ctx.resumen_laboral:
+            return ""
+
+        return (
+            "### CONTEXTO, SUELDOS Y BENEFICIOS LABORALES DEL HOGAR (PRE-CALCULADO POR PYTHON) ###\n"
+            f"{ctx.resumen_laboral}\n"
+            "REGLA ESTRICTA PARA LA IA: Utilizar los números laborales y totales consolidados anteriores "
+            "de forma textual para responder sobre sueldos netos, aguinaldos, salario vacacional "
+            "o cobros a fin de año. NUNCA inventes cálculos ni discrepes con estos valores.\n\n"
+        )
 
     def _formatear_comparativa(self, ctx: AIContext) -> str:
         """
@@ -409,19 +414,17 @@ class AIAdvisorService:
                 )
                 continue
 
-            signo_t = "+" if vt >= 0 else ""
-            signo_tk = "+" if (vtk or 0) >= 0 else ""
-            ant_tot = format_pesos_ai(m.total_anterior or Decimal("0"), currency=ccy)
-            act_tot = format_pesos_ai(m.total_actual, currency=ccy)
-            ant_tck = format_pesos_ai(m.ticket_anterior or Decimal("0"), currency=ccy)
-            act_tck = format_pesos_ai(m.ticket_actual, currency=ccy)
-            lineas.append(
-                f"- {m.categoria}: gasto total {signo_t}{vt:.1f}%"
-                f" ({ant_tot} -> {act_tot}),"
-                f" ticket promedio {signo_tk}{vtk:.1f}%"
-                f" ({ant_tck} -> {act_tck})."
-                f" {diag}"
-            )
+            partes = [f"- {m.categoria}:"]
+            if vt is not None:
+                signo = "+" if vt > 0 else ""
+                partes.append(f"total {signo}{vt:.1f}% vs mes anterior")
+            if vtk is not None:
+                signo_k = "+" if vtk > 0 else ""
+                partes.append(f"gasto promedio por compra {signo_k}{vtk:.1f}%")
+            if diag:
+                partes.append(f"({diag})")
+
+            lineas.append(" ".join(partes))
 
         return "\n".join(lineas)
 
@@ -433,6 +436,7 @@ class AIAdvisorService:
         memoria_vectorial: str = "",
         cuota_agotada: bool = False,
         modelo: str = "gemma2",
+        ctx: AIContext | None = None,
     ) -> str:
         """
         Construye el prompt optimizado para el modelo seleccionado.
@@ -444,6 +448,7 @@ class AIAdvisorService:
             memoria_vectorial: Contexto histórico de pgvector.
             cuota_agotada: Si True, agrega aviso de precisión reducida.
             modelo: 'gemma2' o 'llama3' — ajusta restricciones del prompt.
+            ctx: Contexto financiero y laboral completo del hogar.
         """
         seccion_rag = (
             f"NORMATIVA URUGUAYA RELEVANTE:\n{contexto_legal}\n"
@@ -460,12 +465,15 @@ class AIAdvisorService:
             else ""
         )
 
+        seccion_laboral = self._formatear_datos_laborales(ctx)
         seccion_gastos = f"{gastos_formateados}\n" if gastos_formateados else ""
 
         instruccion_enfoque = (
             "- INSTRUCCIÓN PRINCIPAL: Respondé DIRECTAMENTE a la PREGUNTA.\n"
             "- Si la pregunta es sobre normativa, leyes, IRPF, aguinaldo o IASS, "
             "explicá la ley aplicable de forma clara.\n"
+            "- Si la pregunta es sobre sueldos, aguinaldos, cobro a fin de año o vacaciones, "
+            "utilizá los valores precalculados en la sección laboral.\n"
             "- Solo mencioná gastos o saldo si la pregunta consulta expresamente "
             "sobre su presupuesto o historial.\n"
         )
@@ -498,7 +506,7 @@ SÍMBOLOS MONETARIOS (estricto):
 
 TONO: Profesional pero cercano y pedagógico.
 {aviso_cuota}
-{seccion_rag}{seccion_memoria}{seccion_gastos}PREGUNTA DEL USUARIO: {pregunta}
+{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_gastos}PREGUNTA DEL USUARIO: {pregunta}
 
 RESPUESTA DIRECTA:"""
 
@@ -638,6 +646,7 @@ RESPUESTA DIRECTA:"""
             memoria_vectorial,
             cuota_agotada=cuota_agotada,
             modelo=modelo,
+            ctx=ctx,
         )
 
         ai_logger.info("=" * 80)
@@ -764,6 +773,7 @@ RESPUESTA DIRECTA:"""
                 memoria_vectorial,
                 cuota_agotada=cuota_agotada,
                 modelo=modelo,
+                ctx=ctx,
             )
 
             # Log del contexto para debugging
