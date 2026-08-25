@@ -143,9 +143,27 @@ class IncomesView:
         # Estado de edición
         self.editing_income_id = None
 
+        # Controles dinámicos del formulario
+        self.form_title = ft.Text(
+            value="💰 Registrar ingreso",
+            size=20,
+            weight=ft.FontWeight.BOLD,
+            color=ft.Colors.TEAL_700,
+        )
+        self.save_button = CorrectElevatedButton(
+            "💾 Guardar",
+            on_click=self._on_save_income,
+        )
+        self.cancel_button = CorrectElevatedButton(
+            "❌ Cancelar",
+            on_click=self._on_cancel_edit,
+            visible=False,
+        )
+
     def render(self):
         """Renderizar la vista completa"""
         is_mobile = AppState.device == "mobile"
+        self.form_title.size = 16 if is_mobile else 20
 
         content = ft.Column(
             controls=[
@@ -159,16 +177,7 @@ class IncomesView:
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            ft.Text(
-                                value=(
-                                    "💰 Registrar ingreso"
-                                    if not self.editing_income_id
-                                    else "✏️ Editar ingreso"
-                                ),
-                                size=16 if is_mobile else 20,
-                                weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.TEAL_700,
-                            ),
+                            self.form_title,
                             self.labor_suggestion_container,
                             ft.ResponsiveRow(
                                 controls=[
@@ -205,20 +214,8 @@ class IncomesView:
                             self.frecuencia_dropdown,
                             ft.Row(
                                 controls=[
-                                    CorrectElevatedButton(
-                                        (
-                                            "💾 Guardar"
-                                            if not self.editing_income_id
-                                            else "✅ Actualizar"
-                                        ),
-                                        on_click=self._on_save_income,
-                                    ),
-                                    CorrectElevatedButton(
-                                        "❌ Cancelar",
-                                        on_click=self._on_cancel_edit,
-                                    )
-                                    if self.editing_income_id
-                                    else ft.Container(),
+                                    self.save_button,
+                                    self.cancel_button,
                                 ],
                                 spacing=10,
                             ),
@@ -272,6 +269,10 @@ class IncomesView:
         if not self.member_dropdown.value:
             self.labor_suggestion_container.visible = False
             self.selected_economic_activity_id = None
+            if not self.editing_income_id:
+                self.save_button.text = "💾 Guardar"
+                self.form_title.value = "💰 Registrar ingreso"
+                self.cancel_button.visible = False
             self.page.update()
             return
 
@@ -283,14 +284,51 @@ class IncomesView:
         activities = self.labor_controller.list_by_member(member_id)
         active_acts = [act for act in activities if act.is_active]
 
+        # Verificar si el miembro ya tiene un sueldo recurrente registrado
+        existing_incomes = self.income_controller.list_by_member(member_id)
+        existing_recurring = next(
+            (
+                inc
+                for inc in existing_incomes
+                if inc.es_recurrente
+                and inc.categoria
+                in (
+                    IncomeCategory.SUELDO,
+                    IncomeCategory.FREELANCE,
+                    IncomeCategory.JUBILADO,
+                )
+            ),
+            None,
+        )
+
         if not active_acts:
             self.labor_suggestion_container.visible = False
             self.selected_economic_activity_id = None
+            if existing_recurring and not self.editing_income_id:
+                self.editing_income_id = existing_recurring.id
+                self.monto_input.value = str(existing_recurring.monto)
+                self.descripcion_input.value = existing_recurring.descripcion
+                self.categoria_dropdown.value = existing_recurring.categoria.name
+                self.concept_dropdown.value = existing_recurring.concept or "salary"
+                self.recurrente_checkbox.value = True
+                self.frecuencia_dropdown.value = (
+                    existing_recurring.frecuencia.name
+                    if existing_recurring.frecuencia
+                    else "MENSUAL"
+                )
+                self.frecuencia_dropdown.visible = True
+                self.save_button.text = "🔄 Actualizar Sueldo Existente"
+                self.form_title.value = "✏️ Actualizar ingreso recurrente"
+                self.cancel_button.visible = True
             self.page.update()
             return
 
         act = active_acts[0]
         self.selected_economic_activity_id = act.id
+
+        is_update = existing_recurring is not None
+        btn_action_label = "Actualizar" if is_update else "Cargar"
+        existing_id = existing_recurring.id if existing_recurring else None
 
         if act.nature == ActivityNature.DEPENDIENTE and act.dependent_details:
             details = act.dependent_details
@@ -329,13 +367,14 @@ class IncomesView:
                             expand=True,
                         ),
                         CorrectElevatedButton(
-                            f"⚡ Cargar {liq_fmt} (Líquido)",
+                            f"⚡ {btn_action_label} {liq_fmt} (Líquido)",
                             on_click=lambda _: self._fill_labor_income(
                                 act=act,
                                 amount=liquid,
                                 description="Cobro de sueldo mensual",
                                 category=IncomeCategory.SUELDO,
                                 concept="salary",
+                                existing_income_id=existing_id,
                             ),
                         ),
                     ],
@@ -386,13 +425,14 @@ class IncomesView:
                             expand=True,
                         ),
                         CorrectElevatedButton(
-                            f"⚡ Cargar {sales_fmt}",
+                            f"⚡ {btn_action_label} {sales_fmt}",
                             on_click=lambda _: self._fill_labor_income(
                                 act=act,
                                 amount=sales,
                                 description=f"Ingreso por {act.title}",
                                 category=IncomeCategory.FREELANCE,
                                 concept="salary",
+                                existing_income_id=existing_id,
                             ),
                         )
                         if sales > 0
@@ -445,13 +485,14 @@ class IncomesView:
                             expand=True,
                         ),
                         CorrectElevatedButton(
-                            f"⚡ Cargar {pension_fmt}",
+                            f"⚡ {btn_action_label} {pension_fmt}",
                             on_click=lambda _: self._fill_labor_income(
                                 act=act,
                                 amount=pension_nom,
                                 description="Cobro de pasividad / jubilación",
                                 category=IncomeCategory.JUBILADO,
                                 concept="salary",
+                                existing_income_id=existing_id,
                             ),
                         )
                         if pension_nom > 0
@@ -484,6 +525,7 @@ class IncomesView:
         description: str,
         category: IncomeCategory,
         concept: str,
+        existing_income_id: int | None = None,
     ) -> None:
         """Autocompleta el formulario con datos de la actividad económica."""
         formatted_amount = (
@@ -497,6 +539,21 @@ class IncomesView:
         self.concept_dropdown.value = concept
         self.selected_economic_activity_id = act.id
         self.currency_dropdown.value = "UYU"
+        self.recurrente_checkbox.value = True
+        self.frecuencia_dropdown.value = "MENSUAL"
+        self.frecuencia_dropdown.visible = True
+
+        if existing_income_id:
+            self.editing_income_id = existing_income_id
+            self.save_button.text = "🔄 Actualizar Sueldo Existente"
+            self.form_title.value = "✏️ Actualizar ingreso recurrente"
+            self.cancel_button.visible = True
+        else:
+            self.editing_income_id = None
+            self.save_button.text = "💾 Guardar Sueldo Recurrente"
+            self.form_title.value = "💰 Registrar ingreso"
+            self.cancel_button.visible = False
+
         self.page.update()
 
     def _on_save_income(self, _: ft.ControlEvent) -> None:
@@ -793,6 +850,9 @@ class IncomesView:
         self.frecuencia_dropdown.value = (
             income.frecuencia.name if income.frecuencia else None
         )
+        self.save_button.text = "✅ Actualizar"
+        self.form_title.value = "✏️ Editar ingreso"
+        self.cancel_button.visible = True
         self._on_member_selected(None)
         self.page.update()
 
@@ -826,7 +886,11 @@ class IncomesView:
         self.frecuencia_dropdown.value = None
         self.frecuencia_dropdown.visible = False
         self.selected_economic_activity_id = None
+        self.editing_income_id = None
         self.labor_suggestion_container.visible = False
+        self.save_button.text = "💾 Guardar"
+        self.form_title.value = "💰 Registrar ingreso"
+        self.cancel_button.visible = False
 
         self.currency_dropdown.value = "UYU"
 
