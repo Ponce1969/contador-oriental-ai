@@ -8,6 +8,8 @@ asegurando aislamiento sin contaminar datos de producción/desarrollo.
 
 from __future__ import annotations
 
+from collections.abc import Generator
+
 import pytest
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -22,7 +24,7 @@ def db_engine():
 
 
 @pytest.fixture(scope="function")
-def db_session(db_engine) -> Session:
+def db_session(db_engine) -> Generator[Session, None, None]:
     """
     Sesión de BD dentro de una transacción que se revierte al finalizar.
     Garantiza aislamiento entre tests sin tocar datos reales.

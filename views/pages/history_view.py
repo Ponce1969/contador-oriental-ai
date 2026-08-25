@@ -220,7 +220,9 @@ class HistoryView:
                                     ),
                                     bgcolor=ft.Colors.DEEP_ORANGE_400,
                                     border_radius=6,
-                                    padding=ft.Padding(left=10, top=6, right=10, bottom=6),
+                                    padding=ft.Padding(
+                                        left=10, top=6, right=10, bottom=6
+                                    ),
                                     width=max(int(ancho_barra * 300), 80),
                                 ),
                             ],

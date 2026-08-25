@@ -189,8 +189,10 @@ class MemoriaRepository:
             result = self.session.execute(
                 text("""
                     INSERT INTO ai_vector_memory
-                        (familia_id, household_id, content, embedding, source_type, source_id)
+                        (familia_id, household_id, content,
+                         embedding, source_type, source_id)
                     VALUES
+
                         (:fam_id, :house_id, :content, :emb, :src_type, :src_id)
                     RETURNING id
                 """),
@@ -209,7 +211,9 @@ class MemoriaRepository:
             logger.error("[MEMORIA_REPO] Error guardando household vector: %s", str(e))
             return None
 
-    def eliminar_household_vector(self, household_id: int, source_type: str, source_id: int) -> bool:
+    def eliminar_household_vector(
+        self, household_id: int, source_type: str, source_id: int
+    ) -> bool:
         try:
             result = self.session.execute(
                 text("""
@@ -224,7 +228,9 @@ class MemoriaRepository:
                     "src_id": source_id,
                 },
             )
-            return result.rowcount > 0
+            rowcount = getattr(result, "rowcount", 0) or 0
+            return int(rowcount) > 0
+
         except Exception as e:
             logger.error("[MEMORIA_REPO] Error eliminando household vector: %s", str(e))
             return False
@@ -260,5 +266,7 @@ class MemoriaRepository:
                 for r in rows
             ]
         except Exception as e:
-            logger.error("[MEMORIA_REPO] Error en buscar_similares_por_household: %s", str(e))
+            logger.error(
+                "[MEMORIA_REPO] Error en buscar_similares_por_household: %s", str(e)
+            )
             return []

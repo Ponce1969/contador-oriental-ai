@@ -3,38 +3,35 @@ from __future__ import annotations
 import logging
 from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 from result import Err, Ok, Result
 
 from controllers.base_controller import BaseController
 from core.events import Event, EventType
-
+from models.errors import AppError, UnauthorizedError
+from models.household_model import (
+    ExpenseFeedPage,
+    Household,
+    HouseholdInvitation,
+    HouseholdMember,
+    HouseholdSettlement,
+    MemberBalance,
+    SharedExpenseLink,
+)
+from repositories.household.audit_repository import HouseholdAuditLogRepository
 from repositories.household.household_repository import HouseholdRepository
-from repositories.household.member_repository import HouseholdMemberRepository
 from repositories.household.invitation_repository import HouseholdInvitationRepository
 from repositories.household.link_repository import SharedExpenseLinkRepository
+from repositories.household.member_repository import HouseholdMemberRepository
 from repositories.household.settlement_repository import HouseholdSettlementRepository
-from repositories.household.audit_repository import HouseholdAuditLogRepository
-
+from services.domain.household.balance_service import HouseholdBalanceService
+from services.domain.household.expense_sharing_service import ExpenseSharingService
 from services.domain.household.household_service import HouseholdService
 from services.domain.household.invitation_service import InvitationService
-from services.domain.household.expense_sharing_service import ExpenseSharingService
-from services.domain.household.balance_service import HouseholdBalanceService
 from services.domain.household.settlement_service import SettlementService
 
-from models.household_model import (
-    Household, 
-    HouseholdInvitation, 
-    SharedExpenseLink, 
-    MemberBalance, 
-    HouseholdSettlement, 
-    HouseholdMember,
-    ExpenseFeedPage
-)
-from models.errors import AppError, UnauthorizedError
-
 logger = logging.getLogger(__name__)
+
 
 class HouseholdController(BaseController):
     def _ensure_familia_id(self) -> int:
@@ -53,9 +50,13 @@ class HouseholdController(BaseController):
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
                 settlement_repo = HouseholdSettlementRepository(session)
-                balance_service = HouseholdBalanceService(link_repo, settlement_repo, member_repo, session)
-                service = HouseholdService(household_repo, member_repo, link_repo, balance_service)
-                
+                balance_service = HouseholdBalanceService(
+                    link_repo, settlement_repo, member_repo, session
+                )
+                service = HouseholdService(
+                    household_repo, member_repo, link_repo, balance_service
+                )
+
                 household = service.create_household(nombre, familia_id)
                 session.commit()
                 return Ok(household)
@@ -71,9 +72,13 @@ class HouseholdController(BaseController):
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
                 settlement_repo = HouseholdSettlementRepository(session)
-                balance_service = HouseholdBalanceService(link_repo, settlement_repo, member_repo, session)
-                service = HouseholdService(household_repo, member_repo, link_repo, balance_service)
-                
+                balance_service = HouseholdBalanceService(
+                    link_repo, settlement_repo, member_repo, session
+                )
+                service = HouseholdService(
+                    household_repo, member_repo, link_repo, balance_service
+                )
+
                 household = service.get_household_for_familia(familia_id)
                 return Ok(household)
         except Exception as e:
@@ -88,11 +93,15 @@ class HouseholdController(BaseController):
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
                 settlement_repo = HouseholdSettlementRepository(session)
-                balance_service = HouseholdBalanceService(link_repo, settlement_repo, member_repo, session)
-                service = HouseholdService(household_repo, member_repo, link_repo, balance_service)
-                
+                balance_service = HouseholdBalanceService(
+                    link_repo, settlement_repo, member_repo, session
+                )
+                service = HouseholdService(
+                    household_repo, member_repo, link_repo, balance_service
+                )
+
                 household = service.get_household_for_familia(familia_id)
-                if household:
+                if household and household.id is not None:
                     service.leave_household(household.id, familia_id)
                     session.commit()
                 return Ok(None)
@@ -108,14 +117,19 @@ class HouseholdController(BaseController):
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
                 settlement_repo = HouseholdSettlementRepository(session)
-                balance_service = HouseholdBalanceService(link_repo, settlement_repo, member_repo, session)
-                service = HouseholdService(household_repo, member_repo, link_repo, balance_service)
-                
+                balance_service = HouseholdBalanceService(
+                    link_repo, settlement_repo, member_repo, session
+                )
+                service = HouseholdService(
+                    household_repo, member_repo, link_repo, balance_service
+                )
+
                 household = service.get_household_for_familia(familia_id)
-                if household:
+                if household and household.id is not None:
                     service.transfer_admin(household.id, familia_id, to_familia_id)
                     session.commit()
                 return Ok(None)
+
         except Exception as e:
             logger.error(f"[HouseholdController] transfer_admin error: {e}")
             return Err(e)
@@ -126,12 +140,12 @@ class HouseholdController(BaseController):
             with self._get_session() as session:
                 invitation_repo = HouseholdInvitationRepository(session)
                 member_repo = HouseholdMemberRepository(session)
-                household_repo = HouseholdRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
+
                 if not membership:
                     raise AppError("No sos miembro de un hogar activo.")
-                    
+
                 service = InvitationService(invitation_repo, member_repo)
                 inv = service.create_invitation(membership.household_id, familia_id)
                 session.commit()
@@ -146,11 +160,11 @@ class HouseholdController(BaseController):
             with self._get_session() as session:
                 invitation_repo = HouseholdInvitationRepository(session)
                 member_repo = HouseholdMemberRepository(session)
-                
+
                 service = InvitationService(invitation_repo, member_repo)
                 service.accept_invitation(token, familia_id)
                 session.commit()
-                
+
                 # Emit event if needed later
                 return Ok(None)
         except Exception as e:
@@ -160,20 +174,26 @@ class HouseholdController(BaseController):
     @classmethod
     def is_invitation_valid(cls, token: str) -> Result[bool, Exception]:
         try:
-            from core.sqlalchemy_session import get_db_session
-            from repositories.household.invitation_repository import HouseholdInvitationRepository
             from datetime import datetime
-            
+
+            from core.sqlalchemy_session import get_db_session
+            from repositories.household.invitation_repository import (
+                HouseholdInvitationRepository,
+            )
+
             with get_db_session() as session:
                 repo = HouseholdInvitationRepository(session)
                 invitation = repo.get_by_token(token)
-                
+
                 if not invitation:
                     return Ok(False)
-                
-                if invitation.status != "pending" or invitation.expires_at < datetime.now():
+
+                if (
+                    invitation.status != "pending"
+                    or invitation.expires_at < datetime.now()
+                ):
                     return Ok(False)
-                    
+
                 return Ok(True)
         except Exception as e:
             logging.error(f"[HouseholdController] is_invitation_valid error: {e}")
@@ -185,11 +205,11 @@ class HouseholdController(BaseController):
             with self._get_session() as session:
                 invitation_repo = HouseholdInvitationRepository(session)
                 member_repo = HouseholdMemberRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
                 if not membership:
                     raise AppError("No sos miembro de un hogar activo.")
-                    
+
                 service = InvitationService(invitation_repo, member_repo)
                 service.revoke_invitation(membership.household_id, token, familia_id)
                 session.commit()
@@ -205,15 +225,19 @@ class HouseholdController(BaseController):
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
                 audit_repo = HouseholdAuditLogRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
                 if not membership:
                     raise AppError("No sos miembro de un hogar activo.")
-                    
-                service = ExpenseSharingService(link_repo, member_repo, audit_repo, session)
-                link = service.create_link(membership.household_id, gasto_id, familia_id)
+
+                service = ExpenseSharingService(
+                    link_repo, member_repo, audit_repo, session
+                )
+                link = service.create_link(
+                    membership.household_id, gasto_id, familia_id
+                )
                 session.commit()
-                
+
                 try:
                     self._event_system.fire_and_forget(
                         Event(
@@ -226,8 +250,10 @@ class HouseholdController(BaseController):
                         )
                     )
                 except Exception as ev_err:
-                    logger.warning(f"[HouseholdController] No se pudo emitir LINK_CREADO: {ev_err}")
-                
+                    logger.warning(
+                        f"[HouseholdController] No se pudo emitir LINK_CREADO: {ev_err}"
+                    )
+
                 return Ok(link)
         except Exception as e:
             logger.error(f"[HouseholdController] share_expense error: {e}")
@@ -240,15 +266,17 @@ class HouseholdController(BaseController):
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
                 audit_repo = HouseholdAuditLogRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
                 if not membership:
                     raise AppError("No sos miembro de un hogar activo.")
-                    
-                service = ExpenseSharingService(link_repo, member_repo, audit_repo, session)
+
+                service = ExpenseSharingService(
+                    link_repo, member_repo, audit_repo, session
+                )
                 service.delete_link(membership.household_id, gasto_id, familia_id)
                 session.commit()
-                
+
                 try:
                     self._event_system.fire_and_forget(
                         Event(
@@ -261,8 +289,11 @@ class HouseholdController(BaseController):
                         )
                     )
                 except Exception as ev_err:
-                    logger.warning(f"[HouseholdController] No se pudo emitir LINK_ELIMINADO: {ev_err}")
-                    
+                    logger.warning(
+                        "[HouseholdController] No se pudo emitir LINK_ELIMINADO: %s",
+                        ev_err,
+                    )
+
                 return Ok(None)
         except Exception as e:
             logger.error(f"[HouseholdController] unshare_expense error: {e}")
@@ -276,18 +307,33 @@ class HouseholdController(BaseController):
             with self._get_session() as session:
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
                 if not membership:
-                    return Ok(ExpenseFeedPage(items=[], total=0, page=page, pages=0))
-                    
-                feed = link_repo.get_feed_for_household(
+                    return Ok(
+                        ExpenseFeedPage(
+                            items=[],
+                            total_count=0,
+                            page=page,
+                            page_size=page_size,
+                        )
+                    )
+
+                items, total_count = link_repo.get_feed(
                     household_id=membership.household_id,
                     page=page,
                     page_size=page_size,
-                    filter_familia_id=filter_familia_id
+                    familia_id=filter_familia_id,
                 )
-                return Ok(feed)
+                return Ok(
+                    ExpenseFeedPage(
+                        items=items,
+                        total_count=total_count,
+                        page=page,
+                        page_size=page_size,
+                    )
+                )
+
         except Exception as e:
             logger.error(f"[HouseholdController] get_expense_feed error: {e}")
             return Err(e)
@@ -301,12 +347,14 @@ class HouseholdController(BaseController):
                 member_repo = HouseholdMemberRepository(session)
                 link_repo = SharedExpenseLinkRepository(session)
                 settlement_repo = HouseholdSettlementRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
                 if not membership:
                     return Ok([])
-                    
-                service = HouseholdBalanceService(link_repo, settlement_repo, member_repo, session)
+
+                service = HouseholdBalanceService(
+                    link_repo, settlement_repo, member_repo, session
+                )
                 balances = service.compute_balance(
                     membership.household_id, familia_id, start_date, end_date
                 )
@@ -323,11 +371,11 @@ class HouseholdController(BaseController):
             with self._get_session() as session:
                 member_repo = HouseholdMemberRepository(session)
                 settlement_repo = HouseholdSettlementRepository(session)
-                
+
                 membership = member_repo.get_active_membership(familia_id)
                 if not membership:
                     raise AppError("No sos miembro de un hogar activo.")
-                    
+
                 service = SettlementService(settlement_repo, member_repo)
                 settlement = service.record_settlement(
                     household_id=membership.household_id,
@@ -335,10 +383,10 @@ class HouseholdController(BaseController):
                     payer_familia_id=familia_id,
                     recipient_familia_id=recipient_familia_id,
                     monto=monto,
-                    fecha=fecha
+                    fecha=fecha,
                 )
                 session.commit()
-                
+
                 try:
                     self._event_system.fire_and_forget(
                         Event(
@@ -353,8 +401,11 @@ class HouseholdController(BaseController):
                         )
                     )
                 except Exception as ev_err:
-                    logger.warning(f"[HouseholdController] No se pudo emitir SETTLEMENT_CREADO: {ev_err}")
-                
+                    logger.warning(
+                        "[HouseholdController] No se pudo emitir SETTLEMENT_CREADO: %s",
+                        ev_err,
+                    )
+
                 return Ok(settlement)
         except Exception as e:
             logger.error(f"[HouseholdController] record_settlement error: {e}")

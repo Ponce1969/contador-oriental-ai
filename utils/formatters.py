@@ -12,8 +12,10 @@ _CURRENCIES_SUPPORTED = {"UYU", "USD"}
 
 def _format_uyu(value: float | Decimal) -> str:
     """Formatear monto en pesos uruguayos: entero con separador de miles."""
+    if not isinstance(value, (int, float, Decimal)) or isinstance(value, bool):
+        raise TypeError(f"Expected int, float or Decimal, got {type(value)}")
     if isinstance(value, Decimal):
-        value = int(value.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        value = float(value)
     return f"{value:,.0f}".replace(",", ".")
 
 

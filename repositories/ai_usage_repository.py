@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database.tables import AiUsageTable
@@ -30,21 +29,22 @@ class AiUsageRepository:
             model=row.model,
             prompt_tokens=row.prompt_tokens,
             completion_tokens=row.completion_tokens,
+            requests_count=getattr(row, "requests_count", 1),
             created_at=row.created_at,
         )
 
     def get_count_today(self, model: str = "llama3") -> int:
         """Retorna cuántas consultas hizo la familia hoy para un modelo."""
-        result = (
-            self.session.query(func.count(AiUsageTable.id))
+        row = (
+            self.session.query(AiUsageTable)
             .filter(
                 AiUsageTable.familia_id == self.familia_id,
                 AiUsageTable.date == date.today(),
                 AiUsageTable.model == model,
             )
-            .scalar()
+            .first()
         )
-        return result or 0
+        return row.requests_count if row else 0
 
     def register_usage(
         self,
@@ -52,7 +52,10 @@ class AiUsageRepository:
         prompt_tokens: int = 0,
         completion_tokens: int = 0,
     ) -> AiUsage:
-        """Registra una consulta. Upsert: si ya existe para hoy, suma tokens."""
+        """
+        Registra una consulta.
+        Upsert: si ya existe para hoy, suma tokens e incrementa contador.
+        """
         existing = (
             self.session.query(AiUsageTable)
             .filter(
@@ -66,6 +69,7 @@ class AiUsageRepository:
         if existing:
             existing.prompt_tokens += prompt_tokens
             existing.completion_tokens += completion_tokens
+            existing.requests_count = (existing.requests_count or 0) + 1
             self.session.flush()
             return self._to_domain(existing)
 
@@ -75,6 +79,7 @@ class AiUsageRepository:
             model=model,
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
+            requests_count=1,
         )
         self.session.add(row)
         self.session.flush()

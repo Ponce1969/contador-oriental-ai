@@ -5,11 +5,11 @@ Tests para el sistema de compras en cuotas
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
 
 from models.expense_model import Expense
-from models.installment_model import InstallmentPayment, InstallmentPurchase
 from repositories.installment_repository import (
     InstallmentPaymentRepository,
     InstallmentPurchaseRepository,
@@ -33,7 +33,7 @@ class TestInstallmentService:
         """Fixture: gasto de ejemplo para cuotas"""
         return Expense(
             id=None,
-            monto=12000.0,
+            monto=Decimal("12000.0"),
             fecha=date(2026, 5, 15),
             descripcion="Compra en Tienda Inglesa",
             categoria=__import__(
@@ -42,7 +42,6 @@ class TestInstallmentService:
             metodo_pago=__import__(
                 "models.categories", fromlist=["PaymentMethod"]
             ).PaymentMethod.TARJETA_CREDITO,
-            familia_id=1,
         )
 
     def test_create_installment(self, service, sample_expense):

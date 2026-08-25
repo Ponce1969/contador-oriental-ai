@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from database.tables import HouseholdSettlementTable

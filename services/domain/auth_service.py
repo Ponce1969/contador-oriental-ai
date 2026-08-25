@@ -31,8 +31,11 @@ class AuthService:
 
     def __init__(self, user_repo: UserRepository):
         self._user_repo = user_repo
-        self._reset_repo = PasswordResetRepository()
+        self._reset_repo = PasswordResetRepository(
+            session=getattr(user_repo, "_session", None)
+        )
         self._ph = PasswordHasher(time_cost=2, memory_cost=65536, parallelism=2)
+
         self._email_service: EmailService | None = None
 
     def set_email_service(self, email_service: EmailService) -> None:
@@ -74,7 +77,7 @@ class AuthService:
             rate_limiter.registrar_fallo(username)
             return Err(ValidationError(message="Usuario o contraseña incorrectos"))
 
-        user = result.ok_value
+        user = result.unwrap()
 
         # 3. Verificar que el usuario esté activo
         if not user.activo:
@@ -146,7 +149,7 @@ class AuthService:
         if result.is_err():
             return Err(ValidationError(message="Usuario no encontrado"))
 
-        user = result.ok_value
+        user = result.unwrap()
 
         # Verificar contraseña actual
         if not self._verify_password(old_password, user.password_hash):
@@ -200,12 +203,14 @@ class AuthService:
         user_result = self._user_repo.get_by_email(email.lower().strip())
 
         if user_result.is_ok():
-            user = user_result.ok_value
+            user = user_result.unwrap()
             # Generate token
             token = secrets.token_urlsafe(32)
             expires_at = datetime.now(UTC) + timedelta(hours=1)
 
             # Store token
+            if user.id is None:
+                return Err(AppError(message="Usuario sin ID"))
             token_result = self._reset_repo.create_token(
                 user_id=user.id,
                 token=token,
@@ -216,9 +221,7 @@ class AuthService:
                 # Send email
                 base_url = os.getenv("APP_BASE_URL", "")
                 if not base_url:
-                    return Err(
-                        AppError(message="APP_BASE_URL no configurado")
-                    )
+                    return Err(AppError(message="APP_BASE_URL no configurado"))
                 reset_url = f"{base_url}/reset-password?token={token}"
 
                 email_result = self._get_email_service().send_password_reset(
@@ -228,10 +231,13 @@ class AuthService:
                     logger.error(
                         "Failed to send reset email to %s: %s",
                         email,
-                        email_result.err_value,
+                        email_result.unwrap_err(),
                     )
             else:
-                logger.error("Failed to create reset token: %s", token_result.err_value)
+                logger.error(
+                    "Failed to create reset token: %s",
+                    token_result.unwrap_err(),
+                )
 
         # Register rate limit attempt
         rate_limiter.registrar_fallo(f"reset_{email}")
@@ -260,7 +266,7 @@ class AuthService:
         if claim_result.is_err():
             return Err(AppError(message="Error al procesar token"))
 
-        reset_token = claim_result.ok_value
+        reset_token = claim_result.unwrap()
         if reset_token is None:
             return Err(
                 ValidationError(message="Link inválido o expirado. Solicitá uno nuevo.")
@@ -277,6 +283,6 @@ class AuthService:
         user_result = self._user_repo.get_by_id(reset_token.user_id)
         if user_result.is_ok():
             # Clear rate limit for this user
-            rate_limiter.registrar_exito(f"reset_{user_result.ok_value.email}")
+            rate_limiter.registrar_exito(f"reset_{user_result.unwrap().email}")
 
         return Ok(None)

@@ -37,7 +37,7 @@ def up(db):
                 ADD COLUMN tipo_miembro TEXT DEFAULT 'persona'
             """)
             )
-        except:
+        except Exception:
             pass
 
     # 2. Agregar campo especie (para mascotas)
@@ -63,7 +63,7 @@ def up(db):
                 ALTER TABLE family_members ADD COLUMN especie TEXT
             """)
             )
-        except:
+        except Exception:
             pass
 
     print("✅ Soporte para mascotas agregado exitosamente")

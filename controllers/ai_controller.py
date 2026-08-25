@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 
 from result import Result
 
@@ -55,6 +56,7 @@ class AIController(BaseController):
 
     def __init__(self, familia_id: int):
         super().__init__(familia_id=familia_id)
+        self.familia_id: int = familia_id
         self.ai_service = AIAdvisorService()
         self.embedding_service = EmbeddingService()
         self.last_context: AIContext = AIContext()
@@ -62,7 +64,8 @@ class AIController(BaseController):
 
     def _get_memory_service(self, session) -> IAMemoryService:
         """Crear IAMemoryService con sesión activa."""
-        repo = MemoriaRepository(session, self._familia_id or 0)
+        repo = MemoriaRepository(session, self.familia_id)
+
         return IAMemoryService(repo, self.embedding_service)
 
     async def _calcular_subtotal_semantico(
@@ -95,7 +98,7 @@ class AIController(BaseController):
             return Decimal("0"), ""
 
         emb = embedding_result.ok()
-        repo = ExpenseRepository(session, self._familia_id)
+        repo = ExpenseRepository(session, self.familia_id)
         resultados = repo.buscar_por_similitud(
             emb,
             umbral_cosine=umbral_cosine,
@@ -136,9 +139,9 @@ class AIController(BaseController):
             mes_actual = ahora.month
             anio_actual = ahora.year
 
-            expense_repo = ExpenseRepository(session, self._familia_id)
+            expense_repo = ExpenseRepository(session, self.familia_id)
             expense_service = ExpenseService(expense_repo)
-            income_repo = IncomeRepository(session, self._familia_id)
+            income_repo = IncomeRepository(session, self.familia_id)
             income_service = IncomeService(income_repo)
 
             intencion = QueryAnalyzer.detectar_intenciones(pregunta)
@@ -198,7 +201,7 @@ class AIController(BaseController):
             gastos_filtrados = filtrar_por_categorias(gastos_mes, intencion.categorias)
 
             total_gastos_mes = sum((g.monto for g in gastos_mes), Decimal("0"))
-            resumen_gastos: dict[str, dict[str, dict]] = {}
+            resumen_gastos: dict[str, Any] = {}
             total_gastos_count = 0
             if gastos_filtrados:
                 resumen_gastos = agrupar_gastos(gastos_filtrados)
@@ -215,15 +218,53 @@ class AIController(BaseController):
                 last_day = calendar.monthrange(anio_fin, mes_fin)[1]
                 fecha_max = date(anio_fin, mes_fin, last_day)
 
-            subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
-                pregunta,
-                session,
-                fecha_min=fecha_min,
-                fecha_max=fecha_max,
+            # ── Subtotal semántico con filtro de fechas (solo si es consulta de gastos)
+            palabras_gasto = (
+                "gast",
+                "compr",
+                "pag",
+                "cost",
+                "cuanto",
+                "cuánto",
+                "subtotal",
+                "total",
+                "saldo",
+            )
+            palabras_normativas = (
+                "ley",
+                "iass",
+                "aguinaldo",
+                "vacacional",
+                "irpf",
+                "literal e",
+                "monotributo",
+                "cjppu",
+                "fonasa",
+                "bps",
+                "dgi",
+                "patente",
+            )
+            pregunta_lower = pregunta.lower()
+            es_consulta_normativa = any(
+                n in pregunta_lower for n in palabras_normativas
+            )
+            es_consulta_gasto = (
+                any(g in pregunta_lower for g in palabras_gasto)
+                and not es_consulta_normativa
             )
 
+            subtotal_desc = Decimal("0")
+            label_desc = ""
+            if es_consulta_gasto or intencion.categorias or intencion.rango:
+                subtotal_desc, label_desc = await self._calcular_subtotal_semantico(
+                    pregunta,
+                    session,
+                    fecha_min=fecha_min,
+                    fecha_max=fecha_max,
+                )
+
             # ── Miembros ──────────────────────────────────────────────────
-            member_repo = FamilyMemberRepository(session, self._familia_id)
+            member_repo = FamilyMemberRepository(session, self.familia_id)
             member_service = FamilyMemberService(member_repo)
             miembros = member_service.list_members()
 
@@ -237,7 +278,7 @@ class AIController(BaseController):
             mes_prev = mes_target - 1 if mes_target > 1 else 12
             anio_prev = anio_target if mes_target > 1 else anio_target - 1
 
-            snapshot_repo = MonthlySnapshotRepository(session, self._familia_id)
+            snapshot_repo = MonthlySnapshotRepository(session, self.familia_id)
             comparativa: list = []
             try:
                 snapshot_repo.upsert_mes_actual(anio_target, mes_target)
@@ -288,10 +329,143 @@ class AIController(BaseController):
             # ── Proyección de cuotas futuras ───────────────────────────────
             proyeccion = {}
             try:
-                inst_ctrl = InstallmentController(familia_id=self._familia_id)
+                inst_ctrl = InstallmentController(familia_id=self.familia_id)
                 proyeccion = inst_ctrl.proyectar_meses(6)
             except Exception as proy_err:
                 logger.warning("Proyeccion no disponible: %s", proy_err)
+
+            # ── Beneficios y contexto laboral pre-calculado ────────────────
+            resumen_laboral = ""
+            try:
+                from controllers.labor_controller import LaborController
+                from services.labor.domain.enums import ActivityNature
+                from services.labor.domain.periods import AguinaldoPeriod
+                from services.labor.engine import LaborCalculationEngine
+
+                labor_ctrl = LaborController(
+                    session=session, familia_id=self.familia_id
+                )
+                activities = labor_ctrl.list_all_activities()
+                if activities:
+                    labor_lines = []
+                    today = date.today()
+                    current_period = AguinaldoPeriod.for_date(today)
+                    for act in activities:
+                        if not act.is_active or act.id is None:
+                            continue
+                        member_name = "Integrante"
+                        for m in miembros:
+                            if m.id == act.family_member_id:
+                                member_name = m.nombre
+                                break
+
+                        labor_lines.append(
+                            f"- Integrante: {member_name} | "
+                            f"Actividad: {act.title} ({act.nature.value})"
+                        )
+
+                        # Desglose mensual de retenciones para Dependientes
+                        if (
+                            act.nature == ActivityNature.DEPENDIENTE
+                            and act.dependent_details
+                        ):
+                            nom = act.dependent_details.estimated_monthly_nominal
+                            if nom and nom > 0:
+                                withh = LaborCalculationEngine.calculate_withholdings(
+                                    nominal=nom,
+                                    profile=act.dependent_details.tax_profile,
+                                    fiscal_year=today.year,
+                                )
+                                fonasa_pct = withh.fonasa_effective_rate * Decimal(
+                                    "100"
+                                )
+                                irpf_pct = withh.irpf_marginal_rate * Decimal("100")
+                                f_amt = f"$ {withh.fonasa_amount:.2f}"
+                                irpf_amt = f"$ {withh.irpf_net_withholding:.2f}"
+                                labor_lines.append(
+                                    f"  * Sueldo Nominal: $ {withh.nominal_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * Montepío (15%): $ {withh.montepio_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * FRL (0.1%): $ {withh.frl_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * FONASA ({fonasa_pct:.1f}%): {f_amt}"
+                                )
+                                labor_lines.append(
+                                    f"  * Retención IRPF ({irpf_pct:.0f}% marg.): "
+                                    f"{irpf_amt}"
+                                )
+                                labor_lines.append(
+                                    f"  * Líquido en Mano: $ {withh.liquid_amount:.2f}"
+                                )
+
+                        # Desglose para Pasividades / Jubilaciones
+                        elif (
+                            act.nature == ActivityNature.PASIVIDAD
+                            and act.pension_profile
+                        ):
+                            pen_res = LaborCalculationEngine.calculate_pension(
+                                profile=act.pension_profile,
+                                fiscal_year=today.year,
+                            )
+                            if pen_res.iass_payload:
+                                p = pen_res.iass_payload
+                                iass_pct = p.iass_marginal_rate * Decimal("100")
+                                labor_lines.append(
+                                    f"  * Pasividad Nominal: "
+                                    f"$ {p.gross_pension_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * FONASA Pasivo: "
+                                    f"$ {p.fonasa_pension_withholding:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * Retención IASS ({iass_pct:.0f}% marg.): "
+                                    f"$ {p.iass_net_withholding:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * Pasividad Líquida: "
+                                    f"$ {p.net_pension_liquid:.2f}"
+                                )
+
+                        # Aguinaldo y Salario Vacacional
+                        aguinaldo_res = labor_ctrl.calculate_aguinaldo(
+                            activity_id=act.id,
+                            year=current_period.year,
+                            semester=current_period.semester,
+                            today=today,
+                        )
+                        vacational_res = labor_ctrl.calculate_vacation_pay(
+                            activity_id=act.id,
+                            requested_days=20,
+                        )
+
+                        sem_label = (
+                            "Junio" if current_period.semester == 1 else "Diciembre"
+                        )
+                        if aguinaldo_res.is_ok():
+                            c = aguinaldo_res.unwrap()
+                            if c.final_amount > 0:
+                                labor_lines.append(
+                                    f"  * Aguinaldo estimado {sem_label} "
+                                    f"{current_period.year}: $ {c.final_amount:.2f} "
+                                    f"(Estado: {c.status.value})"
+                                )
+                        if vacational_res.is_ok():
+                            v = vacational_res.unwrap()
+                            if v.final_amount > 0:
+                                labor_lines.append(
+                                    f"  * Salario Vacacional orientativo (20 días): "
+                                    f"$ {v.final_amount:.2f}"
+                                )
+
+                    if labor_lines:
+                        resumen_laboral = "\n".join(labor_lines)
+            except Exception as labor_err:
+                logger.warning("Contexto laboral no disponible: %s", labor_err)
 
             # ── Cotización del dólar ──────────────────────────────────────
             exchange_ctrl = ExchangeRateController()
@@ -318,6 +492,7 @@ class AIController(BaseController):
                 subtotal_descripcion=subtotal_desc if subtotal_desc else None,
                 terminos_buscados=label_desc,
                 proyeccion_cuotas=proyeccion,
+                resumen_laboral=resumen_laboral,
                 cotizacion_dolar=cotizacion if cotizacion > 0 else None,
                 empalme_gastos=empalme_gastos,
                 empalme_ingresos_total=empalme_ingresos_total,
@@ -382,13 +557,13 @@ class AIController(BaseController):
         with self._get_session() as session:
             from services.infrastructure.quota_manager import QuotaManager
 
-            quota = QuotaManager(session, self._familia_id)
+            quota = QuotaManager(session, self.familia_id)
             has_quota = quota.can_use_llama3()
 
         # Crear request
         request = AIRequest(
             pregunta=pregunta,
-            familia_id=self._familia_id,
+            familia_id=self.familia_id,
             incluir_gastos_recientes=incluir_gastos,
         )
 
@@ -418,7 +593,7 @@ class AIController(BaseController):
             with self._get_session() as session:
                 from services.infrastructure.quota_manager import QuotaManager
 
-                quota = QuotaManager(session, self._familia_id)
+                quota = QuotaManager(session, self.familia_id)
                 if modelo_usado == "llama3":
                     quota.register_llama3_usage()
                 else:
@@ -460,12 +635,12 @@ class AIController(BaseController):
         with self._get_session() as session:
             from services.infrastructure.quota_manager import QuotaManager
 
-            quota = QuotaManager(session, self._familia_id)
+            quota = QuotaManager(session, self.familia_id)
             has_quota = quota.can_use_llama3()
 
         request = AIRequest(
             pregunta=pregunta,
-            familia_id=self._familia_id,
+            familia_id=self.familia_id,
             incluir_gastos_recientes=incluir_gastos,
         )
 
@@ -504,7 +679,7 @@ class AIController(BaseController):
         with self._get_session() as session:
             from services.infrastructure.quota_manager import QuotaManager
 
-            quota = QuotaManager(session, self._familia_id)
+            quota = QuotaManager(session, self.familia_id)
             if modelo == "llama3":
                 quota.register_llama3_usage()
             else:

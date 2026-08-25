@@ -9,7 +9,7 @@ import os
 import signal
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum, auto
 from typing import (
     Any,
@@ -18,12 +18,12 @@ from typing import (
     NamedTuple,
     Protocol,
     Self,
-    TypeAlias,
     TypedDict,
 )
 
 import aiohttp
 import docker
+import docker.errors
 from docker.models.containers import Container
 
 # ============================================================================
@@ -35,7 +35,7 @@ DISCORD_WEBHOOK_URL: Final[str] = os.environ["DISCORD_WEBHOOK_URL"]
 CHECK_INTERVAL: Final[int] = int(os.getenv("CHECK_INTERVAL", "60"))
 
 # Type alias para nombres de contenedores
-ContainerName: TypeAlias = Literal[
+type ContainerName = Literal[
     "auditor_familiar_app", "auditor_familiar_db", "auditor_familiar_ocr_api"
 ]
 EXPECTED_CONTAINERS: Final[tuple[ContainerName, ...]] = (
@@ -45,11 +45,12 @@ EXPECTED_CONTAINERS: Final[tuple[ContainerName, ...]] = (
 )
 
 # Colores Discord como constantes tipadas
-DiscordColor: TypeAlias = int
+type DiscordColor = int
 COLOR_RED: Final[DiscordColor] = 0xFF0000
 COLOR_GREEN: Final[DiscordColor] = 0x00FF00
 COLOR_BLUE: Final[DiscordColor] = 0x00AAFF
 COLOR_YELLOW: Final[DiscordColor] = 0xFFA500
+
 
 # Configuración de logging
 logging.basicConfig(
@@ -104,11 +105,12 @@ class ContainerStatus:
     state: ContainerState
     health_status: HealthStatus
     details: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __str__(self) -> str:
         status_emoji = "✅" if self.is_healthy else "❌"
-        return f"{status_emoji} {self.name}: {self.state.name} ({self.health_status.value})"
+        msg = f"{status_emoji} {self.name}: {self.state.name}"
+        return f"{msg} ({self.health_status.value})"
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,7 +120,7 @@ class DiscordEmbed:
     title: str
     description: str
     color: DiscordColor
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -185,11 +187,7 @@ class Monitor(Protocol):
 
 
 class DiscordNotifier:
-    """
-    Notificador de Discord con tipado estricto.
-
-    Implementa el protocolo Notifier.
-    """
+    """Notificador de Discord usando Webhooks con sesión persistente."""
 
     HTTP_SUCCESS: Final[int] = 204
 
@@ -198,16 +196,15 @@ class DiscordNotifier:
         self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
-        """Lazy initialization de la sesión HTTP."""
+        """Obtiene o crea una sesión HTTP persistente."""
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=10),
-                headers={"Content-Type": "application/json"},
+                timeout=aiohttp.ClientTimeout(total=10)
             )
         return self._session
 
     async def close(self) -> None:
-        """Cierra la sesión HTTP de forma segura."""
+        """Cierra la sesión HTTP."""
         if self._session and not self._session.closed:
             await self._session.close()
             self._session = None
@@ -220,7 +217,7 @@ class DiscordNotifier:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: Any,
+        exc_tb: object,
     ) -> None:
         """Async context manager exit."""
         await self.close()
@@ -249,17 +246,19 @@ class DiscordNotifier:
 
     async def send_alert(self, service: str, issue: str) -> None:
         """Envía alerta de problema."""
+        hora = datetime.now().strftime("%H:%M:%S")
         await self.send_message(
             f"🚨 Alerta - {service}",
-            f"**Problema detectado:** {issue}\n**Hora:** {datetime.now().strftime('%H:%M:%S')}",
+            f"**Problema detectado:** {issue}\n**Hora:** {hora}",
             COLOR_RED,
         )
 
     async def send_recovery(self, service: str, message: str) -> None:
         """Envía notificación de recuperación."""
+        hora = datetime.now().strftime("%H:%M:%S")
         await self.send_message(
             f"✅ Recuperado - {service}",
-            f"**Servicio restaurado:** {message}\n**Hora:** {datetime.now().strftime('%H:%M:%S')}",
+            f"**Servicio restaurado:** {message}\n**Hora:** {hora}",
             COLOR_GREEN,
         )
 
@@ -291,11 +290,14 @@ class ContainerMonitor:
     def _get_health_status(self, container: Container) -> HealthStatus:
         """Obtiene el estado de salud del contenedor."""
         try:
-            health = container.attrs.get("State", {}).get("Health", {})
-            if not health:
+            attrs = getattr(container, "attrs", {}) or {}
+            state = attrs.get("State") if isinstance(attrs, dict) else {}
+            health = state.get("Health") if isinstance(state, dict) else {}
+            if not health or not isinstance(health, dict):
                 return HealthStatus.NONE
 
             status = health.get("Status", "")
+
             health_map: dict[str, HealthStatus] = {
                 "healthy": HealthStatus.HEALTHY,
                 "unhealthy": HealthStatus.UNHEALTHY,
@@ -382,10 +384,11 @@ class ContainerMonitor:
                 last_healthy = self._last_status.get(container_name, True)
 
                 if last_healthy and not result.is_healthy:
-                    await self._notifier.send_alert(
-                        container_name,
-                        f"El contenedor `{container_name}` ha dejado de funcionar.\n**Estado:** {result.details}",
+                    msg = (
+                        f"El contenedor `{container_name}` ha dejado de funcionar.\n"
+                        f"**Estado:** {result.details}"
                     )
+                    await self._notifier.send_alert(container_name, msg)
                     logger.error(f"🚨 {status}")
 
                 elif not last_healthy and result.is_healthy:
@@ -462,7 +465,7 @@ class GuardianService:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: Any,
+        exc_tb: object,
     ) -> None:
         """Limpieza async del servicio."""
         self._running = False
@@ -554,7 +557,7 @@ class GuardianService:
                         self._shutdown_event.wait(),
                         timeout=self._config.check_interval,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue  # Normal, continuar con siguiente check
 
             except asyncio.CancelledError:

@@ -14,36 +14,36 @@ class TestFormatCurrency:
 
     def test_format_currency_enteros(self):
         """Test formato de montos enteros"""
-        assert format_currency(1000) == "1.000"
-        assert format_currency(50000) == "50.000"
-        assert format_currency(0) == "0"
+        assert format_currency(Decimal("1000")) == "1.000"
+        assert format_currency(Decimal("50000")) == "50.000"
+        assert format_currency(Decimal("0")) == "0"
 
     def test_format_currency_decimales(self):
         """Test formato de montos con decimales"""
-        assert format_currency(1250.5) == "1.250"  # Truncado
-        assert format_currency(1250.4) == "1.250"  # Truncado
+        assert format_currency(Decimal("1250.5")) == "1.250"  # Truncado
+        assert format_currency(Decimal("1250.4")) == "1.250"  # Truncado
         assert (
-            format_currency(999.99) == "1.000"
+            format_currency(Decimal("999.99")) == "1.000"
         )  # Redondeo hacia arriba (caso especial)
-        assert format_currency(1000.49) == "1.000"  # Truncado
+        assert format_currency(Decimal("1000.49")) == "1.000"  # Truncado
 
     def test_format_currency_grandes_numeros(self):
         """Test formato de montos grandes"""
-        assert format_currency(1000000) == "1.000.000"
-        assert format_currency(5000000) == "5.000.000"
-        assert format_currency(1234567) == "1.234.567"
+        assert format_currency(Decimal("1000000")) == "1.000.000"
+        assert format_currency(Decimal("5000000")) == "5.000.000"
+        assert format_currency(Decimal("1234567")) == "1.234.567"
 
     def test_format_currency_miles(self):
         """Test formato de montos en miles"""
-        assert format_currency(1500) == "1.500"
-        assert format_currency(2500) == "2.500"
-        assert format_currency(9999) == "9.999"
+        assert format_currency(Decimal("1500")) == "1.500"
+        assert format_currency(Decimal("2500")) == "2.500"
+        assert format_currency(Decimal("9999")) == "9.999"
 
     def test_format_currency_con_ceros(self):
         """Test formato de montos que terminan en cero"""
-        assert format_currency(1000) == "1.000"
-        assert format_currency(2000) == "2.000"
-        assert format_currency(10000) == "10.000"
+        assert format_currency(Decimal("1000")) == "1.000"
+        assert format_currency(Decimal("2000")) == "2.000"
+        assert format_currency(Decimal("10000")) == "10.000"
 
 
 class TestFormatCurrencyWithSymbol:
@@ -94,20 +94,20 @@ class TestFormattersEdgeCases:
         """Test formato con tipos inválidos"""
         # String
         with pytest.raises((TypeError, ValueError)):
-            format_currency("1000")
+            format_currency("1000")  # type: ignore[arg-type]
 
         # None
         with pytest.raises((TypeError, ValueError)):
-            format_currency(None)
+            format_currency(None)  # type: ignore[arg-type]
 
         # Lista
         with pytest.raises((TypeError, ValueError)):
-            format_currency([1000])
+            format_currency([1000])  # type: ignore[arg-type]
 
     def test_format_currency_limites(self):
         """Test formato en valores límite"""
         # Valor muy pequeño
-        assert format_currency(0.01) == "0"  # Redondeo hacia abajo
+        assert format_currency(Decimal("0.01")) == "0"  # Redondeo hacia abajo
 
         # Valor muy grande
         grande = 999999999
@@ -115,8 +115,8 @@ class TestFormattersEdgeCases:
         assert "." in resultado  # Debería tener separadores de miles
 
         # Verificar comportamiento de redondeo estándar
-        assert format_currency(0.5) == "0"  # Truncado
-        assert format_currency(0.9) == "1"  # Redondeo hacia arriba (caso especial)
+        assert format_currency(Decimal("0.5")) == "0"  # Truncado
+        assert format_currency(Decimal("0.9")) == "1"  # Redondeo arriba
 
 
 class TestFormattersConsistencia:
@@ -136,12 +136,12 @@ class TestFormattersConsistencia:
     def test_formato_uruguayo_consistente(self):
         """Test que el formato sea consistente con estándares uruguayos"""
         # Separador de miles: punto
-        assert "." in format_currency(1000)
-        assert "," not in format_currency(1000)  # No usa coma decimal
+        assert "." in format_currency(Decimal("1000"))
+        assert "," not in format_currency(Decimal("1000"))  # No usa coma decimal
 
         # Sin decimales (con redondeo estándar)
-        assert format_currency(1250.5) == "1.250"
-        assert format_currency(1250.4) == "1.250"
+        assert format_currency(Decimal("1250.5")) == "1.250"
+        assert format_currency(Decimal("1250.4")) == "1.250"
 
         # Símbolo de peso antes del número
         assert format_currency_with_symbol(1000).startswith("$ ")
@@ -154,7 +154,7 @@ class TestFormattersConsistencia:
         inicio = time.time()
 
         for i in range(1000):
-            format_currency(1000 + i)
+            format_currency(Decimal("1000") + i)
             format_currency_with_symbol(1000 + i)
 
         fin = time.time()

@@ -5,6 +5,7 @@ Tests for PasswordResetRepository.
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import text
 
 from repositories.password_reset_repository import PasswordResetRepository
 
@@ -26,12 +27,14 @@ class TestPasswordResetRepository:
         password_hash = ph.hash("testpassword")
 
         result = db_session.execute(
-            """
-            INSERT INTO usuarios
-                (familia_id, username, password_hash, nombre_completo, activo)
-            VALUES (1, 'resetuser', :password_hash, 'Reset User', true)
-            RETURNING id
-            """,
+            text(
+                """
+                INSERT INTO usuarios
+                    (familia_id, username, password_hash, nombre_completo, activo)
+                VALUES (1, 'resetuser', :password_hash, 'Reset User', true)
+                RETURNING id
+                """
+            ),
             {"password_hash": password_hash},
         )
         db_session.flush()

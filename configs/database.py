@@ -1,10 +1,12 @@
 import os
+from typing import Any
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE = {
+
+DATABASE: dict[str, Any] = {
     "ENGINE": os.getenv("DB_TYPE", "postgresql"),
     "SQLITE": {"PATH": "data/fleting.db"},
     "MYSQL": {

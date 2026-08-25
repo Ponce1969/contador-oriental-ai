@@ -33,7 +33,9 @@ class FamilyMember(BaseModel):
     parentesco: str | None = Field(
         default=None,
         max_length=50,
-        description="Parentesco: padre, madre, hijo, hija, abuelo, abuela, otro (solo personas)",
+        description=(
+            "Parentesco: padre, madre, hijo, hija, abuelo, abuela, otro (solo personas)"
+        ),
     )
 
     # Especie (solo para mascotas)
@@ -52,7 +54,10 @@ class FamilyMember(BaseModel):
     estado_laboral: str | None = Field(
         default=None,
         max_length=50,
-        description="Estado laboral: empleado, desempleado, jubilado, estudiante, independiente (solo personas)",
+        description=(
+            "Estado laboral: empleado, desempleado, jubilado, estudiante, "
+            "independiente (solo personas)"
+        ),
     )
 
     # Estado

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Protocol
+from typing import Any, Protocol
 
 from result import Err, Ok, Result
 
@@ -39,15 +39,16 @@ class ResendEmailService:
 
             resend.api_key = self._api_key
 
-            resend.Emails.send(
-                {
-                    "from": self._from_email,
-                    "to": [to_email],
-                    "subject": "Recuperá tu contraseña — Contador Oriental",
-                    "html": self._build_reset_email_html(reset_url),
-                }
-            )
+            params: dict[str, Any] = {
+                "from": self._from_email,
+                "to": [to_email],
+                "subject": "Recuperá tu contraseña — Contador Oriental",
+                "html": self._build_reset_email_html(reset_url),
+            }
+
+            resend.Emails.send(params)  # type: ignore[arg-type]
             return Ok(None)
+
         except Exception as e:
             logger.error("Error sending password reset email: %s", str(e))
             return Err(f"Error al enviar email: {str(e)}")

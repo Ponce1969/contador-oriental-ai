@@ -4,11 +4,6 @@ Test para verificar que _sessions es thread-safe y no hay fuga de datos entre se
 
 from __future__ import annotations
 
-import threading
-import time
-
-import pytest
-
 from core.session import SessionManager, _sessions
 
 
@@ -36,7 +31,7 @@ class TestSessionIsolation:
             session = MockSession()
 
         page = MockPage()
-        SessionManager.login(page, MockUser())
+        SessionManager.login(page, MockUser())  # type: ignore[arg-type]
 
         assert "test-session-123" in _sessions
         assert _sessions["test-session-123"]["familia_id"] == 100
@@ -60,7 +55,7 @@ class TestSessionIsolation:
             session = MockSession()
 
         page = MockPage()
-        SessionManager.login(page, MockUser())
+        SessionManager.login(page, MockUser())  # type: ignore[arg-type]
         assert "test-session-456" in _sessions
 
         SessionManager.logout(page)
@@ -97,8 +92,8 @@ class TestSessionIsolation:
         page1 = MockPage1()
         page2 = MockPage2()
 
-        SessionManager.login(page1, MockUser1())
-        SessionManager.login(page2, MockUser2())
+        SessionManager.login(page1, MockUser1())  # type: ignore[arg-type]
+        SessionManager.login(page2, MockUser2())  # type: ignore[arg-type]
 
         assert _sessions["session-A"]["familia_id"] == 100
         assert _sessions["session-B"]["familia_id"] == 200
@@ -134,8 +129,8 @@ class TestRepositoryFamiliaIdFiltering:
         """Repository.add debe setear familia_id en la fila插入."""
         from unittest.mock import MagicMock
 
-        from repositories.family_member_repository import FamilyMemberRepository
         from models.family_member_model import FamilyMember
+        from repositories.family_member_repository import FamilyMemberRepository
 
         mock_session = MagicMock()
         repo = FamilyMemberRepository(mock_session, familia_id=42)

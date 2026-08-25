@@ -3,6 +3,7 @@ Tests for ExpenseService.
 """
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
 from result import Err, Ok
@@ -30,8 +31,8 @@ class TestExpenseService:
         result = service.create_expense(expense)
 
         assert isinstance(result, Ok)
-        assert result.ok_value.monto == 150.50
-        assert result.ok_value.descripcion == "Compra en supermercado"
+        assert result.unwrap().monto == 150.50
+        assert result.unwrap().descripcion == "Compra en supermercado"
 
     def test_create_expense_validation_error(self, service):
         """Test expense creation with invalid data raises Pydantic error."""
@@ -40,7 +41,7 @@ class TestExpenseService:
         # Pydantic validates monto > 0 on model creation
         with pytest.raises(PydanticError):
             Expense(
-                monto=-50.00,
+                monto=Decimal("-50.00"),
                 fecha=date.today(),
                 descripcion="Invalid",
                 categoria=ExpenseCategory.ALMACEN,
@@ -53,7 +54,7 @@ class TestExpenseService:
         # Empty string fails min_length=1
         with pytest.raises(PydanticError):
             Expense(
-                monto=100.00,
+                monto=Decimal("100.00"),
                 fecha=date.today(),
                 descripcion="",  # Empty string
                 categoria=ExpenseCategory.ALMACEN,
@@ -62,7 +63,7 @@ class TestExpenseService:
     def test_create_recurrent_without_frequency(self, service):
         """Test that recurrent expense without frequency fails."""
         expense = Expense(
-            monto=500.00,
+            monto=Decimal("500.00"),
             fecha=date.today(),
             descripcion="Alquiler",
             categoria=ExpenseCategory.HOGAR,
@@ -72,7 +73,7 @@ class TestExpenseService:
 
         result = service.create_expense(expense)
         assert isinstance(result, Err)
-        assert isinstance(result.err_value, ValidationError)
+        assert isinstance(result.unwrap_err(), ValidationError)
 
     def test_list_expenses(self, service, sample_expense_data):
         """Test listing expenses."""
@@ -89,7 +90,7 @@ class TestExpenseService:
         created = service.create_expense(expense)
 
         if created.is_ok():
-            expense_id = created.ok_value.id
+            expense_id = created.unwrap().id
             result = service.get_expense(expense_id)
             assert isinstance(result, Ok)
 
@@ -99,21 +100,21 @@ class TestExpenseService:
         created = service.create_expense(expense)
 
         if created.is_ok():
-            expense_id = created.ok_value.id
+            expense_id = created.unwrap().id
             result = service.delete_expense(expense_id)
             assert isinstance(result, Ok)
 
     def test_get_total_by_month(self, service):
         """Test getting total by month grouped by currency."""
         expense1 = Expense(
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=date.today(),
             descripcion="Gasto 1",
             categoria=ExpenseCategory.ALMACEN,
             currency="UYU",
         )
         expense2 = Expense(
-            monto=200.00,
+            monto=Decimal("200.00"),
             fecha=date.today(),
             descripcion="Gasto 2",
             categoria=ExpenseCategory.VEHICULOS,
@@ -138,14 +139,14 @@ class TestExpenseService:
     def test_get_summary_by_categories(self, service):
         """Test getting summary by categories and currency."""
         expense1 = Expense(
-            monto=100.00,
+            monto=Decimal("100.00"),
             fecha=date.today(),
             descripcion="Comida",
             categoria=ExpenseCategory.ALMACEN,
             currency="UYU",
         )
         expense2 = Expense(
-            monto=50.00,
+            monto=Decimal("50.00"),
             fecha=date.today(),
             descripcion="Comida 2",
             categoria=ExpenseCategory.ALMACEN,

@@ -4,7 +4,7 @@ Modelo SQLAlchemy para la tabla ai_vector_memory (memoria vectorial RAG)
 
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Text
+from sqlalchemy import TIMESTAMP, Column, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.base import Base

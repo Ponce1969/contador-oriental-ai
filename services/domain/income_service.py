@@ -42,7 +42,7 @@ class IncomeService:
             if check.is_err():
                 return check  # type: ignore[return-value]
         if income.family_member_id <= 0:
-            return Err(ValidationError(message=ValidationMessages.MIEMBRO_REQUERIDO))  # type: ignore[return-value]
+            return Err(ValidationError(message=ValidationMessages.MIEMBRO_REQUERIDO))
         return self._repo.add(income)
 
     def list_incomes(self) -> list[Income]:

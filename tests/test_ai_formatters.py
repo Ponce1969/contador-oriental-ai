@@ -46,7 +46,7 @@ class TestFormatPesosAi:
         assert format_pesos(Decimal("173720")) != format_pesos_ai(Decimal("173720"))
 
     def test_int_input(self):
-        assert format_pesos_ai(12990) == "$ 12990"
+        assert format_pesos_ai(Decimal("12990")) == "$ 12990"
 
 
 class TestFormatCotizacion:

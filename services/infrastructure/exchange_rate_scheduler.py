@@ -32,13 +32,15 @@ async def update_exchange_rate() -> None:
         service = ExchangeRateService()
         result = await service.fetch_rate()
 
-        if not result.ok:
+        if result.is_err():
             logger.warning(
-                "[EXCHANGE_RATE] Error consultando API: %s", result.err().message
+                "[EXCHANGE_RATE] Error consultando API: %s",
+                result.unwrap_err().message,
             )
             return
 
-        compra, venta = result.ok()
+        compra, venta = result.unwrap()
+
         today = date.today()
 
         with get_db_session() as session:
@@ -46,8 +48,9 @@ async def update_exchange_rate() -> None:
             existing = repo.get_today()
             if existing:
                 logger.info(
-                    "[EXCHANGE_RATE] Cotización de hoy ya existe: C %s - V %s", 
-                    existing.compra, existing.venta
+                    "[EXCHANGE_RATE] Cotización de hoy ya existe: C %s - V %s",
+                    existing.compra,
+                    existing.venta,
                 )
                 return
 
@@ -55,7 +58,8 @@ async def update_exchange_rate() -> None:
             session.commit()
             logger.info(
                 "[EXCHANGE_RATE] Cotización actualizada: 1 USD = C $%s - V $%s",
-                format_cotizacion(compra), format_cotizacion(venta)
+                format_cotizacion(compra),
+                format_cotizacion(venta),
             )
 
     except Exception as e:

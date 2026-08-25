@@ -42,8 +42,9 @@ class AIAdvisorView:
             router.navigate("/login")
             return
 
-        familia_id = SessionManager.get_familia_id(page)
+        familia_id = SessionManager.get_familia_id(page) or 1
         self.controller = AIController(familia_id=familia_id)
+
         self.report_service = ReportService()
         self.chat_history: list[ChatMessage] = []
         self._last_respuesta: str = ""
@@ -498,9 +499,11 @@ class AIAdvisorView:
 
         def copiar(e: object) -> None:
             self.page.run_task(self.page.clipboard.set, reporte)
-            snack = CorrectSnackBar(
-                content=ft.Text("✅ Copiado al portapapeles"),
-                open=True,
+            self.page.overlay.append(
+                CorrectSnackBar(
+                    content=ft.Text("✅ Copiado al portapapeles"),
+                    open=True,
+                )
             )
             self.page.update()
 

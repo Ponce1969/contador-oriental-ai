@@ -65,7 +65,7 @@ class MonthlySnapshotRepository:
             {"familia_id": self.familia_id, "anio": anio, "mes": mes},
         )
         self.session.commit()
-        count: int = result.rowcount
+        count: int = int(getattr(result, "rowcount", 0) or 0)
         logger.info(
             "Snapshot upsert: familia=%s %s/%s → %s categorías",
             self.familia_id,
@@ -73,6 +73,7 @@ class MonthlySnapshotRepository:
             anio,
             count,
         )
+
         return count
 
     # ------------------------------------------------------------------

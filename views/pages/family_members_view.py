@@ -3,7 +3,7 @@ Vista para gestión de miembros de la familia
 Arquitectura: State + Sync Pattern (Profesional)
 """
 
-from __future__ import annotations
+from typing import Any
 
 import flet as ft
 from result import Err
@@ -14,6 +14,7 @@ from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.family_member_model import FamilyMember
+from views.components.labor_simulator_card import LaborSimulatorCard
 from views.layouts.main_layout import MainLayout
 
 
@@ -30,11 +31,12 @@ class FamilyMembersView:
 
         familia_id = SessionManager.get_familia_id(page)
         self.controller = FamilyMemberController(familia_id=familia_id)
+        self.simulator_card = LaborSimulatorCard(page=self.page, familia_id=familia_id)
 
         # ===============================
         # STATE CENTRAL
         # ===============================
-        self.state = {
+        self.state: dict[str, Any] = {
             "members": [],  # list[FamilyMember]
             "editing_id": None,  # int | None
             "selected_id": None,  # str | None
@@ -213,6 +215,8 @@ class FamilyMembersView:
                     size=16 if is_mobile else 20,
                 ),
                 self.members_column,
+                ft.Divider(),
+                self.simulator_card.render(),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,
@@ -235,12 +239,13 @@ class FamilyMembersView:
     # =====================================================
     def _sync_ui(self):
         # Dropdown
+        members_list: list[FamilyMember] = self.state.get("members") or []
         self.select_dropdown.options = [
             ft.dropdown.Option(
                 key=str(m.id),
                 text=f"{m.nombre} ({m.tipo_miembro})",
             )
-            for m in self.state["members"]
+            for m in members_list
         ]
         self.select_dropdown.value = self.state["selected_id"]
 
@@ -252,8 +257,9 @@ class FamilyMembersView:
             pass  # Control aún no está en la página
 
         # Form
-        if self.state["editing_id"]:
-            member = self._get_member(self.state["editing_id"])
+        editing_id = self.state.get("editing_id")
+        if isinstance(editing_id, int):
+            member = self._get_member(editing_id)
             if member:
                 self._fill_form(member)
         else:
@@ -315,7 +321,8 @@ class FamilyMembersView:
     def _render_list(self):
         self.members_column.controls.clear()
 
-        for m in self.state["members"]:
+        members_list: list[FamilyMember] = self.state.get("members") or []
+        for m in members_list:
             # Construir texto descriptivo
             edad_text = f"{m.edad} años" if m.edad else "Edad no especificada"
 
@@ -379,7 +386,8 @@ class FamilyMembersView:
     # HELPERS
     # =====================================================
     def _get_member(self, member_id: int):
-        for m in self.state["members"]:
+        members_list: list[FamilyMember] = self.state.get("members") or []
+        for m in members_list:
             if m.id == member_id:
                 return m
         return None
@@ -444,14 +452,16 @@ class FamilyMembersView:
 
     def _on_unlink(self, member: FamilyMember):
         """Ejecutar desvinculación del miembro."""
+        if member.id is None:
+            return
         result = self.controller.deactivate_member(member.id)
         if result.is_err():
-            self._error(f"Error al desvincular: {result.err().message}")
+            self._error(f"Error al desvincular: {result.unwrap_err().message}")
             return
 
         # Recargar lista
         self.state["members"] = self.controller.list_active_members()
-        self._render_members()
+        self._sync_ui()
         self.page.snack_bar = ft.SnackBar(
             ft.Text(f"{member.nombre} desvinculado correctamente"),
             bgcolor=ft.Colors.GREEN_600,
@@ -495,8 +505,10 @@ class FamilyMembersView:
                 self._error("Edad debe ser un número")
                 return
 
+        editing_id = self.state.get("editing_id")
+        member_id = editing_id if isinstance(editing_id, int) else None
         member = FamilyMember(
-            id=self.state["editing_id"],
+            id=member_id,
             nombre=self.name_input.value,
             tipo_miembro=tipo,
             parentesco=self.parentesco_dropdown.value if tipo == "persona" else None,

@@ -101,8 +101,8 @@ class MainLayout(ft.Column):
         user_result = UserRepository().get_by_id(user_id)
         if user_result.is_err():
             return False
-        email = user_result.ok_value.email
-        return not email  # Show banner if email is None or empty
+        user = user_result.unwrap()
+        return not user.email  # Show banner if email is None or empty
 
     @property
     def _is_mobile(self) -> bool:
@@ -152,7 +152,10 @@ class MainLayout(ft.Column):
 
     # ---------- EXCHANGE RATE BADGE ----------
     def _email_banner(self) -> ft.Control | None:
-        """Banner for users without email — security reminder to add email for password recovery."""
+        """
+        Banner for users without email — security reminder to add email
+        for password recovery.
+        """
         if not self._user_needs_email_banner():
             return None
 
@@ -339,7 +342,7 @@ class MainLayout(ft.Column):
                         label=I18n.t(route["label"]),
                     )
                 )
-                paths.append(route["path"])
+                paths.append(str(route["path"]))
 
         def on_change(e: ft.ControlEvent) -> None:
             selected_index: int = e.control.selected_index

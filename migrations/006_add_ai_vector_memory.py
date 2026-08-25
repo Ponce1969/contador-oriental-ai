@@ -5,11 +5,11 @@ Crea la infraestructura para búsqueda semántica con pgvector y HNSW.
 
 Integra con estructura existente (VERIFICADA):
 - familias (id, nombre, email, activo, created_at)
-- usuarios (id, familia_id, username, password_hash, nombre_completo, activo, created_at, last_login)
+- usuarios (id, familia_id, username, password_hash, ...)
 - family_members (id, familia_id, nombre, ...)
-- incomes (id, familia_id, family_member_id, monto, fecha, descripcion, categoria, es_recurrente, frecuencia, notas, tipo_ingreso)
-- expenses (id, familia_id, monto, fecha, descripcion, categoria, subcategoria, metodo_pago, es_recurrente, frecuencia, notas, name, price, category, purchased, purchase_date)
-- monthly_expense_snapshots (id, familia_id, anio, mes, categoria, total_dinero, cantidad_compras, ticket_promedio, created_at)
+- incomes (id, familia_id, family_member_id, monto, fecha, ...)
+- expenses (id, familia_id, monto, fecha, descripcion, ...)
+- monthly_expense_snapshots (id, familia_id, anio, mes, ...)
 """
 
 from sqlalchemy import text

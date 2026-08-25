@@ -2,11 +2,12 @@
 Tests para BaseController - Pilar de herencia del Escudo Charrúa
 """
 
-import pytest
+from __future__ import annotations
+
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from controllers.base_controller import BaseController
-from models.errors import DatabaseError
 
 
 class TestBaseController:
@@ -26,7 +27,7 @@ class TestBaseController:
         # Verificar atributos base
         assert controller._familia_id == 42
         assert hasattr(controller, "_get_session")
-        assert callable(getattr(controller, "_get_session"))
+        assert callable(controller._get_session)
 
     def test_base_controller_sin_familia_id(self):
         """Test BaseController sin familia_id (opcional)"""
@@ -63,16 +64,13 @@ class TestBaseController:
 
         controller = TestController(familia_id=1)
 
-        session_dentro = None
-        session_fuera = None
-
         # Usar el context manager
         with controller._get_session() as session:
-            session_dentro = session
             assert session.is_active
 
         # Después del context, la sesión debería cerrarse
-        # Nota: En SQLAlchemy, la sesión puede permanecer activa pero el transaction termina
+        # Nota: En SQLAlchemy, la sesión puede permanecer activa
+        # pero el transaction termina
         # Lo importante es que el context manager maneje el ciclo de vida
 
     def test_get_session_con_error_hace_rollback(self, db_session):
@@ -125,7 +123,6 @@ class TestBaseControllerIntegration:
                 """Método de prueba para probar queries"""
                 with self._get_session() as session:
                     # Query simple para probar que la conexión funciona
-                    from sqlalchemy import text
 
                     result = session.execute(text("SELECT 1 as test")).fetchone()
                     return result[0] if result else None
@@ -149,7 +146,7 @@ class TestBaseControllerIntegration:
                         "SELECT COUNT(*) FROM test_table WHERE familia_id = :familia_id"
                     )
                     result = session.execute(
-                        query, {"familia_id": self._familia_id}
+                        text(query), {"familia_id": self._familia_id}
                     ).fetchone()
                     return result[0] if result else 0
 
@@ -192,7 +189,7 @@ class TestBaseControllerErrorHandling:
         assert controller._familia_id == 0
 
         # Familia_id string (inválido pero posible)
-        controller = TestController(familia_id="invalid")
+        controller = TestController(familia_id="invalid")  # type: ignore[arg-type]
         assert controller._familia_id == "invalid"
 
 

@@ -118,7 +118,7 @@ class SessionManager:
             router = Router(page)
             router.navigate("/login")
             return False
-            
+
         return True
 
     @staticmethod

@@ -126,25 +126,25 @@ class NVIDIAClient:
 
                 return result
 
-            except httpx.TimeoutException:
+            except httpx.TimeoutException as err:
                 logger.error("[NVIDIA] Timeout (60s) llamando a la API")
                 raise TimeoutError(
                     "Timeout al consultar NVIDIA API. "
                     "El servidor no respondió en 60 segundos."
-                )
+                ) from err
             except httpx.HTTPStatusError as e:
                 logger.error(
                     "[NVIDIA] Error HTTP %d: %s", e.response.status_code, str(e)
                 )
                 raise RuntimeError(
                     f"Error HTTP {e.response.status_code} al consultar NVIDIA API."
-                )
-            except httpx.ConnectError:
+                ) from e
+            except httpx.ConnectError as err:
                 logger.error("[NVIDIA] Error de conexión a NVIDIA API")
                 raise ConnectionError(
                     "No se pudo conectar a NVIDIA API. "
                     "Verifique la conexión a internet."
-                )
+                ) from err
 
     async def generate_stream(
         self,
@@ -219,11 +219,11 @@ class NVIDIAClient:
 
                 logger.info("[NVIDIA] Stream completado")
 
-            except httpx.TimeoutException:
-                raise TimeoutError("Timeout al consultar NVIDIA API (stream).")
+            except httpx.TimeoutException as err:
+                raise TimeoutError("Timeout al consultar NVIDIA API (stream).") from err
             except httpx.HTTPStatusError as e:
                 raise RuntimeError(
                     f"Error HTTP {e.response.status_code} al consultar NVIDIA API."
-                )
-            except httpx.ConnectError:
-                raise ConnectionError("No se pudo conectar a NVIDIA API.")
+                ) from e
+            except httpx.ConnectError as err:
+                raise ConnectionError("No se pudo conectar a NVIDIA API.") from err

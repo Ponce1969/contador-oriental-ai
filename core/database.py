@@ -77,10 +77,10 @@ class _PostgreSQLConnectionAdapter:
 def _connect_postgresql():
     try:
         import psycopg2
-    except ImportError:
+    except ImportError as err:
         raise RuntimeError(
             "PostgreSQL support requires `psycopg2`: uv add psycopg2-binary"
-        )
+        ) from err
 
     cfg = DATABASE.get("POSTGRESQL", {})
     conn = psycopg2.connect(

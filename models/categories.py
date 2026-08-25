@@ -4,10 +4,10 @@ Categorías y subcategorías de gastos familiares
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class ExpenseCategory(str, Enum):
+class ExpenseCategory(StrEnum):
     """Categorías principales de gastos"""
 
     ALMACEN = "🛒 Almacén"
@@ -28,64 +28,54 @@ SUBCATEGORIES = {
         "Carnicería",
         "Panadería",
         "Delivery comida",
-        "Kiosco",
-        "Otros",
+        "Otros almacén",
     ],
     ExpenseCategory.VEHICULOS: [
         "Combustible",
         "Mantenimiento",
-        "Reparaciones",
-        "Seguro",
+        "Seguro auto",
         "Patente",
         "Estacionamiento",
         "Peajes",
-        "Lavado",
-        "Otros",
+        "Otros vehículos",
     ],
     ExpenseCategory.HOGAR: [
         "Alquiler",
-        "Luz",
-        "Agua",
+        "Gastos comunes",
+        "UTE (Luz)",
+        "OSE (Agua)",
+        "Antel (Internet/Tel)",
         "Gas",
-        "Internet",
-        "Teléfono",
-        "Expensas",
-        "Reparaciones",
-        "Otros",
+        "Limpieza",
+        "Mantenimiento hogar",
+        "Otros hogar",
     ],
     ExpenseCategory.SALUD: [
-        "Obra social",
-        "Medicamentos",
-        "Consultas médicas",
+        "Mutualista",
+        "Farmacia",
+        "Médico particular",
         "Odontólogo",
         "Óptica",
-        "Kinesiología",
-        "Otros",
+        "Otros salud",
     ],
     ExpenseCategory.EDUCACION: [
-        "Cuota escolar",
-        "Útiles",
-        "Libros",
+        "Colegio/Cuota",
+        "Materiales/Libros",
         "Cursos",
-        "Universidad",
-        "Transporte escolar",
-        "Otros",
+        "Otros educación",
     ],
     ExpenseCategory.OCIO: [
-        "Restaurantes",
-        "Cine",
-        "Streaming",
-        "Deportes",
-        "Viajes",
-        "Regalos",
-        "Otros",
+        "Salidas/Restaurantes",
+        "Streaming (Netflix, etc)",
+        "Vacaciones",
+        "Deportes/Gimnasio",
+        "Otros ocio",
     ],
     ExpenseCategory.ROPA: [
         "Ropa adultos",
         "Ropa niños",
         "Calzado",
-        "Accesorios",
-        "Otros",
+        "Otros ropa",
     ],
     ExpenseCategory.OTROS: [
         "Impuestos",
@@ -96,7 +86,7 @@ SUBCATEGORIES = {
 }
 
 
-class PaymentMethod(str, Enum):
+class PaymentMethod(StrEnum):
     """Métodos de pago"""
 
     EFECTIVO = "Efectivo"
@@ -106,7 +96,7 @@ class PaymentMethod(str, Enum):
     OTRO = "Otro"
 
 
-class RecurrenceFrequency(str, Enum):
+class RecurrenceFrequency(StrEnum):
     """Frecuencia de gastos recurrentes"""
 
     DIARIA = "Diaria"

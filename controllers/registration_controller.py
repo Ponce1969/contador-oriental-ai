@@ -90,7 +90,7 @@ class RegistrationController:
 
         if result.is_ok():
             # Registro exitoso
-            usuario = result.ok_value
+            usuario = result.unwrap()
             error_text.value = "¡Registro exitoso! Redirigiendo al login..."
             error_text.color = ft.Colors.GREEN_400
             self.page.update()
@@ -100,6 +100,6 @@ class RegistrationController:
                 success_callback(usuario)
         else:
             # Error en el registro
-            error_text.value = result.err_value
+            error_text.value = result.unwrap_err()
             error_text.color = ft.Colors.RED_400
             self.page.update()

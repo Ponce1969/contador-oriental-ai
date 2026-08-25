@@ -106,7 +106,7 @@ class FamilyMemberRepository:
 
     def delete(self, member_id: int) -> Result[None, DatabaseError]:
         """Desvincular un miembro de la familia (soft delete).
-        
+
         Marca activo=False y registra la fecha de desvinculación.
         El historial pasado del miembro permanece intacto.
         """
@@ -146,9 +146,10 @@ class FamilyMemberRepository:
         """
         query = self._session.query(FamilyMemberTable).filter(
             FamilyMemberTable.familia_id == familia_id,
-            FamilyMemberTable.activo == True,
+            FamilyMemberTable.activo.is_(True),
             FamilyMemberTable.nombre.ilike(nombre),
         )
+
         if exclude_id is not None:
             query = query.filter(FamilyMemberTable.id != exclude_id)
         return query.first() is not None

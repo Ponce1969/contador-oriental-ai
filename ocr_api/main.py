@@ -13,7 +13,7 @@ from html import escape as html_escape
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import cv2
+import cv2  # type: ignore[import-not-found]
 import httpx
 import numpy as np
 import pytesseract
@@ -112,7 +112,7 @@ app = FastAPI(
 )
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type: ignore[arg-type]
     allow_origins=[os.getenv("OCR_ALLOWED_ORIGIN", "http://app:8550")],
     allow_credentials=False,
     allow_methods=["POST"],
@@ -280,8 +280,14 @@ async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
       transition: background 0.2s;
     }}
     .upload-area:hover {{ background: #e3f2fd; }}
-    .upload-area svg {{ width: 48px; height: 48px; color: #2196F3; margin-bottom: 12px; }}
+    .upload-area svg {{
+      width: 48px;
+      height: 48px;
+      color: #2196F3;
+      margin-bottom: 12px;
+    }}
     input[type=file] {{ display: none; }}
+
     .file-name {{ font-size: 13px; color: #333; margin-top: 8px; }}
     button {{
       width: 100%;
@@ -320,7 +326,7 @@ async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
 
       <div class="upload-area" onclick="document.getElementById('fileInput').click()">
         <svg viewBox="0 0 24 24" fill="none" stroke="#2196F3" stroke-width="1.5">
-          <path stroke-linecap="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25
+          <path stroke-linecap="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25
             2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
         </svg>
         <div>Tocá para elegir una foto</div>
@@ -340,7 +346,7 @@ async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
     const status = document.getElementById('status');
 
     input.addEventListener('change', () => {{
-      if (input.files[0]) {{
+      if (input.files && input.files[0]) {{
         fileName.textContent = input.files[0].name;
         btn.disabled = false;
       }}
@@ -382,7 +388,7 @@ async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
 
 @app.post("/upload-form-submit")
 async def upload_form_submit(
-    file: UploadFile = File(...),
+    file: UploadFile = File(...),  # noqa: B008
     session_id: str = Form(...),
     familia_id: int = Form(1, gt=0),
 ) -> JSONResponse:
@@ -399,8 +405,9 @@ async def upload_form_submit(
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
         content = await file.read()
         if len(content) > settings.max_upload_size:
+            max_mb = settings.max_upload_size // (1024 * 1024)
             return JSONResponse(
-                {"success": False, "error": f"Archivo excede {settings.max_upload_size // (1024*1024)}MB"},
+                {"success": False, "error": f"Archivo excede {max_mb}MB"},
                 status_code=413,
             )
         tmp.write(content)
@@ -408,6 +415,7 @@ async def upload_form_submit(
 
     try:
         texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
+        if not texto_crudo or len(texto_crudo) < 20:
             result = {
                 "success": False,
                 "error": "No se pudo extraer texto",
@@ -455,7 +463,7 @@ async def upload_form_submit(
         return JSONResponse(result, status_code=500)
     finally:
         try:
-            tmp_path.unlink()
+            os.unlink(tmp_path)
         except Exception:
             pass
 
@@ -530,7 +538,7 @@ async def get_pendiente(familia_id: int) -> JSONResponse:
 
 @app.post("/upload-ocr", response_model=OCRResponse)
 async def upload_ocr(
-    file: UploadFile = File(...),
+    file: UploadFile = File(...),  # noqa: B008
     familia_id: int = Form(..., gt=0),
 ) -> OCRResponse:
     """Procesar ticket con OCR."""
@@ -543,9 +551,8 @@ async def upload_ocr(
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
         content = await file.read()
         if len(content) > settings.max_upload_size:
-            raise HTTPException(
-                413, f"Archivo excede {settings.max_upload_size // (1024*1024)}MB"
-            )
+            max_mb = settings.max_upload_size // (1024 * 1024)
+            raise HTTPException(413, f"Archivo excede {max_mb}MB")
         tmp.write(content)
         tmp_path = Path(tmp.name)
 
@@ -606,7 +613,7 @@ async def upload_ocr(
     finally:
         # Limpiar archivo temporal
         try:
-            tmp_path.unlink()
+            os.unlink(tmp_path)
         except Exception:
             pass
 

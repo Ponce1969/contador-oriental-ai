@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import Generic, TypeVar
+from typing import Any, TypeVar
 
 from result import Err, Ok, Result
 from sqlalchemy.orm import Session
@@ -18,8 +18,9 @@ T = TypeVar("T")  # Domain model (Expense, Income, etc.)
 TTable = TypeVar("TTable")  # SQLAlchemy table (ExpenseTable, IncomeTable, etc.)
 
 
-class BaseTableRepository(ABC, Generic[T, TTable]):
+class BaseTableRepository[T, TTable](ABC):
     """
+
     Repositorio base para el patrón con mappers.
 
     Provee operaciones CRUD comunes usando:
@@ -34,16 +35,16 @@ class BaseTableRepository(ABC, Generic[T, TTable]):
         self, session: Session, table_model: type[TTable], familia_id: int | None = None
     ):
         self.session = session
-        self.table_model = table_model
+        self.table_model: Any = table_model
         self.familia_id = familia_id
 
     @abstractmethod
-    def _to_domain(self, table_row):
+    def _to_domain(self, table_row: TTable) -> T:
         """Convertir tabla a dominio - debe ser implementado por subclase"""
         pass
 
     @abstractmethod
-    def _to_table(self, entity):
+    def _to_table(self, entity: T) -> TTable:
         """Convertir dominio a tabla - debe ser implementado por subclase"""
         pass
 
@@ -59,8 +60,9 @@ class BaseTableRepository(ABC, Generic[T, TTable]):
             table_row = self._to_table(entity)
             # Agregar familia_id si está configurado
             if self.familia_id is not None and hasattr(table_row, "familia_id"):
-                table_row.familia_id = self.familia_id
+                setattr(table_row, "familia_id", self.familia_id)  # noqa: B010
             self.session.add(table_row)
+
             self.session.flush()
 
             created = self._to_domain(table_row)
@@ -144,9 +146,9 @@ class BaseTableRepository(ABC, Generic[T, TTable]):
         except Exception as e:
             return Err(DatabaseError(message=f"Error al actualizar: {e}"))
 
-    def _update_specific_fields(self, table_row, entity: T):
+    def _update_specific_fields(self, table_row: TTable, entity: T) -> None:
         """
-        Las subclases deben sobreescribir este método para actualizar campos específicos.
+        Hook opcional que las subclases pueden sobreescribir.
         Ejemplo: row.categoria = entity.categoria.value
         """
-        pass
+        return None

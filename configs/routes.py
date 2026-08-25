@@ -173,7 +173,9 @@ def load_view_class(view_path: str) -> type | None:
     Carga dinámicamente una clase de vista desde su ruta de módulo.
 
     Args:
-        view_path: Ruta completa del módulo y clase (ej: 'views.pages.login_view.LoginView')
+        view_path: Ruta completa del módulo y clase
+            (ej: 'views.pages.login_view.LoginView')
+
 
     Returns:
         Clase de vista o None si falla la carga
@@ -226,8 +228,8 @@ def build_routes_dict() -> dict[str, Callable]:
     routes_dict = {}
 
     for route_config in ROUTES:
-        path = route_config["path"]
-        view_path = route_config["view"]
+        path = str(route_config["path"])
+        view_path = str(route_config["view"])
         routes_dict[path] = create_view_renderer(view_path)
 
     logger.info(f"Rutas configuradas: {len(routes_dict)} rutas cargadas")

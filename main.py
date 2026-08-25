@@ -1,10 +1,8 @@
 import asyncio
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 import flet as ft
+from dotenv import load_dotenv
 
 from configs.app_config import AppConfig
 from core.error_handler import GlobalErrorHandler
@@ -14,7 +12,10 @@ from core.responsive import get_device_type
 from core.sqlalchemy_session import create_tables
 from core.state import AppState
 
+load_dotenv()
+
 logger = get_logger("App")
+
 
 _SECRET_KEY_DEFAULT = "CAMBIA_ESTO_genera_con_python_secrets_token_hex_32"
 _secret = os.getenv("SECRET_KEY", "")
@@ -72,8 +73,11 @@ def _setup_memory_observer() -> None:
         logger.info("[MEMORY] Observer de cuotas suscrito al EventSystem ✅")
 
         from services.ai.household_memory_handler import HouseholdMemoryHandler
-        # El HouseholdMemoryHandler se suscribe automáticamente a sus eventos en el constructor
+
+        # El HouseholdMemoryHandler se suscribe automáticamente a sus eventos
+        # en el constructor
         HouseholdMemoryHandler(embedding_service)
+
         logger.info("[MEMORY] Observer de Household suscrito al EventSystem ✅")
 
     except Exception as e:
@@ -91,7 +95,7 @@ async def main(page: ft.Page):
         page.spacing = 0
 
         # Configurar icono personalizado de la aplicación (formato ICO para Windows)
-        page.window_icon = "assets/icon-gastos.ico"  # type: ignore
+        page.window.icon = "assets/icon-gastos.ico"
 
         # Inicializar base de datos
         create_tables()
@@ -117,7 +121,10 @@ async def main(page: ft.Page):
                 try:
                     cleaned = cleanup_expired_sessions()
                     if cleaned:
-                        logger.info("[SESSION] Cleanup: %d sesiones expiradas eliminadas", cleaned)
+                        logger.info(
+                            "[SESSION] Cleanup: %d sesiones expiradas eliminadas",
+                            cleaned,
+                        )
                 except Exception as exc:
                     logger.warning("[SESSION] Error en cleanup de sesiones: %s", exc)
 
@@ -125,15 +132,15 @@ async def main(page: ft.Page):
 
         # Banner de bienvenida
         def close_welcome_banner(e):
-            page.banner.open = False  # type: ignore
+            page.banner.open = False
             page.update()
 
         def go_to_family(e):
-            page.banner.open = False  # type: ignore
+            page.banner.open = False
             router.navigate("/family")
             page.update()
 
-        page.banner = ft.Banner(  # type: ignore
+        page.banner = ft.Banner(
             bgcolor=ft.Colors.BLUE_50,
             leading=ft.Icon(icon=ft.Icons.WAVING_HAND, color=ft.Colors.BLUE, size=40),
             content=ft.Row(
@@ -191,7 +198,7 @@ async def main(page: ft.Page):
                     router.navigate(route)
                 else:
                     # Logged in — always go to dashboard
-                    page.banner.open = True  # type: ignore
+                    page.banner.open = True
                     router.navigate("/")
             elif clean_route in public_routes:
                 # Public routes (forgot-password, reset-password, register, invite)

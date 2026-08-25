@@ -14,7 +14,6 @@ Criterio de aceptación:
 from __future__ import annotations
 
 import os
-from datetime import date
 
 import pytest
 from sqlalchemy import text
@@ -182,8 +181,7 @@ class TestAiUsageRepository:
         repo.register_usage(model="llama3", prompt_tokens=200, completion_tokens=100)
 
         count = repo.get_count_today(model="llama3")
-        # get_count_today cuenta filas, no tokens
-        assert count == 1  # Upserted, not a new row
+        assert count == 2  # Two requests registered in upserted row
 
     def test_get_count_today_empty(self, db_session, familia_ids):
         """Sin uso previo, get_count_today debe ser 0."""

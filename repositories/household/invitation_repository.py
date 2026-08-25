@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from sqlalchemy import select, func, update
+
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from database.tables import HouseholdInvitationTable
@@ -12,8 +13,12 @@ class HouseholdInvitationRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def create(self, household_id: int, token: str, expires_at: datetime) -> HouseholdInvitation:
-        inv = HouseholdInvitationTable(household_id=household_id, token=token, expires_at=expires_at)
+    def create(
+        self, household_id: int, token: str, expires_at: datetime
+    ) -> HouseholdInvitation:
+        inv = HouseholdInvitationTable(
+            household_id=household_id, token=token, expires_at=expires_at
+        )
         self.session.add(inv)
         self.session.flush()
         return HouseholdInvitation(
@@ -27,12 +32,14 @@ class HouseholdInvitationRepository:
 
     def get_by_token(self, token: str) -> HouseholdInvitation | None:
         inv = self.session.execute(
-            select(HouseholdInvitationTable).where(HouseholdInvitationTable.token == token)
+            select(HouseholdInvitationTable).where(
+                HouseholdInvitationTable.token == token
+            )
         ).scalar_one_or_none()
-        
+
         if not inv:
             return None
-            
+
         return HouseholdInvitation(
             id=inv.id,
             household_id=inv.household_id,
@@ -54,7 +61,11 @@ class HouseholdInvitationRepository:
         stmt = (
             update(HouseholdInvitationTable)
             .where(HouseholdInvitationTable.token == token)
-            .values(status="accepted", accepted_by_familia_id=familia_id, accepted_at=datetime.now())
+            .values(
+                status="accepted",
+                accepted_by_familia_id=familia_id,
+                accepted_at=datetime.now(),
+            )
         )
         self.session.execute(stmt)
 

@@ -75,6 +75,21 @@ class IncomesView:
             ],
         )
 
+        self.concept_dropdown = ft.Dropdown(
+            label="Concepto Laboral / Legal",
+            expand=True,
+            value="salary",
+            options=[
+                ft.dropdown.Option("salary", "💼 Sueldo mensual habitual / Jornal"),
+                ft.dropdown.Option("aguinaldo", "🎁 Aguinaldo cobrado (SAC)"),
+                ft.dropdown.Option("vacation_pay", "🏖️ Salario Vacacional cobrado"),
+                ft.dropdown.Option("overtime", "⏱️ Horas extras (computable)"),
+                ft.dropdown.Option("commission", "📈 Comisiones (computable)"),
+                ft.dropdown.Option("bonus", "💰 Bono / Extra"),
+                ft.dropdown.Option("other", "💵 Otro ingreso"),
+            ],
+        )
+
         self.currency_dropdown = ft.Dropdown(
             label="Moneda",
             expand=True,
@@ -151,6 +166,10 @@ class IncomesView:
                                     ),
                                     ft.Container(
                                         content=self.categoria_dropdown,
+                                        col=Responsive.COL_HALF,
+                                    ),
+                                    ft.Container(
+                                        content=self.concept_dropdown,
                                         col=Responsive.COL_HALF,
                                     ),
                                     ft.Container(
@@ -292,6 +311,7 @@ class IncomesView:
             income = Income(
                 id=self.editing_income_id,
                 family_member_id=int(self.member_dropdown.value),
+                concept=self.concept_dropdown.value or "salary",
                 monto=monto,
                 currency=self.currency_dropdown.value or "UYU",
                 fecha=fecha,
@@ -520,6 +540,7 @@ class IncomesView:
         self.monto_input.value = str(income.monto)
         self.descripcion_input.value = income.descripcion
         self.categoria_dropdown.value = income.categoria.name
+        self.concept_dropdown.value = income.concept or "salary"
         self.fecha_input.value = str(income.fecha)
         self.currency_dropdown.value = income.currency
         self.recurrente_checkbox.value = income.es_recurrente
@@ -553,10 +574,12 @@ class IncomesView:
         self.monto_input.value = ""
         self.descripcion_input.value = ""
         self.categoria_dropdown.value = None
+        self.concept_dropdown.value = "salary"
         self.fecha_input.value = str(date.today())
         self.recurrente_checkbox.value = False
         self.frecuencia_dropdown.value = None
         self.frecuencia_dropdown.visible = False
+
         self.currency_dropdown.value = "UYU"
 
     def _show_error(self, error: AppError) -> None:

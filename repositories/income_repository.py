@@ -20,22 +20,24 @@ class IncomeRepository(BaseTableRepository[Income, IncomeTable]):
     def __init__(self, session: Session, familia_id: int | None = None) -> None:
         super().__init__(session, IncomeTable, familia_id)
 
-    def _to_domain(self, table_row):
+    def _to_domain(self, table_row: IncomeTable) -> Income:
         """Convertir tabla IncomeTable a dominio Income"""
         return income_to_domain(table_row)
 
-    def _to_table(self, income):
+    def _to_table(self, entity: Income) -> IncomeTable:
         """Convertir dominio Income a tabla IncomeTable"""
-        return income_to_table(income)
+        return income_to_table(entity)
 
-    def _update_specific_fields(self, table_row, income: Income) -> None:
+    def _update_specific_fields(self, table_row: IncomeTable, entity: Income) -> None:
         """Actualizar campos específicos de ingresos."""
-        table_row.categoria = income.categoria.value
-        table_row.es_recurrente = income.es_recurrente
-        table_row.frecuencia = income.frecuencia.value if income.frecuencia else None
+        table_row.categoria = entity.categoria.value
+        table_row.es_recurrente = entity.es_recurrente
+        table_row.frecuencia = entity.frecuencia.value if entity.frecuencia else None
         # Campo específico de ingresos
-        table_row.family_member_id = income.family_member_id
-        table_row.currency = income.currency
+        table_row.family_member_id = entity.family_member_id
+        table_row.currency = entity.currency
+        table_row.concept = entity.concept
+        table_row.economic_activity_id = entity.economic_activity_id
 
     def get_by_member(self, member_id: int) -> Sequence[Income]:
         """Obtener ingresos de un miembro específico de la familia"""

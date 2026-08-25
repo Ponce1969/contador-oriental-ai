@@ -149,8 +149,9 @@ class TestAuthServiceConSecurity:
         return AuthService(repo)
 
     def test_bloqueo_tras_max_intentos(self):
-        from models.user_model import UserLogin
         from result import Err
+
+        from models.user_model import UserLogin
 
         svc = self._make_service()
         svc._ph = MagicMock()
@@ -162,10 +163,10 @@ class TestAuthServiceConSecurity:
         assert isinstance(result, Err)
         assert "minuto" in result.err_value.message.lower()
 
-    def test_login_exitoso_limpia_fallos(self):
-        from models.user_model import User, UserLogin
+    def test_login_exitoso_limpia_fallos(self, monkeypatch):
         from result import Ok
 
+        from models.user_model import User, UserLogin
         from services.domain.auth_service import AuthService
 
         user_mock = MagicMock(spec=User)
@@ -181,7 +182,7 @@ class TestAuthServiceConSecurity:
         repo.update_last_login = MagicMock()
 
         svc = AuthService(repo)
-        svc._verify_password = MagicMock(return_value=True)
+        monkeypatch.setattr(svc, "_verify_password", MagicMock(return_value=True))
 
         svc.login(UserLogin(username="usuario", password="password123"))
         svc.login(UserLogin(username="usuario", password="password123"))

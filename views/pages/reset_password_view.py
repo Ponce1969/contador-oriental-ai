@@ -188,6 +188,10 @@ class ResetPasswordView:
             self._show_error("La contraseña debe tener al menos 6 caracteres")
             return
 
+        if not self.token:
+            self._show_error("Token de restablecimiento inválido")
+            return
+
         # Reset password
         result = self.auth_controller.reset_password(
             self.token, self.new_password_input.value

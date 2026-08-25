@@ -6,8 +6,8 @@ import pytest
 from result import Err, Ok
 
 from services.domain.validators import (
-    validate_monto_positivo,
     validate_descripcion_requerida,
+    validate_monto_positivo,
 )
 
 
@@ -19,17 +19,17 @@ class TestValidateMontoPositivo:
         # Montos enteros positivos
         result = validate_monto_positivo(100)
         assert isinstance(result, Ok)
-        assert result.ok_value is None  # Validators retornan Ok(None) en éxito
+        assert result.unwrap() is None  # Validators retornan Ok(None) en éxito
 
         # Montos decimales positivos
         result = validate_monto_positivo(99.99)
         assert isinstance(result, Ok)
-        assert result.ok_value is None
+        assert result.unwrap() is None
 
         # Montos grandes
         result = validate_monto_positivo(1000000)
         assert isinstance(result, Ok)
-        assert result.ok_value is None
+        assert result.unwrap() is None
 
     def test_monto_cero_rechazado(self):
         """Caso error: monto igual a cero"""
@@ -49,18 +49,19 @@ class TestValidateMontoPositivo:
 
     def test_monto_tipo_invalido(self):
         """Caso error: tipos de datos inválidos"""
-        # Los validators no manejan tipos inválidos, eso es responsabilidad de la capa superior
+        # Los validators no manejan tipos inválidos, eso es
+        # responsabilidad de la capa superior
         # String - esto lanzará TypeError porque no se puede comparar str <= int
         with pytest.raises(TypeError):
-            validate_monto_positivo("100")
+            validate_monto_positivo("100")  # type: ignore[arg-type]
 
         # None - esto lanzará TypeError porque no se puede comparar None <= int
         with pytest.raises(TypeError):
-            validate_monto_positivo(None)
+            validate_monto_positivo(None)  # type: ignore[arg-type]
 
         # Lista - esto lanzará TypeError porque no se puede comparar list <= int
         with pytest.raises(TypeError):
-            validate_monto_positivo([100])
+            validate_monto_positivo([100])  # type: ignore[arg-type]
 
 
 class TestValidateDescripcionRequerida:
@@ -71,22 +72,22 @@ class TestValidateDescripcionRequerida:
         # Texto normal
         result = validate_descripcion_requerida("Sueldo mensual")
         assert isinstance(result, Ok)
-        assert result.ok_value is None  # Validators retornan Ok(None) en éxito
+        assert result.unwrap() is None  # Validators retornan Ok(None) en éxito
 
         # Texto con números
         result = validate_descripcion_requerida("Factura 12345")
         assert isinstance(result, Ok)
-        assert result.ok_value is None
+        assert result.unwrap() is None
 
         # Texto con caracteres especiales
         result = validate_descripcion_requerida("Alquiler $UYU")
         assert isinstance(result, Ok)
-        assert result.ok_value is None
+        assert result.unwrap() is None
 
         # Texto largo
         result = validate_descripcion_requerida("A" * 500)
         assert isinstance(result, Ok)
-        assert result.ok_value is None
+        assert result.unwrap() is None
 
     def test_descripcion_vacia_rechazada(self):
         """Caso error: string vacío"""
@@ -116,15 +117,15 @@ class TestValidateDescripcionRequerida:
 
         # Número - esto lanzará AttributeError porque int no tiene .strip()
         with pytest.raises(AttributeError):
-            validate_descripcion_requerida(123)
+            validate_descripcion_requerida(123)  # type: ignore[arg-type]
 
         # Lista - esto lanzará AttributeError porque list no tiene .strip()
         with pytest.raises(AttributeError):
-            validate_descripcion_requerida(["texto"])
+            validate_descripcion_requerida(["texto"])  # type: ignore[arg-type]
 
         # Diccionario - esto lanzará AttributeError porque dict no tiene .strip()
         with pytest.raises(AttributeError):
-            validate_descripcion_requerida({"texto": "valor"})
+            validate_descripcion_requerida({"texto": "valor"})  # type: ignore[arg-type]
 
 
 class TestValidatorsIntegration:
@@ -139,8 +140,8 @@ class TestValidatorsIntegration:
         assert desc_result.is_ok()
 
         # Validators retornan Ok(None), los valores originales se mantienen
-        assert monto_result.ok_value is None
-        assert desc_result.ok_value is None
+        assert monto_result.unwrap() is None
+        assert desc_result.unwrap() is None
 
         # Simular creación de gasto validado con valores originales
         gasto_validado = {
@@ -194,7 +195,7 @@ class TestValidatorsEdgeCases:
         # El menor monto positivo válido
         result = validate_monto_positivo(0.01)
         assert isinstance(result, Ok)
-        assert result.ok_value is None
+        assert result.unwrap() is None
 
     def test_monto_muy_pequeno(self):
         """Test montos muy pequeños pero positivos"""

@@ -43,33 +43,33 @@ class InstallmentPurchaseRepository(
             updated_at=table_row.updated_at,
         )
 
-    def _to_table(self, purchase: InstallmentPurchase) -> InstallmentPurchaseTable:
+    def _to_table(self, entity: InstallmentPurchase) -> InstallmentPurchaseTable:
         return InstallmentPurchaseTable(
-            expense_id=purchase.expense_id,
-            familia_id=purchase.familia_id,
-            nombre_tarjeta=purchase.nombre_tarjeta,
-            monto_total=purchase.monto_total,
-            currency=purchase.currency,
-            numero_cuotas=purchase.numero_cuotas,
-            cuotas_pagadas=purchase.cuotas_pagadas,
-            monto_por_cuota=purchase.monto_por_cuota,
-            fecha_compra=purchase.fecha_compra,
-            mes_inicio_pago=purchase.mes_inicio_pago,
-            fecha_ultima_cuota=purchase.fecha_ultima_cuota,
-            activo=purchase.activo,
-            completado=purchase.completado,
-            vectorizado=purchase.vectorizado,
-            descripcion=purchase.descripcion,
+            expense_id=entity.expense_id,
+            familia_id=entity.familia_id,
+            nombre_tarjeta=entity.nombre_tarjeta,
+            monto_total=entity.monto_total,
+            currency=entity.currency,
+            numero_cuotas=entity.numero_cuotas,
+            cuotas_pagadas=entity.cuotas_pagadas,
+            monto_por_cuota=entity.monto_por_cuota,
+            fecha_compra=entity.fecha_compra,
+            mes_inicio_pago=entity.mes_inicio_pago,
+            fecha_ultima_cuota=entity.fecha_ultima_cuota,
+            activo=entity.activo,
+            completado=entity.completado,
+            vectorizado=entity.vectorizado,
+            descripcion=entity.descripcion,
         )
 
     def _update_specific_fields(
-        self, table_row: InstallmentPurchaseTable, purchase: InstallmentPurchase
+        self, table_row: InstallmentPurchaseTable, entity: InstallmentPurchase
     ) -> None:
-        table_row.nombre_tarjeta = purchase.nombre_tarjeta
-        table_row.cuotas_pagadas = purchase.cuotas_pagadas
-        table_row.activo = purchase.activo
-        table_row.completado = purchase.completado
-        table_row.vectorizado = purchase.vectorizado
+        table_row.nombre_tarjeta = entity.nombre_tarjeta
+        table_row.cuotas_pagadas = entity.cuotas_pagadas
+        table_row.activo = entity.activo
+        table_row.completado = entity.completado
+        table_row.vectorizado = entity.vectorizado
 
     def get_pending(self) -> Sequence[InstallmentPurchase]:
         """Obtener compras con cuotas pendientes (activas, no completadas)"""
@@ -121,18 +121,18 @@ class InstallmentPaymentRepository(
             created_at=table_row.created_at,
         )
 
-    def _to_table(self, payment: InstallmentPayment) -> InstallmentPaymentTable:
+    def _to_table(self, entity: InstallmentPayment) -> InstallmentPaymentTable:
         return InstallmentPaymentTable(
-            installment_purchase_id=payment.installment_purchase_id,
-            expense_id=payment.expense_id,
-            familia_id=payment.familia_id,
-            numero_cuota=payment.numero_cuota,
-            monto_pagado=payment.monto_pagado,
-            fecha_pago=payment.fecha_pago,
+            installment_purchase_id=entity.installment_purchase_id,
+            expense_id=entity.expense_id,
+            familia_id=entity.familia_id,
+            numero_cuota=entity.numero_cuota,
+            monto_pagado=entity.monto_pagado,
+            fecha_pago=entity.fecha_pago,
         )
 
     def _update_specific_fields(
-        self, table_row: InstallmentPaymentTable, payment: InstallmentPayment
+        self, table_row: InstallmentPaymentTable, entity: InstallmentPayment
     ) -> None:
         pass  # Payments are immutable once created
 

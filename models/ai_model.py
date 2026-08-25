@@ -6,12 +6,12 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class KnowledgeFile(str, Enum):
+class KnowledgeFile(StrEnum):
     """Archivos de conocimiento disponibles"""
 
     INCLUSION_FINANCIERA = "inclusion_financiera_uy.md"
@@ -156,7 +156,10 @@ class AIContext(BaseModel):
     # Empalme: cierre del mes anterior cuando el mes actual tiene pocos movimientos
     empalme_gastos: dict = Field(
         default_factory=dict,
-        description="Gastos del mes anterior agrupados por categoría (solo cuando mes actual < 5 gastos)",
+        description=(
+            "Gastos del mes anterior agrupados por categoría "
+            "(solo cuando mes actual < 5 gastos)"
+        ),
     )
     empalme_ingresos_total: Decimal = Field(
         default=Decimal("0"),
@@ -173,6 +176,13 @@ class AIContext(BaseModel):
     periodo_label: str = Field(
         default="del mes",
         description="Etiqueta del período: 'del mes' o 'de Marzo 2026 a Mayo 2026'",
+    )
+    resumen_laboral: str = Field(
+        default="",
+        description=(
+            "Resumen pre-calculado por Python de actividades y "
+            "beneficios laborales (aguinaldo, salario vacacional)"
+        ),
     )
 
 

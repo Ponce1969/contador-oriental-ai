@@ -9,9 +9,9 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 import pytest
-import services.infrastructure.ocr_service as ocr_module
 from result import Err, Ok
 
+import services.infrastructure.ocr_service as ocr_module
 from models.ticket_model import PartialExpense
 from services.infrastructure.ocr_service import OCRService
 
