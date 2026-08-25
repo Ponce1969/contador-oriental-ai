@@ -20,8 +20,14 @@ from services.labor.domain.enums import (
     FonasaBeneficiaryType,
     IndependentTaxRegime,
     PensionFundType,
+    RemunerationType,
 )
-from services.labor.domain.models import CalculationResult, TaxProfile
+from services.labor.domain.models import (
+    CalculationResult,
+    DependentDetails,
+    EconomicActivity,
+    TaxProfile,
+)
 from utils.formatters import format_currency
 
 
@@ -38,10 +44,22 @@ class LaborSimulatorCard:
         self.controller = LaborController(familia_id=familia_id)
         self.on_activity_saved = on_activity_saved
 
+        # Vínculo con integrante familiar
+        self.target_member_id: int | None = None
+        self.target_member_name: str | None = None
+        self.target_activity_id: int | None = None
+
         # Estado local de simulación (100% en memoria / Read-Only)
         self.selected_regime = ActivityNature.DEPENDIENTE
         self.current_result: CalculationResult | None = None
         self.current_error: str | None = None
+
+        self.save_activity_btn = ft.ElevatedButton(
+            "💾 Guardar Actividad en Perfil del Integrante",
+            bgcolor=ft.Colors.INDIGO_600,
+            color=ft.Colors.WHITE,
+            on_click=self._on_save_activity,
+        )
 
         # --- Controles de Régimen y Tipo ---
         self.regime_dropdown = ft.Dropdown(
@@ -917,6 +935,194 @@ class LaborSimulatorCard:
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
 
+    def set_target_member(
+        self, member_id: int | None, member_name: str | None = None
+    ) -> None:
+        """Establece el integrante objetivo para asociar la actividad económica."""
+        self.target_member_id = member_id
+        self.target_member_name = member_name
+
+        if member_name:
+            self.save_activity_btn.text = f"💾 Guardar como Actividad de {member_name}"
+        else:
+            self.save_activity_btn.text = (
+                "💾 Guardar Actividad en Perfil del Integrante"
+            )
+
+        if member_id:
+            acts = self.controller.list_by_member(member_id)
+            if acts:
+                self.load_activity(acts[0])
+            else:
+                self.target_activity_id = None
+        else:
+            self.target_activity_id = None
+
+        try:
+            self.save_activity_btn.update()
+        except Exception:
+            pass
+
+    def load_activity(self, act: EconomicActivity) -> None:
+        """Carga una actividad económica persistida en los controles del simulador."""
+        self.target_activity_id = act.id
+        self.target_member_id = act.family_member_id
+        self.selected_regime = act.nature
+        self.regime_dropdown.value = act.nature
+
+        if act.nature == ActivityNature.DEPENDIENTE and act.dependent_details:
+            details = act.dependent_details
+            if details.estimated_monthly_nominal is not None:
+                self.nominal_input.value = str(details.estimated_monthly_nominal)
+            if details.tax_profile:
+                tp = details.tax_profile
+                self.children_input.value = str(tp.children_count)
+                self.fonasa_dropdown.value = tp.fonasa_type
+                self.spouse_switch.value = tp.has_spouse_charge
+        elif act.nature == ActivityNature.INDEPENDIENTE and act.independent_profile:
+            ip = act.independent_profile
+            self.independent_subregime_dropdown.value = ip.regime
+            if ip.estimated_monthly_gross_sales is not None:
+                self.billed_input.value = str(ip.estimated_monthly_gross_sales)
+        elif act.nature == ActivityNature.PASIVIDAD and act.pension_profile:
+            pp = act.pension_profile
+            if pp.monthly_pension_nominal is not None:
+                self.pension_nominal_input.value = str(pp.monthly_pension_nominal)
+            if pp.pension_fund is not None:
+                self.pension_fund_pasivo_dropdown.value = pp.pension_fund
+            self.pension_fonasa_switch.value = pp.has_fonasa_coverage
+
+        self._sync_inputs_visibility()
+        self._trigger_simulation(None)
+
+    def _on_save_activity(self, e: Any) -> None:
+        """Guarda o actualiza la actividad económica del familiar."""
+        if not self.target_member_id:
+            if self.page:
+                self.page.snack_bar = ft.SnackBar(
+                    ft.Text(
+                        "⚠️ Seleccioná o editá un integrante primero para "
+                        "asociarle esta actividad."
+                    ),
+                    bgcolor=ft.Colors.ORANGE_800,
+                )
+                self.page.snack_bar.open = True
+                self.page.update()
+            return
+
+        familia_id = self.controller._familia_id or 1
+
+        if self.selected_regime == ActivityNature.DEPENDIENTE:
+            parsed_nominal = parse_decimal(self.nominal_input.value)
+            if parsed_nominal.is_err():
+                self.current_error = parsed_nominal.unwrap_err().message
+                self._render_results()
+                return
+
+            try:
+                children = int(self.children_input.value or 0)
+            except ValueError:
+                children = 0
+
+            fonasa_type = FonasaBeneficiaryType(
+                self.fonasa_dropdown.value or FonasaBeneficiaryType.SINGLE_NO_CHILDREN
+            )
+            has_spouse = bool(self.spouse_switch.value)
+
+            tax_profile = TaxProfile(
+                children_count=children,
+                has_spouse_charge=has_spouse,
+                fonasa_type=fonasa_type,
+            )
+            dependent_details = DependentDetails(
+                remuneration_type=RemunerationType.MENSUAL,
+                weekly_hours=40,
+                estimated_monthly_nominal=parsed_nominal.unwrap(),
+                tax_profile=tax_profile,
+            )
+            activity = EconomicActivity(
+                id=self.target_activity_id,
+                familia_id=familia_id,
+                family_member_id=self.target_member_id,
+                nature=ActivityNature.DEPENDIENTE,
+                title="Empleado Dependiente",
+                is_active=True,
+                dependent_details=dependent_details,
+            )
+        elif self.selected_regime == ActivityNature.INDEPENDIENTE:
+            parsed_billed = parse_decimal(self.billed_input.value)
+            billed = parsed_billed.unwrap_or(Decimal("0.00"))
+            subregime = IndependentTaxRegime(
+                self.independent_subregime_dropdown.value
+                or IndependentTaxRegime.SERVICIOS_PERSONALES
+            )
+            fund = self.pension_fund_dropdown.value or PensionFundType.CJPPU
+            ind_profile = IndependentProfile(
+                regime=subregime,
+                pension_fund=fund,
+                estimated_monthly_gross_sales=billed,
+            )
+            activity = EconomicActivity(
+                id=self.target_activity_id,
+                familia_id=familia_id,
+                family_member_id=self.target_member_id,
+                nature=ActivityNature.INDEPENDIENTE,
+                title=f"Independiente ({subregime.value})",
+                is_active=True,
+                independent_profile=ind_profile,
+            )
+        else:
+            parsed_pension = parse_decimal(self.pension_nominal_input.value)
+            pension_gross = parsed_pension.unwrap_or(Decimal("0.00"))
+            fund_pasivo = self.pension_fund_pasivo_dropdown.value or PensionFundType.BPS
+            pension_profile = PensionProfile(
+                pension_fund=fund_pasivo,
+                monthly_pension_nominal=pension_gross,
+                has_fonasa_coverage=bool(self.pension_fonasa_switch.value),
+            )
+            activity = EconomicActivity(
+                id=self.target_activity_id,
+                familia_id=familia_id,
+                family_member_id=self.target_member_id,
+                nature=ActivityNature.PASIVIDAD,
+                title="Jubilación / Pensión",
+                is_active=True,
+                pension_profile=pension_profile,
+            )
+
+        if self.target_activity_id:
+            save_res = self.controller.update_activity(activity)
+        else:
+            save_res = self.controller.add_activity(activity)
+
+        if save_res.is_err():
+            if self.page:
+                err_msg = save_res.unwrap_err().message
+                self.page.snack_bar = ft.SnackBar(
+                    ft.Text(f"❌ Error al guardar: {err_msg}"),
+                    bgcolor=ft.Colors.RED_700,
+                )
+                self.page.snack_bar.open = True
+                self.page.update()
+            return
+
+        saved_act = save_res.unwrap()
+        self.target_activity_id = saved_act.id
+
+        if self.page:
+            target_desc = (
+                f" para {self.target_member_name}" if self.target_member_name else ""
+            )
+            self.page.snack_bar = ft.SnackBar(
+                ft.Text(f"✅ Actividad laboral guardada{target_desc}"),
+                bgcolor=ft.Colors.GREEN_700,
+            )
+            self.page.snack_bar.open = True
+            self.page.update()
+
+        if self.on_activity_saved:
+            self.on_activity_saved(saved_act)
+
     def render(self) -> ft.Control:
         """Renderiza la tarjeta del simulador interactivo."""
         self._trigger_simulation(None)
@@ -955,6 +1161,10 @@ class LaborSimulatorCard:
                     self.inputs_container,
                     ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
                     self.results_container,
+                    ft.Row(
+                        controls=[self.save_activity_btn],
+                        alignment=ft.MainAxisAlignment.END,
+                    ),
                 ],
                 spacing=12,
             ),

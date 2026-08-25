@@ -3,6 +3,7 @@ Vista para gestión de miembros de la familia
 Arquitectura: State + Sync Pattern (Profesional)
 """
 
+from decimal import Decimal
 from typing import Any
 
 import flet as ft
@@ -10,10 +11,15 @@ from result import Err
 
 from constants.responsive import Responsive
 from controllers.family_member_controller import FamilyMemberController
+from controllers.labor_controller import LaborController
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.family_member_model import FamilyMember
+from services.labor.domain.enums import ActivityNature
+from services.labor.domain.models import EconomicActivity
+from services.labor.engine import LaborCalculationEngine
+from utils.formatters import format_currency
 from views.components.labor_simulator_card import LaborSimulatorCard
 from views.layouts.main_layout import MainLayout
 
@@ -31,13 +37,19 @@ class FamilyMembersView:
 
         familia_id = SessionManager.get_familia_id(page)
         self.controller = FamilyMemberController(familia_id=familia_id)
-        self.simulator_card = LaborSimulatorCard(page=self.page, familia_id=familia_id)
+        self.labor_controller = LaborController(familia_id=familia_id)
+        self.simulator_card = LaborSimulatorCard(
+            page=self.page,
+            familia_id=familia_id,
+            on_activity_saved=self._on_activity_saved,
+        )
 
         # ===============================
         # STATE CENTRAL
         # ===============================
         self.state: dict[str, Any] = {
             "members": [],  # list[FamilyMember]
+            "activities_map": {},  # dict[int, EconomicActivity]
             "editing_id": None,  # int | None
             "selected_id": None,  # str | None
         }
@@ -129,6 +141,10 @@ class FamilyMembersView:
     # =====================================================
     def _load_members(self):
         self.state["members"] = self.controller.list_active_members()
+        activities = self.labor_controller.list_all_activities()
+        self.state["activities_map"] = {
+            act.family_member_id: act for act in activities if act.is_active
+        }
 
     # =====================================================
     # RENDER
@@ -216,41 +232,42 @@ class FamilyMembersView:
                 ),
                 self.members_column,
                 ft.Divider(),
-                ft.ExpansionTile(
-                    leading=ft.Icon(
-                        ft.Icons.CALCULATE_OUTLINED,
-                        color=ft.Colors.INDIGO_700,
-                    ),
-                    title=ft.Text(
-                        "Simulador de Sueldos y Regímenes Laborales",
-                        weight=ft.FontWeight.BOLD,
-                        size=15,
-                        color=ft.Colors.INDIGO_900,
-                    ),
-                    subtitle=ft.Text(
-                        "Abrir para calcular retenciones IRPF, "
-                        "BPS/CJPPU y líquido en mano",
-                        size=12,
-                        color=ft.Colors.INDIGO_700,
-                    ),
-                    expanded=False,
-                    controls=[
-                        ft.Container(
-                            content=self.simulator_card.render(),
-                            padding=ft.Padding.only(top=6, bottom=6),
-                        )
-                    ],
-                    bgcolor=ft.Colors.INDIGO_50,
-                    collapsed_bgcolor=ft.Colors.INDIGO_50,
-                    collapsed_icon_color=ft.Colors.INDIGO_700,
-                    icon_color=ft.Colors.INDIGO_700,
-                    shape=ft.RoundedRectangleBorder(radius=10),
-                    collapsed_shape=ft.RoundedRectangleBorder(radius=10),
-                ),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,
         )
+
+        self.simulator_tile = ft.ExpansionTile(
+            leading=ft.Icon(
+                ft.Icons.CALCULATE_OUTLINED,
+                color=ft.Colors.INDIGO_700,
+            ),
+            title=ft.Text(
+                "Simulador de Sueldos y Regímenes Laborales",
+                weight=ft.FontWeight.BOLD,
+                size=15,
+                color=ft.Colors.INDIGO_900,
+            ),
+            subtitle=ft.Text(
+                "Abrir para calcular retenciones IRPF, BPS/CJPPU y líquido en mano",
+                size=12,
+                color=ft.Colors.INDIGO_700,
+            ),
+            expanded=False,
+            controls=[
+                ft.Container(
+                    content=self.simulator_card.render(),
+                    padding=ft.Padding.only(top=6, bottom=6),
+                )
+            ],
+            bgcolor=ft.Colors.INDIGO_50,
+            collapsed_bgcolor=ft.Colors.INDIGO_50,
+            collapsed_icon_color=ft.Colors.INDIGO_700,
+            icon_color=ft.Colors.INDIGO_700,
+            shape=ft.RoundedRectangleBorder(radius=10),
+            collapsed_shape=ft.RoundedRectangleBorder(radius=10),
+        )
+        content.controls.append(self.simulator_tile)
 
         # Handlers - Usar on_select según documentación de Fleting
         self.select_dropdown.on_select = self._on_select
@@ -352,8 +369,11 @@ class FamilyMembersView:
         self.members_column.controls.clear()
 
         members_list: list[FamilyMember] = self.state.get("members") or []
+        activities_map: dict[int, EconomicActivity] = (
+            self.state.get("activities_map") or {}
+        )
+
         for m in members_list:
-            # Construir texto descriptivo
             edad_text = f"{m.edad} años" if m.edad else "Edad no especificada"
 
             if m.tipo_miembro == "mascota":
@@ -370,45 +390,160 @@ class FamilyMembersView:
                 info_text = f"{parentesco_text} • {edad_text} • {estado_text}"
                 icon = ft.Icons.PERSON
 
+            act_badges = []
+            if m.id and m.id in activities_map:
+                act = activities_map[m.id]
+                if act.nature == ActivityNature.DEPENDIENTE and act.dependent_details:
+                    nom = act.dependent_details.estimated_monthly_nominal or Decimal(
+                        "0"
+                    )
+                    withh = LaborCalculationEngine.calculate_withholdings(
+                        nominal=nom,
+                        profile=act.dependent_details.tax_profile,
+                    )
+                    nom_fmt = format_currency(nom, "UYU")
+                    liq_fmt = format_currency(withh.liquid_amount, "UYU")
+                    act_badges.append(
+                        ft.Container(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(
+                                        ft.Icons.WORK_OUTLINE,
+                                        size=13,
+                                        color=ft.Colors.INDIGO_800,
+                                    ),
+                                    ft.Text(
+                                        f"Dependiente: {nom_fmt} nom. | "
+                                        f"{liq_fmt} en mano",
+                                        size=11,
+                                        weight=ft.FontWeight.W_500,
+                                        color=ft.Colors.INDIGO_900,
+                                    ),
+                                ],
+                                spacing=4,
+                            ),
+                            bgcolor=ft.Colors.LIGHT_BLUE_50,
+                            border=ft.Border.all(1, ft.Colors.LIGHT_BLUE_200),
+                            border_radius=6,
+                            padding=ft.Padding.symmetric(horizontal=8, vertical=3),
+                        )
+                    )
+                elif act.nature == ActivityNature.INDEPENDIENTE:
+                    act_badges.append(
+                        ft.Container(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(
+                                        ft.Icons.BUILD_OUTLINE,
+                                        size=13,
+                                        color=ft.Colors.INDIGO_800,
+                                    ),
+                                    ft.Text(
+                                        f"{act.title}",
+                                        size=11,
+                                        weight=ft.FontWeight.W_500,
+                                        color=ft.Colors.INDIGO_900,
+                                    ),
+                                ],
+                                spacing=4,
+                            ),
+                            bgcolor=ft.Colors.LIGHT_BLUE_50,
+                            border=ft.Border.all(1, ft.Colors.LIGHT_BLUE_200),
+                            border_radius=6,
+                            padding=ft.Padding.symmetric(horizontal=8, vertical=3),
+                        )
+                    )
+                elif act.nature == ActivityNature.PASIVIDAD:
+                    act_badges.append(
+                        ft.Container(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(
+                                        ft.Icons.SAVINGS_OUTLINED,
+                                        size=13,
+                                        color=ft.Colors.INDIGO_800,
+                                    ),
+                                    ft.Text(
+                                        f"{act.title}",
+                                        size=11,
+                                        weight=ft.FontWeight.W_500,
+                                        color=ft.Colors.INDIGO_900,
+                                    ),
+                                ],
+                                spacing=4,
+                            ),
+                            bgcolor=ft.Colors.LIGHT_BLUE_50,
+                            border=ft.Border.all(1, ft.Colors.LIGHT_BLUE_200),
+                            border_radius=6,
+                            padding=ft.Padding.symmetric(horizontal=8, vertical=3),
+                        )
+                    )
+
+            col_controls: list[ft.Control] = [
+                ft.Text(
+                    m.nombre,
+                    weight=ft.FontWeight.BOLD,
+                    color=ft.Colors.PURPLE_900,
+                ),
+                ft.Text(
+                    info_text,
+                    size=12,
+                    color=ft.Colors.PURPLE_700,
+                ),
+            ]
+            if act_badges:
+                col_controls.extend(act_badges)
+
+            actions = []
+            if m.tipo_miembro == "persona":
+                actions.append(
+                    ft.IconButton(
+                        icon=ft.Icons.CALCULATE_OUTLINED,
+                        tooltip="Simular / Configurar Actividad Laboral",
+                        icon_color=ft.Colors.INDIGO_700,
+                        on_click=lambda e, mm=m: self._on_simulate_member(mm),
+                    )
+                )
+            actions.extend(
+                [
+                    ft.IconButton(
+                        icon=ft.Icons.EDIT,
+                        tooltip="Editar",
+                        icon_color=ft.Colors.DEEP_PURPLE_400,
+                        on_click=lambda e, mm=m: self._on_edit(mm),
+                    ),
+                    ft.IconButton(
+                        icon=ft.Icons.PERSON_OFF,
+                        tooltip="Desvincular",
+                        icon_color=ft.Colors.RED_400,
+                        on_click=lambda e, mm=m: self._on_unlink_confirm(mm),
+                    ),
+                ]
+            )
+
             self.members_column.controls.append(
                 ft.Container(
                     content=ft.Row(
                         controls=[
                             ft.Icon(icon=icon, color=ft.Colors.PURPLE_600, size=30),
                             ft.Column(
-                                controls=[
-                                    ft.Text(
-                                        m.nombre,
-                                        weight=ft.FontWeight.BOLD,
-                                        color=ft.Colors.PURPLE_900,
-                                    ),
-                                    ft.Text(
-                                        info_text,
-                                        size=12,
-                                        color=ft.Colors.PURPLE_700,
-                                    ),
-                                ],
-                                spacing=2,
+                                controls=col_controls,
+                                spacing=3,
                                 expand=True,
                             ),
-                            ft.IconButton(
-                                icon=ft.Icons.EDIT,
-                                tooltip="Editar",
-                                icon_color=ft.Colors.DEEP_PURPLE_400,
-                                on_click=lambda e, mm=m: self._on_edit(mm),
-                            ),
-                            ft.IconButton(
-                                icon=ft.Icons.PERSON_OFF,
-                                tooltip="Desvincular",
-                                icon_color=ft.Colors.RED_400,
-                                on_click=lambda e, mm=m: self._on_unlink_confirm(mm),
-                            ),
+                            *actions,
                         ]
                     ),
                     padding=15,
                     bgcolor=ft.Colors.PURPLE_50,
-                    border=ft.Border.all(2, ft.Colors.PURPLE_200),
+                    border=ft.Border.all(1.5, ft.Colors.PURPLE_200),
                     border_radius=10,
+                    shadow=ft.BoxShadow(
+                        spread_radius=1,
+                        blur_radius=6,
+                        color=ft.Colors.BLUE_GREY_100,
+                        offset=ft.Offset(0, 2),
+                    ),
                 )
             )
 
@@ -425,9 +560,24 @@ class FamilyMembersView:
     # =====================================================
     # EVENTS
     # =====================================================
+    def _on_simulate_member(self, member: FamilyMember):
+        """Abre el simulador y lo sincroniza con el integrante seleccionado."""
+        self.simulator_card.set_target_member(member.id, member.nombre)
+        if hasattr(self, "simulator_tile") and self.simulator_tile:
+            self.simulator_tile.expanded = True
+            try:
+                self.simulator_tile.update()
+            except Exception:
+                pass
+        self.page.update()
+
+    def _on_activity_saved(self, saved_act: EconomicActivity):
+        """Callback cuando se guarda una actividad económica desde el simulador."""
+        self._load_members()
+        self._sync_ui()
+
     def _on_select(self, e):
         """Handler para on_change del dropdown - dispara carga automática"""
-        # Disparar automáticamente la carga de datos sin necesidad del botón
         self._on_load_click(e)
 
     def _on_load_click(self, e):
@@ -437,12 +587,16 @@ class FamilyMembersView:
 
         self.state["selected_id"] = self.select_dropdown.value
         self.state["editing_id"] = int(self.select_dropdown.value)
+        member = self._get_member(self.state["editing_id"])
+        if member:
+            self.simulator_card.set_target_member(member.id, member.nombre)
 
         self._sync_ui()
 
     def _on_edit(self, member: FamilyMember):
         self.state["editing_id"] = member.id
         self.state["selected_id"] = str(member.id)
+        self.simulator_card.set_target_member(member.id, member.nombre)
 
         self._sync_ui()
 
