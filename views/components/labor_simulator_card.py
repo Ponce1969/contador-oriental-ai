@@ -946,21 +946,27 @@ class LaborSimulatorCard:
 
     def set_available_members(self, members: list[Any]) -> None:
         """Carga la lista de miembros familiares disponibles en el dropdown interno."""
-        options = [
-            ft.dropdown.Option(
-                key=str(m.id),
-                text=f"{m.nombre} ({m.parentesco.capitalize() if getattr(m, 'parentesco', None) else 'Integrante'})",
-            )
-            for m in members
-            if getattr(m, "tipo_miembro", "persona") == "persona" and m.id is not None
-        ]
+        options = []
+        for m in members:
+            if getattr(m, "tipo_miembro", "persona") == "persona" and m.id is not None:
+                par = (
+                    m.parentesco.capitalize()
+                    if getattr(m, "parentesco", None)
+                    else "Integrante"
+                )
+                options.append(
+                    ft.dropdown.Option(
+                        key=str(m.id),
+                        text=f"{m.nombre} ({par})",
+                    )
+                )
         self.member_dropdown.options = options
 
         if self.target_member_id:
             self.member_dropdown.value = str(self.target_member_id)
         elif options and not self.member_dropdown.value:
             first_opt = options[0]
-            first_id = int(first_opt.key)  # type: ignore
+            first_id = int(first_opt.key)
             first_name = (first_opt.text or "").split(" (")[0]
             self.target_member_id = first_id
             self.target_member_name = first_name

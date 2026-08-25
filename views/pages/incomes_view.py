@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from typing import Any
 
 import flet as ft
 from result import Err, Ok
@@ -13,12 +14,16 @@ from result import Err, Ok
 from constants.responsive import Responsive
 from controllers.family_member_controller import FamilyMemberController
 from controllers.income_controller import IncomeController
+from controllers.labor_controller import LaborController
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
 from models.income_model import Income, IncomeCategory, RecurrenceFrequency
-from utils.formatters import format_currency_with_symbol
+from services.labor.domain.enums import ActivityNature
+from services.labor.domain.models import EconomicActivity
+from services.labor.engine import LaborCalculationEngine
+from utils.formatters import format_currency, format_currency_with_symbol
 from views.layouts.main_layout import MainLayout
 
 
@@ -40,6 +45,11 @@ class IncomesView:
         # Controllers
         self.income_controller = IncomeController(familia_id=familia_id)
         self.member_controller = FamilyMemberController(familia_id=familia_id)
+        self.labor_controller = LaborController(familia_id=familia_id)
+
+        # Estado de actividad económica vinculada
+        self.selected_economic_activity_id: int | None = None
+        self.labor_suggestion_container = ft.Container(visible=False)
 
         # Cargar miembros activos
         self.active_members = self.member_controller.list_active_members()
@@ -52,6 +62,7 @@ class IncomesView:
                 ft.dropdown.Option(key=str(member.id), text=member.nombre)
                 for member in self.active_members
             ],
+            on_select=self._on_member_selected,
         )
 
         self.monto_input = ft.TextField(
@@ -158,6 +169,7 @@ class IncomesView:
                                 weight=ft.FontWeight.BOLD,
                                 color=ft.Colors.TEAL_700,
                             ),
+                            self.labor_suggestion_container,
                             ft.ResponsiveRow(
                                 controls=[
                                     ft.Container(
@@ -255,6 +267,233 @@ class IncomesView:
         self.frecuencia_dropdown.visible = bool(e.control.value)
         self.page.update()
 
+    def _on_member_selected(self, _: Any) -> None:
+        """Detecta si el miembro tiene una actividad laboral y sugiere datos."""
+        if not self.member_dropdown.value:
+            self.labor_suggestion_container.visible = False
+            self.selected_economic_activity_id = None
+            self.page.update()
+            return
+
+        try:
+            member_id = int(self.member_dropdown.value)
+        except ValueError:
+            return
+
+        activities = self.labor_controller.list_by_member(member_id)
+        active_acts = [act for act in activities if act.is_active]
+
+        if not active_acts:
+            self.labor_suggestion_container.visible = False
+            self.selected_economic_activity_id = None
+            self.page.update()
+            return
+
+        act = active_acts[0]
+        self.selected_economic_activity_id = act.id
+
+        if act.nature == ActivityNature.DEPENDIENTE and act.dependent_details:
+            details = act.dependent_details
+            nom = details.estimated_monthly_nominal or Decimal("0.00")
+            withholdings = LaborCalculationEngine.calculate_withholdings(
+                nominal=nom,
+                profile=details.tax_profile,
+            )
+            liquid = withholdings.liquid_amount
+            nom_fmt = format_currency(nom, "UYU")
+            liq_fmt = format_currency(liquid, "UYU")
+
+            self.labor_suggestion_container.content = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.AUTO_AWESOME,
+                            color=ft.Colors.TEAL_800,
+                            size=20,
+                        ),
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    f"💼 Actividad: {act.title}",
+                                    size=13,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.TEAL_900,
+                                ),
+                                ft.Text(
+                                    f"Nominal: {nom_fmt} | Líquido en mano: {liq_fmt}",
+                                    size=12,
+                                    color=ft.Colors.TEAL_800,
+                                ),
+                            ],
+                            spacing=2,
+                            expand=True,
+                        ),
+                        CorrectElevatedButton(
+                            f"⚡ Cargar {liq_fmt} (Líquido)",
+                            on_click=lambda _: self._fill_labor_income(
+                                act=act,
+                                amount=liquid,
+                                description="Cobro de sueldo mensual",
+                                category=IncomeCategory.SUELDO,
+                                concept="salary",
+                            ),
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                bgcolor=ft.Colors.LIGHT_BLUE_50,
+                border=ft.Border.all(1.5, ft.Colors.LIGHT_BLUE_200),
+                border_radius=8,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8),
+                shadow=ft.BoxShadow(
+                    spread_radius=1,
+                    blur_radius=6,
+                    color=ft.Colors.BLUE_GREY_100,
+                    offset=ft.Offset(0, 2),
+                ),
+            )
+            self.labor_suggestion_container.visible = True
+
+        elif act.nature == ActivityNature.INDEPENDIENTE and act.independent_profile:
+            ip = act.independent_profile
+            sales = ip.estimated_monthly_gross_sales or Decimal("0.00")
+            sales_fmt = format_currency(sales, "UYU")
+
+            self.labor_suggestion_container.content = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.BUILD_OUTLINE,
+                            color=ft.Colors.TEAL_800,
+                            size=20,
+                        ),
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    f"🛠️ Actividad: {act.title}",
+                                    size=13,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.TEAL_900,
+                                ),
+                                ft.Text(
+                                    f"Facturación estimada: {sales_fmt}",
+                                    size=12,
+                                    color=ft.Colors.TEAL_800,
+                                ),
+                            ],
+                            spacing=2,
+                            expand=True,
+                        ),
+                        CorrectElevatedButton(
+                            f"⚡ Cargar {sales_fmt}",
+                            on_click=lambda _: self._fill_labor_income(
+                                act=act,
+                                amount=sales,
+                                description=f"Ingreso por {act.title}",
+                                category=IncomeCategory.FREELANCE,
+                                concept="salary",
+                            ),
+                        )
+                        if sales > 0
+                        else ft.Container(),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                bgcolor=ft.Colors.LIGHT_BLUE_50,
+                border=ft.Border.all(1.5, ft.Colors.LIGHT_BLUE_200),
+                border_radius=8,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8),
+                shadow=ft.BoxShadow(
+                    spread_radius=1,
+                    blur_radius=6,
+                    color=ft.Colors.BLUE_GREY_100,
+                    offset=ft.Offset(0, 2),
+                ),
+            )
+            self.labor_suggestion_container.visible = True
+
+        elif act.nature == ActivityNature.PASIVIDAD and act.pension_profile:
+            pp = act.pension_profile
+            pension_nom = pp.monthly_pension_nominal or Decimal("0.00")
+            pension_fmt = format_currency(pension_nom, "UYU")
+
+            self.labor_suggestion_container.content = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.SAVINGS_OUTLINED,
+                            color=ft.Colors.TEAL_800,
+                            size=20,
+                        ),
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    f"👴 Actividad: {act.title}",
+                                    size=13,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.TEAL_900,
+                                ),
+                                ft.Text(
+                                    f"Pasividad nominal: {pension_fmt}",
+                                    size=12,
+                                    color=ft.Colors.TEAL_800,
+                                ),
+                            ],
+                            spacing=2,
+                            expand=True,
+                        ),
+                        CorrectElevatedButton(
+                            f"⚡ Cargar {pension_fmt}",
+                            on_click=lambda _: self._fill_labor_income(
+                                act=act,
+                                amount=pension_nom,
+                                description="Cobro de pasividad / jubilación",
+                                category=IncomeCategory.JUBILADO,
+                                concept="salary",
+                            ),
+                        )
+                        if pension_nom > 0
+                        else ft.Container(),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                bgcolor=ft.Colors.LIGHT_BLUE_50,
+                border=ft.Border.all(1.5, ft.Colors.LIGHT_BLUE_200),
+                border_radius=8,
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8),
+                shadow=ft.BoxShadow(
+                    spread_radius=1,
+                    blur_radius=6,
+                    color=ft.Colors.BLUE_GREY_100,
+                    offset=ft.Offset(0, 2),
+                ),
+            )
+            self.labor_suggestion_container.visible = True
+        else:
+            self.labor_suggestion_container.visible = False
+
+        self.page.update()
+
+    def _fill_labor_income(
+        self,
+        act: EconomicActivity,
+        amount: Decimal,
+        description: str,
+        category: IncomeCategory,
+        concept: str,
+    ) -> None:
+        """Autocompleta el formulario con datos de la actividad económica."""
+        self.monto_input.value = str(amount)
+        self.descripcion_input.value = description
+        self.categoria_dropdown.value = category.name
+        self.concept_dropdown.value = concept
+        self.selected_economic_activity_id = act.id
+        self.currency_dropdown.value = "UYU"
+        self.page.update()
+
     def _on_save_income(self, _: ft.ControlEvent) -> None:
         """Guardar ingreso (crear o actualizar)"""
         try:
@@ -311,6 +550,7 @@ class IncomesView:
             income = Income(
                 id=self.editing_income_id,
                 family_member_id=int(self.member_dropdown.value),
+                economic_activity_id=self.selected_economic_activity_id,
                 concept=self.concept_dropdown.value or "salary",
                 monto=monto,
                 currency=self.currency_dropdown.value or "UYU",
@@ -536,6 +776,7 @@ class IncomesView:
     def _on_edit_income(self, income: Income) -> None:
         """Cargar datos del ingreso para editar"""
         self.editing_income_id = income.id
+        self.selected_economic_activity_id = income.economic_activity_id
         self.member_dropdown.value = str(income.family_member_id)
         self.monto_input.value = str(income.monto)
         self.descripcion_input.value = income.descripcion
@@ -548,6 +789,7 @@ class IncomesView:
         self.frecuencia_dropdown.value = (
             income.frecuencia.name if income.frecuencia else None
         )
+        self._on_member_selected(None)
         self.page.update()
 
     def _on_delete_income(self, income: Income) -> None:
@@ -579,6 +821,8 @@ class IncomesView:
         self.recurrente_checkbox.value = False
         self.frecuencia_dropdown.value = None
         self.frecuencia_dropdown.visible = False
+        self.selected_economic_activity_id = None
+        self.labor_suggestion_container.visible = False
 
         self.currency_dropdown.value = "UYU"
 
