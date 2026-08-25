@@ -128,15 +128,15 @@ class LaborSimulatorCard:
             on_change=self._trigger_simulation,
         )
         self.children_input = ft.TextField(
-            label="Hijos menores a cargo",
+            label="Hijos a cargo (< 18 años o disc.)",
             value="0",
             hint_text="0",
             keyboard_type=ft.KeyboardType.NUMBER,
-            width=140,
+            width=180,
             on_change=self._trigger_simulation,
         )
         self.spouse_switch = ft.Switch(
-            label="Cónyuge/Concubino a cargo",
+            label="Cónyuge a cargo (sin mutualista propia)",
             value=False,
             on_change=self._trigger_simulation,
         )
@@ -150,15 +150,15 @@ class LaborSimulatorCard:
                 ),
                 ft.dropdown.Option(
                     FonasaBeneficiaryType.WITH_CHILDREN_NO_SPOUSE,
-                    "Con hijos a cargo (sin cónyuge)",
+                    "Con hijos a cargo (< 18 años o disc.)",
                 ),
                 ft.dropdown.Option(
                     FonasaBeneficiaryType.NO_CHILDREN_WITH_SPOUSE,
-                    "Con cónyuge a cargo (sin hijos)",
+                    "Con cónyuge a cargo (sin mutualista propia / sin trabajo formal)",
                 ),
                 ft.dropdown.Option(
                     FonasaBeneficiaryType.WITH_CHILDREN_AND_SPOUSE,
-                    "Con hijos y cónyuge a cargo",
+                    "Con hijos y cónyuge a cargo (sin mutualista propia)",
                 ),
             ],
             on_select=self._trigger_simulation,
