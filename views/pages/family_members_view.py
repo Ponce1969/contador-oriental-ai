@@ -145,6 +145,7 @@ class FamilyMembersView:
         self.state["activities_map"] = {
             act.family_member_id: act for act in activities if act.is_active
         }
+        self.simulator_card.set_available_members(self.state["members"])
 
     # =====================================================
     # RENDER

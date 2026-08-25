@@ -61,6 +61,15 @@ class LaborSimulatorCard:
             on_click=self._on_save_activity,
         )
 
+        # --- Selector de Integrante Familiar ---
+        self.member_dropdown = ft.Dropdown(
+            label="👤 Integrante Familiar",
+            hint_text="Seleccioná un familiar a asociar",
+            options=[],
+            on_select=self._on_member_dropdown_change,
+            expand=True,
+        )
+
         # --- Controles de Régimen y Tipo ---
         self.regime_dropdown = ft.Dropdown(
             label="Régimen / Actividad Económica",
@@ -935,12 +944,60 @@ class LaborSimulatorCard:
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
 
+    def set_available_members(self, members: list[Any]) -> None:
+        """Carga la lista de miembros familiares disponibles en el dropdown interno."""
+        options = [
+            ft.dropdown.Option(
+                key=str(m.id),
+                text=f"{m.nombre} ({m.parentesco.capitalize() if getattr(m, 'parentesco', None) else 'Integrante'})",
+            )
+            for m in members
+            if getattr(m, "tipo_miembro", "persona") == "persona" and m.id is not None
+        ]
+        self.member_dropdown.options = options
+
+        if self.target_member_id:
+            self.member_dropdown.value = str(self.target_member_id)
+        elif options and not self.member_dropdown.value:
+            first_opt = options[0]
+            first_id = int(first_opt.key)  # type: ignore
+            first_name = (first_opt.text or "").split(" (")[0]
+            self.target_member_id = first_id
+            self.target_member_name = first_name
+            self.member_dropdown.value = str(first_id)
+            self.save_activity_btn.text = f"💾 Guardar como Actividad de {first_name}"
+            acts = self.controller.list_by_member(first_id)
+            if acts:
+                self.load_activity(acts[0])
+
+        try:
+            self.member_dropdown.update()
+            self.save_activity_btn.update()
+        except Exception:
+            pass
+
+    def _on_member_dropdown_change(self, e: Any) -> None:
+        """Handler al cambiar el integrante familiar en el dropdown interno."""
+        if self.member_dropdown.value:
+            m_id = int(self.member_dropdown.value)
+            m_name = None
+            for opt in self.member_dropdown.options:
+                if opt.key == str(m_id):
+                    m_name = (opt.text or "").split(" (")[0]
+                    break
+            self.set_target_member(m_id, m_name)
+
     def set_target_member(
         self, member_id: int | None, member_name: str | None = None
     ) -> None:
         """Establece el integrante objetivo para asociar la actividad económica."""
         self.target_member_id = member_id
         self.target_member_name = member_name
+
+        if member_id is not None:
+            self.member_dropdown.value = str(member_id)
+        else:
+            self.member_dropdown.value = None
 
         if member_name:
             self.save_activity_btn.text = f"💾 Guardar como Actividad de {member_name}"
@@ -959,6 +1016,7 @@ class LaborSimulatorCard:
             self.target_activity_id = None
 
         try:
+            self.member_dropdown.update()
             self.save_activity_btn.update()
         except Exception:
             pass
@@ -967,6 +1025,8 @@ class LaborSimulatorCard:
         """Carga una actividad económica persistida en los controles del simulador."""
         self.target_activity_id = act.id
         self.target_member_id = act.family_member_id
+        if act.family_member_id is not None:
+            self.member_dropdown.value = str(act.family_member_id)
         self.selected_regime = act.nature
         self.regime_dropdown.value = act.nature
 
@@ -997,12 +1057,15 @@ class LaborSimulatorCard:
 
     def _on_save_activity(self, e: Any) -> None:
         """Guarda o actualiza la actividad económica del familiar."""
+        if not self.target_member_id and self.member_dropdown.value:
+            self.target_member_id = int(self.member_dropdown.value)
+
         if not self.target_member_id:
             if self.page:
                 self.page.snack_bar = ft.SnackBar(
                     ft.Text(
-                        "⚠️ Seleccioná o editá un integrante primero para "
-                        "asociarle esta actividad."
+                        "⚠️ Seleccioná un integrante familiar en el menú "
+                        "para asociarle esta actividad laboral."
                     ),
                     bgcolor=ft.Colors.ORANGE_800,
                 )
@@ -1156,7 +1219,20 @@ class LaborSimulatorCard:
                         border_radius=8,
                         border=ft.Border.all(1, ft.Colors.AMBER_200),
                     ),
-                    self.regime_dropdown,
+                    ft.ResponsiveRow(
+                        controls=[
+                            ft.Container(
+                                content=self.member_dropdown,
+                                col={"xs": 12, "sm": 6},
+                            ),
+                            ft.Container(
+                                content=self.regime_dropdown,
+                                col={"xs": 12, "sm": 6},
+                            ),
+                        ],
+                        spacing=10,
+                        run_spacing=10,
+                    ),
                     self.independent_subregime_dropdown,
                     self.inputs_container,
                     ft.Divider(height=1, color=ft.Colors.BLUE_GREY_100),
