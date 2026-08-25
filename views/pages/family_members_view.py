@@ -216,7 +216,32 @@ class FamilyMembersView:
                 ),
                 self.members_column,
                 ft.Divider(),
-                self.simulator_card.render(),
+                ft.ExpansionTile(
+                    leading=ft.Icons.CALCULATE_OUTLINED,
+                    title=ft.Text(
+                        "Simulador de Sueldos y Regímenes Laborales",
+                        weight=ft.FontWeight.BOLD,
+                        size=15,
+                        color=ft.Colors.BLUE_900,
+                    ),
+                    subtitle=ft.Text(
+                        "Abrir para calcular retenciones IRPF, "
+                        "BPS/CJPPU y líquido en mano",
+                        size=12,
+                        color=ft.Colors.GREY_600,
+                    ),
+                    expanded=False,
+                    controls=[
+                        ft.Container(
+                            content=self.simulator_card.render(),
+                            padding=ft.Padding.only(top=8, bottom=8),
+                        )
+                    ],
+                    bgcolor=ft.Colors.BLUE_50,
+                    collapsed_bgcolor=ft.Colors.BLUE_50,
+                    shape=ft.RoundedRectangleBorder(radius=10),
+                    collapsed_shape=ft.RoundedRectangleBorder(radius=10),
+                ),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,
