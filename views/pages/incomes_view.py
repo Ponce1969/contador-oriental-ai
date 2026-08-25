@@ -14,7 +14,7 @@ from result import Err, Ok
 from constants.responsive import Responsive
 from controllers.family_member_controller import FamilyMemberController
 from controllers.income_controller import IncomeController
-from controllers.labor_controller import LaborController
+from controllers.labor_controller import LaborController, parse_decimal
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
@@ -486,7 +486,12 @@ class IncomesView:
         concept: str,
     ) -> None:
         """Autocompleta el formulario con datos de la actividad económica."""
-        self.monto_input.value = str(amount)
+        formatted_amount = (
+            str(amount.quantize(Decimal("1")))
+            if amount == amount.to_integral()
+            else str(amount.quantize(Decimal("0.01")))
+        )
+        self.monto_input.value = formatted_amount
         self.descripcion_input.value = description
         self.categoria_dropdown.value = category.name
         self.concept_dropdown.value = concept
@@ -523,13 +528,12 @@ class IncomesView:
                 )
                 return
 
-            # Parsear monto (limpiar formato: eliminar puntos de separador de miles)
-            try:
-                monto_str = self.monto_input.value.replace(".", "").replace(",", ".")
-                monto = Decimal(monto_str)
-            except (ValueError, InvalidOperation):
-                self._show_error(AppError(message="El monto debe ser un número válido"))
+            # Parsear monto de forma segura con regla Decimal estricta
+            parsed_monto = parse_decimal(self.monto_input.value)
+            if parsed_monto.is_err():
+                self._show_error(parsed_monto.unwrap_err())
                 return
+            monto = parsed_monto.unwrap()
 
             # Obtener categoría
             try:
