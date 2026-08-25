@@ -793,9 +793,15 @@ class LaborSimulatorCard:
                 spacing=10,
             ),
             padding=16,
-            bgcolor=ft.Colors.WHITE,
-            border=ft.Border.all(1.5, ft.Colors.BLUE_200),
-            border_radius=10,
+            bgcolor=ft.Colors.LIGHT_BLUE_50,
+            border=ft.Border.all(1.5, ft.Colors.LIGHT_BLUE_200),
+            border_radius=12,
+            shadow=ft.BoxShadow(
+                spread_radius=1,
+                blur_radius=8,
+                color=ft.Colors.BLUE_GREY_100,
+                offset=ft.Offset(0, 2),
+            ),
         )
 
         self.results_container.controls.append(result_card)
