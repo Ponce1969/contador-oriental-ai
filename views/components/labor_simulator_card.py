@@ -834,27 +834,33 @@ class LaborSimulatorCard:
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Row(
-                        [
-                            ft.Icon(
-                                ft.Icons.CALCULATE,
-                                color=ft.Colors.BLUE_700,
-                                size=24,
-                            ),
-                            ft.Text(
-                                "Simulador Interactivo de Sueldos y Regímenes",
-                                size=16,
-                                weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.BLUE_900,
-                            ),
-                        ]
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Icon(
+                                    ft.Icons.LIGHTBULB_OUTLINE,
+                                    color=ft.Colors.AMBER_800,
+                                    size=18,
+                                ),
+                                ft.Text(
+                                    "Proyectá el dinero líquido en mano, "
+                                    "aportes de seguridad social y retenciones "
+                                    "antes de tomar decisiones laborales.",
+                                    size=12,
+                                    color=ft.Colors.BLUE_GREY_800,
+                                    expand=True,
+                                ),
+                            ],
+                            spacing=8,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                        bgcolor=ft.Colors.WHITE,
+                        padding=ft.Padding.symmetric(
+                            horizontal=12, vertical=8
+                        ),
+                        border_radius=8,
+                        border=ft.Border.all(1, ft.Colors.BLUE_100),
                     ),
-                    ft.Text(
-                        "Calculá al instante retenciones, aportes y deducciones.",
-                        size=12,
-                        color=ft.Colors.GREY_700,
-                    ),
-                    ft.Divider(),
                     self.regime_dropdown,
                     self.independent_subregime_dropdown,
                     self.inputs_container,
@@ -863,8 +869,7 @@ class LaborSimulatorCard:
                 ],
                 spacing=12,
             ),
-            padding=18,
+            padding=14,
             bgcolor=ft.Colors.BLUE_50,
-            border=ft.Border.all(2, ft.Colors.BLUE_300),
-            border_radius=12,
+            border_radius=10,
         )
