@@ -140,7 +140,7 @@ class LaborService:
             period_semester=semester,
             accrual_start=period.start_date,
             accrual_end=period.end_date,
-            activity_start_date=activity.start_date,
+            activity_start_date=activity.start_date or period.start_date,
             activity_end_date=activity.end_date,
             estimated_base_salary=estimated_base,
             registered_incomes=period_incomes,

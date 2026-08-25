@@ -29,23 +29,28 @@ class BenefitsProjectionCard(ft.Container):
         labor_controller: LaborController,
         member_controller: FamilyMemberController,
         reference_date: date | None = None,
+        show_header: bool = True,
     ) -> None:
         super().__init__()
         self.labor_controller = labor_controller
         self.member_controller = member_controller
         self.reference_date = reference_date or date.today()
+        self.show_header = show_header
 
         # Estilo de tarjeta pastel
         self.bgcolor = ft.Colors.PURPLE_50
-        self.border = ft.Border.all(1.5, ft.Colors.PURPLE_200)
-        self.border_radius = 12
-        self.padding = 16
-        self.shadow = ft.BoxShadow(
-            spread_radius=1,
-            blur_radius=6,
-            color=ft.Colors.BLUE_GREY_100,
-            offset=ft.Offset(0, 2),
-        )
+        if show_header:
+            self.border = ft.Border.all(1.5, ft.Colors.PURPLE_200)
+            self.border_radius = 12
+            self.padding = 16
+            self.shadow = ft.BoxShadow(
+                spread_radius=1,
+                blur_radius=6,
+                color=ft.Colors.BLUE_GREY_100,
+                offset=ft.Offset(0, 2),
+            )
+        else:
+            self.padding = 8
 
         self.content_column = ft.Column(spacing=12)
         self.content = self.content_column
@@ -67,38 +72,48 @@ class BenefitsProjectionCard(ft.Container):
             f"{period.end_date.strftime('%d/%m/%Y')}"
         )
 
-        # Encabezado
-        self.content_column.controls.append(
-            ft.Row(
-                controls=[
-                    ft.Icon(
-                        ft.Icons.CARD_GIFTCARD,
-                        color=ft.Colors.PURPLE_800,
-                        size=24,
-                    ),
-                    ft.Column(
-                        controls=[
-                            ft.Text(
-                                "🎁 Previsión de Aguinaldo y Salario Vacacional",
-                                size=16 if is_mobile else 18,
-                                weight=ft.FontWeight.BOLD,
-                                color=ft.Colors.PURPLE_900,
-                            ),
-                            ft.Text(
-                                f"Próximo cobro: {period_label} (Devengo: {accrual_range})",
-                                size=12,
-                                color=ft.Colors.PURPLE_700,
-                            ),
-                        ],
-                        spacing=2,
-                        expand=True,
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        if self.show_header:
+            # Encabezado completo
+            self.content_column.controls.append(
+                ft.Row(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.CARD_GIFTCARD,
+                            color=ft.Colors.PURPLE_800,
+                            size=24,
+                        ),
+                        ft.Column(
+                            controls=[
+                                ft.Text(
+                                    "🎁 Previsión de Aguinaldo y Salario Vacacional",
+                                    size=16 if is_mobile else 18,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.PURPLE_900,
+                                ),
+                                ft.Text(
+                                    f"Próximo cobro: {period_label} (Devengo: {accrual_range})",
+                                    size=12,
+                                    color=ft.Colors.PURPLE_700,
+                                ),
+                            ],
+                            spacing=2,
+                            expand=True,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                )
             )
-        )
-        self.content_column.controls.append(ft.Divider(color=ft.Colors.PURPLE_200))
+            self.content_column.controls.append(ft.Divider(color=ft.Colors.PURPLE_200))
+        else:
+            self.content_column.controls.append(
+                ft.Text(
+                    f"🗓️ Próximo cobro: {period_label} (Período: {accrual_range})",
+                    size=12,
+                    weight=ft.FontWeight.W_500,
+                    color=ft.Colors.PURPLE_800,
+                )
+            )
 
         # Obtener miembros y actividades
         members = self.member_controller.list_active_members()

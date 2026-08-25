@@ -73,6 +73,7 @@ class DashboardView:
         self.benefits_card = BenefitsProjectionCard(
             labor_controller=self.labor_controller,
             member_controller=self.member_controller,
+            show_header=False,
         )
 
         # Contenedores para los datos
@@ -170,7 +171,7 @@ class DashboardView:
                     run_spacing=16,
                 ),
                 self._build_cuotas_card(),
-                self.benefits_card,
+                self._build_benefits_card(),
                 # Tarjetas de Ingresos y Gastos — ResponsiveRow
                 ft.ResponsiveRow(
                     controls=[
@@ -636,3 +637,36 @@ class DashboardView:
             12: "Diciembre",
         }
         return months.get(month, "")
+
+    def _build_benefits_card(self) -> ft.Control:
+        """Construye el panel desplegable de previsión de beneficios laborales."""
+        return ft.ExpansionTile(
+            leading=ft.Icon(
+                ft.Icons.CARD_GIFTCARD,
+                color=ft.Colors.PURPLE_700,
+            ),
+            title=ft.Text(
+                "Previsión de Aguinaldo y Salario Vacacional",
+                weight=ft.FontWeight.BOLD,
+                size=15,
+                color=ft.Colors.PURPLE_900,
+            ),
+            subtitle=ft.Text(
+                "Planificación de cobros extraordinarios legales del hogar",
+                size=12,
+                color=ft.Colors.PURPLE_700,
+            ),
+            expanded=False,
+            controls=[
+                ft.Container(
+                    content=self.benefits_card,
+                    padding=ft.Padding.only(top=6, bottom=6),
+                )
+            ],
+            bgcolor=ft.Colors.PURPLE_50,
+            collapsed_bgcolor=ft.Colors.PURPLE_50,
+            collapsed_icon_color=ft.Colors.PURPLE_700,
+            icon_color=ft.Colors.PURPLE_700,
+            shape=ft.RoundedRectangleBorder(radius=10),
+            collapsed_shape=ft.RoundedRectangleBorder(radius=10),
+        )

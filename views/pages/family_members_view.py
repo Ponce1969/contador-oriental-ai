@@ -47,6 +47,7 @@ class FamilyMembersView:
         self.benefits_card = BenefitsProjectionCard(
             labor_controller=self.labor_controller,
             member_controller=self.controller,
+            show_header=False,
         )
 
         # ===============================
@@ -244,7 +245,37 @@ class FamilyMembersView:
             scroll=ft.ScrollMode.AUTO,
         )
 
-        content.controls.append(self.benefits_card)
+        self.benefits_tile = ft.ExpansionTile(
+            leading=ft.Icon(
+                ft.Icons.CARD_GIFTCARD,
+                color=ft.Colors.PURPLE_700,
+            ),
+            title=ft.Text(
+                "Previsión de Aguinaldo y Salario Vacacional",
+                weight=ft.FontWeight.BOLD,
+                size=15,
+                color=ft.Colors.PURPLE_900,
+            ),
+            subtitle=ft.Text(
+                "Abrir para ver el próximo aguinaldo (SAC) y salario vacacional por integrante",
+                size=12,
+                color=ft.Colors.PURPLE_700,
+            ),
+            expanded=False,
+            controls=[
+                ft.Container(
+                    content=self.benefits_card,
+                    padding=ft.Padding.only(top=6, bottom=6),
+                )
+            ],
+            bgcolor=ft.Colors.PURPLE_50,
+            collapsed_bgcolor=ft.Colors.PURPLE_50,
+            collapsed_icon_color=ft.Colors.PURPLE_700,
+            icon_color=ft.Colors.PURPLE_700,
+            shape=ft.RoundedRectangleBorder(radius=10),
+            collapsed_shape=ft.RoundedRectangleBorder(radius=10),
+        )
+        content.controls.append(self.benefits_tile)
 
         self.simulator_tile = ft.ExpansionTile(
             leading=ft.Icon(
