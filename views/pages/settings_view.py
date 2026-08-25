@@ -42,7 +42,7 @@ class SettingsView:
         self._email_status = ft.Text(value="", visible=False, size=13)
 
         self._save_email_btn = ft.ElevatedButton(
-            text="Guardar Email",
+            "Guardar Email",
             icon=ft.Icons.SAVE_OUTLINED,
             on_click=self._on_save_email,
         )
