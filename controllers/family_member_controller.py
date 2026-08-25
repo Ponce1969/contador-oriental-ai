@@ -4,6 +4,8 @@ Controller para gestión de miembros de la familia
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from result import Result
 
 from controllers.base_controller import BaseController
@@ -12,6 +14,9 @@ from models.errors import AppError
 from models.family_member_model import FamilyMember
 from repositories.family_member_repository import FamilyMemberRepository
 from services.domain.family_member_service import FamilyMemberService
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 
 class FamilyMemberController(BaseController):
@@ -22,10 +27,11 @@ class FamilyMemberController(BaseController):
 
     def __init__(
         self,
+        session: Session | None = None,
         familia_id: int | None = None,
         uow: UnitOfWork | None = None,
     ) -> None:
-        super().__init__(familia_id=familia_id, uow=uow)
+        super().__init__(session=session, familia_id=familia_id, uow=uow)
 
     def add_member(self, member: FamilyMember) -> Result[FamilyMember, AppError]:
         """Agregar un nuevo miembro"""

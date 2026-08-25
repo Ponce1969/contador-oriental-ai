@@ -12,12 +12,15 @@ import flet as ft
 from constants.responsive import Responsive
 from controllers.exchange_rate_controller import ExchangeRateController
 from controllers.expense_controller import ExpenseController
+from controllers.family_member_controller import FamilyMemberController
 from controllers.history_controller import HistoryController
 from controllers.income_controller import IncomeController
 from controllers.installment_controller import InstallmentController
+from controllers.labor_controller import LaborController
 from core.session import SessionManager
 from core.state import AppState
 from services.infrastructure.formatters import format_pesos
+from views.components.benefits_projection_card import BenefitsProjectionCard
 from views.components.summary_renderer import SummaryRenderer
 from views.layouts.main_layout import MainLayout
 
@@ -63,6 +66,14 @@ class DashboardView:
         self.expense_controller = ExpenseController(familia_id=familia_id)
         self.installment_controller = InstallmentController(familia_id=familia_id)
         self.history_controller = HistoryController(familia_id=familia_id)
+        self.member_controller = FamilyMemberController(familia_id=familia_id)
+        self.labor_controller = LaborController(familia_id=familia_id)
+
+        # Proyección de beneficios laborales
+        self.benefits_card = BenefitsProjectionCard(
+            labor_controller=self.labor_controller,
+            member_controller=self.member_controller,
+        )
 
         # Contenedores para los datos
         self.balance_card = ft.Container()
@@ -159,6 +170,7 @@ class DashboardView:
                     run_spacing=16,
                 ),
                 self._build_cuotas_card(),
+                self.benefits_card,
                 # Tarjetas de Ingresos y Gastos — ResponsiveRow
                 ft.ResponsiveRow(
                     controls=[

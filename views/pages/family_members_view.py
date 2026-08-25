@@ -20,6 +20,7 @@ from services.labor.domain.enums import ActivityNature
 from services.labor.domain.models import EconomicActivity
 from services.labor.engine import LaborCalculationEngine
 from utils.formatters import format_currency
+from views.components.benefits_projection_card import BenefitsProjectionCard
 from views.components.labor_simulator_card import LaborSimulatorCard
 from views.layouts.main_layout import MainLayout
 
@@ -42,6 +43,10 @@ class FamilyMembersView:
             page=self.page,
             familia_id=familia_id,
             on_activity_saved=self._on_activity_saved,
+        )
+        self.benefits_card = BenefitsProjectionCard(
+            labor_controller=self.labor_controller,
+            member_controller=self.controller,
         )
 
         # ===============================
@@ -146,6 +151,7 @@ class FamilyMembersView:
             act.family_member_id: act for act in activities if act.is_active
         }
         self.simulator_card.set_available_members(self.state["members"])
+        self.benefits_card.refresh()
 
     # =====================================================
     # RENDER
@@ -237,6 +243,8 @@ class FamilyMembersView:
             spacing=16,
             scroll=ft.ScrollMode.AUTO,
         )
+
+        content.controls.append(self.benefits_card)
 
         self.simulator_tile = ft.ExpansionTile(
             leading=ft.Icon(
