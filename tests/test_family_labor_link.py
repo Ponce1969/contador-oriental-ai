@@ -107,10 +107,7 @@ class TestFamilyLaborLink:
         assert saved.id is not None
         assert saved.family_member_id == 10
         assert saved.dependent_details is not None
-        assert (
-            saved.dependent_details.estimated_monthly_nominal
-            == Decimal("150000.00")
-        )
+        assert saved.dependent_details.estimated_monthly_nominal == Decimal("150000.00")
 
         # Listar actividades por miembro
         member_acts = controller.list_by_member(10)
@@ -146,7 +143,6 @@ class TestFamilyLaborLink:
         assert len(acts) == 1
         assert acts[0].title == "Empleado Senior"
         assert acts[0].dependent_details is not None
-        assert (
-            acts[0].dependent_details.estimated_monthly_nominal
-            == Decimal("160000.00")
+        assert acts[0].dependent_details.estimated_monthly_nominal == Decimal(
+            "160000.00"
         )
