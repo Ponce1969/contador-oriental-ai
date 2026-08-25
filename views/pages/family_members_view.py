@@ -14,6 +14,7 @@ from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.family_member_model import FamilyMember
+from views.components.labor_simulator_card import LaborSimulatorCard
 from views.layouts.main_layout import MainLayout
 
 
@@ -30,6 +31,7 @@ class FamilyMembersView:
 
         familia_id = SessionManager.get_familia_id(page)
         self.controller = FamilyMemberController(familia_id=familia_id)
+        self.simulator_card = LaborSimulatorCard(page=self.page, familia_id=familia_id)
 
         # ===============================
         # STATE CENTRAL
@@ -213,6 +215,8 @@ class FamilyMembersView:
                     size=16 if is_mobile else 20,
                 ),
                 self.members_column,
+                ft.Divider(),
+                self.simulator_card.render(),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,

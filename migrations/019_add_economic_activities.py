@@ -68,7 +68,6 @@ def up(db):
     """)
 
 
-
 def down(db):
     db.execute("DROP INDEX IF EXISTS idx_incomes_concept")
     db.execute("ALTER TABLE incomes DROP COLUMN IF NOT EXISTS economic_activity_id")

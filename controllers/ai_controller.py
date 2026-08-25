@@ -338,7 +338,9 @@ class AIController(BaseController):
             resumen_laboral = ""
             try:
                 from controllers.labor_controller import LaborController
+                from services.labor.domain.enums import ActivityNature
                 from services.labor.domain.periods import AguinaldoPeriod
+                from services.labor.engine import LaborCalculationEngine
 
                 labor_ctrl = LaborController(
                     session=session, familia_id=self.familia_id
@@ -357,6 +359,79 @@ class AIController(BaseController):
                                 member_name = m.nombre
                                 break
 
+                        labor_lines.append(
+                            f"- Integrante: {member_name} | "
+                            f"Actividad: {act.title} ({act.nature.value})"
+                        )
+
+                        # Desglose mensual de retenciones para Dependientes
+                        if (
+                            act.nature == ActivityNature.DEPENDIENTE
+                            and act.dependent_details
+                        ):
+                            nom = act.dependent_details.estimated_monthly_nominal
+                            if nom and nom > 0:
+                                withh = LaborCalculationEngine.calculate_withholdings(
+                                    nominal=nom,
+                                    profile=act.dependent_details.tax_profile,
+                                    fiscal_year=today.year,
+                                )
+                                fonasa_pct = withh.fonasa_effective_rate * Decimal(
+                                    "100"
+                                )
+                                irpf_pct = withh.irpf_marginal_rate * Decimal("100")
+                                f_amt = f"$ {withh.fonasa_amount:.2f}"
+                                irpf_amt = f"$ {withh.irpf_net_withholding:.2f}"
+                                labor_lines.append(
+                                    f"  * Sueldo Nominal: $ {withh.nominal_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * Montepío (15%): $ {withh.montepio_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * FRL (0.1%): $ {withh.frl_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * FONASA ({fonasa_pct:.1f}%): {f_amt}"
+                                )
+                                labor_lines.append(
+                                    f"  * Retención IRPF ({irpf_pct:.0f}% marg.): "
+                                    f"{irpf_amt}"
+                                )
+                                labor_lines.append(
+                                    f"  * Líquido en Mano: $ {withh.liquid_amount:.2f}"
+                                )
+
+                        # Desglose para Pasividades / Jubilaciones
+                        elif (
+                            act.nature == ActivityNature.PASIVIDAD
+                            and act.pension_profile
+                        ):
+                            pen_res = LaborCalculationEngine.calculate_pension(
+                                profile=act.pension_profile,
+                                fiscal_year=today.year,
+                            )
+                            if pen_res.iass_payload:
+                                p = pen_res.iass_payload
+                                iass_pct = p.iass_marginal_rate * Decimal("100")
+                                labor_lines.append(
+                                    f"  * Pasividad Nominal: "
+                                    f"$ {p.gross_pension_amount:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * FONASA Pasivo: "
+                                    f"$ {p.fonasa_pension_withholding:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * Retención IASS ({iass_pct:.0f}% marg.): "
+                                    f"$ {p.iass_net_withholding:.2f}"
+                                )
+                                labor_lines.append(
+                                    f"  * Pasividad Líquida: "
+                                    f"$ {p.net_pension_liquid:.2f}"
+                                )
+
+                        # Aguinaldo y Salario Vacacional
                         aguinaldo_res = labor_ctrl.calculate_aguinaldo(
                             activity_id=act.id,
                             year=current_period.year,
@@ -371,17 +446,14 @@ class AIController(BaseController):
                         sem_label = (
                             "Junio" if current_period.semester == 1 else "Diciembre"
                         )
-                        labor_lines.append(
-                            f"- Integrante: {member_name} | "
-                            f"Actividad: {act.title} ({act.nature.value})"
-                        )
                         if aguinaldo_res.is_ok():
                             c = aguinaldo_res.unwrap()
-                            labor_lines.append(
-                                f"  * Aguinaldo estimado {sem_label} "
-                                f"{current_period.year}: $ {c.final_amount:.2f} "
-                                f"(Estado: {c.status.value})"
-                            )
+                            if c.final_amount > 0:
+                                labor_lines.append(
+                                    f"  * Aguinaldo estimado {sem_label} "
+                                    f"{current_period.year}: $ {c.final_amount:.2f} "
+                                    f"(Estado: {c.status.value})"
+                                )
                         if vacational_res.is_ok():
                             v = vacational_res.unwrap()
                             if v.final_amount > 0:

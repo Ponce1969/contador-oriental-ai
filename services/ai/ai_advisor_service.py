@@ -488,7 +488,7 @@ TU ROL:
 
 REGLAS ESTRICTAS (NO LAS ROMPAS NUNCA):
 {instruccion_enfoque}
-- NUNCA inventar números ni cálculos propios. Usá los datos provistos.
+- NUNCA hacer cálculos por tu cuenta. NUNCA inventar números. Usá los datos provistos.
 - Los totales y balances YA están calculados. Solo leer y narrar.
 - Si un dato no aparece explícitamente en los datos, NO lo inventes.
 

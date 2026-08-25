@@ -110,6 +110,9 @@ class EconomicActivity(BaseModel):
     independent_profile: IndependentProfile | None = Field(
         default=None, description="Detalles si es trabajador independiente (Fase 3)"
     )
+    pension_profile: PensionProfile | None = Field(
+        default=None, description="Detalles si es pasivo o jubilado (Fase 3)"
+    )
 
 
 class ComputableMonth(BaseModel):

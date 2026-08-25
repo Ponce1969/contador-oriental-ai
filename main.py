@@ -95,7 +95,7 @@ async def main(page: ft.Page):
         page.spacing = 0
 
         # Configurar icono personalizado de la aplicación (formato ICO para Windows)
-        page.window_icon = "assets/icon-gastos.ico"
+        page.window.icon = "assets/icon-gastos.ico"
 
         # Inicializar base de datos
         create_tables()
