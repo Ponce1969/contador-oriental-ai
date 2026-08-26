@@ -85,7 +85,7 @@ class BenefitsProjectionCard(ft.Container):
                         ft.Column(
                             controls=[
                                 ft.Text(
-                                    "🎁 Previsión de Aguinaldo y Salario Vacacional",
+                                    "🎁 Aguinaldos y Vacacionales",
                                     size=16 if is_mobile else 18,
                                     weight=ft.FontWeight.BOLD,
                                     color=ft.Colors.PURPLE_900,

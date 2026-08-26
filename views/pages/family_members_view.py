@@ -251,13 +251,13 @@ class FamilyMembersView:
                 color=ft.Colors.PURPLE_700,
             ),
             title=ft.Text(
-                "Previsión de Aguinaldo y Salario Vacacional",
+                "Aguinaldos y Vacacionales",
                 weight=ft.FontWeight.BOLD,
                 size=15,
                 color=ft.Colors.PURPLE_900,
             ),
             subtitle=ft.Text(
-                "Abrir para ver el próximo aguinaldo (SAC) y salario vacacional por integrante",
+                "Estimación para los integrantes del hogar.",
                 size=12,
                 color=ft.Colors.PURPLE_700,
             ),

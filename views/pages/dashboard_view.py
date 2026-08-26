@@ -646,13 +646,13 @@ class DashboardView:
                 color=ft.Colors.PURPLE_700,
             ),
             title=ft.Text(
-                "Previsión de Aguinaldo y Salario Vacacional",
+                "Aguinaldos y Vacacionales",
                 weight=ft.FontWeight.BOLD,
                 size=15,
                 color=ft.Colors.PURPLE_900,
             ),
             subtitle=ft.Text(
-                "Planificación de cobros extraordinarios legales del hogar",
+                "Estimación para los integrantes del hogar.",
                 size=12,
                 color=ft.Colors.PURPLE_700,
             ),
