@@ -115,9 +115,21 @@ Cuando la familia pregunte sobre sus metas, el `AIAdvisorService` recibe el esta
 
 ---
 
-## 6. Fases de Implementación Propuestas
+## 6. Pautas de Diseño e Interfaz (UI/UX)
 
-1. **Fase 1 (Dominio y Base de Datos):** Modelos `SavingsGoal`, `GoalContribution`, repositorios y servicios con validación multimoneda (UYU/USD).
+1. **Ubicación Arquitectónica:** Integrado dentro de la vista **`📋 Mis Planes`**, manteniendo limpia la barra de navegación.
+2. **Componentes Colapsables (ExpansionTile):** Cada meta se presenta en un acordeón desplegable que se abre y cierra para no saturar la pantalla cuando no se usa.
+3. **Ícono Distintivo:** `ft.Icons.SAVINGS` (Alcancía / Chanchito 🐷).
+4. **Paleta de Colores Tenues (Soft Pastels):**
+   - Fondos suaves consistentes con el diseño de la app: `ft.Colors.PURPLE_50`, `ft.Colors.TEAL_50`, `ft.Colors.AMBER_50`.
+   - Cero fondos blancos crudos o chillones.
+   - Barras de progreso sutiles con indicadores porcentuales legibles.
+
+---
+
+## 7. Fases de Implementación Propuestas
+
+1. **Fase 1 (Dominio y Base de Datos):** Modelos `SavingsGoal`, `GoalContribution`, migraciones SQL, repositorios y servicios con validación multimoneda (UYU/USD).
 2. **Fase 2 (Motor de Simulación):** Algoritmo de proyección temporal integrando sueldos, aguinaldos y excedentes independientes.
-3. **Fase 3 (Interfaz Flet):** Pantalla en la barra de navegación (*"Mis Planes / Metas"*) con barras de progreso visuales, tarjetas de alcancía y botón de *"Aportar a la meta"*.
+3. **Fase 3 (Interfaz Flet en Mis Planes):** Paneles colapsables en tonos pastel con el ícono de alcancía 🐷, barras de progreso y modal *"Aportar a la meta"*.
 4. **Fase 4 (Asesor IA):** Inyección del bloque de metas en el prompt del Contador Oriental para consultas de planificación y asesoramiento.
