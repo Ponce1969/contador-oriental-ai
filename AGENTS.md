@@ -16,6 +16,7 @@ This file provides references to the specification documents for AI agents.
 | [FINE_TUNING_GUIDE.md](AGENTS/FINE_TUNING_GUIDE.md) | Gemma 2:2b Unsloth fine-tuning guide and workflow |
 | [openspec/changes/add-multi-currency/specs/currency/spec.md](openspec/changes/add-multi-currency/specs/currency/spec.md) | Multi-currency support (UYU/USD) design rules |
 | [.kiro/specs/shared-household-expenses/design.md](.kiro/specs/shared-household-expenses/design.md) | Shared Household Expenses feature design and data structures |
+| [SAVINGS_GOALS_SPEC.md](AGENTS/SAVINGS_GOALS_SPEC.md) | Family savings goals, projections, and labor income integration spec |
 
 
 ## Quick Commands
