@@ -202,13 +202,187 @@ class AIAdvisorService:
 
         return "", None
 
-    def _formatear_datos_financieros(self, ctx: AIContext) -> str:
+    @staticmethod
+    def _es_pregunta_laboral(pregunta: str) -> bool:
+        """Determina si la consulta involucra sueldos, aportes o beneficios."""
+        if not pregunta:
+            return True
+        p = pregunta.lower()
+        keywords = (
+            "sueldo",
+            "sueldos",
+            "salario",
+            "salarios",
+            "aguinaldo",
+            "aguinaldos",
+            "sac",
+            "vacacional",
+            "vacacionales",
+            "vacacion",
+            "vacaciones",
+            "licencia",
+            "jubilacion",
+            "jubilación",
+            "pension",
+            "pensión",
+            "pasividad",
+            "pasivo",
+            "pasivos",
+            "bps",
+            "fonasa",
+            "montepio",
+            "montepío",
+            "frl",
+            "irpf",
+            "retencion",
+            "retención",
+            "iass",
+            "nominal",
+            "liquido",
+            "líquido",
+            "en mano",
+            "cobro",
+            "cobros",
+            "cobrar",
+            "diciembre",
+            "junio",
+            "despido",
+            "aportes",
+            "laboral",
+            "laborales",
+            "trabajo",
+            "empleo",
+            "empleado",
+            "patronal",
+            "dependiente",
+            "independiente",
+            "unipersonal",
+            "servicios personales",
+            "honorario",
+            "honorarios",
+        )
+        return any(k in p for k in keywords)
+
+    @staticmethod
+    def _es_pregunta_cuotas(pregunta: str) -> bool:
+        """Determina si la consulta requiere la proyección de cuotas futuras."""
+        if not pregunta:
+            return True
+        p = pregunta.lower()
+        keywords = (
+            "cuota",
+            "cuotas",
+            "tarjeta",
+            "tarjetas",
+            "credito",
+            "crédito",
+            "meses que vienen",
+            "proximo mes",
+            "próximo mes",
+            "proximos meses",
+            "próximos meses",
+            "futuro",
+            "futuros",
+            "proyeccion",
+            "proyección",
+            "financiamiento",
+            "puedo comprar",
+            "puedo gastar",
+            "endeud",
+            "deuda",
+            "financiar",
+        )
+        return any(k in p for k in keywords)
+
+    @staticmethod
+    def _es_pregunta_comparativa(pregunta: str) -> bool:
+        """Determina si la consulta pide comparar con meses anteriores."""
+        if not pregunta:
+            return True
+        p = pregunta.lower()
+        keywords = (
+            "comparar",
+            "comparativa",
+            "vs",
+            "respecto",
+            "mes pasado",
+            "mes anterior",
+            "aumento",
+            "aumentó",
+            "subio",
+            "subió",
+            "bajo",
+            "bajó",
+            "diferencia",
+            "variacion",
+            "variación",
+            "mas que",
+            "más que",
+            "menos que",
+            "evolucion",
+            "evolución",
+            "como vengo",
+            "cómo vengo",
+            "analisis",
+            "análisis",
+            "tendencia",
+            "resumen general",
+        )
+        return any(k in p for k in keywords)
+
+    @staticmethod
+    def _es_pregunta_memoria(pregunta: str) -> bool:
+        """Determina si la consulta requiere contexto histórico RAG de pgvector."""
+        if not pregunta:
+            return True
+        p = pregunta.lower()
+        keywords = (
+            "recuerdo",
+            "recuerdas",
+            "acordas",
+            "acordás",
+            "historico",
+            "histórico",
+            "historial",
+            "alguna vez",
+            "cuando fue",
+            "cuándo fue",
+            "cuando compre",
+            "cuándo compré",
+            "arreglo",
+            "auto",
+            "pasado",
+        )
+        return any(k in p for k in keywords)
+
+    @staticmethod
+    def _es_pregunta_historica_o_rango(pregunta: str) -> bool:
+        """Determina si se consultan datos del mes previo o rangos históricos."""
+        if not pregunta:
+            return True
+        p = pregunta.lower()
+        keywords = (
+            "mes pasado",
+            "mes anterior",
+            "pasado",
+            "historico",
+            "histórico",
+            "historial",
+            "cierre",
+            "empalme",
+            "anterior",
+            "anteriores",
+        )
+        return any(k in p for k in keywords)
+
+    def _formatear_datos_financieros(self, ctx: AIContext, pregunta: str = "") -> str:
         """
-        Prepara el bloque de datos financieros para el Prompt de Gemma 2:2b.
-        Todos los valores ya vienen calculados en ctx; Gemma solo narra.
+        Prepara el bloque de datos financieros para el Prompt del Asesor.
+        Todos los valores ya vienen calculados en ctx; el modelo solo narra.
 
         Args:
             ctx: Contexto financiero pre-calculado por Python
+            pregunta: Pregunta del usuario para adaptar la granularidad
 
         Returns:
             String formateado con el resumen financiero
@@ -237,7 +411,6 @@ class AIAdvisorService:
 
         if ctx.cotizacion_dolar:
             # Formato inequivoco para IA: coma decimal, sin punto
-            # "$ 40,01" en vez de "$ 40.01" (Llama confunde punto con decimal)
             cotizacion_2d = ctx.cotizacion_dolar.quantize(Decimal("0.01"))
             entero = int(cotizacion_2d)
             decimal_part = int((cotizacion_2d - entero) * 100)
@@ -260,8 +433,8 @@ class AIAdvisorService:
             )
             lineas.append(subtotal_str)
 
-        # Proyeccion de cuotas futuras
-        if ctx.proyeccion_cuotas:
+        # Proyección de cuotas futuras solo si la consulta es relevante
+        if ctx.proyeccion_cuotas and self._es_pregunta_cuotas(pregunta):
             lineas.append("")
             lineas.append("PROYECCION DE CUOTAS FUTURAS:")
             for mes, total in ctx.proyeccion_cuotas.items():
@@ -271,8 +444,11 @@ class AIAdvisorService:
                 "comprometeria meses futuros."
             )
 
-        # ── Empalme: cierre del mes anterior ──────────────────────────
-        if ctx.empalme_mes_label:
+        # ── Empalme: cierre de mes anterior (solo si no hay gastos o son históricos)
+        if ctx.empalme_mes_label and (
+            self._es_pregunta_historica_o_rango(pregunta)
+            or ctx.total_gastos_count == 0
+        ):
             balance_empalme = ctx.empalme_ingresos_total - ctx.empalme_total_gastos
             lineas.append("")
             lineas.append(f"### CIERRE DEL MES ANTERIOR ({ctx.empalme_mes_label}) ###")
@@ -371,28 +547,37 @@ class AIAdvisorService:
 
         return "\n".join(lineas)
 
-    def _formatear_datos_laborales(self, ctx: AIContext | None) -> str:
+    def _formatear_datos_laborales(
+        self, ctx: AIContext | None, pregunta: str = ""
+    ) -> str:
         """
         Formatea los datos de sueldos, beneficios y aguinaldos del hogar
         pre-calculados por Python para el prompt de la IA.
+        Solo se inyecta si la pregunta involucra temática laboral o perfiles.
         """
         if not ctx or not ctx.resumen_laboral:
             return ""
 
+        if pregunta and not self._es_pregunta_laboral(pregunta):
+            return ""
+
         return (
-            "### CONTEXTO, SUELDOS Y BENEFICIOS LABORALES DEL HOGAR (PRE-CALCULADO POR PYTHON) ###\n"
+            "### CONTEXTO, SUELDOS Y BENEFICIOS LABORALES DEL HOGAR "
+            "(PRE-CALCULADO POR PYTHON) ###\n"
             f"{ctx.resumen_laboral}\n"
-            "REGLA ESTRICTA PARA LA IA: Utilizar los números laborales y totales consolidados anteriores "
-            "de forma textual para responder sobre sueldos netos, aguinaldos, salario vacacional "
-            "o cobros a fin de año. NUNCA inventes cálculos ni discrepes con estos valores.\n\n"
+            "REGLA ESTRICTA PARA LA IA: Utilizar los números laborales y "
+            "totales consolidados anteriores de forma textual para responder "
+            "sobre sueldos netos, aguinaldos, salario vacacional o cobros a "
+            "fin de año. NUNCA inventes cálculos ni discrepes con estos valores.\n\n"
         )
 
-    def _formatear_comparativa(self, ctx: AIContext) -> str:
+    def _formatear_comparativa(self, ctx: AIContext, pregunta: str = "") -> str:
         """
         Convierte CategoryMetric en hechos contables narrativos para el prompt.
-        Python pre-calcula todo; Gemma solo lee y narra.
+        Python pre-calcula todo; el modelo solo lee y narra.
+        Solo se inyecta si la consulta amerita comparación con meses anteriores.
         """
-        if not ctx.comparativa_meses:
+        if not ctx.comparativa_meses or not self._es_pregunta_comparativa(pregunta):
             return ""
 
         lineas: list[str] = [
@@ -450,6 +635,10 @@ class AIAdvisorService:
             modelo: 'gemma2' o 'llama3' — ajusta restricciones del prompt.
             ctx: Contexto financiero y laboral completo del hogar.
         """
+        # Filtrar memoria vectorial solo si la pregunta pide historial/recuerdos
+        if memoria_vectorial and not self._es_pregunta_memoria(pregunta):
+            memoria_vectorial = ""
+
         seccion_rag = (
             f"NORMATIVA URUGUAYA RELEVANTE:\n{contexto_legal}\n"
             if contexto_legal
@@ -465,18 +654,8 @@ class AIAdvisorService:
             else ""
         )
 
-        seccion_laboral = self._formatear_datos_laborales(ctx)
+        seccion_laboral = self._formatear_datos_laborales(ctx, pregunta=pregunta)
         seccion_gastos = f"{gastos_formateados}\n" if gastos_formateados else ""
-
-        instruccion_enfoque = (
-            "- INSTRUCCIÓN PRINCIPAL: Respondé DIRECTAMENTE a la PREGUNTA.\n"
-            "- Si la pregunta es sobre normativa, leyes, IRPF, aguinaldo o IASS, "
-            "explicá la ley aplicable de forma clara.\n"
-            "- Si la pregunta es sobre sueldos, aguinaldos, cobro a fin de año o vacaciones, "
-            "utilizá los valores precalculados en la sección laboral.\n"
-            "- Solo mencioná gastos o saldo si la pregunta consulta expresamente "
-            "sobre su presupuesto o historial.\n"
-        )
 
         # Aviso cuando la cuota de Llama 3 está agotada y cae a Gemma 2
         aviso_cuota = ""
@@ -487,28 +666,60 @@ class AIAdvisorService:
                 "puede ser menos precisa.\n"
             )
 
-        prompt = f"""Sos el Contador Oriental, contador público uruguayo.
+        if modelo == "gemma2":
+            p_head = (
+                "Sos el Contador Oriental, contador público uruguayo.\n"
+                "Respondé DIRECTAMENTE a la PREGUNTA en español rioplatense, "
+                "de forma clara, profesional y concisa.\n\n"
+                "REGLAS ESTRICTAS:\n"
+                "- INSTRUCCIÓN PRINCIPAL: Respondé DIRECTAMENTE a la PREGUNTA.\n"
+                "- NUNCA hacer cálculos por tu cuenta. NUNCA inventar números. "
+                "Usá los datos provistos.\n"
+                "- Los totales y balances YA están calculados. Solo leer y narrar.\n"
+                "- Si un dato no aparece explícitamente en los datos, NO lo inventes.\n"
+                "- Reportá cada moneda por separado: $ para UYU, USD para USD. "
+                "NUNCA conviertas ni sumes monedas distintas.\n"
+                "- TONO: Profesional pero cercano y pedagógico."
+            )
+            return (
+                f"{p_head}\n"
+                f"{aviso_cuota}\n"
+                f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_gastos}"
+                f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
+                f"RESPUESTA DIRECTA:"
+            )
 
-TU ROL:
-- Responder en español rioplatense de forma clara y profesional.
-- Explicar las normas contables y laborales cuando te lo pidan.
-- Analizar gastos solo cuando pregunten por su presupuesto.
+        instruccion_enfoque = (
+            "- INSTRUCCIÓN PRINCIPAL: Respondé DIRECTAMENTE a la PREGUNTA.\n"
+            "- Si la pregunta es sobre normativa, leyes, IRPF, aguinaldo o IASS, "
+            "explicá la ley aplicable de forma clara.\n"
+            "- Si la pregunta es sobre sueldos, aguinaldos, cobro a fin de año o "
+            "vacaciones, utilizá los valores precalculados en la sección laboral.\n"
+            "- Solo mencioná gastos o saldo si la pregunta consulta expresamente "
+            "sobre su presupuesto o historial.\n"
+        )
 
-REGLAS ESTRICTAS (NO LAS ROMPAS NUNCA):
-{instruccion_enfoque}
-- NUNCA hacer cálculos por tu cuenta. NUNCA inventar números. Usá los datos provistos.
-- Los totales y balances YA están calculados. Solo leer y narrar.
-- Si un dato no aparece explícitamente en los datos, NO lo inventes.
-
-SÍMBOLOS MONETARIOS (estricto):
-- Reportá cada moneda por separado: $ para UYU, USD para USD.
-- NUNCA conviertas ni sumes monedas distintas.
-
-TONO: Profesional pero cercano y pedagógico.
-{aviso_cuota}
-{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_gastos}PREGUNTA DEL USUARIO: {pregunta}
-
-RESPUESTA DIRECTA:"""
+        prompt = (
+            f"Sos el Contador Oriental, contador público uruguayo.\n\n"
+            f"TU ROL:\n"
+            f"- Responder en español rioplatense de forma clara y profesional.\n"
+            f"- Explicar las normas contables y laborales cuando te lo pidan.\n"
+            f"- Analizar gastos solo cuando pregunten por su presupuesto.\n\n"
+            f"REGLAS ESTRICTAS (NO LAS ROMPAS NUNCA):\n"
+            f"{instruccion_enfoque}"
+            f"- NUNCA hacer cálculos por tu cuenta. NUNCA inventar números. "
+            f"Usá los datos provistos.\n"
+            f"- Los totales y balances YA están calculados. Solo leer y narrar.\n"
+            f"- Si un dato no aparece explícitamente en los datos, NO lo inventes.\n\n"
+            f"SÍMBOLOS MONETARIOS (estricto):\n"
+            f"- Reportá cada moneda por separado: $ para UYU, USD para USD.\n"
+            f"- NUNCA conviertas ni sumes monedas distintas.\n\n"
+            f"TONO: Profesional pero cercano y pedagógico.\n"
+            f"{aviso_cuota}\n"
+            f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_gastos}"
+            f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
+            f"RESPUESTA DIRECTA:"
+        )
 
         return prompt
 
@@ -623,8 +834,12 @@ RESPUESTA DIRECTA:"""
         # 2. Formatear gastos
         gastos_formateados = ""
         if request.incluir_gastos_recientes and ctx:
-            gastos_formateados = self._formatear_datos_financieros(ctx)
-            comparativa_str = self._formatear_comparativa(ctx)
+            gastos_formateados = self._formatear_datos_financieros(
+                ctx, pregunta=request.pregunta
+            )
+            comparativa_str = self._formatear_comparativa(
+                ctx, pregunta=request.pregunta
+            )
             if comparativa_str:
                 gastos_formateados += comparativa_str
 
@@ -750,8 +965,12 @@ RESPUESTA DIRECTA:"""
             gastos_formateados = ""
 
             if request.incluir_gastos_recientes and ctx:
-                gastos_formateados = self._formatear_datos_financieros(ctx)
-                comparativa_str = self._formatear_comparativa(ctx)
+                gastos_formateados = self._formatear_datos_financieros(
+                    ctx, pregunta=request.pregunta
+                )
+                comparativa_str = self._formatear_comparativa(
+                    ctx, pregunta=request.pregunta
+                )
                 if comparativa_str:
                     gastos_formateados += comparativa_str
 
