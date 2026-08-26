@@ -9,10 +9,13 @@ from decimal import Decimal
 
 import flet as ft
 
+from controllers.family_member_controller import FamilyMemberController
 from controllers.installment_controller import InstallmentController
+from controllers.savings_goal_controller import SavingsGoalController
 from core.session import SessionManager
 from core.state import AppState
 from services.infrastructure.formatters import format_pesos
+from views.components.savings_goals_card import SavingsGoalsCard
 from views.layouts.main_layout import MainLayout
 
 # ── Light Palette ───────────────────────────────────────────────────
@@ -97,6 +100,12 @@ class PlanesView:
 
         familia_id = SessionManager.get_familia_id(page)
         self.controller = InstallmentController(familia_id=familia_id)
+        self.savings_controller = SavingsGoalController(familia_id=familia_id)
+        self.member_controller = FamilyMemberController(familia_id=familia_id)
+        self._savings_card = SavingsGoalsCard(
+            self.savings_controller,
+            self.member_controller,
+        )
         self._planes_column = ft.Column(spacing=14)
 
     def render(self):
@@ -120,11 +129,30 @@ class PlanesView:
                         padding=ft.Padding.only(bottom=4),
                     ),
                     ft.Text(
-                        "Compras en cuotas activas y su progreso",
+                        "Planificación familiar: metas de ahorro y compras en cuotas",
                         size=12,
                         color=_GREY,
                     ),
-                    ft.Divider(color="#E5E7EB", height=24),
+                    self._savings_card,
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Icon(
+                                    ft.Icons.CREDIT_CARD,
+                                    size=18,
+                                    color=_DARK,
+                                ),
+                                ft.Text(
+                                    "Compras en Cuotas Activas",
+                                    size=15,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=_DARK,
+                                ),
+                            ],
+                            spacing=6,
+                        ),
+                        padding=ft.Padding.only(top=10, bottom=4),
+                    ),
                     self._planes_column,
                 ],
                 spacing=10,

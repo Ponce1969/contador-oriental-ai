@@ -356,22 +356,29 @@ class AIAdvisorService:
         return any(k in p for k in keywords)
 
     @staticmethod
-    def _es_pregunta_historica_o_rango(pregunta: str) -> bool:
-        """Determina si se consultan datos del mes previo o rangos históricos."""
+    def _es_pregunta_metas(pregunta: str) -> bool:
+        """Determina si la consulta involucra metas de ahorro o alcancías del hogar."""
         if not pregunta:
             return True
         p = pregunta.lower()
         keywords = (
-            "mes pasado",
-            "mes anterior",
-            "pasado",
-            "historico",
-            "histórico",
-            "historial",
-            "cierre",
-            "empalme",
-            "anterior",
-            "anteriores",
+            "meta",
+            "metas",
+            "ahorro",
+            "ahorros",
+            "ahorrar",
+            "alcancia",
+            "alcancía",
+            "chanchito",
+            "objetivo",
+            "objetivos",
+            "viaje",
+            "vacacion",
+            "vacaciones",
+            "fondo",
+            "llegamos",
+            "cuanto falta",
+            "cuánto falta",
         )
         return any(k in p for k in keywords)
 
@@ -459,8 +466,7 @@ class AIAdvisorService:
 
         # ── Empalme: cierre de mes anterior (solo si no hay gastos o son históricos)
         if ctx.empalme_mes_label and (
-            self._es_pregunta_historica_o_rango(pregunta)
-            or ctx.total_gastos_count == 0
+            self._es_pregunta_historica_o_rango(pregunta) or ctx.total_gastos_count == 0
         ):
             balance_empalme = ctx.empalme_ingresos_total - ctx.empalme_total_gastos
             lineas.append("")
@@ -584,6 +590,26 @@ class AIAdvisorService:
             "fin de año. NUNCA inventes cálculos ni discrepes con estos valores.\n\n"
         )
 
+    def _formatear_datos_metas(self, ctx: AIContext | None, pregunta: str = "") -> str:
+        """
+        Formatea los datos de metas de ahorro y alcancías del hogar.
+        Solo se inyecta si hay metas activas y la pregunta es sobre metas/ahorro.
+        """
+        if not ctx or not ctx.resumen_metas:
+            return ""
+
+        if pregunta and not self._es_pregunta_metas(pregunta):
+            return ""
+
+        return (
+            "### METAS DE AHORRO Y ALCANCÍAS DEL HOGAR "
+            "(PRE-CALCULADO POR PYTHON) ###\n"
+            f"{ctx.resumen_metas}\n"
+            "REGLA ESTRICTA PARA LA IA: Utilizar los números de metas, avances "
+            "y montos faltantes anteriores de forma textual. "
+            "NUNCA inventes cálculos.\n\n"
+        )
+
     def _formatear_comparativa(self, ctx: AIContext, pregunta: str = "") -> str:
         """
         Convierte CategoryMetric en hechos contables narrativos para el prompt.
@@ -668,6 +694,7 @@ class AIAdvisorService:
         )
 
         seccion_laboral = self._formatear_datos_laborales(ctx, pregunta=pregunta)
+        seccion_metas = self._formatear_datos_metas(ctx, pregunta=pregunta)
         seccion_gastos = f"{gastos_formateados}\n" if gastos_formateados else ""
 
         # Aviso cuando la cuota de Llama 3 está agotada y cae a Gemma 2
@@ -697,7 +724,7 @@ class AIAdvisorService:
             return (
                 f"{p_head}\n"
                 f"{aviso_cuota}\n"
-                f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_gastos}"
+                f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_gastos}"
                 f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
                 f"RESPUESTA DIRECTA:"
             )
@@ -708,6 +735,8 @@ class AIAdvisorService:
             "explicá la ley aplicable de forma clara.\n"
             "- Si la pregunta es sobre sueldos, aguinaldos, cobro a fin de año o "
             "vacaciones, utilizá los valores precalculados en la sección laboral.\n"
+            "- Si la pregunta es sobre metas de ahorro o alcancías, utilizá los "
+            "valores precalculados en la sección de metas.\n"
             "- Solo mencioná gastos o saldo si la pregunta consulta expresamente "
             "sobre su presupuesto o historial.\n"
         )
@@ -729,7 +758,7 @@ class AIAdvisorService:
             f"- NUNCA conviertas ni sumes monedas distintas.\n\n"
             f"TONO: Profesional pero cercano y pedagógico.\n"
             f"{aviso_cuota}\n"
-            f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_gastos}"
+            f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_gastos}"
             f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
             f"RESPUESTA DIRECTA:"
         )

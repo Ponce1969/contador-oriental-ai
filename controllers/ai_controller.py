@@ -32,6 +32,7 @@ from services.ai.query_analyzer import QueryAnalyzer
 from services.domain.expense_service import ExpenseService
 from services.domain.family_member_service import FamilyMemberService
 from services.domain.income_service import IncomeService
+from services.infrastructure.formatters import format_pesos_ai
 
 logger = logging.getLogger(__name__)
 
@@ -511,6 +512,32 @@ class AIController(BaseController):
             except Exception as labor_err:
                 logger.warning("Contexto laboral no disponible: %s", labor_err)
 
+            # ── Metas de Ahorro del Hogar ─────────────────────────────────
+            resumen_metas = ""
+            try:
+                from services.savings_goal_service import SavingsGoalService
+
+                savings_service = SavingsGoalService(session, self._familia_id)
+                metas = savings_service.list_goals(active_only=True)
+                if metas:
+                    metas_lines = ["=== METAS DE AHORRO ACTIVAS DEL HOGAR ==="]
+                    for m in metas:
+                        pct = m.progress_pct
+                        rem_str = format_pesos_ai(
+                            m.remaining_amount, currency=m.currency
+                        )
+                        tot_str = format_pesos_ai(m.target_amount, currency=m.currency)
+                        acum_str = format_pesos_ai(
+                            m.current_amount, currency=m.currency
+                        )
+                        metas_lines.append(
+                            f"- Meta: '{m.name}' | Objetivo: {tot_str} | "
+                            f"Acumulado: {acum_str} ({pct:.1f}%) | Faltante: {rem_str}"
+                        )
+                    resumen_metas = "\n".join(metas_lines)
+            except Exception as metas_err:
+                logger.warning("Metas de ahorro no disponibles: %s", metas_err)
+
             # ── Cotización del dólar ──────────────────────────────────────
             exchange_ctrl = ExchangeRateController()
             compra, venta, is_fresh = exchange_ctrl.get_display_rate()
@@ -539,6 +566,7 @@ class AIController(BaseController):
                 terminos_buscados=label_desc,
                 proyeccion_cuotas=proyeccion,
                 resumen_laboral=resumen_laboral,
+                resumen_metas=resumen_metas,
                 cotizacion_dolar=cotizacion if cotizacion > 0 else None,
                 empalme_gastos=empalme_gastos,
                 empalme_ingresos_total=empalme_ingresos_total,

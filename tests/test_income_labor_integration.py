@@ -84,7 +84,7 @@ def db_session():
 
 
 class TestIncomeLaborIntegration:
-    """Verifica que los ingresos puedan crearse y asociarse con la actividad económica."""
+    """Verifica que los ingresos se asocien con la actividad económica."""
 
     def test_create_income_linked_to_economic_activity(self, db_session):
         labor_ctrl = LaborController(session=db_session, familia_id=1)

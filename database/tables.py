@@ -530,3 +530,55 @@ class HouseholdAuditLogTable(Base):
         Index("idx_audit_log_household", "household_id"),
         Index("idx_audit_log_familia", "familia_id"),
     )
+
+
+class SavingsGoalTable(Base):
+    """Tabla de metas de ahorro familiares."""
+
+    __tablename__ = "savings_goals"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    familia_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("familias.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    target_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), default="UYU", nullable=False)
+    current_amount: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0.00"), nullable=False
+    )
+    deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
+    category: Mapped[str] = mapped_column(String(50), default="general", nullable=False)
+    icon: Mapped[str] = mapped_column(String(50), default="savings", nullable=False)
+    color: Mapped[str] = mapped_column(String(30), default="#6200EE", nullable=False)
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    __table_args__ = (Index("idx_savings_goals_familia", "familia_id"),)
+
+
+class SavingsGoalContributionTable(Base):
+    """Tabla de aportes / transacciones a las metas de ahorro."""
+
+    __tablename__ = "savings_goal_contributions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    savings_goal_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("savings_goals.id", ondelete="CASCADE"), nullable=False
+    )
+    family_member_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("family_members.id", ondelete="SET NULL"), nullable=True
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), default="UYU", nullable=False)
+    source_type: Mapped[str] = mapped_column(
+        String(50), default="regular_income", nullable=False
+    )
+    note: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    fecha: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (Index("idx_goal_contributions_goal", "savings_goal_id"),)

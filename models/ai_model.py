@@ -184,6 +184,10 @@ class AIContext(BaseModel):
             "beneficios laborales (aguinaldo, salario vacacional)"
         ),
     )
+    resumen_metas: str = Field(
+        default="",
+        description="Resumen pre-calculado por Python de metas de ahorro del hogar",
+    )
 
 
 class AIResponse(BaseModel):

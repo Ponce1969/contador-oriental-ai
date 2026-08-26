@@ -20,7 +20,6 @@ from database.tables import (
     FamilyMemberTable,
     IncomeTable,
 )
-from models.income_model import Income, IncomeCategory, RecurrenceFrequency
 from services.labor.domain.enums import (
     ActivityNature,
     FonasaBeneficiaryType,
@@ -78,7 +77,7 @@ def db_session():
 
 
 class TestBenefitsProjectionCard:
-    """Verifica que BenefitsProjectionCard renderice correctamente con datos de aguinaldo y salario vacacional."""
+    """Verifica que BenefitsProjectionCard renderice con aguinaldo y vacacional."""
 
     def test_benefits_card_with_no_dependent_activities(self, db_session):
         labor_ctrl = LaborController(session=db_session, familia_id=1)

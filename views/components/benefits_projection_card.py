@@ -6,7 +6,6 @@ y Salario Vacacional (Ley 16.101) para integrantes familiares dependientes.
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
 
 import flet as ft
 
@@ -91,7 +90,8 @@ class BenefitsProjectionCard(ft.Container):
                                     color=ft.Colors.PURPLE_900,
                                 ),
                                 ft.Text(
-                                    f"Próximo cobro: {period_label} (Devengo: {accrual_range})",
+                                    f"Próximo cobro: {period_label} "
+                                    f"(Devengo: {accrual_range})",
                                     size=12,
                                     color=ft.Colors.PURPLE_700,
                                 ),
@@ -139,7 +139,8 @@ class BenefitsProjectionCard(ft.Container):
                             ),
                             ft.Text(
                                 "No hay integrantes con actividad dependiente activa. "
-                                "Al guardar una actividad en Familia, aquí verás la proyección.",
+                                "Al guardar una actividad en Familia, aquí verás "
+                                "la proyección.",
                                 size=13,
                                 color=ft.Colors.PURPLE_900,
                                 expand=True,

@@ -55,8 +55,8 @@ def test_ai_advisor_labor_context_injection():
 
     # Verificaciones de inyección estricta
     assert (
-        "### CONTEXTO, SUELDOS Y BENEFICIOS LABORALES DEL HOGAR (PRE-CALCULADO POR PYTHON) ###"
-        in prompt
+        "### CONTEXTO, SUELDOS Y BENEFICIOS LABORALES DEL HOGAR "
+        "(PRE-CALCULADO POR PYTHON) ###" in prompt
     )
     assert "Sueldo Nominal Mensual: $ 80000.00" in prompt
     assert "Retención IRPF Anticipo Mensual (10% marg.): $ 2450.00" in prompt
