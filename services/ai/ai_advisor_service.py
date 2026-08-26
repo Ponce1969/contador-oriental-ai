@@ -749,14 +749,23 @@ class AIAdvisorService:
     async def _call_ollama_stream(self, prompt: str):
         """
         Llama a Ollama (Gemma 2:2b local) con streaming.
-        Yield tokens a medida que el modelo los genera.
+        Yield tokens a medida que el modelo los genera y registra telemetría de tiempos.
         """
+        import time
+
         from ollama import AsyncClient
 
+        from core.logger import get_logger
+
+        ai_logger = get_logger("AIAdvisor.ollama")
         _ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         _keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", "24h")
         _threads = int(os.getenv("OLLAMA_NUM_THREADS", "4"))
         client = AsyncClient(host=_ollama_url)
+
+        t_start = time.perf_counter()
+        t_first_token = None
+        token_count = 0
 
         async for part in await client.generate(
             model="contador-oriental",
@@ -771,7 +780,33 @@ class AIAdvisorService:
         ):
             token: str = part.get("response", "")
             if token:
+                if t_first_token is None:
+                    t_first_token = time.perf_counter()
+                    ai_logger.info(
+                        "⏱️ Primer token recibido en: %.2fs (Prefill / TTFT)",
+                        t_first_token - t_start,
+                    )
+                token_count += 1
                 yield token
+
+            if part.get("done", False):
+                t_total = time.perf_counter() - t_start
+                p_eval_count = part.get("prompt_eval_count", 0)
+                p_eval_dur = part.get("prompt_eval_duration", 0) / 1e9
+                eval_count = part.get("eval_count", token_count)
+                eval_dur = part.get("eval_duration", 0) / 1e9
+                speed = eval_count / eval_dur if eval_dur > 0 else 0
+
+                ai_logger.info(
+                    "📊 RESUMEN OLLAMA: Prompt: %d tokens (%.2fs) | "
+                    "Generación: %d tokens (%.2fs @ %.1f tok/s) | Tiempo Total: %.2fs",
+                    p_eval_count,
+                    p_eval_dur,
+                    eval_count,
+                    eval_dur,
+                    speed,
+                    t_total,
+                )
 
     async def _call_nvidia(self, prompt: str) -> dict:
         """
