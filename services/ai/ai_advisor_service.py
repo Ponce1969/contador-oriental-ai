@@ -392,20 +392,33 @@ class AIAdvisorService:
             f"- Miembros en el hogar: {ctx.miembros_count}",
             f"- Ingresos totales {ctx.periodo_label}:",
         ]
-        for ccy in sorted(ctx.ingresos_por_moneda.keys()):
-            ingresos_str = format_pesos_ai(ctx.ingresos_por_moneda[ccy], currency=ccy)
+        ingresos_dict = ctx.ingresos_por_moneda or (
+            {"UYU": ctx.ingresos_total}
+            if ctx.ingresos_total > Decimal("0")
+            else {"UYU": Decimal("0")}
+        )
+        for ccy in sorted(ingresos_dict.keys()):
+            ingresos_str = format_pesos_ai(ingresos_dict[ccy], currency=ccy)
             lineas.append(f"  * {ccy}: {ingresos_str}")
+
         lineas.append(f"- TOTAL gastos {ctx.periodo_label} (todas las categorías):")
-        for ccy in sorted(ctx.gastos_por_moneda.keys()):
-            gastos_str = format_pesos_ai(ctx.gastos_por_moneda[ccy], currency=ccy)
+        gastos_dict = ctx.gastos_por_moneda or (
+            {"UYU": ctx.total_gastos_mes}
+            if ctx.total_gastos_mes > Decimal("0")
+            else {"UYU": Decimal("0")}
+        )
+        for ccy in sorted(gastos_dict.keys()):
+            gastos_str = format_pesos_ai(gastos_dict[ccy], currency=ccy)
             lineas.append(f"  * {ccy}: {gastos_str}")
+
         lineas.append(f"- BALANCE {ctx.periodo_label} (Ingresos - Gastos) por moneda:")
-        ingresos_keys = set(ctx.ingresos_por_moneda.keys())
-        gastos_keys = set(ctx.gastos_por_moneda.keys())
-        for ccy in sorted(ingresos_keys | gastos_keys):
-            ingresos = ctx.ingresos_por_moneda.get(ccy, Decimal("0"))
-            gastos = ctx.gastos_por_moneda.get(ccy, Decimal("0"))
-            balance_mes = ingresos - gastos
+        all_ccy = set(ingresos_dict.keys()) | set(gastos_dict.keys())
+        if not all_ccy:
+            all_ccy = {"UYU"}
+        for ccy in sorted(all_ccy):
+            ingresos_val = ingresos_dict.get(ccy, Decimal("0"))
+            gastos_val = gastos_dict.get(ccy, Decimal("0"))
+            balance_mes = ingresos_val - gastos_val
             balance_str = format_pesos_ai(balance_mes, currency=ccy)
             lineas.append(f"  * {ccy}: {balance_str}")
 

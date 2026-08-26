@@ -195,6 +195,20 @@ class AIController(BaseController):
             else:
                 # Usar income_service para incluir ingresos recurrentes
                 ingresos = income_service.list_for_month(mes_actual, anio_actual)
+            # ── Totales por moneda ─────────────────────────────────────────
+            gastos_por_moneda: dict[str, Decimal] = {}
+            for g in gastos_mes:
+                ccy = getattr(g, "currency", "UYU") or "UYU"
+                gastos_por_moneda[ccy] = (
+                    gastos_por_moneda.get(ccy, Decimal("0")) + g.monto
+                )
+
+            ingresos_por_moneda: dict[str, Decimal] = {}
+            for inc in ingresos:
+                ccy = getattr(inc, "currency", "UYU") or "UYU"
+                ingresos_por_moneda[ccy] = (
+                    ingresos_por_moneda.get(ccy, Decimal("0")) + inc.monto
+                )
             ingresos_total = sum((i.monto for i in ingresos), Decimal("0"))
 
             # ── Filtrado por categorías ───────────────────────────────────
@@ -474,19 +488,24 @@ class AIController(BaseController):
                         labor_lines.append("")
                         labor_lines.append("=== TOTALES CONSOLIDADOS DEL HOGAR ===")
                         labor_lines.append(
-                            f"- Total Sueldos/Pasividades Líquidas Mensuales del Hogar (en mano): $ {total_liquido_mensual_hogar:.2f}"
+                            f"- Total Sueldos/Pasividades Líquidas Mensuales del Hogar "
+                            f"(en mano): $ {total_liquido_mensual_hogar:.2f}"
                         )
                         labor_lines.append(
-                            f"- Total Próximo Aguinaldo del Hogar ({sem_label} {current_period.year}): $ {total_aguinaldo_hogar:.2f}"
+                            f"- Total Próximo Aguinaldo del Hogar "
+                            f"({sem_label} {current_period.year}): "
+                            f"$ {total_aguinaldo_hogar:.2f}"
                         )
                         total_fin_anio = (
                             total_liquido_mensual_hogar + total_aguinaldo_hogar
                         )
                         labor_lines.append(
-                            f"- Total Cobro Estimado en Diciembre (Sueldos del Mes + Aguinaldo): $ {total_fin_anio:.2f}"
+                            f"- Total Cobro Estimado en Diciembre "
+                            f"(Sueldos del Mes + Aguinaldo): $ {total_fin_anio:.2f}"
                         )
                         labor_lines.append(
-                            f"- Total Salario Vacacional del Hogar (20 días anuales): $ {total_vacacional_hogar:.2f}"
+                            f"- Total Salario Vacacional del Hogar "
+                            f"(20 días anuales): $ {total_vacacional_hogar:.2f}"
                         )
                         resumen_laboral = "\n".join(labor_lines)
             except Exception as labor_err:
@@ -510,7 +529,9 @@ class AIController(BaseController):
                 resumen_gastos=resumen_gastos,
                 total_gastos_count=total_gastos_count,
                 total_gastos_mes=total_gastos_mes,
+                gastos_por_moneda=gastos_por_moneda,
                 ingresos_total=ingresos_total,
+                ingresos_por_moneda=ingresos_por_moneda,
                 miembros_count=len(miembros),
                 resumen_metodos_pago=resumir_metodos_pago(gastos_mes),
                 comparativa_meses=comparativa,
