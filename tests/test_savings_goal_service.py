@@ -236,3 +236,48 @@ class TestSavingsGoalService:
             ctx, pregunta="¿Cuánto gasté en el supermercado?"
         )
         assert texto_irrel == ""
+
+    def test_savings_goals_card_ui_render(self, db_session):
+        from unittest.mock import MagicMock
+
+        from controllers.family_member_controller import FamilyMemberController
+        from controllers.savings_goal_controller import SavingsGoalController
+        from views.components.savings_goals_card import SavingsGoalsCard
+
+        savings_ctrl = SavingsGoalController(familia_id=1)
+        member_ctrl = FamilyMemberController(familia_id=1)
+        card = SavingsGoalsCard(savings_ctrl, member_ctrl)
+        assert card is not None
+        assert card._expansion_tile is not None
+
+        # Probar con página mockeada
+        mock_page = MagicMock()
+        card._page = mock_page
+        card.refresh()
+        assert len(card._goals_list_column.controls) > 0
+
+    def test_planes_view_ui_render(self, db_session):
+        from unittest.mock import MagicMock
+
+        from core.session import SessionManager
+        from models.user_model import User
+        from views.pages.planes_view import PlanesView
+
+        mock_page = MagicMock()
+        mock_page.session.id = "test_session_planes"
+        test_user = User(
+            id=1,
+            familia_id=1,
+            username="admin",
+            email="test@test.com",
+            password_hash="hash",
+            is_active=True,
+        )
+        SessionManager.login(mock_page, test_user)
+        mock_router = MagicMock()
+
+        view = PlanesView(page=mock_page, router=mock_router)
+        assert view is not None
+        assert view._savings_card is not None
+        content = view.render()
+        assert content is not None

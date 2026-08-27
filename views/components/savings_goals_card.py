@@ -72,7 +72,7 @@ class SavingsGoalsCard(ft.Container):
                 ],
                 alignment=ft.MainAxisAlignment.START,
             ),
-            initially_expanded=False,
+            expanded=False,
             controls=[
                 ft.Container(
                     content=self._goals_list_column,
