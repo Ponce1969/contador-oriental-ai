@@ -9,6 +9,7 @@ Sistema integral de gestión financiera familiar con **Python 3.12 + Flet + Post
 - **🔐 Autenticación & Seguridad** — Login y registro de familias (hash Argon2id), control de sesiones, protección contra fuerza bruta y aislamiento multi-tenant estricto por `familia_id`.
 - **🔑 Recuperación de Contraseña** — Reset por email con Resend y tokens criptográficos de un solo uso con expiración de 1 hora.
 - **👨‍👩‍👧‍👦 Gestión Familiar & Actividades Económicas** — Integrantes del hogar con asignación de regímenes laborales: dependiente, servicios personales, Literal E, monotributo común/MIDES o pasividad.
+- **🏛️ Optimizador IRPF Núcleo Familiar vs. Individual & Crédito por Alquiler (Ley 18.083 / Ley 18.719)** — Simulador anual con escalas oficiales de DGI: Escala A (ambos cónyuges generan rentas, MNI 14 BPC mensuales / 168 BPC anuales) vs. Escala B (un solo cónyuge genera rentas, MNI 8 BPC / 96 BPC anuales) vs. liquidación individual conjunta. Incluye cómputo automático del **8% de Crédito Fiscal por Alquiler** de vivienda permanente, deducciones por hijos menores de 18 años / con discapacidad y recomendación oficial con cuantificación del ahorro anual.
 - **🐷 Metas de Ahorro Familiar (Alcancías)** — Creación de metas (viajes, emergencias, vehículos, reformas), registro de aportes por integrante y simulador de plazos temporales con inyección de aguinaldos legales.
 - **🤝 Hogares Compartidos** — Gestión de gastos comunes entre múltiples familias (estilo Splitwise): pozo común, división proporcional o equitativa y liquidación automática de saldos.
 - **💳 Compras en Cuotas** — Control de tarjetas de crédito, amortización mensual programada y seguimiento de cuotas restantes.
@@ -185,9 +186,9 @@ contador-oriental/
 ├── 📁 database/                      # Modelos SQLAlchemy y conexión
 ├── 📁 views/
 │   ├── 📁 pages/                     # Vistas principales (Hogar, Dashboard, Planes, Familia, Gastos, etc.)
-│   └── 📁 components/                # Componentes interactivos (SavingsGoalsCard, BenefitsCard, etc.)
+│   └── 📁 components/                # Componentes interactivos (FamilyIRPFOptimizerCard, SavingsGoalsCard, BenefitsCard, etc.)
 ├── 📁 migrations/                    # 001_initial.py ... 021_add_savings_goals.py
-├── 📁 tests/                         # Suite automatizada con 461 tests unitarios e integración
+├── 📁 tests/                         # Suite automatizada con 470 tests unitarios e integración
 ├── 📄 docker-compose.yml             # postgres (pgvector) + app + ocr_api + guardian
 ├── 📄 Modelfile                      # Configuración del modelo contador-oriental
 ├── 📄 pyproject.toml                 # uv, dependencias y herramientas de calidad
@@ -241,7 +242,7 @@ GUARDIAN_CHECK_INTERVAL=60
 El proyecto cuenta con una amplia suite de pruebas automatizadas:
 
 ```bash
-# Ejecutar toda la suite de pruebas (461 tests)
+# Ejecutar toda la suite de pruebas (470 tests)
 uv run pytest -v
 
 # Con reporte de cobertura de código
