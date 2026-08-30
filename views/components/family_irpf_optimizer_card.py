@@ -57,7 +57,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             value="Titular",
             text_size=13,
             content_padding=ft.Padding(12, 12, 12, 12),
-            expand=True,
+            col={"xs": 12, "sm": 6},
         )
         self.m1_salary_input = ft.TextField(
             label="Sueldo Nominal Mensual ($)",
@@ -65,7 +65,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             text_size=13,
             content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
-            expand=True,
+            col={"xs": 12, "sm": 6},
         )
 
         # Inputs Miembro 2
@@ -74,7 +74,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             value="Cónyuge",
             text_size=13,
             content_padding=ft.Padding(12, 12, 12, 12),
-            expand=True,
+            col={"xs": 12, "sm": 6},
         )
         self.m2_salary_input = ft.TextField(
             label="Sueldo Nominal Mensual ($)",
@@ -82,7 +82,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             text_size=13,
             content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
-            expand=True,
+            col={"xs": 12, "sm": 6},
         )
 
         # Deducciones y Créditos
@@ -92,7 +92,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             text_size=13,
             content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
-            expand=True,
+            col={"xs": 12, "sm": 6},
         )
         self.disabled_children_input = ft.TextField(
             label="Hijos con Discapacidad",
@@ -100,7 +100,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             text_size=13,
             content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
-            expand=True,
+            col={"xs": 12, "sm": 6},
         )
 
         self.rent_input = ft.TextField(
@@ -109,7 +109,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             text_size=13,
             content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
-            expand=True,
+            col={"xs": 12, "sm": 7},
         )
         self.apply_rent_switch = ft.Switch(
             label="Crédito 8% Alquiler (Ley 18.083)",
@@ -172,13 +172,15 @@ class FamilyIRPFOptimizerCard(ft.Container):
                     size=13,
                     color=ft.Colors.BLUE_GREY_900,
                 ),
-                ft.Row(
+                ft.ResponsiveRow(
                     controls=[self.m1_name_input, self.m1_salary_input],
-                    spacing=14,
+                    spacing=12,
+                    run_spacing=12,
                 ),
-                ft.Row(
+                ft.ResponsiveRow(
                     controls=[self.m2_name_input, self.m2_salary_input],
-                    spacing=14,
+                    spacing=12,
+                    run_spacing=12,
                 ),
                 ft.Divider(height=16, color=ft.Colors.AMBER_200),
                 ft.Text(
@@ -187,22 +189,26 @@ class FamilyIRPFOptimizerCard(ft.Container):
                     size=13,
                     color=ft.Colors.BLUE_GREY_900,
                 ),
-                ft.Row(
+                ft.ResponsiveRow(
                     controls=[
                         self.children_input,
                         self.disabled_children_input,
                     ],
-                    spacing=14,
+                    spacing=12,
+                    run_spacing=12,
                 ),
-                ft.Row(
+                ft.ResponsiveRow(
                     controls=[
                         self.rent_input,
                         ft.Container(
                             content=self.apply_rent_switch,
-                            padding=ft.Padding(6, 0, 6, 0),
+                            padding=ft.Padding(6, 4, 6, 4),
+                            col={"xs": 12, "sm": 5},
+                            alignment=ft.Alignment(-1, 0),
                         ),
                     ],
-                    spacing=14,
+                    spacing=12,
+                    run_spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
                 ft.Container(
@@ -377,7 +383,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             border=ft.Border.all(1, ft.Colors.BLUE_GREY_200),
             border_radius=8,
             padding=12,
-            expand=True,
+            col={"xs": 12, "md": 6},
             content=ft.Column(
                 controls=[
                     ft.Text(
@@ -433,7 +439,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             ),
             border_radius=8,
             padding=12,
-            expand=True,
+            col={"xs": 12, "md": 6},
             content=ft.Column(
                 controls=[
                     ft.Text(
@@ -482,10 +488,10 @@ class FamilyIRPFOptimizerCard(ft.Container):
             ),
         )
 
-        comparison_row = ft.Row(
+        comparison_row = ft.ResponsiveRow(
             controls=[card_indiv, card_family],
-            spacing=10,
-            vertical_alignment=ft.CrossAxisAlignment.START,
+            spacing=12,
+            run_spacing=12,
         )
 
         legal_notes_col = ft.Column(
