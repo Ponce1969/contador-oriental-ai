@@ -67,12 +67,16 @@ class IRPFRuleSet(BaseModel):
     rule_version: str
     year: int
     brackets: list[IRPFBracket]
+    family_unit_brackets_both_generate: list[IRPFBracket] = []
+    family_unit_brackets_single_generates: list[IRPFBracket] = []
     deduction_rate_low: Decimal
     deduction_rate_high: Decimal
     deduction_threshold_bpc: Decimal
     child_deduction_annual_bpc: Decimal
     disabled_child_deduction_annual_bpc: Decimal
     sac_ficto_increment_rate: Decimal
+    rental_credit_rate: Decimal = Decimal("0.0800")
+    mortgage_deduction_max_annual_bpc: Decimal = Decimal("36.0")
     source: str
     verification_status: RuleVerificationStatus
 
@@ -269,6 +273,72 @@ _OFFICIAL_IRPF_BRACKETS_2023_ONWARDS: list[IRPFBracket] = [
     IRPFBracket(tier=8, from_bpc=Decimal("115.0"), to_bpc=None, rate=Decimal("0.3600")),
 ]
 
+_OFFICIAL_IRPF_FAMILY_UNIT_BOTH_GENERATE: list[IRPFBracket] = [
+    IRPFBracket(
+        tier=1, from_bpc=Decimal("0.0"), to_bpc=Decimal("14.0"), rate=Decimal("0.0000")
+    ),
+    IRPFBracket(
+        tier=2, from_bpc=Decimal("14.0"), to_bpc=Decimal("20.0"), rate=Decimal("0.1000")
+    ),
+    IRPFBracket(
+        tier=3, from_bpc=Decimal("20.0"), to_bpc=Decimal("30.0"), rate=Decimal("0.1500")
+    ),
+    IRPFBracket(
+        tier=4, from_bpc=Decimal("30.0"), to_bpc=Decimal("50.0"), rate=Decimal("0.2400")
+    ),
+    IRPFBracket(
+        tier=5, from_bpc=Decimal("50.0"), to_bpc=Decimal("75.0"), rate=Decimal("0.2500")
+    ),
+    IRPFBracket(
+        tier=6,
+        from_bpc=Decimal("75.0"),
+        to_bpc=Decimal("115.0"),
+        rate=Decimal("0.2700"),
+    ),
+    IRPFBracket(
+        tier=7,
+        from_bpc=Decimal("115.0"),
+        to_bpc=Decimal("166.6667"),
+        rate=Decimal("0.3100"),
+    ),
+    IRPFBracket(
+        tier=8, from_bpc=Decimal("166.6667"), to_bpc=None, rate=Decimal("0.3600")
+    ),
+]
+
+_OFFICIAL_IRPF_FAMILY_UNIT_SINGLE_GENERATES: list[IRPFBracket] = [
+    IRPFBracket(
+        tier=1, from_bpc=Decimal("0.0"), to_bpc=Decimal("8.0"), rate=Decimal("0.0000")
+    ),
+    IRPFBracket(
+        tier=2, from_bpc=Decimal("8.0"), to_bpc=Decimal("10.0"), rate=Decimal("0.1000")
+    ),
+    IRPFBracket(
+        tier=3, from_bpc=Decimal("10.0"), to_bpc=Decimal("15.0"), rate=Decimal("0.1500")
+    ),
+    IRPFBracket(
+        tier=4, from_bpc=Decimal("15.0"), to_bpc=Decimal("50.0"), rate=Decimal("0.2400")
+    ),
+    IRPFBracket(
+        tier=5, from_bpc=Decimal("50.0"), to_bpc=Decimal("75.0"), rate=Decimal("0.2500")
+    ),
+    IRPFBracket(
+        tier=6,
+        from_bpc=Decimal("75.0"),
+        to_bpc=Decimal("115.0"),
+        rate=Decimal("0.2700"),
+    ),
+    IRPFBracket(
+        tier=7,
+        from_bpc=Decimal("115.0"),
+        to_bpc=Decimal("166.6667"),
+        rate=Decimal("0.3100"),
+    ),
+    IRPFBracket(
+        tier=8, from_bpc=Decimal("166.6667"), to_bpc=None, rate=Decimal("0.3600")
+    ),
+]
+
 _OFFICIAL_IASS_BRACKETS_2024_ONWARDS: list[IASSBracket] = [
     IASSBracket(
         tier=1, from_bpc=Decimal("0.0"), to_bpc=Decimal("9.0"), rate=Decimal("0.0000")
@@ -362,13 +432,17 @@ def get_irpf_ruleset(year: int) -> IRPFRuleSet | None:
         rule_version=f"UY-DGI-IRPF-{year}-v1",
         year=year,
         brackets=_OFFICIAL_IRPF_BRACKETS_2023_ONWARDS,
+        family_unit_brackets_both_generate=_OFFICIAL_IRPF_FAMILY_UNIT_BOTH_GENERATE,
+        family_unit_brackets_single_generates=_OFFICIAL_IRPF_FAMILY_UNIT_SINGLE_GENERATES,
         deduction_rate_low=Decimal("0.1400"),
         deduction_rate_high=Decimal("0.0800"),
         deduction_threshold_bpc=Decimal("15.0"),
         child_deduction_annual_bpc=Decimal("20.0"),
         disabled_child_deduction_annual_bpc=Decimal("40.0"),
         sac_ficto_increment_rate=Decimal("0.0600"),
-        source="Ley 18.083, Dec. 148/007, Ley 20.124 (DGI)",
+        rental_credit_rate=Decimal("0.0800"),
+        mortgage_deduction_max_annual_bpc=Decimal("36.0"),
+        source="Ley 18.083, Dec. 148/007, Ley 18.719 Art. 764, Ley 20.124 (DGI)",
         verification_status=RuleVerificationStatus.VERIFIED,
     )
 

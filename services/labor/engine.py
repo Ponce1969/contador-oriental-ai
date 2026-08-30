@@ -8,6 +8,9 @@ from datetime import date
 from decimal import Decimal
 
 from services.labor.calculations.aguinaldo import AguinaldoCalculator
+from services.labor.calculations.family_irpf_optimizer import (
+    calculate_family_irpf_optimization,
+)
 from services.labor.calculations.independent.literal_e import (
     calculate_literal_e_settlement,
 )
@@ -29,7 +32,12 @@ from services.labor.calculations.withholdings import (
     calculate_monthly_withholdings,
     estimate_nominal_from_liquid,
 )
-from services.labor.domain.dtos import IndependentProfile, PensionProfile
+from services.labor.domain.dtos import (
+    FamilyIRPFOptimizerInput,
+    FamilyIRPFOptimizerResult,
+    IndependentProfile,
+    PensionProfile,
+)
 from services.labor.domain.enums import RemunerationType
 from services.labor.domain.models import (
     CalculationRequest,
@@ -211,5 +219,24 @@ class LaborCalculationEngine:
         return calculate_pension_settlement(
             profile=profile,
             rules=rules,
+            bpc=bpc,
+        )
+
+    @staticmethod
+    def optimize_family_irpf(
+        inp: FamilyIRPFOptimizerInput,
+    ) -> FamilyIRPFOptimizerResult | None:
+        """
+        Calcula y compara la liquidación anual de IRPF Individual vs. Núcleo Familiar.
+        Incorpora deducciones por hijos y crédito por alquiler (8% Ley 18.083 / 18.719).
+        """
+        irpf_rules = get_irpf_ruleset(inp.year)
+        bpc = get_verified_bpc(inp.year)
+        if irpf_rules is None or bpc is None:
+            return None
+
+        return calculate_family_irpf_optimization(
+            inp=inp,
+            rules=irpf_rules,
             bpc=bpc,
         )

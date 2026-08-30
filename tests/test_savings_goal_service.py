@@ -271,13 +271,16 @@ class TestSavingsGoalService:
             username="admin",
             email="test@test.com",
             password_hash="hash",
-            is_active=True,
+            activo=True,
         )
-        SessionManager.login(mock_page, test_user)
-        mock_router = MagicMock()
+        try:
+            SessionManager.login(mock_page, test_user)
+            mock_router = MagicMock()
 
-        view = PlanesView(page=mock_page, router=mock_router)
-        assert view is not None
-        assert view._savings_card is not None
-        content = view.render()
-        assert content is not None
+            view = PlanesView(page=mock_page, router=mock_router)
+            assert view is not None
+            assert view._savings_card is not None
+            content = view.render()
+            assert content is not None
+        finally:
+            SessionManager.logout(mock_page)

@@ -356,6 +356,24 @@ class AIAdvisorService:
         return any(k in p for k in keywords)
 
     @staticmethod
+    def _es_pregunta_historica_o_rango(pregunta: str) -> bool:
+        """Determina si la consulta refiere a meses anteriores o históricos."""
+        if not pregunta:
+            return False
+        p = pregunta.lower()
+        keywords = (
+            "mes anterior",
+            "mes pasado",
+            "historico",
+            "histórico",
+            "historial",
+            "anterior",
+            "pasado",
+            "año pasado",
+        )
+        return any(k in p for k in keywords)
+
+    @staticmethod
     def _es_pregunta_metas(pregunta: str) -> bool:
         """Determina si la consulta involucra metas de ahorro o alcancías del hogar."""
         if not pregunta:
@@ -610,6 +628,53 @@ class AIAdvisorService:
             "NUNCA inventes cálculos.\n\n"
         )
 
+    def _es_pregunta_irpf_familiar(self, pregunta: str) -> bool:
+        """Determina si la consulta es sobre IRPF, núcleo familiar, alquiler o DGI."""
+        keywords = [
+            "irpf",
+            "nucleo",
+            "núcleo",
+            "familiar",
+            "matrimonio",
+            "conyuge",
+            "cónyuge",
+            "concubino",
+            "concubinato",
+            "declaracion",
+            "declaración",
+            "dgi",
+            "alquiler",
+            "arrendamiento",
+            "devolucion",
+            "devolución",
+            "crédito fiscal",
+            "credito fiscal",
+        ]
+        p_lower = pregunta.lower()
+        return any(kw in p_lower for kw in keywords)
+
+    def _formatear_datos_irpf_familiar(
+        self, ctx: AIContext | None, pregunta: str = ""
+    ) -> str:
+        """
+        Formatea los datos de optimización de IRPF Núcleo Familiar vs Individual.
+        Solo se inyecta si hay resumen precalculado y la pregunta es sobre IRPF/DGI.
+        """
+        if not ctx or not ctx.resumen_irpf_familiar:
+            return ""
+
+        if pregunta and not self._es_pregunta_irpf_familiar(pregunta):
+            return ""
+
+        return (
+            "### OPTIMIZACIÓN IRPF NÚCLEO FAMILIAR VS INDIVIDUAL "
+            "(PRE-CALCULADO POR PYTHON) ###\n"
+            f"{ctx.resumen_irpf_familiar}\n"
+            "REGLA ESTRICTA PARA LA IA: Utilizar las cifras de IRPF individual, "
+            "núcleo familiar, ahorro y créditos por alquiler de forma textual. "
+            "NUNCA inventes cálculos ni discrepes con estos valores.\n\n"
+        )
+
     def _formatear_comparativa(self, ctx: AIContext, pregunta: str = "") -> str:
         """
         Convierte CategoryMetric en hechos contables narrativos para el prompt.
@@ -695,6 +760,7 @@ class AIAdvisorService:
 
         seccion_laboral = self._formatear_datos_laborales(ctx, pregunta=pregunta)
         seccion_metas = self._formatear_datos_metas(ctx, pregunta=pregunta)
+        seccion_irpf = self._formatear_datos_irpf_familiar(ctx, pregunta=pregunta)
         seccion_gastos = f"{gastos_formateados}\n" if gastos_formateados else ""
 
         # Aviso cuando la cuota de Llama 3 está agotada y cae a Gemma 2
@@ -724,7 +790,7 @@ class AIAdvisorService:
             return (
                 f"{p_head}\n"
                 f"{aviso_cuota}\n"
-                f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_gastos}"
+                f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_irpf}{seccion_gastos}"
                 f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
                 f"RESPUESTA DIRECTA:"
             )
@@ -737,6 +803,8 @@ class AIAdvisorService:
             "vacaciones, utilizá los valores precalculados en la sección laboral.\n"
             "- Si la pregunta es sobre metas de ahorro o alcancías, utilizá los "
             "valores precalculados en la sección de metas.\n"
+            "- Si la pregunta es sobre IRPF familiar, núcleo familiar o "
+            "crédito de alquiler, utilizá los valores en la sección de IRPF.\n"
             "- Solo mencioná gastos o saldo si la pregunta consulta expresamente "
             "sobre su presupuesto o historial.\n"
         )
@@ -758,7 +826,7 @@ class AIAdvisorService:
             f"- NUNCA conviertas ni sumes monedas distintas.\n\n"
             f"TONO: Profesional pero cercano y pedagógico.\n"
             f"{aviso_cuota}\n"
-            f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_gastos}"
+            f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_irpf}{seccion_gastos}"
             f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
             f"RESPUESTA DIRECTA:"
         )

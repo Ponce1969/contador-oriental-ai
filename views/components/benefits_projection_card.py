@@ -155,8 +155,9 @@ class BenefitsProjectionCard(ft.Container):
             )
             return
 
-        # Renderizar cada integrante con actividad
         for act in dependent_acts:
+            if act.id is None:
+                continue
             member_name = "Integrante"
             for m in members:
                 if m.id == act.family_member_id:
@@ -165,7 +166,7 @@ class BenefitsProjectionCard(ft.Container):
 
             # Calcular aguinaldo
             aguinaldo_res = self.labor_controller.calculate_aguinaldo(
-                activity_id=act.id,  # type: ignore[arg-type]
+                activity_id=act.id,
                 year=period.year,
                 semester=period.semester,
                 today=self.reference_date,
@@ -173,7 +174,7 @@ class BenefitsProjectionCard(ft.Container):
 
             # Calcular salario vacacional (20 días base)
             vacation_res = self.labor_controller.calculate_vacation_pay(
-                activity_id=act.id,  # type: ignore[arg-type]
+                activity_id=act.id,
                 requested_days=20,
             )
 

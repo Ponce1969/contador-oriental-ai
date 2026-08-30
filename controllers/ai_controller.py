@@ -538,6 +538,76 @@ class AIController(BaseController):
             except Exception as metas_err:
                 logger.warning("Metas de ahorro no disponibles: %s", metas_err)
 
+            # ── Optimización IRPF Núcleo Familiar vs Individual ───────────
+            resumen_irpf_familiar = ""
+            try:
+                from services.labor.domain.dtos import FamilyIRPFOptimizerInput
+                from services.labor.engine import LaborCalculationEngine
+
+                # Identificar miembros con actividad dependiente/ingreso
+                act_members = []
+                for act in activities:
+                    if (
+                        act.is_active
+                        and act.nature == ActivityNature.DEPENDIENTE
+                        and act.dependent_details
+                    ):
+                        sal = (
+                            act.dependent_details.estimated_monthly_nominal
+                            or Decimal("0")
+                        )
+                        if sal > Decimal("0"):
+                            m_name = "Integrante"
+                            for m in miembros:
+                                if m.id == act.family_member_id:
+                                    m_name = m.nombre
+                                    break
+                            act_members.append((m_name, sal))
+
+                if len(act_members) >= 1:
+                    m1_name, m1_sal = act_members[0]
+                    m2_name, m2_sal = (
+                        act_members[1]
+                        if len(act_members) > 1
+                        else ("Cónyuge (sin ingresos)", Decimal("0"))
+                    )
+
+                    opt_inp = FamilyIRPFOptimizerInput(
+                        year=anio_actual,
+                        member1_name=m1_name,
+                        member1_annual_nominal=m1_sal * Decimal("12"),
+                        member1_annual_social_security=(m1_sal * Decimal("12"))
+                        * Decimal("0.196"),
+                        member1_monthly_withholdings_paid=Decimal("0.00"),
+                        member2_name=m2_name,
+                        member2_annual_nominal=m2_sal * Decimal("12"),
+                        member2_annual_social_security=(m2_sal * Decimal("12"))
+                        * Decimal("0.196"),
+                        member2_monthly_withholdings_paid=Decimal("0.00"),
+                        children_count=0,
+                        apply_rental_credit=False,
+                    )
+                    opt_res = LaborCalculationEngine.optimize_family_irpf(opt_inp)
+                    if opt_res:
+                        indiv_str = format_pesos_ai(opt_res.total_individual_net_tax)
+                        fam_str = format_pesos_ai(opt_res.family_net_tax)
+                        sav_str = format_pesos_ai(opt_res.annual_savings)
+                        hdr = (
+                            f"=== COMPARATIVA IRPF NÚCLEO FAMILIAR ({opt_res.year}) ==="
+                        )
+                        irpf_lines = [
+                            hdr,
+                            f"- Recomendación: {opt_res.recommendation_summary}",
+                            f"- IRPF Total Individual Anual: {indiv_str}",
+                            f"- IRPF Núcleo Familiar Anual: {fam_str}",
+                            f"- Diferencia / Ahorro Anual: {sav_str}",
+                        ]
+                        resumen_irpf_familiar = "\n".join(irpf_lines)
+            except Exception as irpf_opt_err:
+                logger.warning(
+                    "Optimización IRPF familiar no disponible: %s", irpf_opt_err
+                )
+
             # ── Cotización del dólar ──────────────────────────────────────
             exchange_ctrl = ExchangeRateController()
             compra, venta, is_fresh = exchange_ctrl.get_display_rate()
@@ -567,6 +637,7 @@ class AIController(BaseController):
                 proyeccion_cuotas=proyeccion,
                 resumen_laboral=resumen_laboral,
                 resumen_metas=resumen_metas,
+                resumen_irpf_familiar=resumen_irpf_familiar,
                 cotizacion_dolar=cotizacion if cotizacion > 0 else None,
                 empalme_gastos=empalme_gastos,
                 empalme_ingresos_total=empalme_ingresos_total,

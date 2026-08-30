@@ -22,7 +22,6 @@ from models.savings_goal_model import (
     SavingsGoalCreate,
     SavingsGoalUpdate,
 )
-from services.labor.engine import LaborCalculationEngine
 from services.savings_goal_service import SavingsGoalService
 
 logger = logging.getLogger(__name__)
@@ -77,7 +76,7 @@ class SavingsGoalController(BaseController):
                 session.commit()
             return res
 
-    def eliminar_meta(self, goal_id: int) -> Result[bool, AppError]:
+    def eliminar_meta(self, goal_id: int) -> Result[None, AppError]:
         """Elimina una meta de ahorro."""
         with self._get_session() as session:
             service = SavingsGoalService(session, self._familia_id)
@@ -143,41 +142,29 @@ class SavingsGoalController(BaseController):
             labor_boost = Decimal("0.00")
             boost_desc = ""
             try:
-                from repositories.economic_activity_repository import (
-                    EconomicActivityRepository,
-                )
-                from repositories.family_member_repository import (
-                    FamilyMemberRepository,
-                )
-                from services.labor.domain.periods import CalculationPeriod
+                from controllers.labor_controller import LaborController
 
-                member_repo = FamilyMemberRepository(session, self._familia_id)
-                act_repo = EconomicActivityRepository(session, self._familia_id)
-                members_res = member_repo.get_all()
-                members = members_res.ok() if members_res.is_ok() else []
-
+                labor_ctrl = LaborController(
+                    session=session, familia_id=self._familia_id
+                )
+                activities = labor_ctrl.list_all_activities()
                 today = date.today()
-                period = CalculationPeriod(year=today.year, month=today.month)
+                semester = 1 if today.month <= 6 else 2
                 total_aguinaldos_hogar = Decimal("0.00")
 
-                for m in members:
-                    if not m or not m.id or not m.activo:
+                for act in activities:
+                    if not act.is_active or act.id is None:
                         continue
-                    activities = act_repo.get_by_family_member(m.id)
-                    for act in activities:
-                        if not act.is_active:
-                            continue
-                        if act.nature.value == "dependiente" and act.dependent_details:
-                            sal = (
-                                act.dependent_details.estimated_monthly_nominal
-                                or Decimal("0")
-                            )
-                            if sal > 0:
-                                res_ag = LaborCalculationEngine.calculate_aguinaldo(
-                                    period, [(today.month, sal)]
-                                )
-                                if res_ag.status.value == "calculated":
-                                    total_aguinaldos_hogar += res_ag.final_amount
+                    ag_res = labor_ctrl.calculate_aguinaldo(
+                        activity_id=act.id,
+                        year=today.year,
+                        semester=semester,
+                        today=today,
+                    )
+                    if ag_res.is_ok():
+                        calc = ag_res.unwrap()
+                        if calc.final_amount > Decimal("0.00"):
+                            total_aguinaldos_hogar += calc.final_amount
 
                 if total_aguinaldos_hogar > Decimal("0"):
                     factor = aguinaldo_pct / Decimal("100.0")

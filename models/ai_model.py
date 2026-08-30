@@ -188,6 +188,13 @@ class AIContext(BaseModel):
         default="",
         description="Resumen pre-calculado por Python de metas de ahorro del hogar",
     )
+    resumen_irpf_familiar: str = Field(
+        default="",
+        description=(
+            "Resumen pre-calculado por Python de optimización IRPF "
+            "Núcleo Familiar vs Individual y crédito por alquiler"
+        ),
+    )
 
 
 class AIResponse(BaseModel):

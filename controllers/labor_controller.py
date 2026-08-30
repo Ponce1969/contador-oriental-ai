@@ -17,7 +17,12 @@ from models.errors import AppError, ValidationError
 from repositories.economic_activity_repository import EconomicActivityRepository
 from repositories.income_repository import IncomeRepository
 from services.domain.labor_service import LaborService
-from services.labor.domain.dtos import IndependentProfile, PensionProfile
+from services.labor.domain.dtos import (
+    FamilyIRPFOptimizerInput,
+    FamilyIRPFOptimizerResult,
+    IndependentProfile,
+    PensionProfile,
+)
 from services.labor.domain.models import (
     CalculationResult,
     EconomicActivity,
@@ -295,3 +300,23 @@ class LaborController(BaseController):
             return service.calculate_member_vacation_pay(
                 activity_id, requested_days=requested_days
             )
+
+    def optimizar_irpf_familiar(
+        self,
+        input_data: FamilyIRPFOptimizerInput,
+    ) -> Result[FamilyIRPFOptimizerResult, AppError]:
+        """
+        Calcula y compara la liquidación de IRPF Individual vs. Núcleo Familiar (DGI).
+        Aplica deducciones conjuntas y crédito fiscal del 8% (Ley 18.083 / 18.719).
+        """
+        try:
+            res = LaborCalculationEngine.optimize_family_irpf(input_data)
+            if res is None:
+                return Err(
+                    ValidationError(
+                        f"Sin reglas fiscales para el año {input_data.year}."
+                    )
+                )
+            return Ok(res)
+        except Exception as ex:
+            return Err(ValidationError(f"Error en simulación de IRPF familiar: {ex}"))

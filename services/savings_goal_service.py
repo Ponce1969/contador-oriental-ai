@@ -100,7 +100,7 @@ class SavingsGoalService:
         existing.updated_at = datetime.now()
         return self.goal_repo.update(existing)
 
-    def delete_goal(self, goal_id: int) -> Result[bool, DatabaseError]:
+    def delete_goal(self, goal_id: int) -> Result[None, DatabaseError]:
         """Elimina una meta y sus aportes asociados."""
         return self.goal_repo.delete(goal_id)
 

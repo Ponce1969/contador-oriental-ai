@@ -21,6 +21,7 @@ from services.labor.domain.models import EconomicActivity
 from services.labor.engine import LaborCalculationEngine
 from utils.formatters import format_currency
 from views.components.benefits_projection_card import BenefitsProjectionCard
+from views.components.family_irpf_optimizer_card import FamilyIRPFOptimizerCard
 from views.components.labor_simulator_card import LaborSimulatorCard
 from views.layouts.main_layout import MainLayout
 
@@ -48,6 +49,10 @@ class FamilyMembersView:
             labor_controller=self.labor_controller,
             member_controller=self.controller,
             show_header=False,
+        )
+        self.irpf_optimizer_card = FamilyIRPFOptimizerCard(
+            labor_controller=self.labor_controller,
+            member_controller=self.controller,
         )
 
         # ===============================
@@ -308,6 +313,7 @@ class FamilyMembersView:
             collapsed_shape=ft.RoundedRectangleBorder(radius=10),
         )
         content.controls.append(self.simulator_tile)
+        content.controls.append(self.irpf_optimizer_card)
 
         # Handlers - Usar on_select según documentación de Fleting
         self.select_dropdown.on_select = self._on_select

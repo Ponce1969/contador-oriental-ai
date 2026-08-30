@@ -144,3 +144,81 @@ class IASSPayload(BaseModel):
     total_withholdings: Decimal = Decimal("0.00")
     net_pension_liquid: Decimal = Decimal("0.00")
     is_multi_pension_consolidated: bool = False
+
+
+class IndividualIRPFSummary(BaseModel):
+    """Resumen de liquidación anual individual de IRPF."""
+
+    member_name: str
+    annual_nominal: Decimal = Decimal("0.00")
+    annual_social_security: Decimal = Decimal("0.00")
+    children_deduction_bpc: Decimal = Decimal("0.00")
+    annual_gross_tax: Decimal = Decimal("0.00")
+    annual_deductions_amount: Decimal = Decimal("0.00")
+    annual_net_tax: Decimal = Decimal("0.00")
+    monthly_withholdings_paid: Decimal = Decimal("0.00")
+    rental_credit_applied: Decimal = Decimal("0.00")
+    fiscal_balance: Decimal = Decimal("0.00")  # > 0 a pagar, < 0 devolución
+
+
+class FamilyIRPFOptimizerInput(BaseModel):
+    """Datos de entrada para la optimización de IRPF Núcleo Familiar vs Individual."""
+
+    year: int = 2026
+    # Miembro 1 (Titular)
+    member1_name: str = "Titular"
+    member1_annual_nominal: Decimal = Decimal("0.00")
+    member1_annual_social_security: Decimal = Decimal("0.00")
+    member1_monthly_withholdings_paid: Decimal = Decimal("0.00")
+    # Miembro 2 (Cónyuge / Concubino)
+    member2_name: str = "Cónyuge"
+    member2_annual_nominal: Decimal = Decimal("0.00")
+    member2_annual_social_security: Decimal = Decimal("0.00")
+    member2_monthly_withholdings_paid: Decimal = Decimal("0.00")
+    # Cargas de familia compartidas
+    children_count: int = 0
+    disabled_children_count: int = 0
+    # Créditos y Deducciones de Vivienda
+    annual_rent_paid: Decimal = Decimal("0.00")
+    apply_rental_credit: bool = True
+    annual_mortgage_payments: Decimal = Decimal("0.00")
+    apply_mortgage_deduction: bool = False
+
+
+class FamilyIRPFOptimizerResult(BaseModel):
+    """Resultado formal comparativo de liquidación Individual vs Núcleo Familiar."""
+
+    year: int
+    bpc_value: Decimal
+
+    # 1. Liquidación Individual
+    member1_summary: IndividualIRPFSummary
+    member2_summary: IndividualIRPFSummary
+    total_individual_net_tax: Decimal = Decimal("0.00")
+    total_individual_withholdings: Decimal = Decimal("0.00")
+    total_individual_balance: Decimal = Decimal("0.00")
+
+    # 2. Liquidación Núcleo Familiar
+    family_gross_income: Decimal = Decimal("0.00")
+    family_unit_variant: str = "ambos_generan"
+    family_gross_tax: Decimal = Decimal("0.00")
+    family_deductions_base: Decimal = Decimal("0.00")
+    family_deduction_rate: Decimal = Decimal("0.0000")
+    family_deductions_amount: Decimal = Decimal("0.00")
+    family_tax_before_credits: Decimal = Decimal("0.00")
+
+    # Créditos fiscales
+    rental_credit_amount: Decimal = Decimal("0.00")
+    mortgage_deduction_amount: Decimal = Decimal("0.00")
+    family_net_tax: Decimal = Decimal("0.00")
+    total_family_withholdings: Decimal = Decimal("0.00")
+    family_balance: Decimal = Decimal("0.00")
+
+    # 3. Veredicto y recomendación
+    tax_difference: Decimal = Decimal("0.00")  # Indiv - NF (> 0 ahorro con NF)
+    recommended_option: str = (
+        "INDIVIDUAL"  # "NUCLEO_FAMILIAR", "INDIVIDUAL", "INDIFERENTE"
+    )
+    annual_savings: Decimal = Decimal("0.00")
+    recommendation_summary: str = ""
+    legal_notes: list[str] = Field(default_factory=list)
