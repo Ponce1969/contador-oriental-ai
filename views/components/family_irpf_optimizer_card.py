@@ -56,14 +56,14 @@ class FamilyIRPFOptimizerCard(ft.Container):
             label="Persona 1 (Titular)",
             value="Titular",
             text_size=13,
-            dense=True,
+            content_padding=ft.Padding(12, 12, 12, 12),
             expand=True,
         )
         self.m1_salary_input = ft.TextField(
             label="Sueldo Nominal Mensual ($)",
             value="80000",
             text_size=13,
-            dense=True,
+            content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
             expand=True,
         )
@@ -73,43 +73,43 @@ class FamilyIRPFOptimizerCard(ft.Container):
             label="Persona 2 (Cónyuge / Pareja)",
             value="Cónyuge",
             text_size=13,
-            dense=True,
+            content_padding=ft.Padding(12, 12, 12, 12),
             expand=True,
         )
         self.m2_salary_input = ft.TextField(
             label="Sueldo Nominal Mensual ($)",
             value="35000",
             text_size=13,
-            dense=True,
+            content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
             expand=True,
         )
 
         # Deducciones y Créditos
         self.children_input = ft.TextField(
-            label="Hijos a cargo (<18)",
+            label="Hijos Menores de 18 Años",
             value="1",
             text_size=13,
-            dense=True,
-            width=130,
+            content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
+            expand=True,
         )
         self.disabled_children_input = ft.TextField(
-            label="Hijos con discap.",
+            label="Hijos con Discapacidad",
             value="0",
             text_size=13,
-            dense=True,
-            width=130,
+            content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
+            expand=True,
         )
 
         self.rent_input = ft.TextField(
-            label="Alquiler Mensual ($)",
+            label="Alquiler Mensual del Hogar ($)",
             value="22000",
             text_size=13,
-            dense=True,
-            expand=True,
+            content_padding=ft.Padding(12, 12, 12, 12),
             keyboard_type=ft.KeyboardType.NUMBER,
+            expand=True,
         )
         self.apply_rent_switch = ft.Switch(
             label="Crédito 8% Alquiler (Ley 18.083)",
@@ -117,7 +117,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
             active_color=ft.Colors.AMBER_800,
         )
 
-        self.results_container = ft.Column(spacing=12)
+        self.results_container = ft.Column(spacing=14)
 
         self._build_ui()
 
@@ -128,7 +128,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
                 ft.Icon(
                     ft.Icons.AUTO_AWESOME_OUTLINED,
                     color=ft.Colors.AMBER_900,
-                    size=22,
+                    size=24,
                 ),
                 ft.Column(
                     controls=[
@@ -145,7 +145,7 @@ class FamilyIRPFOptimizerCard(ft.Container):
                             color=ft.Colors.AMBER_800,
                         ),
                     ],
-                    spacing=2,
+                    spacing=3,
                     expand=True,
                 ),
             ],
@@ -158,6 +158,10 @@ class FamilyIRPFOptimizerCard(ft.Container):
             bgcolor=ft.Colors.AMBER_700,
             color=ft.Colors.WHITE,
             on_click=self._on_calculate_clicked,
+            style=ft.ButtonStyle(
+                padding=ft.Padding(20, 14, 20, 14),
+                shape=ft.RoundedRectangleBorder(radius=8),
+            ),
         )
 
         body_content = ft.Column(
@@ -165,47 +169,50 @@ class FamilyIRPFOptimizerCard(ft.Container):
                 ft.Text(
                     "1. Ingresos y Cónyuges del Hogar",
                     weight=ft.FontWeight.W_600,
-                    size=12,
-                    color=ft.Colors.BLUE_GREY_800,
+                    size=13,
+                    color=ft.Colors.BLUE_GREY_900,
                 ),
                 ft.Row(
                     controls=[self.m1_name_input, self.m1_salary_input],
-                    spacing=10,
+                    spacing=14,
                 ),
                 ft.Row(
                     controls=[self.m2_name_input, self.m2_salary_input],
-                    spacing=10,
+                    spacing=14,
                 ),
-                ft.Divider(height=1, color=ft.Colors.AMBER_200),
+                ft.Divider(height=16, color=ft.Colors.AMBER_200),
                 ft.Text(
                     "2. Deducciones por Hijos y Crédito por Alquiler",
                     weight=ft.FontWeight.W_600,
-                    size=12,
-                    color=ft.Colors.BLUE_GREY_800,
+                    size=13,
+                    color=ft.Colors.BLUE_GREY_900,
                 ),
                 ft.Row(
                     controls=[
                         self.children_input,
                         self.disabled_children_input,
                     ],
-                    spacing=10,
+                    spacing=14,
                 ),
                 ft.Row(
                     controls=[
                         self.rent_input,
-                        self.apply_rent_switch,
+                        ft.Container(
+                            content=self.apply_rent_switch,
+                            padding=ft.Padding(6, 0, 6, 0),
+                        ),
                     ],
-                    spacing=10,
+                    spacing=14,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
                 ft.Container(
                     content=calc_btn,
                     alignment=ft.Alignment(0, 0),
-                    padding=ft.Padding(0, 8, 0, 8),
+                    padding=ft.Padding(0, 12, 0, 12),
                 ),
                 self.results_container,
             ],
-            spacing=10,
+            spacing=12,
         )
 
         self.content = ft.ExpansionTile(
