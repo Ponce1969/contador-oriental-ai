@@ -23,6 +23,10 @@ from services.labor.domain.dtos import (
     IndependentProfile,
     PensionProfile,
 )
+from services.labor.domain.fiscal_calendar_dtos import (
+    FiscalCalendarRequest,
+    FiscalCalendarSummary,
+)
 from services.labor.domain.models import (
     CalculationResult,
     EconomicActivity,
@@ -320,3 +324,29 @@ class LaborController(BaseController):
             return Ok(res)
         except Exception as ex:
             return Err(ValidationError(f"Error en simulación de IRPF familiar: {ex}"))
+
+    def obtener_calendario_fiscal(
+        self,
+        year: int,
+        month: int,
+        last_digit: int | None = None,
+        reference_date: date | None = None,
+    ) -> Result[FiscalCalendarSummary, AppError]:
+        """
+        Calcula el calendario fiscal determinístico del mes para la familia.
+        """
+        try:
+            activities = self.list_all_activities()
+            req = FiscalCalendarRequest(
+                year=year,
+                month=month,
+                rut_last_digit=last_digit,
+                reference_date=reference_date,
+            )
+            summary = LaborCalculationEngine.calculate_fiscal_calendar(
+                request=req,
+                activities=activities,
+            )
+            return Ok(summary)
+        except Exception as ex:
+            return Err(ValidationError(f"Error generando calendario fiscal: {ex}"))

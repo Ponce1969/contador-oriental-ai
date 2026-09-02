@@ -608,6 +608,45 @@ class AIController(BaseController):
                     "Optimización IRPF familiar no disponible: %s", irpf_opt_err
                 )
 
+            # ── Calendario Fiscal Oficial (DGI / BPS / CJPPU) ─────────────
+            resumen_calendario_fiscal = ""
+            try:
+                from services.labor.domain.fiscal_calendar_dtos import (
+                    FiscalCalendarRequest,
+                )
+
+                cal_req = FiscalCalendarRequest(
+                    year=anio_actual,
+                    month=mes_actual,
+                    reference_date=today,
+                )
+                cal_summary = LaborCalculationEngine.calculate_fiscal_calendar(
+                    request=cal_req,
+                    activities=activities,
+                )
+                if cal_summary and cal_summary.obligations:
+                    mes_label = _MESES_NUM[mes_actual]
+                    cal_lines = [
+                        f"=== VENCIMIENTOS FISCALES DEL MES "
+                        f"({mes_label} {anio_actual}) ==="
+                    ]
+                    for ob in cal_summary.obligations:
+                        amt_str = (
+                            f"$ {ob.estimated_amount:,.2f} UYU".replace(",", ".")
+                            if ob.estimated_amount
+                            else "A liquidar"
+                        )
+                        f_date = ob.due_date.strftime("%d/%m/%Y")
+                        cal_lines.append(
+                            f"- {ob.title} | Vence: {f_date} "
+                            f"({ob.urgency_level} - {ob.days_remaining} días) | "
+                            f"Monto: {amt_str} [{ob.amount_status.value}] | "
+                            f"Fuente: {ob.legal_source} [{ob.date_status.value}]"
+                        )
+                    resumen_calendario_fiscal = "\n".join(cal_lines)
+            except Exception as cal_err:
+                logger.warning("Calendario fiscal no disponible: %s", cal_err)
+
             # ── Cotización del dólar ──────────────────────────────────────
             exchange_ctrl = ExchangeRateController()
             compra, venta, is_fresh = exchange_ctrl.get_display_rate()
@@ -638,6 +677,7 @@ class AIController(BaseController):
                 resumen_laboral=resumen_laboral,
                 resumen_metas=resumen_metas,
                 resumen_irpf_familiar=resumen_irpf_familiar,
+                resumen_calendario_fiscal=resumen_calendario_fiscal,
                 cotizacion_dolar=cotizacion if cotizacion > 0 else None,
                 empalme_gastos=empalme_gastos,
                 empalme_ingresos_total=empalme_ingresos_total,

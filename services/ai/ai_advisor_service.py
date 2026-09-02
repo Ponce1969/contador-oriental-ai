@@ -675,6 +675,54 @@ class AIAdvisorService:
             "NUNCA inventes cálculos ni discrepes con estos valores.\n\n"
         )
 
+    @staticmethod
+    def _es_pregunta_calendario_fiscal(pregunta: str) -> bool:
+        """Determina si la consulta involucra vencimientos o calendario fiscal."""
+        if not pregunta:
+            return True
+        p = pregunta.lower()
+        keywords = (
+            "vencimiento",
+            "vence",
+            "calendario",
+            "dgi",
+            "bps",
+            "cjppu",
+            "cuando pago",
+            "cuándo pago",
+            "cuando tengo que pagar",
+            "cuándo tengo que pagar",
+            "fecha de pago",
+            "fechas de pago",
+            "anticipo",
+            "cuota",
+            "tributo",
+            "impuesto",
+            "literal e",
+        )
+        return any(k in p for k in keywords)
+
+    def _formatear_datos_calendario_fiscal(
+        self, ctx: AIContext | None, pregunta: str = ""
+    ) -> str:
+        """
+        Formatea los vencimientos del calendario fiscal oficial.
+        """
+        if not ctx or not ctx.resumen_calendario_fiscal:
+            return ""
+
+        if pregunta and not self._es_pregunta_calendario_fiscal(pregunta):
+            return ""
+
+        return (
+            "### CALENDARIO FISCAL Y VENCIMIENTOS OFICIALES "
+            "(PRE-CALCULADO POR PYTHON) ###\n"
+            f"{ctx.resumen_calendario_fiscal}\n"
+            "REGLA ESTRICTA PARA LA IA: Las fechas y fuentes normativas son oficiales. "
+            "Diferenciá claramente si un monto es oficial o estimado. "
+            "NUNCA inventes fechas.\n\n"
+        )
+
     def _formatear_comparativa(self, ctx: AIContext, pregunta: str = "") -> str:
         """
         Convierte CategoryMetric en hechos contables narrativos para el prompt.
@@ -761,6 +809,9 @@ class AIAdvisorService:
         seccion_laboral = self._formatear_datos_laborales(ctx, pregunta=pregunta)
         seccion_metas = self._formatear_datos_metas(ctx, pregunta=pregunta)
         seccion_irpf = self._formatear_datos_irpf_familiar(ctx, pregunta=pregunta)
+        seccion_calendario = self._formatear_datos_calendario_fiscal(
+            ctx, pregunta=pregunta
+        )
         seccion_gastos = f"{gastos_formateados}\n" if gastos_formateados else ""
 
         # Aviso cuando la cuota de Llama 3 está agotada y cae a Gemma 2
@@ -790,7 +841,7 @@ class AIAdvisorService:
             return (
                 f"{p_head}\n"
                 f"{aviso_cuota}\n"
-                f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_irpf}{seccion_gastos}"
+                f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_irpf}{seccion_calendario}{seccion_gastos}"
                 f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
                 f"RESPUESTA DIRECTA:"
             )
@@ -805,6 +856,8 @@ class AIAdvisorService:
             "valores precalculados en la sección de metas.\n"
             "- Si la pregunta es sobre IRPF familiar, núcleo familiar o "
             "crédito de alquiler, utilizá los valores en la sección de IRPF.\n"
+            "- Si la pregunta es sobre vencimientos o calendario fiscal, "
+            "utilizá las fechas oficiales precalculadas en la sección de calendario.\n"
             "- Solo mencioná gastos o saldo si la pregunta consulta expresamente "
             "sobre su presupuesto o historial.\n"
         )
@@ -826,7 +879,7 @@ class AIAdvisorService:
             f"- NUNCA conviertas ni sumes monedas distintas.\n\n"
             f"TONO: Profesional pero cercano y pedagógico.\n"
             f"{aviso_cuota}\n"
-            f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_irpf}{seccion_gastos}"
+            f"{seccion_rag}{seccion_memoria}{seccion_laboral}{seccion_metas}{seccion_irpf}{seccion_calendario}{seccion_gastos}"
             f"PREGUNTA DEL USUARIO: {pregunta}\n\n"
             f"RESPUESTA DIRECTA:"
         )

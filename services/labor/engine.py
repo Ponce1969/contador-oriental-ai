@@ -39,9 +39,14 @@ from services.labor.domain.dtos import (
     PensionProfile,
 )
 from services.labor.domain.enums import RemunerationType
+from services.labor.domain.fiscal_calendar_dtos import (
+    FiscalCalendarRequest,
+    FiscalCalendarSummary,
+)
 from services.labor.domain.models import (
     CalculationRequest,
     CalculationResult,
+    EconomicActivity,
     NominalEstimationResult,
     TaxProfile,
 )
@@ -234,9 +239,25 @@ class LaborCalculationEngine:
         bpc = get_verified_bpc(inp.year)
         if irpf_rules is None or bpc is None:
             return None
-
         return calculate_family_irpf_optimization(
             inp=inp,
             rules=irpf_rules,
             bpc=bpc,
+        )
+
+    @staticmethod
+    def calculate_fiscal_calendar(
+        request: FiscalCalendarRequest,
+        activities: list[EconomicActivity] | None = None,
+    ) -> FiscalCalendarSummary:
+        """
+        Calcula el calendario fiscal determinístico del mes
+        según reglas oficiales DGI / BPS / CJPPU.
+        """
+        from services.labor.calculations.fiscal_calendar_calculator import (
+            FiscalCalendarCalculator,
+        )
+
+        return FiscalCalendarCalculator.calculate_calendar(
+            request=request, activities=activities
         )

@@ -195,6 +195,13 @@ class AIContext(BaseModel):
             "Núcleo Familiar vs Individual y crédito por alquiler"
         ),
     )
+    resumen_calendario_fiscal: str = Field(
+        default="",
+        description=(
+            "Resumen pre-calculado por Python de vencimientos del "
+            "calendario fiscal oficial DGI / BPS / CJPPU"
+        ),
+    )
 
 
 class AIResponse(BaseModel):

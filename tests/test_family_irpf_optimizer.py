@@ -196,16 +196,28 @@ def test_family_members_view_includes_irpf_optimizer_card():
         nombre_completo="Test User",
         familia_id=1,
     )
-    try:
-        SessionManager.login(page, mock_user)
+    from unittest.mock import patch
 
-        router = MagicMock()
-        view = FamilyMembersView(page=page, router=router)
+    with (
+        patch(
+            "controllers.family_member_controller.FamilyMemberController.list_active_members",
+            return_value=[],
+        ),
+        patch(
+            "controllers.labor_controller.LaborController.list_all_activities",
+            return_value=[],
+        ),
+    ):
+        try:
+            SessionManager.login(page, mock_user)
 
-        assert hasattr(view, "irpf_optimizer_card")
-        assert isinstance(view.irpf_optimizer_card, FamilyIRPFOptimizerCard)
+            router = MagicMock()
+            view = FamilyMembersView(page=page, router=router)
 
-        rendered = view.render()
-        assert rendered is not None
-    finally:
-        SessionManager.logout(page)
+            assert hasattr(view, "irpf_optimizer_card")
+            assert isinstance(view.irpf_optimizer_card, FamilyIRPFOptimizerCard)
+
+            rendered = view.render()
+            assert rendered is not None
+        finally:
+            SessionManager.logout(page)
