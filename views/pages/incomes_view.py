@@ -394,9 +394,15 @@ class IncomesView:
             )
             self.labor_suggestion_container.visible = True
 
-        elif act.nature == ActivityNature.INDEPENDIENTE and act.independent_profile:
+        elif act.nature == ActivityNature.INDEPENDIENTE:
             ip = act.independent_profile
-            sales = ip.estimated_monthly_gross_sales or Decimal("0.00")
+            sales = (
+                ip.estimated_monthly_gross_sales
+                if ip and ip.estimated_monthly_gross_sales is not None
+                else Decimal("150000.00")
+                if "monotributo" in act.title.lower()
+                else Decimal("0.00")
+            )
             sales_fmt = format_currency(sales, "UYU")
 
             self.labor_suggestion_container.content = ft.Container(

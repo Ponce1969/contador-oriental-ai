@@ -148,6 +148,38 @@ class DependentDetailsTable(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 
+class IndependentDetailsTable(Base):
+    """
+    Detalle especializado para trabajadores independientes
+    (Monotributo, Literal E, Servicios Personales).
+    """
+
+    __tablename__ = "independent_details"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    economic_activity_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("economic_activities.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    regime: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="monotributo"
+    )
+    pension_fund: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, default="bps"
+    )
+    estimated_monthly_gross_sales: Mapped[Decimal | None] = mapped_column(
+        Numeric(12, 2), nullable=True
+    )
+    partner_count: Mapped[int | None] = mapped_column(Integer, nullable=True, default=1)
+    employees_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    has_mides_certificate: Mapped[bool | None] = mapped_column(
+        Boolean, nullable=True, default=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
 class IncomeTable(Base):
     """
     Tabla de ingresos familiares

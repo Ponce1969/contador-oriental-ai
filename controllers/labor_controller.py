@@ -23,6 +23,7 @@ from services.labor.domain.dtos import (
     IndependentProfile,
     PensionProfile,
 )
+from services.labor.domain.enums import ActivityNature
 from services.labor.domain.fiscal_calendar_dtos import (
     FiscalCalendarRequest,
     FiscalCalendarSummary,
@@ -231,7 +232,22 @@ class LaborController(BaseController):
             activity_repo = EconomicActivityRepository(session, self._familia_id)
             income_repo = IncomeRepository(session, self._familia_id)
             service = LaborService(activity_repo, income_repo)
-            return service.create_activity(activity)
+            res = service.create_activity(activity)
+            if res.is_ok() and activity.nature == ActivityNature.INDEPENDIENTE:
+                try:
+                    from database.tables import FamilyMemberTable
+
+                    mem = (
+                        session.query(FamilyMemberTable)
+                        .filter(FamilyMemberTable.id == activity.family_member_id)
+                        .first()
+                    )
+                    if mem and mem.estado_laboral != "independiente":
+                        mem.estado_laboral = "independiente"
+                        session.commit()
+                except Exception:
+                    pass
+            return res
 
     def get_activity(self, activity_id: int) -> Result[EconomicActivity, AppError]:
         """Obtener una actividad económica por ID."""
@@ -265,7 +281,22 @@ class LaborController(BaseController):
             activity_repo = EconomicActivityRepository(session, self._familia_id)
             income_repo = IncomeRepository(session, self._familia_id)
             service = LaborService(activity_repo, income_repo)
-            return service.update_activity(activity)
+            res = service.update_activity(activity)
+            if res.is_ok() and activity.nature == ActivityNature.INDEPENDIENTE:
+                try:
+                    from database.tables import FamilyMemberTable
+
+                    mem = (
+                        session.query(FamilyMemberTable)
+                        .filter(FamilyMemberTable.id == activity.family_member_id)
+                        .first()
+                    )
+                    if mem and mem.estado_laboral != "independiente":
+                        mem.estado_laboral = "independiente"
+                        session.commit()
+                except Exception:
+                    pass
+            return res
 
     def delete_activity(self, activity_id: int) -> Result[None, AppError]:
         """Eliminar una actividad económica."""

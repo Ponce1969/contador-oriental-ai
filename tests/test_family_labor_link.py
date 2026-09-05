@@ -17,6 +17,7 @@ from database.tables import (
     FamiliaTable,
     FamilyMemberTable,
     IncomeTable,
+    IndependentDetailsTable,
 )
 from services.labor.domain.enums import (
     ActivityNature,
@@ -46,6 +47,7 @@ def db_session():
                 FamilyMemberTable.__table__,
                 EconomicActivityTable.__table__,
                 DependentDetailsTable.__table__,
+                IndependentDetailsTable.__table__,
                 IncomeTable.__table__,
             ],
         ),

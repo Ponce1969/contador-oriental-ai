@@ -17,6 +17,7 @@ from database.tables import (
     FamiliaTable,
     FamilyMemberTable,
     IncomeTable,
+    IndependentDetailsTable,
 )
 from models.income_model import Income, IncomeCategory
 from repositories.economic_activity_repository import EconomicActivityRepository
@@ -47,6 +48,7 @@ def db_session():
                 FamilyMemberTable.__table__,
                 EconomicActivityTable.__table__,
                 DependentDetailsTable.__table__,
+                IndependentDetailsTable.__table__,
                 IncomeTable.__table__,
             ],
         ),

@@ -212,7 +212,14 @@ class FiscalCalendarCard(ft.Container):
 
     def _on_entity_filter_changed(self, e: ft.ControlEvent) -> None:
         """Filtra la lista de obligaciones por organismo."""
-        self.selected_entity_filter = e.control.value or "TODOS"
+        val = getattr(e.control, "value", None)
+        if not isinstance(val, str) or not val:
+            sel = getattr(e.control, "selected", None)
+            if isinstance(sel, (set, list)) and sel:
+                val = next(iter(sel))
+            elif not isinstance(val, str):
+                val = "TODOS"
+        self.selected_entity_filter = val or "TODOS"
         self._render_obligations()
 
     def _load_and_render_calendar(self) -> None:

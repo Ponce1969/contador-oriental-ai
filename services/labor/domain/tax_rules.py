@@ -541,8 +541,8 @@ def get_monotributo_ruleset(year: int) -> MonotributoRuleSet | None:
     return MonotributoRuleSet(
         rule_version=f"UY-BPS-MONO-{year}-v1",
         year=year,
-        threshold_unipersonal_ui=Decimal("183000.00"),
-        threshold_sociedad_ui=Decimal("305000.00"),
+        threshold_unipersonal_ui=Decimal("305000.00"),
+        threshold_sociedad_ui=Decimal("508000.00"),
         max_premises_sqm=Decimal("15.00"),
         max_employees_unipersonal=1,
         base_fee_unipersonal_monthly=Decimal("2850.00"),

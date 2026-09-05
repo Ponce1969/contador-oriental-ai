@@ -433,9 +433,17 @@ class FamilyMembersView:
                 icon = ft.Icons.PETS
             else:
                 parentesco_text = m.parentesco.capitalize() if m.parentesco else "Otro"
+                estado_laboral_val = m.estado_laboral
+                if m.id and m.id in activities_map:
+                    act_m = activities_map[m.id]
+                    if act_m.nature == ActivityNature.INDEPENDIENTE:
+                        estado_laboral_val = "independiente"
+                    elif act_m.nature == ActivityNature.PASIVIDAD:
+                        estado_laboral_val = "jubilado"
+
                 estado_text = (
-                    m.estado_laboral.capitalize()
-                    if m.estado_laboral
+                    estado_laboral_val.capitalize()
+                    if estado_laboral_val
                     else "No especificado"
                 )
                 info_text = f"{parentesco_text} • {edad_text} • {estado_text}"
@@ -480,6 +488,22 @@ class FamilyMembersView:
                         )
                     )
                 elif act.nature == ActivityNature.INDEPENDIENTE:
+                    monthly_sales = (
+                        act.independent_profile.estimated_monthly_gross_sales
+                        if act.independent_profile
+                        and act.independent_profile.estimated_monthly_gross_sales
+                        is not None
+                        else Decimal("150000.00")
+                        if "monotributo" in act.title.lower()
+                        else Decimal("0.00")
+                    )
+                    if monthly_sales > Decimal("0.00"):
+                        m_fmt = format_currency(monthly_sales, "UYU")
+                        a_fmt = format_currency(monthly_sales * Decimal("12"), "UYU")
+                        badge_label = f"🛠️ {act.title}: {m_fmt}/mes ({a_fmt} anual)"
+                    else:
+                        badge_label = f"🛠️ {act.title}"
+
                     act_badges.append(
                         ft.Container(
                             content=ft.Row(
@@ -490,7 +514,7 @@ class FamilyMembersView:
                                         color=ft.Colors.INDIGO_800,
                                     ),
                                     ft.Text(
-                                        f"{act.title}",
+                                        badge_label,
                                         size=11,
                                         weight=ft.FontWeight.W_500,
                                         color=ft.Colors.INDIGO_900,

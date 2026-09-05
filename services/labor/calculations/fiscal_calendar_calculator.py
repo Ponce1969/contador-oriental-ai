@@ -10,9 +10,11 @@ from datetime import date
 from decimal import Decimal
 from typing import Literal
 
+from services.labor.domain.dtos import IndependentProfile
 from services.labor.domain.enums import (
     ActivityNature,
     IndependentTaxRegime,
+    PensionFundType,
 )
 from services.labor.domain.fiscal_calendar_dtos import (
     AmountStatus,
@@ -97,16 +99,29 @@ class FiscalCalendarCalculator:
                 if not act.is_active:
                     continue
                 is_indep = act.nature == ActivityNature.INDEPENDIENTE
-                if is_indep and act.independent_profile:
-                    prof = act.independent_profile
-                    if prof.regime == IndependentTaxRegime.LITERAL_E:
+                if is_indep:
+                    regime = (
+                        act.independent_profile.regime
+                        if act.independent_profile
+                        else None
+                    )
+                    if not regime:
+                        title_lower = (act.title or "").lower()
+                        if "monotributo" in title_lower:
+                            regime = IndependentTaxRegime.MONOTRIBUTO
+                        elif "literal" in title_lower:
+                            regime = IndependentTaxRegime.LITERAL_E
+                        elif "servicio" in title_lower:
+                            regime = IndependentTaxRegime.SERVICIOS_PERSONALES
+
+                    if regime == IndependentTaxRegime.LITERAL_E:
                         applicable_obligations.add(
                             FiscalObligationType.LITERAL_E_CUOTA_MENSUAL
                         )
                         activity_by_obligation[
                             FiscalObligationType.LITERAL_E_CUOTA_MENSUAL
                         ] = act
-                    elif prof.regime in (
+                    elif regime in (
                         IndependentTaxRegime.MONOTRIBUTO,
                         IndependentTaxRegime.MONOTRIBUTO_MIDES,
                     ):
@@ -115,7 +130,10 @@ class FiscalCalendarCalculator:
                         activity_by_obligation[FiscalObligationType.MONOTRIBUTO_DGI] = (
                             act
                         )
-                    elif prof.regime == IndependentTaxRegime.SERVICIOS_PERSONALES:
+                        activity_by_obligation[FiscalObligationType.MONOTRIBUTO_BPS] = (
+                            act
+                        )
+                    elif regime == IndependentTaxRegime.SERVICIOS_PERSONALES:
                         applicable_obligations.add(
                             FiscalObligationType.IRPF_ANTICIPO_BIMESTRAL
                         )
@@ -218,10 +236,32 @@ class FiscalCalendarCalculator:
         activity: EconomicActivity | None,
     ) -> tuple[Decimal | None, AmountStatus]:
         """Calcula el importe oficial o estimado según la actividad registrada."""
-        if not activity or not activity.independent_profile:
+        if not activity:
             return None, AmountStatus.NOT_APPLICABLE
 
         prof = activity.independent_profile
+        if not prof:
+            title_lower = (activity.title or "").lower()
+            if "monotributo" in title_lower:
+                prof = IndependentProfile(
+                    regime=IndependentTaxRegime.MONOTRIBUTO,
+                    pension_fund=PensionFundType.BPS,
+                    estimated_monthly_gross_sales=Decimal("150000.00"),
+                )
+            elif "literal" in title_lower:
+                prof = IndependentProfile(
+                    regime=IndependentTaxRegime.LITERAL_E,
+                    pension_fund=PensionFundType.BPS,
+                    estimated_monthly_gross_sales=Decimal("0.00"),
+                )
+            elif "servicio" in title_lower:
+                prof = IndependentProfile(
+                    regime=IndependentTaxRegime.SERVICIOS_PERSONALES,
+                    pension_fund=PensionFundType.CJPPU,
+                    estimated_monthly_gross_sales=Decimal("0.00"),
+                )
+            else:
+                return None, AmountStatus.NOT_APPLICABLE
         try:
             if ob_type == FiscalObligationType.LITERAL_E_CUOTA_MENSUAL:
                 sales = (
