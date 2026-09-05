@@ -177,9 +177,8 @@ class TicketUploadView:
         local_label = "🔒 Escaneo 100% Local"
 
         def _on_engine_change(e):
-            if e.control.selected:
-                selected_val = list(e.control.selected)[0]
-                self._engine = selected_val
+            if e.control.value:
+                self._engine = e.control.value
                 self._renderizar()
 
         if cloud_available:
@@ -204,20 +203,24 @@ class TicketUploadView:
                         weight=ft.FontWeight.W_500,
                         color=ft.Colors.GREY_700,
                     ),
-                    ft.SegmentedButton(
-                        selected={self._engine},
-                        allow_multiple_selection=False,
-                        segments=[
-                            ft.Segment(
-                                value="cloud",
-                                label=ft.Text(cloud_label, size=12),
-                                disabled=not cloud_available,
-                            ),
-                            ft.Segment(
-                                value="local",
-                                label=ft.Text(local_label, size=12),
-                            ),
-                        ],
+                    ft.RadioGroup(
+                        content=ft.Row(
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            wrap=True,
+                            spacing=16,
+                            controls=[
+                                ft.Radio(
+                                    value="cloud",
+                                    label=cloud_label,
+                                    disabled=not cloud_available,
+                                ),
+                                ft.Radio(
+                                    value="local",
+                                    label=local_label,
+                                ),
+                            ],
+                        ),
+                        value=self._engine,
                         on_change=_on_engine_change,
                     ),
                     ft.Text(
