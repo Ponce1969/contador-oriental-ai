@@ -8,12 +8,12 @@ def up(db):
     db.execute("""
         UPDATE incomes
         SET categoria = '🛠️ Independiente / Unipersonal'
-        WHERE categoria LIKE '%Freelance%'
+        WHERE categoria LIKE '%%Freelance%%'
     """)
     db.execute("""
         UPDATE incomes
         SET categoria = '👴 Jubilación / Pensión'
-        WHERE categoria LIKE '%Jubilad%'
+        WHERE categoria LIKE '%%Jubilad%%'
     """)
 
 
@@ -21,10 +21,10 @@ def down(db):
     db.execute("""
         UPDATE incomes
         SET categoria = '💻 Freelance'
-        WHERE categoria LIKE '%Independiente%'
+        WHERE categoria LIKE '%%Independiente%%'
     """)
     db.execute("""
         UPDATE incomes
         SET categoria = '👴 Jubilado/a'
-        WHERE categoria LIKE '%Jubilación%'
+        WHERE categoria LIKE '%%Jubilación%%'
     """)
