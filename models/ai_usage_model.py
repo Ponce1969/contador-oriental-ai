@@ -16,8 +16,8 @@ class AiUsage(BaseModel):
     familia_id: int
     date: date
     model: str = Field(
-        description="Modelo usado: 'gemma2' o 'llama3'",
-        pattern=r"^(gemma2|llama3)$",
+        description="Model used: 'gemma2', 'llama3', or 'gemini_ocr'",
+        pattern=r"^(gemma2|llama3|gemini_ocr)$",
     )
     prompt_tokens: int = Field(default=0, ge=0)
     completion_tokens: int = Field(default=0, ge=0)

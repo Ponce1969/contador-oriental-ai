@@ -19,9 +19,11 @@ from result import Ok
 
 from controllers.expense_controller import ExpenseController
 from core.session import SessionManager
+from core.sqlalchemy_session import get_db_session
 from models.categories import ExpenseCategory, PaymentMethod
 from models.expense_model import Expense
 from models.ticket_model import PartialExpense
+from services.infrastructure.quota_manager import QuotaManager
 from views.layouts.main_layout import MainLayout
 
 # URL interna Docker (Python->microservicio) y publica (browser->microservicio)
@@ -50,12 +52,21 @@ class TicketUploadView:
             return
 
         familia_id = SessionManager.get_familia_id(page)
-        self._familia_id = familia_id
-        self.expense_controller = ExpenseController(familia_id=familia_id)
+        if familia_id is None:
+            router.navigate("/login")
+            return
+
+        self._familia_id: int = int(familia_id)
+        self.expense_controller = ExpenseController(familia_id=self._familia_id)
 
         self._estado = _Estado.IDLE
         self._partial: PartialExpense | None = None
         self._session_id: str | None = None
+        self._engine: str = "cloud"
+        self._quota_remaining: int = 10
+        self._quota_limit: int = 10
+        self._last_engine_used: str = "local"
+        self._consultar_cuota_ocr()
 
         # Texto de feedback dinámico durante el procesamiento
         self._loading_text = ft.Text(
@@ -74,6 +85,21 @@ class TicketUploadView:
 
         self._renderizar()
         asyncio.create_task(self._recuperar_pendiente())
+
+    def _consultar_cuota_ocr(self) -> None:
+        """Query OCR quota for the current family and determine default engine."""
+        try:
+            with get_db_session() as session:
+                qm = QuotaManager(session, self._familia_id)
+                self._quota_limit = qm.ocr_daily_limit()
+                self._quota_remaining = qm.get_remaining_ocr()
+                can_use_cloud = qm.can_use_cloud_ocr()
+                self._engine = "cloud" if can_use_cloud else "local"
+        except Exception as e:
+            logger.warning("[OCR_VIEW] Could not query quota: %s", e)
+            self._engine = "local"
+            self._quota_remaining = 0
+            self._quota_limit = 10
 
     # ------------------------------------------------------------------
     # Render principal
@@ -144,6 +170,67 @@ class TicketUploadView:
         url = self._preparar_sesion()
         asyncio.create_task(self._iniciar_polling(None))
 
+        cloud_available = self._quota_remaining > 0
+        cloud_label = (
+            f"⚡ Escaneo Rápido ({self._quota_remaining}/{self._quota_limit} hoy)"
+        )
+        local_label = "🔒 Escaneo 100% Local"
+
+        def _on_engine_change(e):
+            if e.control.selected:
+                selected_val = list(e.control.selected)[0]
+                self._engine = selected_val
+                self._renderizar()
+
+        if cloud_available:
+            info_text = (
+                "⚡ Modo Rápido: Procesa el ticket en ~1-2s con Gemini 2.0 Flash."
+                if self._engine == "cloud"
+                else "🔒 Modo Local: Inferencia 100% privada con Orange Pi."
+            )
+            info_color = ft.Colors.GREY_600
+        else:
+            info_text = "⚠️ Cuota diaria de escaneo rápido agotada. Usando motor local."
+            info_color = ft.Colors.ORANGE_800
+
+        engine_selector = ft.Container(
+            content=ft.Column(
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=8,
+                controls=[
+                    ft.Text(
+                        "Modo de escaneo:",
+                        size=13,
+                        weight=ft.FontWeight.W_500,
+                        color=ft.Colors.GREY_700,
+                    ),
+                    ft.SegmentedButton(
+                        selected={self._engine},
+                        allow_multiple_selection=False,
+                        segments=[
+                            ft.Segment(
+                                value="cloud",
+                                label=ft.Text(cloud_label, size=12),
+                                disabled=not cloud_available,
+                            ),
+                            ft.Segment(
+                                value="local",
+                                label=ft.Text(local_label, size=12),
+                            ),
+                        ],
+                        on_change=_on_engine_change,
+                    ),
+                    ft.Text(
+                        info_text,
+                        size=11,
+                        color=info_color,
+                        italic=True,
+                    ),
+                ],
+            ),
+            margin=ft.margin.only(bottom=16),
+        )
+
         return ft.Column(
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
@@ -155,7 +242,8 @@ class TicketUploadView:
                     size=22,
                     weight=ft.FontWeight.BOLD,
                 ),
-                ft.Container(height=20),
+                ft.Container(height=16),
+                engine_selector,
                 ft.Button(
                     content=ft.Row(
                         controls=[
@@ -301,13 +389,63 @@ class TicketUploadView:
             options=[ft.dropdown.Option(m.value) for m in PaymentMethod],
         )
 
+        # Chip del motor utilizado
+        if self._last_engine_used == "gemini-2.0-flash":
+            engine_chip = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.BOLT, color=ft.Colors.AMBER_800, size=15),
+                        ft.Text(
+                            "⚡ Procesado con Gemini Flash en 1s",
+                            size=12,
+                            color=ft.Colors.AMBER_900,
+                            weight=ft.FontWeight.W_500,
+                        ),
+                    ],
+                    spacing=4,
+                    tight=True,
+                ),
+                bgcolor=ft.Colors.AMBER_50,
+                border=ft.border.all(1, ft.Colors.AMBER_200),
+                padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                border_radius=8,
+            )
+        else:
+            engine_chip = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.LOCK, color=ft.Colors.BLUE_800, size=15),
+                        ft.Text(
+                            "🔒 Procesado localmente con Orange Pi",
+                            size=12,
+                            color=ft.Colors.BLUE_900,
+                            weight=ft.FontWeight.W_500,
+                        ),
+                    ],
+                    spacing=4,
+                    tight=True,
+                ),
+                bgcolor=ft.Colors.BLUE_50,
+                border=ft.border.all(1, ft.Colors.BLUE_200),
+                padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                border_radius=8,
+            )
+
         return ft.Column(
             controls=[
                 ft.Row(
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Icon(conf_icon, color=conf_color),
-                        ft.Text(conf_label, color=conf_color, size=13),
-                    ]
+                        ft.Row(
+                            controls=[
+                                ft.Icon(conf_icon, color=conf_color),
+                                ft.Text(conf_label, color=conf_color, size=13),
+                            ],
+                            spacing=6,
+                            tight=True,
+                        ),
+                        engine_chip,
+                    ],
                 ),
                 ft.Divider(),
                 ft.Text(
@@ -443,6 +581,7 @@ class TicketUploadView:
             f"{_OCR_PUBLIC}/upload-form"
             f"?session_id={self._session_id}"
             f"&familia_id={self._familia_id}"
+            f"&engine={self._engine}"
         )
 
     async def _iniciar_polling(self, _):
@@ -481,10 +620,27 @@ class TicketUploadView:
 
     async def _procesar_resultado_ocr(self, data: dict) -> None:
         """Procesa el resultado OCR ya recibido y cambia al estado final."""
-        await self._actualizar_loading(
-            "Procesando con OCR...",
-            "Tesseract + Gemma2 analizando el ticket",
-        )
+        engine_used = data.get("engine_used", "local")
+        self._last_engine_used = engine_used
+
+        if engine_used == "gemini-2.0-flash":
+            try:
+                with get_db_session() as session:
+                    qm = QuotaManager(session, self._familia_id)
+                    qm.register_cloud_ocr_usage()
+                    self._quota_remaining = qm.get_remaining_ocr()
+            except Exception as e:
+                logger.warning("[OCR_VIEW] Failed to register cloud OCR usage: %s", e)
+
+            await self._actualizar_loading(
+                "Procesado con Gemini Flash ⚡",
+                "Datos extraídos a través de la nube",
+            )
+        else:
+            await self._actualizar_loading(
+                "Procesando con OCR...",
+                "Tesseract + Gemma2 analizando el ticket",
+            )
 
         if not data.get("success"):
             logger.error("[OCR] Error: %s", data.get("error"))

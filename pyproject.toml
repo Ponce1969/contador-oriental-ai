@@ -39,6 +39,9 @@ dev = [
     "flet>=0.80.4",
     "types-pyyaml>=6.0.12.20250915",
     "result>=0.17.0",
+    "python-multipart>=0.0.12",
+    "pydantic-settings>=2.6.0",
+    "opencv-python-headless>=4.10.0",
 ]
 
 [tool.ty.analysis]

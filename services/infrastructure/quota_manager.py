@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Límite diario por familia (editable via env var)
 DEFAULT_DAILY_LIMIT = 10
+DEFAULT_OCR_DAILY_LIMIT = 10
 
 MENSAJE_CUOTA_AGOTADA = (
     "⚠️ Respuesta con precisión reducida. "
@@ -42,6 +43,9 @@ class QuotaManager:
         self._familia_id = familia_id
         self._daily_limit = int(
             os.getenv("LLAMA3_DAILY_QUOTA", str(DEFAULT_DAILY_LIMIT))
+        )
+        self._ocr_daily_limit = int(
+            os.getenv("OCR_DAILY_QUOTA", str(DEFAULT_OCR_DAILY_LIMIT))
         )
         self._repo = AiUsageRepository(session, familia_id)
 
@@ -106,3 +110,47 @@ class QuotaManager:
         if remaining > 0:
             return ""
         return MENSAJE_CUOTA_AGOTADA
+
+    def ocr_daily_limit(self) -> int:
+        """Configured daily OCR limit."""
+        return self._ocr_daily_limit
+
+    def can_use_cloud_ocr(self) -> bool:
+        """Check if family has remaining daily quota for cloud OCR."""
+        remaining = self.get_remaining_ocr()
+        if remaining <= 0:
+            logger.info(
+                "[QUOTA] Family %d: Cloud OCR quota exhausted (%d/%d)",
+                self._familia_id,
+                self._ocr_daily_limit - remaining,
+                self._ocr_daily_limit,
+            )
+            return False
+        return True
+
+    def get_remaining_ocr(self) -> int:
+        """Return how many cloud OCR requests remain today."""
+        return self._repo.get_remaining_today(self._ocr_daily_limit, model="gemini_ocr")
+
+    def get_ocr_count_today(self) -> int:
+        """Return how many cloud OCR requests were made today."""
+        return self._repo.get_count_today(model="gemini_ocr")
+
+    def register_cloud_ocr_usage(
+        self, prompt_tokens: int = 0, completion_tokens: int = 0
+    ) -> AiUsage:
+        """Register a cloud OCR request usage."""
+        usage = self._repo.register_usage(
+            model="gemini_ocr",
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+        )
+        logger.info(
+            "[QUOTA] Family %d: Cloud OCR usage registered (%d/%d, tokens: %d+%d)",
+            self._familia_id,
+            self.get_ocr_count_today(),
+            self._ocr_daily_limit,
+            prompt_tokens,
+            completion_tokens,
+        )
+        return usage

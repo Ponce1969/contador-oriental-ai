@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import contextlib
 import json
 import logging
@@ -18,7 +19,7 @@ from pathlib import Path
 from threading import Lock
 from typing import TYPE_CHECKING
 
-import cv2  # type: ignore[import-not-found]
+import cv2
 import httpx
 import numpy as np
 import pytesseract
@@ -349,8 +350,186 @@ async def parsear_con_ollama(texto: str) -> dict | None:
         return None
 
 
-async def _process_receipt_image(tmp_path: Path) -> OCRResponse:
-    """Process a single receipt image via Tesseract and Ollama."""
+async def extraer_con_gemini_flash(
+    image_bytes: bytes, api_key: str, model: str
+) -> dict | None:
+    """Extract receipt information using Gemini Flash cloud model."""
+    if not image_bytes or not api_key:
+        return None
+
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{model}:generateContent?key={api_key}"
+    )
+    b64_image = base64.b64encode(image_bytes).decode("utf-8")
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": (
+                            "Analizá este ticket de compra uruguayo y extraé los "
+                            "datos en formato JSON.\n"
+                            "Respondé con el siguiente formato exacto:\n"
+                            "{\n"
+                            '  "monto": 1250.0,\n'
+                            '  "fecha": "2026-02-28",\n'
+                            '  "comercio": "Tienda Inglesa",\n'
+                            '  "items": ["leche", "pan", "aceite"],\n'
+                            '  "currency": "UYU"\n'
+                            "}\n"
+                            "Reglas:\n"
+                            "- monto: Total pagado del ticket (sin símbolos).\n"
+                            "- fecha: Formato ISO YYYY-MM-DD. Si no hay, usá null.\n"
+                            "- comercio: Nombre empresa/comercio o null.\n"
+                            "- items: Lista de nombres de productos principales.\n"
+                            "- currency: 'UYU' (pesos, $) o 'USD' (dólares, US$).\n"
+                            "- Si no podés determinar un campo, poné null."
+                        )
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": "image/jpeg",
+                            "data": b64_image,
+                        }
+                    },
+                ]
+            }
+        ],
+        "generationConfig": {
+            "response_mime_type": "application/json",
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.post(url, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+
+        candidates = data.get("candidates", [])
+        if not candidates:
+            logger.warning("[GEMINI] No candidates in response")
+            return None
+
+        parts = candidates[0].get("content", {}).get("parts", [])
+        if not parts:
+            logger.warning("[GEMINI] No content parts in response")
+            return None
+
+        raw_text = parts[0].get("text", "")
+        if not raw_text:
+            logger.warning("[GEMINI] Empty text part in response")
+            return None
+
+        parsed = json.loads(raw_text)
+
+        # Normalize amount
+        monto_raw = parsed.get("monto")
+        monto_val: float | None = None
+        if monto_raw is not None:
+            try:
+                monto_val = float(monto_raw)
+            except (ValueError, TypeError):
+                monto_val = None
+
+        # Normalize date
+        fecha_val = _str_or_none(parsed.get("fecha"))
+
+        # Normalize store and items
+        comercio_val = _str_or_none(parsed.get("comercio"))
+        items_raw = parsed.get("items") or []
+        items_val = [str(it) for it in items_raw] if isinstance(items_raw, list) else []
+
+        # Normalize currency
+        currency_val = _resolve_currency(parsed.get("currency"))
+
+        logger.info(
+            "[GEMINI] Extracted: store=%s amount=%s currency=%s",
+            comercio_val,
+            monto_val,
+            currency_val,
+        )
+        return {
+            "monto": monto_val,
+            "fecha": fecha_val,
+            "comercio": comercio_val,
+            "items": items_val,
+            "currency": currency_val,
+        }
+    except Exception as e:
+        logger.warning("[GEMINI] Extraction failed: %s", e)
+        return None
+
+
+async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
+    """Process a single receipt image via Gemini Flash or local pipeline."""
+    # 1. Cloud OCR via Gemini 2.0 Flash
+    if engine in ("auto", "cloud"):
+        if settings.gemini_api_key:
+            try:
+                image_bytes = await asyncio.to_thread(tmp_path.read_bytes)
+                gemini_data = await extraer_con_gemini_flash(
+                    image_bytes=image_bytes,
+                    api_key=settings.gemini_api_key,
+                    model=settings.gemini_model,
+                )
+                if gemini_data is not None:
+                    fecha_parsed: date | None = None
+                    if gemini_data.get("fecha"):
+                        try:
+                            fecha_parsed = date.fromisoformat(str(gemini_data["fecha"]))
+                        except (ValueError, TypeError):
+                            pass
+
+                    monto = gemini_data.get("monto")
+                    comercio = gemini_data.get("comercio")
+                    items = gemini_data.get("items") or []
+                    currency = gemini_data.get("currency", "UYU")
+                    raw_summary = (
+                        f"[Gemini Flash] {comercio or ''} {monto or ''}".strip()
+                    )
+
+                    return OCRResponse(
+                        success=True,
+                        monto=monto,
+                        fecha=fecha_parsed,
+                        comercio=comercio,
+                        items=items,
+                        currency=currency,
+                        texto_crudo=raw_summary,
+                        confianza_ocr=0.95,
+                        engine_used="gemini-2.0-flash",
+                    )
+                if engine == "cloud":
+                    return OCRResponse(
+                        success=False,
+                        error="No se pudo extraer información con Gemini Flash",
+                        engine_used="gemini-2.0-flash",
+                    )
+                logger.warning(
+                    "[OCR] Gemini Flash extraction was empty; "
+                    "falling back to local pipeline"
+                )
+            except Exception as e:
+                logger.warning(
+                    "[OCR] Gemini Flash failed (%s); falling back to local pipeline",
+                    e,
+                )
+                if engine == "cloud":
+                    return OCRResponse(
+                        success=False,
+                        error=f"Error en Gemini Flash: {e}",
+                        engine_used="gemini-2.0-flash",
+                    )
+        elif engine == "cloud":
+            return OCRResponse(
+                success=False,
+                error="GEMINI_API_KEY no configurada",
+                engine_used="gemini-2.0-flash",
+            )
+
+    # 2. Local pipeline (Tesseract + Ollama)
     try:
         texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
         if not texto_crudo or len(texto_crudo) < 20:
@@ -358,6 +537,7 @@ async def _process_receipt_image(tmp_path: Path) -> OCRResponse:
                 success=False,
                 error="No se pudo extraer texto de la imagen",
                 confianza_ocr=confianza,
+                engine_used="local-tesseract",
             )
 
         parsed = await parsear_con_ollama(texto_crudo)
@@ -367,6 +547,7 @@ async def _process_receipt_image(tmp_path: Path) -> OCRResponse:
                 texto_crudo=texto_crudo,
                 confianza_ocr=confianza,
                 error="OCR exitoso pero no se pudo parsear los datos",
+                engine_used="local-tesseract",
             )
 
         monto = parsed.get("monto")
@@ -375,36 +556,43 @@ async def _process_receipt_image(tmp_path: Path) -> OCRResponse:
         items = parsed.get("items") or []
         currency = _resolve_currency(parsed.get("currency"))
 
-        fecha_parsed: date | None = None
+        fecha_parsed_local: date | None = None
         if fecha_str:
             try:
-                fecha_parsed = date.fromisoformat(fecha_str)
+                fecha_parsed_local = date.fromisoformat(fecha_str)
             except (ValueError, TypeError):
                 pass
 
         return OCRResponse(
             success=True,
             monto=monto,
-            fecha=fecha_parsed,
+            fecha=fecha_parsed_local,
             comercio=comercio,
             items=items,
             currency=currency,
             texto_crudo=texto_crudo,
             confianza_ocr=confianza,
+            engine_used="local-tesseract",
         )
     except Exception as e:
         logger.error("[OCR] Receipt processing error: %s", e)
         return OCRResponse(
             success=False,
             error=f"Error interno: {e}",
+            engine_used="local-tesseract",
         )
 
 
-async def _execute_background_job(job_id: str, tmp_path: Path) -> None:
+_process_receipt_image = procesar_job_async
+
+
+async def _execute_background_job(
+    job_id: str, tmp_path: Path, engine: str = "auto"
+) -> None:
     """Background worker for asynchronous OCR job execution."""
     try:
         job_store.update(job_id, status=JobStatus.PROCESSING)
-        result = await _process_receipt_image(tmp_path)
+        result = await procesar_job_async(tmp_path, engine=engine)
         if result.success:
             job_store.update(job_id, status=JobStatus.COMPLETED, resultado=result)
         else:
@@ -440,6 +628,7 @@ async def health() -> HealthResponse:
 async def create_job(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),  # noqa: B008
+    engine: str = Form("auto"),
 ) -> JobResponse:
     """Submit an image for asynchronous OCR processing."""
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -458,7 +647,7 @@ async def create_job(
         tmp_path = Path(tmp.name)
 
     job = job_store.create()
-    background_tasks.add_task(_execute_background_job, job.job_id, tmp_path)
+    background_tasks.add_task(_execute_background_job, job.job_id, tmp_path, engine)
 
     return JobResponse(
         job_id=job.job_id,
@@ -484,10 +673,19 @@ async def get_job(job_id: str) -> JobResponse:
 
 
 @app.get("/upload-form", response_class=HTMLResponse)
-async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
+async def upload_form(
+    session_id: str,
+    familia_id: int = 1,
+    engine: str = "auto",
+) -> HTMLResponse:
     """Native HTML upload form with direct mobile camera capture."""
     safe_session_id = html_escape(session_id, quote=True)
     safe_familia_id = html_escape(str(familia_id), quote=True)
+    safe_engine = html_escape(engine, quote=True)
+    badge_class = "mode-local" if engine == "local" else "mode-cloud"
+    mode_text = (
+        "🔒 Modo Local (Privado)" if engine == "local" else "⚡ Modo Rápido (Cloud)"
+    )
     html = f"""
 <!DOCTYPE html>
 <html lang="es">
@@ -515,7 +713,25 @@ async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
       box-shadow: 0 4px 24px rgba(0,0,0,0.08);
     }}
     h1 {{ font-size: 22px; margin-bottom: 8px; color: #1a1a1a; }}
-    p {{ color: #666; font-size: 14px; margin-bottom: 24px; }}
+    p {{ color: #666; font-size: 14px; margin-bottom: 16px; }}
+    .mode-badge {{
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }}
+    .mode-cloud {{
+      background: #e3f2fd;
+      color: #1565c0;
+      border: 1px solid #90caf9;
+    }}
+    .mode-local {{
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }}
     .upload-area {{
       border: 2px dashed #2196F3;
       border-radius: 8px;
@@ -564,10 +780,12 @@ async def upload_form(session_id: str, familia_id: int = 1) -> HTMLResponse:
   <div class="card">
     <h1>📸 Subir Ticket de Compra</h1>
     <p>Seleccioná la foto del ticket para extraer monto, fecha y comercio.</p>
+    <div class="mode-badge {badge_class}">{mode_text}</div>
 
     <form id="form" enctype="multipart/form-data">
       <input type="hidden" name="session_id" value="{safe_session_id}">
       <input type="hidden" name="familia_id" value="{safe_familia_id}">
+      <input type="hidden" name="engine" value="{safe_engine}">
       <input type="file" id="fileInput" name="file"
              accept="image/*" capture="environment">
 
@@ -639,6 +857,7 @@ async def upload_form_submit(
     session_id: str | None = Form(None),
     job_id: str | None = Form(None),
     familia_id: int = Form(1, gt=0),
+    engine: str = Form("auto"),
 ) -> JSONResponse:
     """Process ticket submission from HTML form and store result in memory."""
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -649,9 +868,10 @@ async def upload_form_submit(
 
     effective_id = session_id or job_id or str(uuid.uuid4())
     logger.info(
-        "[FORM] Processing ticket session=%s familia=%d",
+        "[FORM] Processing ticket session=%s familia=%d engine=%s",
         effective_id,
         familia_id,
+        engine,
     )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
@@ -669,7 +889,7 @@ async def upload_form_submit(
     job_store.update(effective_id, status=JobStatus.PROCESSING)
 
     try:
-        result = await _process_receipt_image(tmp_path)
+        result = await procesar_job_async(tmp_path, engine=engine)
         if result.success:
             job_store.update(effective_id, status=JobStatus.COMPLETED, resultado=result)
         else:
@@ -733,12 +953,17 @@ async def get_pendiente(familia_id: int) -> JSONResponse:
 async def upload_ocr(
     file: UploadFile = File(...),  # noqa: B008
     familia_id: int = Form(..., gt=0),
+    engine: str = Form("auto"),
 ) -> OCRResponse:
     """Synchronously process a receipt image with OCR."""
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Solo imágenes")
 
-    logger.info("Processing ticket synchronously for family %d", familia_id)
+    logger.info(
+        "Processing ticket synchronously for family %d (engine=%s)",
+        familia_id,
+        engine,
+    )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
         content = await file.read()
@@ -749,7 +974,7 @@ async def upload_ocr(
         tmp_path = Path(tmp.name)
 
     try:
-        return await _process_receipt_image(tmp_path)
+        return await procesar_job_async(tmp_path, engine=engine)
     finally:
         _safe_unlink(tmp_path)
 

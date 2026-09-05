@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic_settings import (  # type: ignore[import-not-found]
+from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict,
 )
@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # Ollama
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "gemma2:2b"
+
+    # Gemini Cloud OCR
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.0-flash"
 
 
 settings = Settings()

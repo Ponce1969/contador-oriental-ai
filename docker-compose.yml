@@ -60,6 +60,7 @@ services:
       NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
       NVIDIA_MODEL: ${NVIDIA_MODEL:-meta/llama-3.3-70b-instruct}
       LLAMA3_DAILY_QUOTA: ${LLAMA3_DAILY_QUOTA:-10}
+      OCR_DAILY_QUOTA: ${OCR_DAILY_QUOTA:-10}
 
       # Email — Password Recovery (Resend)
       RESEND_API_KEY: ${RESEND_API_KEY:-}
@@ -129,6 +130,8 @@ services:
       API_PORT: 8551
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OCR_ALLOWED_ORIGIN: ${OCR_ALLOWED_ORIGIN:-http://localhost:8550}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

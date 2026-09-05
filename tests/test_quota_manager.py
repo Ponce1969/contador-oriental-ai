@@ -155,6 +155,61 @@ class TestQuotaManager:
         quota = QuotaManager(db_session, familia_ids["fam_1"])
         assert quota.daily_limit == 10
 
+    def test_can_use_cloud_ocr_within_quota(self, db_session, familia_ids):
+        """Initial state within quota should allow cloud OCR."""
+        quota = QuotaManager(db_session, familia_ids["fam_1"])
+        assert quota.can_use_cloud_ocr() is True
+
+    def test_ocr_quota_exhausted_after_limit(self, db_session, familia_ids):
+        """Exhausting OCR daily limit should deny cloud OCR."""
+        os.environ["OCR_DAILY_QUOTA"] = "2"
+        try:
+            quota = QuotaManager(db_session, familia_ids["fam_1"])
+            quota.register_cloud_ocr_usage(prompt_tokens=100, completion_tokens=50)
+            quota.register_cloud_ocr_usage(prompt_tokens=100, completion_tokens=50)
+            assert quota.can_use_cloud_ocr() is False
+        finally:
+            os.environ.pop("OCR_DAILY_QUOTA", None)
+
+    def test_get_remaining_ocr_decrements(self, db_session, familia_ids):
+        """Remaining OCR count decrements and today count increments."""
+        os.environ["OCR_DAILY_QUOTA"] = "4"
+        try:
+            quota = QuotaManager(db_session, familia_ids["fam_1"])
+            assert quota.get_remaining_ocr() == 4
+            quota.register_cloud_ocr_usage()
+            assert quota.get_remaining_ocr() == 3
+            assert quota.get_ocr_count_today() == 1
+        finally:
+            os.environ.pop("OCR_DAILY_QUOTA", None)
+
+    def test_ocr_daily_limit_from_env(self, db_session, familia_ids):
+        """OCR daily limit configured via env var."""
+        os.environ["OCR_DAILY_QUOTA"] = "15"
+        try:
+            quota = QuotaManager(db_session, familia_ids["fam_1"])
+            assert quota.ocr_daily_limit() == 15
+        finally:
+            os.environ.pop("OCR_DAILY_QUOTA", None)
+
+    def test_default_ocr_daily_limit(self, db_session, familia_ids):
+        """Default OCR daily limit is 10."""
+        os.environ.pop("OCR_DAILY_QUOTA", None)
+        quota = QuotaManager(db_session, familia_ids["fam_1"])
+        assert quota.ocr_daily_limit() == 10
+
+    def test_ocr_family_isolation(self, db_session, familia_ids):
+        """OCR usage in family 1 does not affect family 2."""
+        os.environ["OCR_DAILY_QUOTA"] = "1"
+        try:
+            quota_fam1 = QuotaManager(db_session, familia_ids["fam_1"])
+            quota_fam2 = QuotaManager(db_session, familia_ids["fam_2"])
+            quota_fam1.register_cloud_ocr_usage()
+            assert quota_fam1.can_use_cloud_ocr() is False
+            assert quota_fam2.can_use_cloud_ocr() is True
+        finally:
+            os.environ.pop("OCR_DAILY_QUOTA", None)
+
 
 class TestAiUsageRepository:
     """Tests para AiUsageRepository."""
@@ -219,3 +274,14 @@ class TestAiUsageRepository:
 
         assert repo.get_count_today(model="llama3") == 1
         assert repo.get_count_today(model="gemma2") == 1
+
+    def test_gemini_ocr_tracked_separately(self, db_session, familia_ids):
+        """gemini_ocr is tracked as a valid model in AiUsageRepository."""
+        repo = AiUsageRepository(db_session, familia_ids["fam_1"])
+        usage = repo.register_usage(
+            model="gemini_ocr", prompt_tokens=200, completion_tokens=80
+        )
+        assert usage.model == "gemini_ocr"
+        assert usage.prompt_tokens == 200
+        assert repo.get_count_today(model="gemini_ocr") == 1
+        assert repo.get_count_today(model="llama3") == 0

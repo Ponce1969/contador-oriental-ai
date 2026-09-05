@@ -30,6 +30,7 @@ class OCRResponse(BaseModel):
     confianza_ocr: float = Field(default=0.0, ge=0.0, le=1.0)
     texto_crudo: str = ""
     error: str | None = None
+    engine_used: str = "local"
 
 
 class JobResponse(BaseModel):
