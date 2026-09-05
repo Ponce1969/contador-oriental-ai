@@ -1,48 +1,24 @@
-"""Modelos Pydantic y SQLAlchemy."""
+"""Data models for OCR microservice."""
 
 from __future__ import annotations
 
 from datetime import date, datetime  # noqa: TCH003
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
-from sqlalchemy import DateTime, Integer, String, Text, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 
-class Base(DeclarativeBase):
-    pass
+class JobStatus(StrEnum):
+    """Status of an OCR processing job."""
 
-
-class OCRSession(Base):
-    __tablename__ = "ocr_sessions"
-
-    session_id: Mapped[str] = mapped_column(String, primary_key=True)
-    familia_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    resultado_json: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-
-
-def get_engine(database_url: str):
-    return create_engine(database_url, pool_pre_ping=True)
-
-
-def init_db(database_url: str) -> None:
-    engine = get_engine(database_url)
-    Base.metadata.create_all(engine)
-
-
-def get_session(database_url: str) -> Session:
-    engine = get_engine(database_url)
-    return Session(engine)
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class OCRResponse(BaseModel):
-    """Respuesta OCR."""
+    """OCR extraction response payload."""
 
     success: bool
     monto: float | None = None
@@ -56,8 +32,19 @@ class OCRResponse(BaseModel):
     error: str | None = None
 
 
+class JobResponse(BaseModel):
+    """Job status and result response."""
+
+    job_id: str
+    status: JobStatus
+    created_at: datetime
+    resultado: OCRResponse | None = None
+    error: str | None = None
+
+
 class HealthResponse(BaseModel):
-    """Health check."""
+    """Service health check response."""
 
     status: str
     version: str
+    active_jobs: int = 0

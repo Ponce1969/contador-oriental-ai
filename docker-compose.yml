@@ -124,21 +124,15 @@ services:
       dockerfile: Dockerfile
     container_name: auditor_familiar_ocr_api
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       API_HOST: 0.0.0.0
       API_PORT: 8551
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OCR_ALLOWED_ORIGIN: ${OCR_ALLOWED_ORIGIN:-http://localhost:8550}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    ports:
+      - "${OCR_PORT:-8551}:8551"
     networks:
       - auditor_network
     healthcheck:
