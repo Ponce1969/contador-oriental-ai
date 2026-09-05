@@ -41,36 +41,51 @@ def _color_semaforo(ratio: float) -> str:
 
 
 def _barra_progreso(pagadas: int, total: int) -> ft.Control:
-    """Barra de progreso premium con degradado y glow."""
+    """Barra de progreso premium con degradado y glow, fluida al 100%."""
     ratio = float(pagadas / total) if total > 0 else 0.0
     color = _color_semaforo(ratio)
     celebrando = ratio >= 0.80
 
+    pct = min(max(ratio, 0.0), 1.0)
+    flex_filled = max(1, round(pct * 1000)) if pct > 0 else 0
+    flex_empty = max(1, 1000 - flex_filled) if pct < 1.0 else 0
+
+    row_controls: list[ft.Control] = []
+    if flex_filled > 0:
+        row_controls.append(
+            ft.Container(
+                expand=flex_filled,
+                height=8,
+                border_radius=10,
+                gradient=ft.LinearGradient(
+                    begin=ft.Alignment(-1, 0),
+                    end=ft.Alignment(1, 0),
+                    colors=[_EMERALD, _EMERALD_MINT],
+                ),
+                shadow=(
+                    ft.BoxShadow(
+                        spread_radius=2 if celebrando else 0.5,
+                        blur_radius=8 if celebrando else 3,
+                        color=f"{_EMERALD}44" if celebrando else f"{_EMERALD}22",
+                    )
+                ),
+            )
+        )
+    if flex_empty > 0:
+        row_controls.append(ft.Container(expand=flex_empty))
+
     return ft.Column(
         controls=[
-            # Contenedor exterior con sombra glow
+            # Contenedor exterior con sombra glow y ancho fluido al 100%
             ft.Container(
-                content=ft.Container(
-                    width=ratio * 300 if ratio > 0 else 4,
-                    height=8,
-                    border_radius=10,
-                    gradient=ft.LinearGradient(
-                        begin=ft.Alignment(-1, 0),
-                        end=ft.Alignment(1, 0),
-                        colors=[_EMERALD, _EMERALD_MINT],
-                    ),
-                    shadow=(
-                        ft.BoxShadow(
-                            spread_radius=2 if celebrando else 0.5,
-                            blur_radius=8 if celebrando else 3,
-                            color=f"{_EMERALD}44" if celebrando else f"{_EMERALD}22",
-                        )
-                    ),
+                content=ft.Row(
+                    controls=row_controls,
+                    spacing=0,
                 ),
                 border_radius=10,
                 bgcolor="#E5E7EB",
                 height=8,
-                width=300,
+                clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
             ),
             ft.Row(
                 controls=[
