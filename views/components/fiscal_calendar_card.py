@@ -101,15 +101,18 @@ class FiscalCalendarCard(ft.Container):
         )
         self.digit_dropdown.on_select = self._on_filters_changed
 
-        self.entity_filter = ft.SegmentedButton(
-            selected={self.selected_entity_filter},
-            allow_multiple_selection=False,
-            segments=[
-                ft.Segment(value="TODOS", label=ft.Text("Todos", size=11)),
-                ft.Segment(value="DGI", label=ft.Text("DGI", size=11)),
-                ft.Segment(value="BPS", label=ft.Text("BPS", size=11)),
-                ft.Segment(value="CJPPU", label=ft.Text("CJPPU", size=11)),
-            ],
+        self.entity_filter = ft.RadioGroup(
+            content=ft.Row(
+                spacing=8,
+                wrap=True,
+                controls=[
+                    ft.Radio(value="TODOS", label="Todos"),
+                    ft.Radio(value="DGI", label="DGI"),
+                    ft.Radio(value="BPS", label="BPS"),
+                    ft.Radio(value="CJPPU", label="CJPPU"),
+                ],
+            ),
+            value=self.selected_entity_filter,
             on_change=self._on_entity_filter_changed,
         )
 
@@ -209,8 +212,7 @@ class FiscalCalendarCard(ft.Container):
 
     def _on_entity_filter_changed(self, e: ft.ControlEvent) -> None:
         """Filtra la lista de obligaciones por organismo."""
-        val = list(e.control.selected)[0] if e.control.selected else "TODOS"
-        self.selected_entity_filter = val
+        self.selected_entity_filter = e.control.value or "TODOS"
         self._render_obligations()
 
     def _load_and_render_calendar(self) -> None:
