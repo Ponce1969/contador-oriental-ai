@@ -48,7 +48,7 @@ class TestIncomeMappers:
         table_row = income_to_table(income)
 
         assert table_row.monto == 3000.00
-        assert "Freelance" in table_row.categoria
+        assert "Independiente" in table_row.categoria
         assert table_row.es_recurrente is False
 
     def test_income_to_table_with_frequency(self):

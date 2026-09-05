@@ -92,6 +92,11 @@ class IncomesView:
             value="salary",
             options=[
                 ft.dropdown.Option("salary", "💼 Sueldo mensual habitual / Jornal"),
+                ft.dropdown.Option(
+                    "independent_invoice",
+                    "🛠️ Facturación Monotributo / Servicios / Unipersonal",
+                ),
+                ft.dropdown.Option("pension", "👴 Jubilación / Pensión mensual"),
                 ft.dropdown.Option("aguinaldo", "🎁 Aguinaldo cobrado (SAC)"),
                 ft.dropdown.Option("vacation_pay", "🏖️ Salario Vacacional cobrado"),
                 ft.dropdown.Option("overtime", "⏱️ Horas extras (computable)"),
@@ -294,8 +299,8 @@ class IncomesView:
                 and inc.categoria
                 in (
                     IncomeCategory.SUELDO,
-                    IncomeCategory.FREELANCE,
-                    IncomeCategory.JUBILADO,
+                    IncomeCategory.INDEPENDIENTE,
+                    IncomeCategory.JUBILACION_PENSION,
                 )
             ),
             None,
@@ -436,8 +441,8 @@ class IncomesView:
                                 act=act,
                                 amount=sales,
                                 description=f"Ingreso por {act.title}",
-                                category=IncomeCategory.FREELANCE,
-                                concept="salary",
+                                category=IncomeCategory.INDEPENDIENTE,
+                                concept="independent_invoice",
                                 existing_income_id=existing_id,
                             ),
                         )
@@ -496,8 +501,8 @@ class IncomesView:
                                 act=act,
                                 amount=pension_nom,
                                 description="Cobro de pasividad / jubilación",
-                                category=IncomeCategory.JUBILADO,
-                                concept="salary",
+                                category=IncomeCategory.JUBILACION_PENSION,
+                                concept="pension",
                                 existing_income_id=existing_id,
                             ),
                         )

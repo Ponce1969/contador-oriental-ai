@@ -12,18 +12,36 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class IncomeCategory(StrEnum):
-    """Categorías de ingresos"""
+    """Categorías de ingresos adaptadas a la realidad tributaria y laboral uruguaya."""
 
     SUELDO = "💼 Sueldo"
     JORNAL = "🔨 Jornal"
     EXTRA = "💰 Extra"
     BONO = "🎁 Bono"
-    FREELANCE = "💻 Freelance"
+    INDEPENDIENTE = "🛠️ Independiente / Unipersonal"
     NEGOCIO = "🏪 Negocio"
     ALQUILER = "🏠 Alquiler"
     INVERSION = "📈 Inversión"
-    JUBILADO = "👴 Jubilado/a"
+    JUBILACION_PENSION = "👴 Jubilación / Pensión"
     OTRO = "💵 Otro"
+
+    # Alias de compatibilidad hacia atrás
+    FREELANCE = "🛠️ Independiente / Unipersonal"
+    JUBILADO = "👴 Jubilación / Pensión"
+
+    @classmethod
+    def _missing_(cls, value: object):
+        if isinstance(value, str):
+            val_lower = value.lower()
+            if (
+                "freelance" in val_lower
+                or "independiente" in val_lower
+                or "unipersonal" in val_lower
+            ):
+                return cls.INDEPENDIENTE
+            if "jubilad" in val_lower or "pension" in val_lower:
+                return cls.JUBILACION_PENSION
+        return None
 
 
 class RecurrenceFrequency(StrEnum):
