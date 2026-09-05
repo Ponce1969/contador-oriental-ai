@@ -186,10 +186,10 @@ class MainLayout(ft.Column):
                 alignment=ft.MainAxisAlignment.START,
             ),
             bgcolor=ft.Colors.AMBER_50,
-            border=ft.border.all(1, ft.Colors.AMBER_200),
+            border=ft.Border.all(1, ft.Colors.AMBER_200),
             border_radius=6,
             padding=ft.Padding(left=12, right=4, top=6, bottom=6),
-            margin=ft.margin.only(left=8, right=8, top=4, bottom=0),
+            margin=ft.Margin.only(left=8, right=8, top=4, bottom=0),
         )
 
     def _dismiss_email_banner(self, e: ft.ControlEvent) -> None:

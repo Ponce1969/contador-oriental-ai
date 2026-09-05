@@ -231,7 +231,7 @@ class TicketUploadView:
                     ),
                 ],
             ),
-            margin=ft.margin.only(bottom=16),
+            margin=ft.Margin.only(bottom=16),
         )
 
         return ft.Column(

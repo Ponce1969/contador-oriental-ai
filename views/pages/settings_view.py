@@ -151,7 +151,7 @@ class SettingsView:
                         ],
                         spacing=12,
                     ),
-                    padding=ft.margin.only(top=8),
+                    padding=ft.Padding.only(top=8),
                 ),
             ],
         )
