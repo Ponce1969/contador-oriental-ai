@@ -403,7 +403,7 @@ class IncomesView:
                 content=ft.Row(
                     controls=[
                         ft.Icon(
-                            ft.Icons.BUILD_OUTLINE,
+                            ft.Icons.BUILD_OUTLINED,
                             color=ft.Colors.TEAL_800,
                             size=20,
                         ),

@@ -485,7 +485,7 @@ class FamilyMembersView:
                             content=ft.Row(
                                 controls=[
                                     ft.Icon(
-                                        ft.Icons.BUILD_OUTLINE,
+                                        ft.Icons.BUILD_OUTLINED,
                                         size=13,
                                         color=ft.Colors.INDIGO_800,
                                     ),
