@@ -239,6 +239,46 @@ class TestProcesarJobAsync:
         assert str(resp.fecha) == "2026-08-15"
         assert resp.currency == "UYU"
 
+    async def test_local_engine_rejects_hallucinated_values_from_ollama(self, tmp_path):
+        ticket_file = tmp_path / "ticket_pantalon.jpg"
+        ticket_file.write_bytes(b"ticket_bytes")
+
+        ticket_text = (
+            "TIENDA URUGUAY\n"
+            "FECHA: 05/09/2026\n"
+            "PANTALON FELPA 790,00\n"
+            "TOTAL A PAGAR: $ 790,00\n"
+        )
+        # Ollama alucina los valores del ejemplo anterior (1250 y leche/pan/aceite)
+        hallucinated_ollama = {
+            "monto": 1250.0,
+            "fecha": "2026-02-28",
+            "comercio": "Tienda Inglesa",
+            "items": ["leche", "pan", "aceite"],
+            "currency": None,
+        }
+
+        with (
+            patch.object(settings, "gemini_api_key", None),
+            patch(
+                "ocr_api.main.extraer_texto_tesseract",
+                new_callable=AsyncMock,
+                return_value=(ticket_text, 0.88),
+            ),
+            patch(
+                "ocr_api.main.parsear_con_ollama",
+                new_callable=AsyncMock,
+                return_value=hallucinated_ollama,
+            ),
+        ):
+            resp = await procesar_job_async(ticket_file, engine="local")
+
+        assert resp.success is True
+        # El monto alucinado (1250) fue descartado y reemplazado por el real del ticket (790)
+        assert resp.monto == 790.0
+        assert "leche" not in resp.items
+        assert "pan" not in resp.items
+
 
 class TestRegexExtraction:
     """Direct tests for Uruguayan regex fallback parser."""

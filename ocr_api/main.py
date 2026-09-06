@@ -166,21 +166,24 @@ def _str_or_none(val: object) -> str | None:
 
 
 _PROMPT_PARSEO = (
-    "Analizá este texto de un ticket de compra uruguayo y extraé los datos.\n"
-    "Respondé ÚNICAMENTE con un JSON válido, sin texto adicional, "
-    "en este formato exacto:\n"
-    "\n"
+    "Analizá el texto de este ticket de compra uruguayo y extraé los datos.\n"
+    "Respondé ÚNICAMENTE con un JSON válido, sin texto adicional ni explicaciones, "
+    "con esta estructura exacta:\n"
     "{{\n"
-    '  "monto": 1250.0,\n'
-    '  "fecha": "2026-02-28",\n'
-    '  "comercio": "Tienda Inglesa",\n'
-    '  "items": ["leche", "pan", "aceite"],\n'
+    '  "monto": null,\n'
+    '  "fecha": null,\n'
+    '  "comercio": null,\n'
+    '  "items": [],\n'
     '  "currency": null\n'
     "}}\n"
     "\n"
-    "Si no podés determinar un campo, usá null.\n"
-    "La fecha debe estar en formato YYYY-MM-DD.\n"
-    "El monto debe ser el TOTAL del ticket (número sin símbolos de moneda).\n"
+    "Reglas estrictas:\n"
+    "- 'monto': El número total pagado que aparezca en el texto (ejemplo: 790.0 o null si no se encuentra). NO inventes montos.\n"
+    "- 'fecha': Fecha en formato YYYY-MM-DD o null.\n"
+    "- 'comercio': Nombre del local o empresa que emite el ticket o null.\n"
+    "- 'items': Lista de productos o artículos comprados que figuren explícitamente en el texto.\n"
+    "- 'currency': 'UYU' (si es pesos o $) o 'USD' (si es dólares) o null.\n"
+    "- IMPORTANTE: Extraé EXCLUSIVAMENTE datos que aparezcan en el texto del ticket. NO inventes productos ni tiendas.\n"
     "\n"
     "Texto del ticket:\n"
     "{texto}"
@@ -453,13 +456,61 @@ def extraer_datos_regex(texto: str) -> dict:
         if secondary_candidates:
             monto = secondary_candidates[-1]
 
+    # 5. Items extraction from text lines
+    extracted_items: list[str] = []
+    stop_words = {
+        "RUT", "FECHA", "HORA", "TOTAL", "SUBTOTAL", "TICKET", "FACTURA", "CAJA",
+        "LOCAL", "CAJERO", "MONTO", "CAMBIO", "EFECTIVO", "TARJETA", "IVA",
+        "REDONDEO", "GRACIAS", "VISITA", "DISCO", "DEVOTO", "TATA", "GEANT",
+        "PAGO", "IMPORTA", "SERIE", "SUCURSAL", "CONSUMO", "CLIENTE", "DIRECCION",
+        "TEL", "R.U.T", "I.V.A", "D.G.I", "CONTADO", "CREDITO", "TIENDA INGLESA",
+    }
+    for line in lines:
+        upper_l = line.upper()
+        if any(sw in upper_l for sw in stop_words):
+            continue
+        clean_item = re.sub(r"[\$0-9\.,]{2,}", "", line)
+        clean_item = re.sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", "", clean_item).strip()
+        if 4 <= len(clean_item) <= 40:
+            item_title = clean_item.title()
+            if item_title not in extracted_items:
+                extracted_items.append(item_title)
+
     return {
         "monto": monto,
         "fecha": fecha,
         "comercio": comercio,
         "currency": currency,
-        "items": [],
+        "items": extracted_items[:5],
     }
+
+
+def _es_monto_valido_en_texto(monto: float | None, texto: str) -> bool:
+    """Verifica si el monto extraído por el LLM realmente figura en el texto OCR."""
+    if monto is None or not texto:
+        return False
+    int_str = str(int(round(monto)))
+    if int_str in texto:
+        return True
+    if f"{monto:.2f}" in texto or f"{monto:.2f}".replace(".", ",") in texto:
+        return True
+    return False
+
+
+def _filtrar_items_reales(items: list, texto: str) -> list[str]:
+    """Descarta items alucinados por el LLM que no figuren en el ticket."""
+    if not items or not texto:
+        return []
+    texto_lower = texto.lower()
+    items_validos = []
+    for item in items:
+        if not isinstance(item, str) or not item.strip():
+            continue
+        item_clean = item.strip()
+        palabras = [w for w in re.split(r"\s+", item_clean.lower()) if len(w) >= 2]
+        if palabras and all(re.search(rf"\b{re.escape(p)}\b", texto_lower) for p in palabras):
+            items_validos.append(item_clean)
+    return items_validos
 
 
 async def parsear_con_ollama(texto: str) -> dict | None:
@@ -544,19 +595,19 @@ async def extraer_con_gemini_flash(
                             "datos en formato JSON.\n"
                             "Respondé con el siguiente formato exacto:\n"
                             "{\n"
-                            '  "monto": 1250.0,\n'
-                            '  "fecha": "2026-02-28",\n'
-                            '  "comercio": "Tienda Inglesa",\n'
-                            '  "items": ["leche", "pan", "aceite"],\n'
+                            '  "monto": null,\n'
+                            '  "fecha": null,\n'
+                            '  "comercio": null,\n'
+                            '  "items": [],\n'
                             '  "currency": "UYU"\n'
                             "}\n"
                             "Reglas:\n"
-                            "- monto: Total pagado del ticket (sin símbolos).\n"
-                            "- fecha: Formato ISO YYYY-MM-DD. Si no hay, usá null.\n"
+                            "- monto: Total pagado del ticket como número flotante (ej: 790.0) o null.\n"
+                            "- fecha: Formato ISO YYYY-MM-DD o null.\n"
                             "- comercio: Nombre empresa/comercio o null.\n"
-                            "- items: Lista de nombres de productos principales.\n"
+                            "- items: Lista de nombres de productos reales del ticket.\n"
                             "- currency: 'UYU' (pesos, $) o 'USD' (dólares, US$).\n"
-                            "- Si no podés determinar un campo, poné null."
+                            "- Extraé ÚNICAMENTE datos presentes en la imagen. Si no podés determinar un campo, poné null."
                         )
                     },
                     {
@@ -788,22 +839,57 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 engine_used="local-tesseract",
             )
 
+        regex_data = extraer_datos_regex(texto_crudo)
         parsed = await parsear_con_ollama(texto_crudo)
         engine_used = "local-tesseract-ollama"
-        if not parsed or (
-            parsed.get("monto") is None and parsed.get("comercio") is None
-        ):
+
+        if parsed:
+            # Validación anti-alucinación de monto del LLM
+            monto_llm = parsed.get("monto")
+            if monto_llm is not None:
+                try:
+                    monto_float = float(monto_llm)
+                    if _es_monto_valido_en_texto(monto_float, texto_crudo):
+                        monto = monto_float
+                    else:
+                        logger.warning(
+                            "[OCR] LLM monto %s no figura en el texto OCR; usando regex (%s)",
+                            monto_float,
+                            regex_data.get("monto"),
+                        )
+                        monto = regex_data.get("monto")
+                        engine_used = "local-tesseract-hybrid"
+                except (ValueError, TypeError):
+                    monto = regex_data.get("monto")
+            else:
+                monto = regex_data.get("monto")
+
+            # Validación anti-alucinación de items
+            items_llm = parsed.get("items") or []
+            valid_items = _filtrar_items_reales(items_llm, texto_crudo)
+            items = valid_items if valid_items else (regex_data.get("items") or [])
+
+            # Validación de comercio
+            comercio_llm = _str_or_none(parsed.get("comercio"))
+            if comercio_llm and (comercio_llm.lower() in texto_crudo.lower() or not regex_data.get("comercio")):
+                comercio = comercio_llm
+            else:
+                comercio = regex_data.get("comercio") or comercio_llm
+
+            # Validación de currency y fecha
+            currency = _resolve_currency(parsed.get("currency") or regex_data.get("currency"))
+            fecha_str = parsed.get("fecha") or regex_data.get("fecha")
+        else:
             logger.info(
                 "[OCR] Ollama unavailable or empty; falling back to regex parser"
             )
-            parsed = extraer_datos_regex(texto_crudo)
+            parsed = regex_data
             engine_used = "local-tesseract-regex"
-
-        monto = parsed.get("monto")
-        fecha_str = parsed.get("fecha")
-        comercio = _str_or_none(parsed.get("comercio"))
-        items = parsed.get("items") or []
-        currency = _resolve_currency(parsed.get("currency"))
+            monto = regex_data.get("monto")
+            items = regex_data.get("items") or []
+            comercio = regex_data.get("comercio")
+            currency = _resolve_currency(regex_data.get("currency"))
+            fecha_str = regex_data.get("fecha")
 
         fecha_parsed_local: date | None = None
         if fecha_str:
