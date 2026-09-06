@@ -313,3 +313,39 @@ class TestRegexExtraction:
         assert data["fecha"] == "2026-05-10"
         assert data["monto"] == 450.0
         assert data["currency"] == "USD"
+
+    def test_extraer_datos_regex_rejects_upside_down_garbage(self):
+        from ocr_api.main import extraer_datos_regex
+
+        texto_upside_down = (
+            "006. S 0110333\n"
+            "O9Ya 30 SOOZN\n"
+            "A XX A A ST Hr IE 1 cr\n"
+            "pun; 19301 pepyueo\n"
+            "( $ % JUAN IS IQ.)\n"
+            "00'662 $ YV29VdA Y IVLOL\n"
+            "WNINOvLI vd +34 NOTWLNVd\n"
+            "VWWNI3 OANSNOO\n"
+        )
+        data = extraer_datos_regex(texto_upside_down)
+        assert data["monto"] is None
+        assert data["comercio"] is None
+        assert data["items"] == []
+
+    async def test_missing_monto_caps_confidence(self, tmp_path):
+        ticket_file = tmp_path / "ticket.jpg"
+        ticket_file.write_bytes(b"receipt_image_bytes")
+
+        texto_sin_monto = "FARMACIA RIVERA\nFECHA 12/03/2026\nMEDICAMENTOS"
+
+        with patch(
+            "ocr_api.main.extraer_texto_tesseract",
+            new_callable=AsyncMock,
+            return_value=(texto_sin_monto, 0.88),
+        ):
+            resp = await procesar_job_async(ticket_file, engine="local")
+
+        assert resp.monto is None
+        assert resp.comercio == "Farmacia"
+        # Confianza debe estar limitada si no hay monto detectado
+        assert resp.confianza_ocr <= 0.35

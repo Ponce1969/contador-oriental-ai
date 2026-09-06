@@ -27,7 +27,7 @@ import uvicorn
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
-from PIL import Image
+from PIL import Image, ImageOps
 
 from ocr_api.config import settings
 from ocr_api.models import HealthResponse, JobResponse, JobStatus, OCRResponse
@@ -270,29 +270,108 @@ def preprocesar_imagen(imagen: Image.Image) -> Image.Image:
     return Image.fromarray(thresh)
 
 
-def _run_tesseract(imagen_path: Path) -> tuple[str, float]:
-    """Synchronously run preprocessing and fast Tesseract OCR with timeout."""
-    with Image.open(imagen_path) as img:
-        imagen = preprocesar_imagen(img)
+PALABRAS_CLAVE_TICKET = {
+    "TOTAL",
+    "RUT",
+    "FECHA",
+    "PESOS",
+    "UYU",
+    "SUBTOTAL",
+    "PAGAR",
+    "CONSUMO",
+    "FACTURA",
+    "TICKET",
+    "CONTADO",
+    "IVA",
+    "EFECTIVO",
+    "CAMBIO",
+    "TASA",
+    "BASICA",
+    "DESCUENTO",
+    "IMPORTE",
+}
 
+
+def _evaluar_calidad_ocr(texto: str) -> tuple[float | None, int]:
+    """Evalúa calidad del texto extraído retornando (monto, cant_palabras_clave)."""
+    if not texto or len(texto.strip()) < 5:
+        return None, 0
+    datos = extraer_datos_regex(texto)
+    monto = datos.get("monto")
+    upper = texto.upper()
+    keywords = sum(1 for kw in PALABRAS_CLAVE_TICKET if re.search(rf"\b{kw}\b", upper))
+    return monto, keywords
+
+
+def _ejecutar_tesseract_imagen(imagen: Image.Image, timeout: int = 15) -> str:
+    """Ejecuta pytesseract.image_to_string con manejo de excepciones."""
     try:
-        texto_crudo = pytesseract.image_to_string(
+        return pytesseract.image_to_string(
             imagen,
             lang="spa",
             config="--psm 3 --oem 3",
-            timeout=15,
+            timeout=timeout,
         )
-    except Exception as t_err:
-        logger.warning(
-            "[OCR] Tesseract primary timeout/error: %s, reintentando básico", t_err
-        )
+    except Exception:
         try:
-            texto_crudo = pytesseract.image_to_string(imagen, lang="spa", timeout=10)
+            return pytesseract.image_to_string(imagen, lang="spa", timeout=10)
         except Exception:
-            texto_crudo = ""
+            return ""
 
-    clean_text = "\n".join(line for line in texto_crudo.splitlines() if line.strip())
-    confianza = 0.88 if len(clean_text) > 30 else 0.40
+
+def _run_tesseract(imagen_path: Path) -> tuple[str, float]:
+    """Synchronously run preprocessing, auto-orientation, and fast Tesseract OCR."""
+    with Image.open(imagen_path) as img:
+        img = ImageOps.exif_transpose(img)
+        imagen_base = preprocesar_imagen(img)
+
+    # 1. Orientación normal (0°)
+    texto_0 = _ejecutar_tesseract_imagen(imagen_base, timeout=12)
+    monto_0, kw_0 = _evaluar_calidad_ocr(texto_0)
+
+    # Si a 0° ya encontró monto y al menos una keyword, la orientación es correcta
+    if monto_0 is not None and kw_0 >= 1:
+        clean_text = "\n".join(line for line in texto_0.splitlines() if line.strip())
+        return clean_text, 0.88
+
+    # 2. Si no encontró monto o faltan keywords, probar rotación 180° (ticket invertido)
+    img_180 = imagen_base.rotate(180, expand=True)
+    texto_180 = _ejecutar_tesseract_imagen(img_180, timeout=12)
+    monto_180, kw_180 = _evaluar_calidad_ocr(texto_180)
+
+    if monto_180 is not None or kw_180 > kw_0:
+        clean_text = "\n".join(line for line in texto_180.splitlines() if line.strip())
+        confianza = 0.88 if monto_180 is not None else 0.50
+        logger.info(
+            "[OCR] Auto-orientación 180° seleccionada (kw_0=%d -> kw_180=%d, monto=%s)",
+            kw_0,
+            kw_180,
+            monto_180,
+        )
+        return clean_text, confianza
+
+    # 3. Si la imagen es apaisada (width > height) y no hay monto, probar 90° y 270°
+    if imagen_base.width > imagen_base.height and monto_0 is None:
+        for angulo in (90, 270):
+            img_rot = imagen_base.rotate(angulo, expand=True)
+            txt_rot = _ejecutar_tesseract_imagen(img_rot, timeout=10)
+            m_rot, kw_rot = _evaluar_calidad_ocr(txt_rot)
+            if m_rot is not None or kw_rot > kw_0 + 1:
+                clean_text = "\n".join(
+                    line for line in txt_rot.splitlines() if line.strip()
+                )
+                confianza = 0.88 if m_rot is not None else 0.50
+                logger.info(
+                    "[OCR] Auto-orientación %d° seleccionada (kw=%d, monto=%s)",
+                    angulo,
+                    kw_rot,
+                    m_rot,
+                )
+                return clean_text, confianza
+
+    mejor_texto = texto_180 if kw_180 > kw_0 else texto_0
+    clean_text = "\n".join(line for line in mejor_texto.splitlines() if line.strip())
+    confianza = 0.88 if (monto_0 is not None or monto_180 is not None) else 0.35
     return clean_text, confianza
 
 
@@ -363,52 +442,7 @@ def extraer_datos_regex(texto: str) -> dict:
             y, m, d = iso_match.groups()
             fecha = f"{y}-{m}-{d}"
 
-    # 3. Store name
-    comercio: str | None = None
-    known_stores = [
-        "TIENDA INGLESA",
-        "DEVOTO",
-        "DISCO",
-        "TATA",
-        "TA-TA",
-        "GEANT",
-        "FARMASHOP",
-        "SAN ROQUE",
-        "MACROMERCADO",
-        "MACRO MERCADO",
-        "SODIMAC",
-        "ANCAP",
-        "DISA",
-        "AXION",
-        "PETROBRAS",
-        "EL CLON",
-        "FARMACIA",
-        "SUPERMERCADO",
-        "PANADERIA",
-        "CARNICERIA",
-        "VERDULERIA",
-        "FERRETERIA",
-        "AGROPECUARIA",
-        "VETERINARIA",
-    ]
-    upper_full = full_text.upper()
-    for store in known_stores:
-        if store in upper_full:
-            comercio = store.title()
-            break
-
-    if not comercio and lines:
-        for line in lines[:4]:
-            clean = re.sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", "", line).strip()
-            upper_clean = clean.upper()
-            if len(clean) >= 3 and not any(
-                w in upper_clean
-                for w in ("RUT", "FECHA", "HORA", "TICKET", "FACTURA", "CAJA", "LOCAL")
-            ):
-                comercio = clean.title()
-                break
-
-    # 4. Total Amount
+    # 3. Total Amount
     monto: float | None = None
     num_pat = (
         r"([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})|[0-9]+(?:[.,][0-9]{1,2})?)"
@@ -456,6 +490,69 @@ def extraer_datos_regex(texto: str) -> dict:
         if secondary_candidates:
             monto = secondary_candidates[-1]
 
+    # 4. Store name
+    comercio: str | None = None
+    known_stores = [
+        "TIENDA INGLESA",
+        "DEVOTO",
+        "DISCO",
+        "TATA",
+        "TA-TA",
+        "GEANT",
+        "FARMASHOP",
+        "SAN ROQUE",
+        "MACROMERCADO",
+        "MACRO MERCADO",
+        "SODIMAC",
+        "ANCAP",
+        "DISA",
+        "AXION",
+        "PETROBRAS",
+        "EL CLON",
+        "FARMACIA",
+        "SUPERMERCADO",
+        "PANADERIA",
+        "CARNICERIA",
+        "VERDULERIA",
+        "FERRETERIA",
+        "AGROPECUARIA",
+        "VETERINARIA",
+    ]
+    upper_full = full_text.upper()
+    for store in known_stores:
+        if store in upper_full:
+            comercio = store.title()
+            break
+
+    keywords_count = sum(
+        1 for kw in PALABRAS_CLAVE_TICKET if re.search(rf"\b{kw}\b", upper_full)
+    )
+
+    if not comercio and lines and (monto is not None or keywords_count >= 2):
+        for line in lines[:4]:
+            clean = re.sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", "", line).strip()
+            upper_clean = clean.upper()
+            if 3 <= len(clean) <= 30 and not any(
+                w in upper_clean
+                for w in (
+                    "RUT",
+                    "FECHA",
+                    "HORA",
+                    "TICKET",
+                    "FACTURA",
+                    "CAJA",
+                    "LOCAL",
+                    "CONSUMO",
+                    "CLIENTE",
+                    "DATOS",
+                    "TOTAL",
+                )
+            ):
+                palabras = clean.split()
+                if palabras and all(len(p) >= 2 for p in palabras):
+                    comercio = clean.title()
+                    break
+
     # 5. Items extraction from text lines
     extracted_items: list[str] = []
     stop_words = {
@@ -496,16 +593,17 @@ def extraer_datos_regex(texto: str) -> dict:
         "CREDITO",
         "TIENDA INGLESA",
     }
-    for line in lines:
-        upper_l = line.upper()
-        if any(sw in upper_l for sw in stop_words):
-            continue
-        clean_item = re.sub(r"[\$0-9\.,]{2,}", "", line)
-        clean_item = re.sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", "", clean_item).strip()
-        if 4 <= len(clean_item) <= 40:
-            item_title = clean_item.title()
-            if item_title not in extracted_items:
-                extracted_items.append(item_title)
+    if monto is not None or keywords_count >= 2:
+        for line in lines:
+            upper_l = line.upper()
+            if any(sw in upper_l for sw in stop_words):
+                continue
+            clean_item = re.sub(r"[\$0-9\.,]{2,}", "", line)
+            clean_item = re.sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", "", clean_item).strip()
+            if 4 <= len(clean_item) <= 40:
+                item_title = clean_item.title()
+                if item_title not in extracted_items:
+                    extracted_items.append(item_title)
 
     return {
         "monto": monto,
@@ -1000,12 +1098,15 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
 
         if monto is None and comercio is None:
             return OCRResponse(
-                success=True,
+                success=False,
                 texto_crudo=texto_crudo,
                 confianza_ocr=confianza,
-                error="OCR exitoso pero no se detectaron montos ni comercio",
+                error="No se detectaron montos ni comercio en el ticket",
                 engine_used=engine_used,
             )
+
+        # Si no se detectó monto, la confianza no puede ser alta
+        confianza_final = min(confianza, 0.35) if monto is None else confianza
 
         return OCRResponse(
             success=True,
@@ -1015,7 +1116,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             items=items,
             currency=currency,
             texto_crudo=texto_crudo,
-            confianza_ocr=confianza,
+            confianza_ocr=confianza_final,
             engine_used=engine_used,
         )
     except Exception as e:

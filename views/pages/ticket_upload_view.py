@@ -335,7 +335,11 @@ class TicketUploadView:
             return ft.Text("Error interno")
 
         # Chip de confianza OCR
-        if partial.confianza_ocr >= 0.7:
+        if partial.monto is None:
+            conf_color = ft.Colors.ORANGE_800
+            conf_label = "Monto no detectado — por favor completalo"
+            conf_icon = ft.Icons.WARNING
+        elif partial.confianza_ocr >= 0.7:
             conf_color = ft.Colors.GREEN_700
             conf_label = f"Alta confianza ({partial.confianza_ocr:.0%})"
             conf_icon = ft.Icons.CHECK_CIRCLE
@@ -356,6 +360,8 @@ class TicketUploadView:
             value=str(partial.monto) if partial.monto else "",
             keyboard_type=ft.KeyboardType.NUMBER,
             expand=True,
+            error_text="Ingresá el monto" if partial.monto is None else None,
+            autofocus=partial.monto is None,
         )
         items_str = ", ".join(partial.items[:3]) if partial.items else ""
         self._descripcion_field = ft.TextField(
