@@ -57,9 +57,11 @@ class ExpenseService:
         expenses = self._repo.get_by_category(categoria)
         return list(expenses)
 
-    def list_by_month(self, year: int, month: int) -> list[Expense]:
+    def list_by_month(
+        self, year: int, month: int, entorno: str | None = None
+    ) -> list[Expense]:
         """Listar gastos de un mes específico"""
-        expenses = self._repo.get_by_month(year, month)
+        expenses = self._repo.get_by_month(year, month, entorno=entorno)
         return list(expenses)
 
     def delete_expense(self, expense_id: int) -> Result[None, DatabaseError]:
@@ -96,10 +98,14 @@ class ExpenseService:
         return sum((expense.monto for expense in expenses), Decimal("0"))
 
     def get_total_by_month(
-        self, year: int, month: int, currency: str | None = None
+        self,
+        year: int,
+        month: int,
+        currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[str, Decimal]:
         """Calcular total gastado en un mes, agrupado por moneda."""
-        expenses = self.list_by_month(year, month)
+        expenses = self.list_by_month(year, month, entorno=entorno)
         totals: dict[str, Decimal] = {}
         for expense in expenses:
             if currency is not None and expense.currency != currency:
@@ -114,10 +120,11 @@ class ExpenseService:
         year: int | None = None,
         month: int | None = None,
         currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[tuple[str, str], Decimal]:
         """Resumen de gastos por (categoría, moneda), opcionalmente filtrado por mes."""
         if year is not None and month is not None:
-            expenses = self.list_by_month(year, month)
+            expenses = self.list_by_month(year, month, entorno=entorno)
         else:
             expenses = self.list_expenses()
         summary: dict[tuple[str, str], Decimal] = {}

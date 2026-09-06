@@ -25,6 +25,13 @@ class IncomeCategory(StrEnum):
     JUBILACION_PENSION = "👴 Jubilación / Pensión"
     OTRO = "💵 Otro"
 
+    # Categorías rurales / campo
+    VENTA_GANADO = "🐄 Venta de Ganado"
+    VENTA_GRANOS = "🌾 Venta de Granos / Cosecha"
+    VENTA_LANA_LECHE = "🥛 Venta de Leche / Lana"
+    SERVICIOS_AGRO = "🚜 Servicios Rurales / Maquinaria"
+    OTRO_RURAL = "🌾 Otro Ingreso Campo"
+
     # Alias de compatibilidad hacia atrás
     FREELANCE = "🛠️ Independiente / Unipersonal"
     JUBILADO = "👴 Jubilación / Pensión"
@@ -57,6 +64,39 @@ class RecurrenceFrequency(StrEnum):
     ANUAL = "Anual"
 
 
+INCOME_CATEGORIES_HOGAR: list[IncomeCategory] = [
+    IncomeCategory.SUELDO,
+    IncomeCategory.JORNAL,
+    IncomeCategory.EXTRA,
+    IncomeCategory.BONO,
+    IncomeCategory.INDEPENDIENTE,
+    IncomeCategory.NEGOCIO,
+    IncomeCategory.ALQUILER,
+    IncomeCategory.INVERSION,
+    IncomeCategory.JUBILACION_PENSION,
+    IncomeCategory.OTRO,
+]
+
+INCOME_CATEGORIES_CAMPO: list[IncomeCategory] = [
+    IncomeCategory.VENTA_GANADO,
+    IncomeCategory.VENTA_GRANOS,
+    IncomeCategory.VENTA_LANA_LECHE,
+    IncomeCategory.SERVICIOS_AGRO,
+    IncomeCategory.OTRO_RURAL,
+]
+
+
+def get_income_categories_for_entorno(
+    entorno: str | None = "hogar",
+) -> list[IncomeCategory]:
+    """Retorna las categorías de ingresos según el entorno (hogar, campo o todas)."""
+    if entorno == "campo":
+        return INCOME_CATEGORIES_CAMPO
+    if entorno in ("consolidado", "all", None):
+        return list(IncomeCategory)
+    return INCOME_CATEGORIES_HOGAR
+
+
 class Income(BaseModel):
     """
     Ingreso familiar
@@ -86,8 +126,11 @@ class Income(BaseModel):
         min_length=1, max_length=200, description="Descripción del ingreso"
     )
 
-    # Categorización
+    # Categorización y Entorno
     categoria: IncomeCategory = Field(description="Categoría del ingreso")
+    entorno: str = Field(
+        default="hogar", description="Entorno o centro de costo: hogar | campo"
+    )
 
     # Recurrencia
     es_recurrente: bool = Field(

@@ -37,17 +37,24 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
         table_row.es_recurrente = entity.es_recurrente
         table_row.frecuencia = entity.frecuencia.value if entity.frecuencia else None
         table_row.currency = entity.currency
+        table_row.entorno = entity.entorno
 
-    def get_by_category(self, categoria: str) -> Sequence[Expense]:
+    def get_by_category(
+        self, categoria: str, entorno: str | None = None
+    ) -> Sequence[Expense]:
         """Obtener gastos por categoría de la familia"""
         query = self.session.query(ExpenseTable).filter(
             ExpenseTable.categoria == categoria
         )
+        if entorno and entorno != "consolidado":
+            query = query.filter(ExpenseTable.entorno == entorno)
         query = self._filter_by_family(query)
         rows = query.all()
         return [to_domain(row) for row in rows]
 
-    def get_by_month(self, year: int, month: int) -> Sequence[Expense]:
+    def get_by_month(
+        self, year: int, month: int, entorno: str | None = None
+    ) -> Sequence[Expense]:
         """Obtener gastos de un mes específico de la familia"""
         from sqlalchemy import extract
 
@@ -55,6 +62,8 @@ class ExpenseRepository(BaseTableRepository[Expense, ExpenseTable]):
             extract("year", ExpenseTable.fecha) == year,
             extract("month", ExpenseTable.fecha) == month,
         )
+        if entorno and entorno != "consolidado":
+            query = query.filter(ExpenseTable.entorno == entorno)
         query = self._filter_by_family(query)
         rows = query.all()
         return [to_domain(row) for row in rows]

@@ -139,3 +139,35 @@ class SessionManager:
         session_data = SessionManager._get_session_data(page)
         if "pending_invite_token" in session_data:
             del session_data["pending_invite_token"]
+
+    @staticmethod
+    def is_campo_enabled(page: ft.Page) -> bool:
+        """Indica si el módulo Campo/Rural está habilitado en la sesión"""
+        session_data = SessionManager._get_session_data(page)
+        return bool(session_data.get("campo_enabled", False))
+
+    @staticmethod
+    def set_campo_enabled(page: ft.Page, enabled: bool) -> None:
+        """Habilitar o deshabilitar el módulo Campo/Rural"""
+        session_data = SessionManager._get_session_data(page)
+        session_data["campo_enabled"] = enabled
+        from core.state import AppState
+
+        AppState.campo_enabled = enabled
+        if not enabled and SessionManager.get_active_entorno(page) == "campo":
+            SessionManager.set_active_entorno(page, "hogar")
+
+    @staticmethod
+    def get_active_entorno(page: ft.Page) -> str:
+        """Obtener el entorno activo: 'hogar' | 'campo' | 'consolidado'"""
+        session_data = SessionManager._get_session_data(page)
+        return session_data.get("active_entorno", "hogar")
+
+    @staticmethod
+    def set_active_entorno(page: ft.Page, entorno: str) -> None:
+        """Definir el entorno activo"""
+        session_data = SessionManager._get_session_data(page)
+        session_data["active_entorno"] = entorno
+        from core.state import AppState
+
+        AppState.active_entorno = entorno

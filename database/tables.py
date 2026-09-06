@@ -217,8 +217,11 @@ class IncomeTable(Base):
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     descripcion: Mapped[str] = mapped_column(String(200), nullable=False)
 
-    # Categorización
+    # Categorización y Entorno
     categoria: Mapped[str] = mapped_column(String(50), nullable=False)
+    entorno: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="hogar"
+    )
 
     # Recurrencia
     es_recurrente: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -257,9 +260,12 @@ class ExpenseTable(Base):
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     descripcion: Mapped[str] = mapped_column(String(200), nullable=False)
 
-    # Categorización
+    # Categorización y Entorno
     categoria: Mapped[str] = mapped_column(String(50), nullable=False)
     subcategoria: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    entorno: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="hogar"
+    )
 
     # Información de pago
     metodo_pago: Mapped[str] = mapped_column(String(50), nullable=False)

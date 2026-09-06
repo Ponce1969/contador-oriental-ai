@@ -12,6 +12,7 @@ from core.session import SessionManager
 from core.state import AppState
 from repositories.user_repository import UserRepository
 from services.infrastructure.formatters import format_cotizacion
+from views.components.entorno_switcher import EntornoSwitcher
 
 
 @dataclass(frozen=True)
@@ -301,10 +302,13 @@ class MainLayout(ft.Column):
         )
 
         username = SessionManager.get_username(self._page) or "Usuario"
+        switcher = EntornoSwitcher(self._page, self._router)
 
-        return ft.AppBar(
-            title=ft.Text(I18n.t("app.name")),
-            actions=[
+        actions: list[ft.Control] = []
+        if switcher.visible:
+            actions.append(switcher)
+        actions.extend(
+            [
                 ft.Text(f"👤 {username}", size=14, color=ft.Colors.ON_SURFACE_VARIANT),
                 # Botón de contacto WhatsApp mejorado
                 ft.IconButton(
@@ -317,7 +321,12 @@ class MainLayout(ft.Column):
                     icon=ft.Icons.MENU,
                     items=menu_items,
                 ),
-            ],
+            ]
+        )
+
+        return ft.AppBar(
+            title=ft.Text(I18n.t("app.name")),
+            actions=actions,
         )
 
     def _on_whatsapp_click(self, e: ft.ControlEvent) -> None:

@@ -17,7 +17,7 @@ from controllers.installment_controller import InstallmentController
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
-from models.categories import ExpenseCategory, PaymentMethod
+from models.categories import ExpenseCategory, PaymentMethod, get_categories_for_entorno
 from models.errors import AppError, ValidationError
 from models.expense_model import Expense
 from services.infrastructure.formatters import format_pesos
@@ -72,20 +72,24 @@ class ExpensesView:
             keyboard_type=ft.KeyboardType.NUMBER,
         )
 
+        self.entorno = SessionManager.get_active_entorno(page)
+        default_currency = "USD" if self.entorno == "campo" else "UYU"
+
         self.currency_dropdown = ft.Dropdown(
             label="Moneda",
             expand=True,
-            value="UYU",
+            value=default_currency,
             options=[
                 ft.dropdown.Option("UYU", "Pesos Uruguayos ($)"),
                 ft.dropdown.Option("USD", "Dólares (USD)"),
             ],
         )
 
+        categories = get_categories_for_entorno(self.entorno)
         self.categoria_dropdown = ft.Dropdown(
             label="Categoría",
             expand=True,
-            options=[ft.dropdown.Option(cat.value) for cat in ExpenseCategory],
+            options=[ft.dropdown.Option(cat.value) for cat in categories],
         )
 
         self.metodo_pago_dropdown = ft.Dropdown(
@@ -519,6 +523,7 @@ class ExpensesView:
                 es_recurrente=False,
                 frecuencia=None,
                 notas=None,
+                entorno=self.entorno,
             )
 
             # Decidir si crear o actualizar
@@ -609,7 +614,9 @@ class ExpensesView:
         """Renderizar lista de gastos del mes actual"""
         self.expenses_column.controls.clear()
         today = date.today()
-        expenses = self.controller.list_expenses_by_month(today.year, today.month)
+        expenses = self.controller.list_expenses_by_month(
+            today.year, today.month, entorno=self.entorno
+        )
 
         if not expenses:
             self.expenses_column.controls.append(
@@ -722,7 +729,7 @@ class ExpensesView:
         self.summary_column.controls.clear()
         today = date.today()
         summary = self.controller.get_summary_by_categories(
-            year=today.year, month=today.month
+            year=today.year, month=today.month, entorno=self.entorno
         )
 
         if not summary:
@@ -850,7 +857,7 @@ class ExpensesView:
         self.categoria_dropdown.value = None
         self.metodo_pago_dropdown.value = PaymentMethod.EFECTIVO.value
         self.share_household_switch.value = False
-        self.currency_dropdown.value = "UYU"
+        self.currency_dropdown.value = "USD" if self.entorno == "campo" else "UYU"
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

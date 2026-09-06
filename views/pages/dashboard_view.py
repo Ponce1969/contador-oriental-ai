@@ -100,7 +100,9 @@ class DashboardView:
         except Exception:
             pass  # No bloquear dashboard por error de cuotas
 
-        # Obtener totales por moneda
+        campo_enabled = SessionManager.is_campo_enabled(self.page)
+
+        # Totales consolidados (Hogar + Campo)
         ingresos_uyu = self._get_total_ingresos(year, month, "UYU")
         gastos_uyu = self._get_total_gastos(year, month, "UYU")
         balance_uyu = ingresos_uyu - gastos_uyu
@@ -108,6 +110,87 @@ class DashboardView:
         ingresos_usd = self._get_total_ingresos(year, month, "USD")
         gastos_usd = self._get_total_gastos(year, month, "USD")
         balance_usd = ingresos_usd - gastos_usd
+
+        # Desglose para progressive disclosure si el modo campo está activo
+        split_ingresos_ctrl = None
+        split_gastos_ctrl = None
+        if campo_enabled:
+            g_hogar_uyu = self._get_total_gastos(year, month, "UYU", entorno="hogar")
+            g_hogar_usd = self._get_total_gastos(year, month, "USD", entorno="hogar")
+            g_campo_uyu = self._get_total_gastos(year, month, "UYU", entorno="campo")
+            g_campo_usd = self._get_total_gastos(year, month, "USD", entorno="campo")
+
+            i_hogar_uyu = self._get_total_ingresos(year, month, "UYU", entorno="hogar")
+            i_hogar_usd = self._get_total_ingresos(year, month, "USD", entorno="hogar")
+            i_campo_uyu = self._get_total_ingresos(year, month, "UYU", entorno="campo")
+            i_campo_usd = self._get_total_ingresos(year, month, "USD", entorno="campo")
+
+            def _format_parts(uyu: Decimal, usd: Decimal) -> str:
+                parts = []
+                if uyu > 0:
+                    parts.append(format_pesos(uyu, currency="UYU"))
+                if usd > 0:
+                    parts.append(format_pesos(usd, currency="USD"))
+                return " / ".join(parts) if parts else "$ 0"
+
+            gh_str = _format_parts(g_hogar_uyu, g_hogar_usd)
+            gc_str = _format_parts(g_campo_uyu, g_campo_usd)
+            ih_str = _format_parts(i_hogar_uyu, i_hogar_usd)
+            ic_str = _format_parts(i_campo_uyu, i_campo_usd)
+
+            split_gastos_ctrl = ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Divider(height=1, color=ft.Colors.ORANGE_200),
+                        ft.Row(
+                            controls=[
+                                ft.Text(
+                                    f"🏠 Hogar: {gh_str}",
+                                    size=11,
+                                    color=ft.Colors.ORANGE_900,
+                                ),
+                                ft.Text(
+                                    f"🚜 Campo: {gc_str}",
+                                    size=11,
+                                    color=ft.Colors.ORANGE_900,
+                                    weight=ft.FontWeight.W_500,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            wrap=True,
+                        ),
+                    ],
+                    spacing=4,
+                ),
+                margin=ft.Margin.only(top=2),
+            )
+
+            split_ingresos_ctrl = ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Divider(height=1, color=ft.Colors.TEAL_200),
+                        ft.Row(
+                            controls=[
+                                ft.Text(
+                                    f"🏠 Hogar: {ih_str}",
+                                    size=11,
+                                    color=ft.Colors.TEAL_900,
+                                ),
+                                ft.Text(
+                                    f"🚜 Campo: {ic_str}",
+                                    size=11,
+                                    color=ft.Colors.TEAL_900,
+                                    weight=ft.FontWeight.W_500,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            wrap=True,
+                        ),
+                    ],
+                    spacing=4,
+                ),
+                margin=ft.Margin.only(top=2),
+            )
 
         # Cotización y Patrimonio Consolidado
         exchange_ctrl = ExchangeRateController()
@@ -131,15 +214,47 @@ class DashboardView:
         is_mobile = AppState.device == "mobile"
         title_size = 20 if is_mobile else 28
 
-        # Opcional: mostrar super card del patrimonio consolidado (por ahora lo usaremos
-        # solo para alertas y equivalencias como pide el plan ligero)
+        header_title_controls = [
+            ft.Text(
+                value=f"📊 Dashboard - {month_name} {year}",
+                size=title_size,
+                weight=ft.FontWeight.BOLD,
+            )
+        ]
+        if campo_enabled:
+            header_title_controls.append(
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(
+                                ft.Icons.ALL_INCLUSIVE,
+                                size=14,
+                                color=ft.Colors.GREEN_800,
+                            ),
+                            ft.Text(
+                                "Consolidado: Hogar + Campo",
+                                size=11,
+                                weight=ft.FontWeight.W_600,
+                                color=ft.Colors.GREEN_800,
+                            ),
+                        ],
+                        spacing=4,
+                        tight=True,
+                    ),
+                    bgcolor=ft.Colors.GREEN_50,
+                    padding=ft.Padding.symmetric(horizontal=8, vertical=4),
+                    border_radius=6,
+                    border=ft.Border.all(1, ft.Colors.GREEN_200),
+                )
+            )
 
         content = ft.Column(
             controls=[
-                ft.Text(
-                    value=f"📊 Dashboard - {month_name} {year}",
-                    size=title_size,
-                    weight=ft.FontWeight.BOLD,
+                ft.Row(
+                    controls=header_title_controls,
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    wrap=True,
                 ),
                 self._build_history_hook(year, month),
                 ft.Divider(),
@@ -186,6 +301,7 @@ class DashboardView:
                             uyu_amount=ingresos_uyu,
                             usd_amount=ingresos_usd,
                             is_mobile=is_mobile,
+                            split_control=split_ingresos_ctrl,
                         ),
                         self._build_summary_total_card(
                             title="Gastos",
@@ -198,6 +314,7 @@ class DashboardView:
                             uyu_amount=gastos_uyu,
                             usd_amount=gastos_usd,
                             is_mobile=is_mobile,
+                            split_control=split_gastos_ctrl,
                         ),
                     ],
                     spacing=16,
@@ -384,6 +501,7 @@ class DashboardView:
         uyu_amount: Decimal,
         usd_amount: Decimal,
         is_mobile: bool,
+        split_control: ft.Control | None = None,
     ) -> ft.Container:
         """Construir tarjeta de totales (Ingresos/Gastos) mostrando UYU y USD."""
         amounts = []
@@ -406,27 +524,31 @@ class DashboardView:
                 )
             )
 
+        card_content = [
+            ft.Row(
+                controls=[
+                    ft.Icon(
+                        icon=icon,
+                        color=icon_color,
+                        size=28,
+                    ),
+                    ft.Text(
+                        value=title,
+                        size=16,
+                        weight=ft.FontWeight.BOLD,
+                        color=title_color,
+                    ),
+                ],
+                spacing=10,
+            ),
+            *amounts,
+        ]
+        if split_control is not None:
+            card_content.append(split_control)
+
         return ft.Container(
             content=ft.Column(
-                controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Icon(
-                                icon=icon,
-                                color=icon_color,
-                                size=28,
-                            ),
-                            ft.Text(
-                                value=title,
-                                size=16,
-                                weight=ft.FontWeight.BOLD,
-                                color=title_color,
-                            ),
-                        ],
-                        spacing=10,
-                    ),
-                    *amounts,
-                ],
+                controls=card_content,
                 spacing=10,
                 horizontal_alignment=ft.CrossAxisAlignment.START,
             ),
@@ -606,17 +728,21 @@ class DashboardView:
             on_click=lambda _: self.router.navigate("/planes"),
         )
 
-    def _get_total_ingresos(self, year: int, month: int, currency: str) -> Decimal:
+    def _get_total_ingresos(
+        self, year: int, month: int, currency: str, entorno: str | None = None
+    ) -> Decimal:
         """Obtener total de ingresos del mes para una moneda."""
         totals = self.income_controller.get_total_by_month(
-            year, month, currency=currency
+            year, month, currency=currency, entorno=entorno
         )
         return totals.get(currency, Decimal("0"))
 
-    def _get_total_gastos(self, year: int, month: int, currency: str) -> Decimal:
+    def _get_total_gastos(
+        self, year: int, month: int, currency: str, entorno: str | None = None
+    ) -> Decimal:
         """Obtener total de gastos del mes para una moneda."""
         totals = self.expense_controller.get_total_by_month(
-            year, month, currency=currency
+            year, month, currency=currency, entorno=entorno
         )
         return totals.get(currency, Decimal("0"))
 

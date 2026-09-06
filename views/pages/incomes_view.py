@@ -19,7 +19,12 @@ from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
 from models.errors import AppError
-from models.income_model import Income, IncomeCategory, RecurrenceFrequency
+from models.income_model import (
+    Income,
+    IncomeCategory,
+    RecurrenceFrequency,
+    get_income_categories_for_entorno,
+)
 from services.labor.domain.enums import ActivityNature
 from services.labor.domain.models import EconomicActivity
 from services.labor.engine import LaborCalculationEngine
@@ -77,12 +82,15 @@ class IncomesView:
             expand=True,
         )
 
+        self.entorno = SessionManager.get_active_entorno(page)
+        default_currency = "USD" if self.entorno == "campo" else "UYU"
+
+        categories = get_income_categories_for_entorno(self.entorno)
         self.categoria_dropdown = ft.Dropdown(
             label="Categoría",
             expand=True,
             options=[
-                ft.dropdown.Option(key=cat.name, text=cat.value)
-                for cat in IncomeCategory
+                ft.dropdown.Option(key=cat.name, text=cat.value) for cat in categories
             ],
         )
 
@@ -109,7 +117,7 @@ class IncomesView:
         self.currency_dropdown = ft.Dropdown(
             label="Moneda",
             expand=True,
-            value="UYU",
+            value=default_currency,
             options=[
                 ft.dropdown.Option("UYU", "Pesos Uruguayos ($)"),
                 ft.dropdown.Option("USD", "Dólares (USD)"),
@@ -632,6 +640,7 @@ class IncomesView:
                 es_recurrente=es_recurrente,
                 frecuencia=frecuencia,
                 notas=None,
+                entorno=self.entorno,
             )
 
             if self.editing_income_id:
@@ -659,7 +668,9 @@ class IncomesView:
         """Renderizar ingresos del mes: recurrentes siempre + no-recurrentes del mes."""
         self.incomes_column.controls.clear()
         today = date.today()
-        incomes = self.income_controller.list_for_month(today.year, today.month)
+        incomes = self.income_controller.list_for_month(
+            today.year, today.month, entorno=self.entorno
+        )
 
         if not incomes:
             self.incomes_column.controls.append(
@@ -773,7 +784,7 @@ class IncomesView:
         self.summary_column.controls.clear()
         today = date.today()
         summary = self.income_controller.get_summary_by_categories(
-            year=today.year, month=today.month
+            year=today.year, month=today.month, entorno=self.entorno
         )
 
         if not summary:
@@ -903,7 +914,7 @@ class IncomesView:
         self.form_title.value = "💰 Registrar ingreso"
         self.cancel_button.visible = False
 
-        self.currency_dropdown.value = "UYU"
+        self.currency_dropdown.value = "USD" if self.entorno == "campo" else "UYU"
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

@@ -74,12 +74,14 @@ class ExpenseController(BaseController):
             service = ExpenseService(repo)
             return service.list_expenses()
 
-    def list_expenses_by_month(self, year: int, month: int) -> list[Expense]:
+    def list_expenses_by_month(
+        self, year: int, month: int, entorno: str | None = None
+    ) -> list[Expense]:
         """Listar gastos de un mes específico"""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
-            return service.list_by_month(year, month)
+            return service.list_by_month(year, month, entorno=entorno)
 
     def list_by_category(self, categoria: str) -> list[Expense]:
         """Listar gastos por categoría"""
@@ -93,13 +95,14 @@ class ExpenseController(BaseController):
         year: int | None = None,
         month: int | None = None,
         currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[tuple[str, str], Decimal]:
         """Obtener resumen de gastos por (categoría, moneda) del mes indicado."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
             return service.get_summary_by_categories(
-                year=year, month=month, currency=currency
+                year=year, month=month, currency=currency, entorno=entorno
             )
 
     def update_expense(self, expense: Expense) -> Result[Expense, AppError]:
@@ -117,10 +120,16 @@ class ExpenseController(BaseController):
             return service.delete_expense(expense_id)
 
     def get_total_by_month(
-        self, year: int, month: int, currency: str | None = None
+        self,
+        year: int,
+        month: int,
+        currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[str, Decimal]:
         """Obtener total de gastos de un mes específico, agrupado por moneda."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
-            return service.get_total_by_month(year, month, currency=currency)
+            return service.get_total_by_month(
+                year, month, currency=currency, entorno=entorno
+            )

@@ -30,10 +30,13 @@ class Expense(BaseModel):
         min_length=1, max_length=200, description="Descripción del gasto"
     )
 
-    # Categorización
+    # Categorización y Entorno
     categoria: ExpenseCategory = Field(description="Categoría principal del gasto")
     subcategoria: str | None = Field(
         default=None, description="Subcategoría específica"
+    )
+    entorno: str = Field(
+        default="hogar", description="Entorno o centro de costo: hogar | campo"
     )
 
     # Información de pago

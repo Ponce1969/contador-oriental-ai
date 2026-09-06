@@ -58,35 +58,44 @@ class IncomeController(BaseController):
             service = IncomeService(repo)
             return service.list_by_member(member_id)
 
-    def list_for_month(self, year: int, month: int) -> list[Income]:
+    def list_for_month(
+        self, year: int, month: int, entorno: str | None = None
+    ) -> list[Income]:
         """Ingresos del mes: recurrentes siempre + no-recurrentes solo del mes."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
-            return service.list_for_month(year, month)
+            return service.list_for_month(year, month, entorno=entorno)
 
     def get_summary_by_categories(
         self,
         year: int | None = None,
         month: int | None = None,
         currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[tuple[str, str], Decimal]:
         """Obtener resumen de ingresos por (categoría, moneda) del mes indicado."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
             return service.get_summary_by_categories(
-                year=year, month=month, currency=currency
+                year=year, month=month, currency=currency, entorno=entorno
             )
 
     def get_total_by_month(
-        self, year: int, month: int, currency: str | None = None
+        self,
+        year: int,
+        month: int,
+        currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[str, Decimal]:
         """Obtener total de ingresos del mes, agrupado por moneda."""
         with self._get_session() as session:
             repo = IncomeRepository(session, self._familia_id)
             service = IncomeService(repo)
-            return service.get_total_by_month(year, month, currency=currency)
+            return service.get_total_by_month(
+                year, month, currency=currency, entorno=entorno
+            )
 
     def delete_income(self, income_id: int) -> Result[None, AppError]:
         """Eliminar un ingreso"""

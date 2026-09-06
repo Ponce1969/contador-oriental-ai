@@ -64,7 +64,9 @@ class IncomeService:
         incomes = self._repo.get_by_month(year, month)
         return list(incomes)
 
-    def list_for_month(self, year: int, month: int) -> list[Income]:
+    def list_for_month(
+        self, year: int, month: int, entorno: str | None = None
+    ) -> list[Income]:
         """
         Ingresos relevantes para un mes dado:
         - Recurrentes: siempre se muestran (sueldo, alquiler cobrado, etc.)
@@ -73,6 +75,8 @@ class IncomeService:
         todos = self.list_incomes()
         resultado = []
         for inc in todos:
+            if entorno and entorno != "consolidado" and inc.entorno != entorno:
+                continue
             if inc.es_recurrente:
                 resultado.append(inc)
             elif inc.fecha.year == year and inc.fecha.month == month:
@@ -97,10 +101,14 @@ class IncomeService:
         return self._repo.update(income)
 
     def get_total_by_month(
-        self, year: int, month: int, currency: str | None = None
+        self,
+        year: int,
+        month: int,
+        currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[str, Decimal]:
         """Total de ingresos del mes, agrupado por moneda."""
-        incomes = self.list_for_month(year, month)
+        incomes = self.list_for_month(year, month, entorno=entorno)
         totals: dict[str, Decimal] = {}
         for income in incomes:
             if currency is not None and income.currency != currency:
@@ -120,12 +128,17 @@ class IncomeService:
         year: int | None = None,
         month: int | None = None,
         currency: str | None = None,
+        entorno: str | None = None,
     ) -> dict[tuple[str, str], Decimal]:
-        """Resumen de ingresos por (categoría, moneda), filtrado opcionalmente."""
+        """Resumen de ingresos por (categoría, moneda), opcionalmente
+        filtrado por mes.
+        """
         if year is not None and month is not None:
-            incomes = self.list_for_month(year, month)
+            incomes = self.list_for_month(year, month, entorno=entorno)
         else:
             incomes = self.list_incomes()
+            if entorno and entorno != "consolidado":
+                incomes = [inc for inc in incomes if inc.entorno == entorno]
         summary: dict[tuple[str, str], Decimal] = {}
         for income in incomes:
             if currency is not None and income.currency != currency:

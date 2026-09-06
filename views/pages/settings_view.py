@@ -47,6 +47,17 @@ class SettingsView:
             on_click=self._on_save_email,
         )
 
+        self._campo_switch = ft.Switch(
+            label="Habilitar gestión de Campo / Actividad Rural",
+            value=SessionManager.is_campo_enabled(page),
+            on_change=self._on_toggle_campo,
+        )
+
+    def _on_toggle_campo(self, e: ft.ControlEvent) -> None:
+        enabled = bool(self._campo_switch.value)
+        SessionManager.set_campo_enabled(self.page, enabled)
+        self.page.update()
+
     def _get_user_id(self) -> int | None:
         return SessionManager.get_user_id(self.page)
 
@@ -148,6 +159,41 @@ class SettingsView:
                                 ],
                                 spacing=10,
                             ),
+                        ],
+                        spacing=12,
+                    ),
+                    padding=ft.Padding.only(top=8),
+                ),
+                # ── Divider ──
+                ft.Divider(),
+                # ── Campo / Agro section ──
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Row(
+                                controls=[
+                                    ft.Icon(
+                                        ft.Icons.AGRICULTURE,
+                                        size=28,
+                                        color=ft.Colors.GREEN_700,
+                                    ),
+                                    ft.Text(
+                                        value="Actividad Rural / Campo",
+                                        size=20,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.GREEN_800,
+                                    ),
+                                ],
+                                spacing=10,
+                            ),
+                            ft.Text(
+                                "Habilita el selector de entorno (Hogar / Campo) "
+                                "en la barra superior para gestionar cuentas "
+                                "agropecuarias con categorías e insumos rurales.",
+                                size=12,
+                                color=ft.Colors.GREY_600,
+                            ),
+                            self._campo_switch,
                         ],
                         spacing=12,
                     ),

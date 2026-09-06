@@ -23,6 +23,7 @@ def income_to_domain(row: IncomeTable) -> Income:
         es_recurrente=row.es_recurrente,
         frecuencia=RecurrenceFrequency(row.frecuencia) if row.frecuencia else None,
         notas=row.notas,
+        entorno=getattr(row, "entorno", "hogar") or "hogar",
     )
 
 
@@ -40,4 +41,5 @@ def income_to_table(income: Income) -> IncomeTable:
         es_recurrente=income.es_recurrente,
         frecuencia=income.frecuencia.value if income.frecuencia else None,
         notas=income.notas,
+        entorno=income.entorno,
     )

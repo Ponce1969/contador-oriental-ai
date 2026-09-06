@@ -24,6 +24,7 @@ def to_domain(row: ExpenseTable) -> Expense:
         notas=row.notas,
         installment_purchase_id=row.installment_purchase_id,
         pendiente=bool(row.pendiente) if row.pendiente is not None else False,
+        entorno=getattr(row, "entorno", "hogar") or "hogar",
     )
 
 
@@ -42,6 +43,7 @@ def to_table(expense: Expense) -> ExpenseTable:
         notas=expense.notas,
         installment_purchase_id=expense.installment_purchase_id,
         pendiente=expense.pendiente,
+        entorno=expense.entorno,
     )
 
 

@@ -38,6 +38,7 @@ class IncomeRepository(BaseTableRepository[Income, IncomeTable]):
         table_row.currency = entity.currency
         table_row.concept = entity.concept
         table_row.economic_activity_id = entity.economic_activity_id
+        table_row.entorno = entity.entorno
 
     def get_by_member(self, member_id: int) -> Sequence[Income]:
         """Obtener ingresos de un miembro específico de la familia"""
@@ -48,7 +49,9 @@ class IncomeRepository(BaseTableRepository[Income, IncomeTable]):
         rows = query.all()
         return [income_to_domain(row) for row in rows]
 
-    def get_by_month(self, year: int, month: int) -> Sequence[Income]:
+    def get_by_month(
+        self, year: int, month: int, entorno: str | None = None
+    ) -> Sequence[Income]:
         """Obtener ingresos de un mes específico de la familia"""
         from sqlalchemy import extract
 
@@ -56,6 +59,8 @@ class IncomeRepository(BaseTableRepository[Income, IncomeTable]):
             extract("year", IncomeTable.fecha) == year,
             extract("month", IncomeTable.fecha) == month,
         )
+        if entorno and entorno != "consolidado":
+            query = query.filter(IncomeTable.entorno == entorno)
         query = self._filter_by_family(query)
         rows = query.all()
         return [income_to_domain(row) for row in rows]
