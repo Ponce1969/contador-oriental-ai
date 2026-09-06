@@ -504,6 +504,8 @@ def _filtrar_items_reales(items: list, texto: str) -> list[str]:
     texto_lower = texto.lower()
     items_validos = []
     for item in items:
+        if isinstance(item, dict):
+            item = item.get("nombre") or item.get("name") or item.get("item") or ""
         if not isinstance(item, str) or not item.strip():
             continue
         item_clean = item.strip()
@@ -910,7 +912,17 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             try:
                 fecha_parsed_local = date.fromisoformat(str(fecha_str))
             except (ValueError, TypeError):
-                pass
+                m_date = re.match(
+                    r"^(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2,4})$",
+                    str(fecha_str).strip(),
+                )
+                if m_date:
+                    d, m, y = m_date.groups()
+                    y_int = int(y) + (2000 if int(y) < 100 else 0)
+                    try:
+                        fecha_parsed_local = date(y_int, int(m), int(d))
+                    except ValueError:
+                        pass
 
         if monto is None and comercio is None:
             return OCRResponse(
