@@ -308,15 +308,169 @@ async def extraer_texto_tesseract(imagen_path: Path) -> tuple[str, float]:
         return "", 0.0
 
 
+def _detect_image_mime_type(image_bytes: bytes) -> str:
+    """Detect image MIME type from magic numbers or fallback to JPEG."""
+    if image_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if (
+        image_bytes.startswith(b"RIFF")
+        and len(image_bytes) >= 12
+        and image_bytes[8:12] == b"WEBP"
+    ):
+        return "image/webp"
+    return "image/jpeg"
+
+
+def extraer_datos_regex(texto: str) -> dict:
+    """Fallback heuristic and regex extractor for Uruguayan receipts.
+
+    Parses total amount, date, store name, and currency directly from raw OCR text
+    when LLM/Ollama parsing is unavailable or fails.
+    """
+    if not texto:
+        return {}
+
+    lines = [line.strip() for line in texto.split("\n") if line.strip()]
+    full_text = " ".join(lines)
+
+    # 1. Currency
+    currency = "UYU"
+    if re.search(r"\b(USD|U\$S|US\$|DOLARES|DOLAR)\b", full_text, re.IGNORECASE):
+        currency = "USD"
+
+    # 2. Date
+    fecha: str | None = None
+    date_match = re.search(r"\b(\d{1,2})[/\-\.](\d{1,2})[/\-\.](\d{2,4})\b", full_text)
+    if date_match:
+        d_str, m_str, y_str = date_match.groups()
+        try:
+            day = int(d_str)
+            month = int(m_str)
+            year = int(y_str)
+            if year < 100:
+                year += 2000
+            if 1 <= day <= 31 and 1 <= month <= 12 and 2000 <= year <= 2035:
+                fecha = f"{year:04d}-{month:02d}-{day:02d}"
+        except (ValueError, TypeError):
+            fecha = None
+
+    if not fecha:
+        iso_match = re.search(r"\b(20\d{2})[/\-](\d{2})[/\-](\d{2})\b", full_text)
+        if iso_match:
+            y, m, d = iso_match.groups()
+            fecha = f"{y}-{m}-{d}"
+
+    # 3. Store name
+    comercio: str | None = None
+    known_stores = [
+        "TIENDA INGLESA",
+        "DEVOTO",
+        "DISCO",
+        "TATA",
+        "TA-TA",
+        "GEANT",
+        "FARMASHOP",
+        "SAN ROQUE",
+        "MACROMERCADO",
+        "MACRO MERCADO",
+        "SODIMAC",
+        "ANCAP",
+        "DISA",
+        "AXION",
+        "PETROBRAS",
+        "EL CLON",
+        "FARMACIA",
+        "SUPERMERCADO",
+        "PANADERIA",
+        "CARNICERIA",
+        "VERDULERIA",
+        "FERRETERIA",
+        "AGROPECUARIA",
+        "VETERINARIA",
+    ]
+    upper_full = full_text.upper()
+    for store in known_stores:
+        if store in upper_full:
+            comercio = store.title()
+            break
+
+    if not comercio and lines:
+        for line in lines[:4]:
+            clean = re.sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", "", line).strip()
+            upper_clean = clean.upper()
+            if len(clean) >= 3 and not any(
+                w in upper_clean
+                for w in ("RUT", "FECHA", "HORA", "TICKET", "FACTURA", "CAJA", "LOCAL")
+            ):
+                comercio = clean.title()
+                break
+
+    # 4. Total Amount
+    monto: float | None = None
+    num_pat = (
+        r"([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})|[0-9]+(?:[.,][0-9]{1,2})?)"
+    )
+    ccy_prefix = r"[:\$]?\s*(?:UYU|USD|\$|U\$S)?\s*"
+    primary_patterns = [
+        rf"(?:TOTAL A PAGAR|TOTAL PAGADO|TOTAL FINAL)\s*{ccy_prefix}{num_pat}",
+        rf"(?<!SUB)(?<!DES)TOTAL\s*{ccy_prefix}{num_pat}",
+        rf"(?:IMPORTE TOTAL|A PAGAR|PAGO CONTADO)\s*{ccy_prefix}{num_pat}",
+    ]
+    secondary_patterns = [
+        rf"(?:SUBTOTAL|IMPORTE|TOT)\s*{ccy_prefix}{num_pat}",
+        rf"(?:UYU|USD|\$|U\$S)\s*{num_pat}",
+    ]
+
+    def _extract_from_patterns(patterns: list[str]) -> list[float]:
+        results: list[float] = []
+        for pattern in patterns:
+            for m in re.finditer(pattern, full_text, re.IGNORECASE):
+                raw_num = m.group(1).strip()
+                if "," in raw_num and "." in raw_num:
+                    if raw_num.rfind(",") > raw_num.rfind("."):
+                        raw_num = raw_num.replace(".", "").replace(",", ".")
+                    else:
+                        raw_num = raw_num.replace(",", "")
+                elif "," in raw_num:
+                    parts = raw_num.split(",")
+                    if len(parts) == 2 and len(parts[1]) <= 2:
+                        raw_num = parts[0] + "." + parts[1]
+                    else:
+                        raw_num = raw_num.replace(",", "")
+                try:
+                    val = float(raw_num)
+                    if 0.0 < val < 10000000.0:
+                        results.append(val)
+                except ValueError:
+                    pass
+        return results
+
+    primary_candidates = _extract_from_patterns(primary_patterns)
+    if primary_candidates:
+        monto = primary_candidates[-1]
+    else:
+        secondary_candidates = _extract_from_patterns(secondary_patterns)
+        if secondary_candidates:
+            monto = secondary_candidates[-1]
+
+    return {
+        "monto": monto,
+        "fecha": fecha,
+        "comercio": comercio,
+        "currency": currency,
+        "items": [],
+    }
+
+
 async def parsear_con_ollama(texto: str) -> dict | None:
-    """Parse raw OCR text using Ollama/Gemma with 60s timeout."""
+    """Parse raw OCR text using Ollama with 90s timeout."""
     if not texto.strip():
         return None
 
     try:
         prompt = _PROMPT_PARSEO.format(texto=texto[:1500])
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             response = await client.post(
                 f"{settings.ollama_base_url}/api/generate",
                 json={
@@ -346,7 +500,8 @@ async def parsear_con_ollama(texto: str) -> dict | None:
         return datos
 
     except Exception as e:
-        logger.warning("[PARSER] Ollama extraction failed: %s", e)
+        err_detail = f"{type(e).__name__}: {e}" if str(e) else repr(e)
+        logger.warning("[PARSER] Ollama extraction failed: %s", err_detail)
         return None
 
 
@@ -362,6 +517,7 @@ async def extraer_con_gemini_flash(
         f"{model}:generateContent?key={api_key}"
     )
     b64_image = base64.b64encode(image_bytes).decode("utf-8")
+    mime_type = _detect_image_mime_type(image_bytes)
     payload = {
         "contents": [
             {
@@ -389,7 +545,7 @@ async def extraer_con_gemini_flash(
                     },
                     {
                         "inline_data": {
-                            "mime_type": "image/jpeg",
+                            "mime_type": mime_type,
                             "data": b64_image,
                         }
                     },
@@ -402,8 +558,14 @@ async def extraer_con_gemini_flash(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(url, json=payload)
+            if resp.is_error:
+                logger.error(
+                    "[GEMINI] HTTP %d: %s",
+                    resp.status_code,
+                    resp.text[:500],
+                )
             resp.raise_for_status()
             data = resp.json()
 
@@ -458,7 +620,8 @@ async def extraer_con_gemini_flash(
             "currency": currency_val,
         }
     except Exception as e:
-        logger.warning("[GEMINI] Extraction failed: %s", e)
+        err_desc = f"{type(e).__name__}: {e}" if str(e) else repr(e)
+        logger.error("[GEMINI] Extraction failed: %s", err_desc)
         return None
 
 
@@ -504,7 +667,10 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 if engine == "cloud":
                     return OCRResponse(
                         success=False,
-                        error="No se pudo extraer información con Gemini Flash",
+                        error=(
+                            "No se pudo extraer información con Gemini Flash. "
+                            "Revisá logs para detalle HTTP."
+                        ),
                         engine_used="gemini-2.0-flash",
                     )
                 logger.warning(
@@ -512,14 +678,15 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                     "falling back to local pipeline"
                 )
             except Exception as e:
+                err_desc = f"{type(e).__name__}: {e}" if str(e) else repr(e)
                 logger.warning(
                     "[OCR] Gemini Flash failed (%s); falling back to local pipeline",
-                    e,
+                    err_desc,
                 )
                 if engine == "cloud":
                     return OCRResponse(
                         success=False,
-                        error=f"Error en Gemini Flash: {e}",
+                        error=f"Error en Gemini Flash: {err_desc}",
                         engine_used="gemini-2.0-flash",
                     )
         elif engine == "cloud":
@@ -529,10 +696,10 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 engine_used="gemini-2.0-flash",
             )
 
-    # 2. Local pipeline (Tesseract + Ollama)
+    # 2. Local pipeline (Tesseract + Ollama / Regex fallback)
     try:
         texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
-        if not texto_crudo or len(texto_crudo) < 20:
+        if not texto_crudo or len(texto_crudo) < 10:
             return OCRResponse(
                 success=False,
                 error="No se pudo extraer texto de la imagen",
@@ -541,14 +708,15 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             )
 
         parsed = await parsear_con_ollama(texto_crudo)
-        if not parsed:
-            return OCRResponse(
-                success=True,
-                texto_crudo=texto_crudo,
-                confianza_ocr=confianza,
-                error="OCR exitoso pero no se pudo parsear los datos",
-                engine_used="local-tesseract",
+        engine_used = "local-tesseract-ollama"
+        if not parsed or (
+            parsed.get("monto") is None and parsed.get("comercio") is None
+        ):
+            logger.info(
+                "[OCR] Ollama unavailable or empty; falling back to regex parser"
             )
+            parsed = extraer_datos_regex(texto_crudo)
+            engine_used = "local-tesseract-regex"
 
         monto = parsed.get("monto")
         fecha_str = parsed.get("fecha")
@@ -559,9 +727,18 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
         fecha_parsed_local: date | None = None
         if fecha_str:
             try:
-                fecha_parsed_local = date.fromisoformat(fecha_str)
+                fecha_parsed_local = date.fromisoformat(str(fecha_str))
             except (ValueError, TypeError):
                 pass
+
+        if monto is None and comercio is None:
+            return OCRResponse(
+                success=True,
+                texto_crudo=texto_crudo,
+                confianza_ocr=confianza,
+                error="OCR exitoso pero no se detectaron montos ni comercio",
+                engine_used=engine_used,
+            )
 
         return OCRResponse(
             success=True,
@@ -572,7 +749,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             currency=currency,
             texto_crudo=texto_crudo,
             confianza_ocr=confianza,
-            engine_used="local-tesseract",
+            engine_used=engine_used,
         )
     except Exception as e:
         logger.error("[OCR] Receipt processing error: %s", e)

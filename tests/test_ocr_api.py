@@ -162,7 +162,7 @@ class TestProcesarJobAsync:
             resp = await procesar_job_async(ticket_file, engine="auto")
 
         assert resp.success is True
-        assert resp.engine_used == "local-tesseract"
+        assert resp.engine_used.startswith("local-tesseract")
         assert resp.monto == 500.0
         assert resp.comercio == "Tienda Inglesa"
 
@@ -199,6 +199,75 @@ class TestProcesarJobAsync:
 
         assert mock_gemini.called is False
         assert resp.success is True
-        assert resp.engine_used == "local-tesseract"
+        assert resp.engine_used.startswith("local-tesseract")
         assert resp.monto == 300.0
         assert resp.comercio == "TaTa"
+
+    async def test_local_engine_regex_fallback_when_ollama_fails(self, tmp_path):
+        ticket_file = tmp_path / "ticket.jpg"
+        ticket_file.write_bytes(b"receipt_image_bytes")
+
+        ticket_text = (
+            "SUPERMERCADO DEVOTO\n"
+            "RUT 219999990019\n"
+            "FECHA: 15/08/2026 14:30\n"
+            "YERBA CANARIAS 1KG  250.00\n"
+            "LECHE CONAPROLE      45.00\n"
+            "TOTAL $ 295,00\n"
+        )
+
+        with (
+            patch(
+                "ocr_api.main.extraer_texto_tesseract",
+                new_callable=AsyncMock,
+                return_value=(ticket_text, 0.88),
+            ),
+            patch(
+                "ocr_api.main.parsear_con_ollama",
+                new_callable=AsyncMock,
+                return_value=None,  # Ollama fails / timeout
+            ),
+        ):
+            resp = await procesar_job_async(ticket_file, engine="local")
+
+        assert resp.success is True
+        assert resp.engine_used == "local-tesseract-regex"
+        assert resp.monto == 295.0
+        assert resp.comercio == "Devoto"
+        assert str(resp.fecha) == "2026-08-15"
+        assert resp.currency == "UYU"
+
+
+class TestRegexExtraction:
+    """Direct tests for Uruguayan regex fallback parser."""
+
+    def test_extraer_datos_regex_with_pesos_ticket(self):
+        from ocr_api.main import extraer_datos_regex
+
+        texto = (
+            "TATA S.A.\n"
+            "RUT: 210001230018\n"
+            "FECHA 28/02/2026\n"
+            "SUBTOTAL 1.200,00\n"
+            "TOTAL A PAGAR: $ 1.250,50\n"
+        )
+        data = extraer_datos_regex(texto)
+        assert data["comercio"] == "Tata"
+        assert data["fecha"] == "2026-02-28"
+        assert data["monto"] == 1250.5
+        assert data["currency"] == "UYU"
+
+    def test_extraer_datos_regex_with_usd_ticket(self):
+        from ocr_api.main import extraer_datos_regex
+
+        texto = (
+            "AGROPECUARIA DEL SUR\n"
+            "FECHA: 2026-05-10\n"
+            "SEMILLAS MAIZ  USD 450.00\n"
+            "TOTAL USD 450.00\n"
+        )
+        data = extraer_datos_regex(texto)
+        assert data["comercio"] == "Agropecuaria"
+        assert data["fecha"] == "2026-05-10"
+        assert data["monto"] == 450.0
+        assert data["currency"] == "USD"

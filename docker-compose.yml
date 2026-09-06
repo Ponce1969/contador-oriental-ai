@@ -129,6 +129,7 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: 8551
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_OCR_MODEL:-gemma2:2b}
       OCR_ALLOWED_ORIGIN: ${OCR_ALLOWED_ORIGIN:-http://localhost:8550}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
