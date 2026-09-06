@@ -48,7 +48,7 @@ services:
       
       # OCR Microservice
       OCR_API_URL: ${OCR_API_URL:-http://ocr_api:8551}
-      OCR_API_PUBLIC_URL: ${OCR_API_PUBLIC_URL:-http://localhost:8551}
+      OCR_API_PUBLIC_URL: ${OCR_API_PUBLIC_URL:-/ocr}
 
       # Ollama IA
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}

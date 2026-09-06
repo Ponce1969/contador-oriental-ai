@@ -28,7 +28,7 @@ from views.layouts.main_layout import MainLayout
 
 # URL interna Docker (Python->microservicio) y publica (browser->microservicio)
 _OCR_INTERNAL = os.getenv("OCR_API_URL", "http://ocr_api:8551")
-_OCR_PUBLIC = os.getenv("OCR_API_PUBLIC_URL", "http://localhost:8551")
+_OCR_PUBLIC = os.getenv("OCR_API_PUBLIC_URL", "/ocr")
 
 logger = logging.getLogger(__name__)
 

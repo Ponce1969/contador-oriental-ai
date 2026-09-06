@@ -39,7 +39,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
 
 
 def _safe_unlink(path: Path) -> None:
@@ -65,26 +65,26 @@ class JobRecord:
 
 
 class JobStore:
-    """Thread-safe in-memory job store with TTL eviction."""
+    """Thread-safe in-memory store for OCR job records."""
 
     def __init__(self) -> None:
         self._jobs: dict[str, JobRecord] = {}
         self._lock = Lock()
 
     def create(self, job_id: str | None = None) -> JobRecord:
-        """Create a new job entry with PENDING status."""
+        """Create a new job record with PENDING status."""
+        jid = job_id or str(uuid.uuid4())
+        record = JobRecord(
+            job_id=jid,
+            status=JobStatus.PENDING,
+            created_at=datetime.now(UTC),
+        )
         with self._lock:
-            jid = job_id or str(uuid.uuid4())
-            record = JobRecord(
-                job_id=jid,
-                status=JobStatus.PENDING,
-                created_at=datetime.now(UTC),
-            )
             self._jobs[jid] = record
-            return record
+        return record
 
     def get(self, job_id: str) -> JobRecord | None:
-        """Retrieve a job by its ID."""
+        """Retrieve a job record by ID."""
         with self._lock:
             return self._jobs.get(job_id)
 
@@ -95,7 +95,7 @@ class JobStore:
         resultado: OCRResponse | None = None,
         error: str | None = None,
     ) -> JobRecord:
-        """Update job status and results."""
+        """Update job status and optionally set result or error message."""
         with self._lock:
             record = self._jobs.get(job_id)
             if record is None:
@@ -228,10 +228,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,  # type: ignore[arg-type]
-    allow_origins=[os.getenv("OCR_ALLOWED_ORIGIN", "http://app:8550")],
+    allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["POST"],
-    allow_headers=["Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -505,11 +505,18 @@ async def parsear_con_ollama(texto: str) -> dict | None:
         return None
 
 
+_last_gemini_error: str | None = None
+
+
 async def extraer_con_gemini_flash(
     image_bytes: bytes, api_key: str, model: str
 ) -> dict | None:
     """Extract receipt information using Gemini Flash cloud model."""
+    global _last_gemini_error
+    _last_gemini_error = None
+
     if not image_bytes or not api_key:
+        _last_gemini_error = "Bytes de imagen o API key vacíos"
         return None
 
     url = (
@@ -561,6 +568,7 @@ async def extraer_con_gemini_flash(
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(url, json=payload)
             if resp.is_error:
+                _last_gemini_error = f"HTTP {resp.status_code}: {resp.text[:300]}"
                 logger.error(
                     "[GEMINI] HTTP %d: %s",
                     resp.status_code,
@@ -571,16 +579,19 @@ async def extraer_con_gemini_flash(
 
         candidates = data.get("candidates", [])
         if not candidates:
+            _last_gemini_error = "Google API respondió sin candidates"
             logger.warning("[GEMINI] No candidates in response")
             return None
 
         parts = candidates[0].get("content", {}).get("parts", [])
         if not parts:
+            _last_gemini_error = "Google API respondió sin parts de contenido"
             logger.warning("[GEMINI] No content parts in response")
             return None
 
         raw_text = parts[0].get("text", "")
         if not raw_text:
+            _last_gemini_error = "Google API respondió con texto vacío"
             logger.warning("[GEMINI] Empty text part in response")
             return None
 
@@ -621,6 +632,8 @@ async def extraer_con_gemini_flash(
         }
     except Exception as e:
         err_desc = f"{type(e).__name__}: {e}" if str(e) else repr(e)
+        if not _last_gemini_error:
+            _last_gemini_error = err_desc
         logger.error("[GEMINI] Extraction failed: %s", err_desc)
         return None
 
@@ -665,12 +678,13 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                         engine_used="gemini-2.0-flash",
                     )
                 if engine == "cloud":
+                    detail = (
+                        _last_gemini_error
+                        or "Respuesta vacía o formato inválido de Google API"
+                    )
                     return OCRResponse(
                         success=False,
-                        error=(
-                            "No se pudo extraer información con Gemini Flash. "
-                            "Revisá logs para detalle HTTP."
-                        ),
+                        error=f"Gemini Flash falló: {detail}",
                         engine_used="gemini-2.0-flash",
                     )
                 logger.warning(
@@ -1001,8 +1015,10 @@ async def upload_form(
       status.textContent = 'Procesando... esto puede tardar unos segundos.';
 
       const formData = new FormData(e.target);
+      const p = window.location.pathname;
+      const submitUrl = p.replace(/upload-form.*$/, 'upload-form-submit');
       try {{
-        const resp = await fetch('/upload-form-submit', {{
+        const resp = await fetch(submitUrl, {{
           method: 'POST',
           body: formData
         }});
