@@ -47,7 +47,7 @@ class SettingsView:
             on_click=self._on_save_email,
         )
 
-        self._campo_switch = ft.Switch(
+        self._campo_switch = ft.Checkbox(
             label="Habilitar gestión de Campo / Actividad Rural",
             value=SessionManager.is_campo_enabled(page),
             on_change=self._on_toggle_campo,
@@ -100,6 +100,7 @@ class SettingsView:
     def render(self):
         content = ft.Column(
             spacing=24,
+            scroll=ft.ScrollMode.AUTO,
             controls=[
                 # ── Language section ──
                 ft.Text(
@@ -190,14 +191,22 @@ class SettingsView:
                                 "Habilita el selector de entorno (Hogar / Campo) "
                                 "en la barra superior para gestionar cuentas "
                                 "agropecuarias con categorías e insumos rurales.",
-                                size=12,
-                                color=ft.Colors.GREY_600,
+                                size=13,
+                                color=ft.Colors.GREY_700,
                             ),
-                            self._campo_switch,
+                            ft.Container(
+                                content=self._campo_switch,
+                                bgcolor=ft.Colors.GREEN_50,
+                                border=ft.Border.all(1, ft.Colors.GREEN_300),
+                                border_radius=8,
+                                padding=ft.Padding.symmetric(
+                                    horizontal=14, vertical=10
+                                ),
+                            ),
                         ],
                         spacing=12,
                     ),
-                    padding=ft.Padding.only(top=8),
+                    padding=ft.Padding.only(top=8, bottom=140),
                 ),
             ],
         )
