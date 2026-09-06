@@ -521,10 +521,13 @@ async def extraer_con_gemini_flash(
 
     models_to_try = [model]
     for fallback_mod in (
-        "gemini-2.5-flash",
         "gemini-1.5-flash",
-        "gemini-flash-latest",
         "gemini-2.0-flash",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-flash-latest",
+        "gemini-2.0-flash-exp",
+        "gemini-1.5-flash-8b",
     ):
         if fallback_mod not in models_to_try:
             models_to_try.append(fallback_mod)
@@ -574,31 +577,69 @@ async def extraer_con_gemini_flash(
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             for current_model in models_to_try:
-                url = (
-                    f"https://generativelanguage.googleapis.com/v1beta/models/"
-                    f"{current_model}:generateContent?key={api_key}"
-                )
-                resp = await client.post(url, json=payload)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    logger.info("[GEMINI] Succeeded with model: %s", current_model)
+                for api_version in ("v1beta", "v1"):
+                    url = (
+                        f"https://generativelanguage.googleapis.com/{api_version}/models/"
+                        f"{current_model}:generateContent?key={api_key}"
+                    )
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        logger.info(
+                            "[GEMINI] Succeeded with model: %s (%s)",
+                            current_model,
+                            api_version,
+                        )
+                        break
+
+                    body_snip = resp.text[:200]
+                    _last_gemini_error = (
+                        f"HTTP {resp.status_code} ({current_model}/{api_version}): {body_snip}"
+                    )
+                    logger.warning(
+                        "[GEMINI] Model %s (%s) failed (HTTP %d): %s",
+                        current_model,
+                        api_version,
+                        resp.status_code,
+                        resp.text[:200],
+                    )
+                    if resp.status_code not in (404, 400):
+                        break
+
+                if data is not None:
                     break
 
-                body_snip = resp.text[:200]
-                _last_gemini_error = (
-                    f"HTTP {resp.status_code} ({current_model}): {body_snip}"
-                )
-                logger.warning(
-                    "[GEMINI] Model %s failed (HTTP %d): %s",
-                    current_model,
-                    resp.status_code,
-                    resp.text[:200],
-                )
-                # If 404 (model not found), try next candidate
-                if resp.status_code in (404, 400):
-                    continue
-                # For auth/rate-limit errors, do not retry other models
-                break
+            # Si todos los modelos candidatos fallaron con 404/400, consultar ListModels
+            if data is None:
+                try:
+                    logger.info("[GEMINI] Querying ListModels to discover available models...")
+                    list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+                    list_resp = await client.get(list_url, timeout=10.0)
+                    if list_resp.status_code == 200:
+                        models_data = list_resp.json().get("models", [])
+                        discovered = [
+                            m.get("name", "").replace("models/", "")
+                            for m in models_data
+                            if "generateContent" in m.get("supportedGenerationMethods", [])
+                        ]
+                        logger.info("[GEMINI] Discovered available models from Google: %s", discovered)
+                        flash_first = [m for m in discovered if "flash" in m.lower()]
+                        other_models = [m for m in discovered if "flash" not in m.lower()]
+                        for disc_model in (flash_first + other_models):
+                            if disc_model in models_to_try:
+                                continue
+                            url = (
+                                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                                f"{disc_model}:generateContent?key={api_key}"
+                            )
+                            resp = await client.post(url, json=payload)
+                            if resp.status_code == 200:
+                                data = resp.json()
+                                logger.info("[GEMINI] Succeeded with discovered model: %s", disc_model)
+                                break
+                            _last_gemini_error = f"HTTP {resp.status_code} ({disc_model}): {resp.text[:200]}"
+                except Exception as list_err:
+                    logger.warning("[GEMINI] ListModels query failed: %s", list_err)
 
         if data is None:
             return None
