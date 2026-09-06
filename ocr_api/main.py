@@ -1201,10 +1201,14 @@ async def upload_form(
           method: 'POST',
           body: formData
         }});
+        if (!resp.ok) {{
+          const errBody = await resp.text();
+          throw new Error('Servidor error ' + resp.status + ': ' + (errBody.slice(0, 100) || 'Sin respuesta'));
+        }}
         const data = await resp.json();
         if (data.success) {{
           status.className = 'status success';
-          status.textContent = '\\u2705 Listo. Volvé a la app para ver los resultados.';
+          status.textContent = '\\u2705 Listo. Volv\\u00e9 a la app para ver los resultados.';
         }} else {{
           status.className = 'status error';
           status.textContent = 'Error: ' + (data.error || 'No se pudo procesar');
@@ -1225,13 +1229,14 @@ async def upload_form(
 
 @app.post("/upload-form-submit")
 async def upload_form_submit(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),  # noqa: B008
     session_id: str | None = Form(None),
     job_id: str | None = Form(None),
     familia_id: int = Form(1, gt=0),
     engine: str = Form("auto"),
 ) -> JSONResponse:
-    """Process ticket submission from HTML form and store result in memory."""
+    """Process ticket submission from HTML form and store result in memory asynchronously."""
     if not file.content_type or not file.content_type.startswith("image/"):
         return JSONResponse(
             {"success": False, "error": "Solo imágenes"},
@@ -1259,32 +1264,16 @@ async def upload_form_submit(
 
     job_store.create(effective_id)
     job_store.update(effective_id, status=JobStatus.PROCESSING)
+    background_tasks.add_task(_execute_background_job, effective_id, tmp_path, engine)
 
-    try:
-        result = await procesar_job_async(tmp_path, engine=engine)
-        if result.success:
-            job_store.update(effective_id, status=JobStatus.COMPLETED, resultado=result)
-        else:
-            job_store.update(
-                effective_id,
-                status=JobStatus.FAILED,
-                resultado=result,
-                error=result.error or "OCR extraction failed",
-            )
-        return JSONResponse(result.model_dump(mode="json"))
-
-    except Exception as e:
-        logger.error("[FORM] Error: %s", e)
-        err_res = OCRResponse(success=False, error=str(e))
-        job_store.update(
-            effective_id,
-            status=JobStatus.FAILED,
-            resultado=err_res,
-            error=str(e),
-        )
-        return JSONResponse(err_res.model_dump(mode="json"), status_code=500)
-    finally:
-        _safe_unlink(tmp_path)
+    return JSONResponse(
+        {
+            "success": True,
+            "session_id": effective_id,
+            "status": "processing",
+            "message": "Imagen recibida, procesando en segundo plano",
+        }
+    )
 
 
 @app.get("/resultado/{session_id}")
