@@ -203,7 +203,7 @@ class TestProcesarJobAsync:
         assert resp.success is True
         assert resp.engine_used.startswith("local-tesseract")
         assert resp.monto == 300.0
-        assert resp.comercio == "TaTa"
+        assert resp.comercio.lower() == "tata"
 
     async def test_local_engine_regex_fallback_when_ollama_fails(self, tmp_path):
         ticket_file = tmp_path / "ticket.jpg"
@@ -274,7 +274,7 @@ class TestProcesarJobAsync:
             resp = await procesar_job_async(ticket_file, engine="local")
 
         assert resp.success is True
-        # El monto alucinado (1250) fue descartado y reemplazado por el real del ticket (790)
+        # El monto alucinado (1250) se descarta por el real del ticket (790)
         assert resp.monto == 790.0
         assert "leche" not in resp.items
         assert "pan" not in resp.items

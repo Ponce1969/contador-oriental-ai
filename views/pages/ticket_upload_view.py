@@ -599,7 +599,7 @@ class TicketUploadView:
         for i in range(intentos):
             await asyncio.sleep(intervalo)
 
-            if self._estado != _Estado.IDLE:
+            if self._estado not in (_Estado.IDLE, _Estado.LOADING):
                 return
 
             try:
@@ -613,10 +613,17 @@ class TicketUploadView:
                 continue
 
             if not data.get("ready"):
+                if data.get("status") == "processing" and self._estado == _Estado.IDLE:
+                    self._cambiar_estado(_Estado.LOADING)
+                    await self._actualizar_loading(
+                        "Foto recibida 📸",
+                        "Analizando ticket en la Orange Pi...",
+                    )
                 continue
 
             try:
-                self._cambiar_estado(_Estado.LOADING)
+                if self._estado != _Estado.LOADING:
+                    self._cambiar_estado(_Estado.LOADING)
                 await self._procesar_resultado_ocr(data)
             except Exception as e:
                 logger.error("[OCR] Error processing OCR result: %s", e, exc_info=True)
@@ -624,6 +631,8 @@ class TicketUploadView:
             return
 
         logger.warning("[OCR] Timeout esperando foto session=%s", self._session_id)
+        if self._estado in (_Estado.IDLE, _Estado.LOADING):
+            self._cambiar_estado(_Estado.ERROR)
 
     async def _procesar_resultado_ocr(self, data: dict) -> None:
         """Procesa el resultado OCR ya recibido y cambia al estado final."""

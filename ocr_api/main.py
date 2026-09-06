@@ -178,12 +178,14 @@ _PROMPT_PARSEO = (
     "}}\n"
     "\n"
     "Reglas estrictas:\n"
-    "- 'monto': El número total pagado que aparezca en el texto (ejemplo: 790.0 o null si no se encuentra). NO inventes montos.\n"
+    "- 'monto': El total pagado que figure en el texto (ej: 790.0 o null). "
+    "NO inventes montos.\n"
     "- 'fecha': Fecha en formato YYYY-MM-DD o null.\n"
     "- 'comercio': Nombre del local o empresa que emite el ticket o null.\n"
-    "- 'items': Lista de productos o artículos comprados que figuren explícitamente en el texto.\n"
+    "- 'items': Lista de productos o artículos comprados que figuren en el texto.\n"
     "- 'currency': 'UYU' (si es pesos o $) o 'USD' (si es dólares) o null.\n"
-    "- IMPORTANTE: Extraé EXCLUSIVAMENTE datos que aparezcan en el texto del ticket. NO inventes productos ni tiendas.\n"
+    "- IMPORTANTE: Extraé EXCLUSIVAMENTE datos que aparezcan en el ticket. "
+    "NO inventes nada.\n"
     "\n"
     "Texto del ticket:\n"
     "{texto}"
@@ -247,10 +249,8 @@ def preprocesar_imagen(imagen: Image.Image) -> Image.Image:
     """Preprocess receipt image optimized for ARM / Orange Pi 5 Plus.
 
     - Convert to grayscale.
-    - Smart resize: ONLY downscale if max(h, w) > 1920 using cv2.INTER_AREA.
-      Never upscale with fx=2.
-    - CLAHE + GaussianBlur + adaptiveThreshold.
-    - Avoid heavy cubic warp affine transformations.
+    - Resize max dimension to 1280 (INTER_AREA) for fast OCR.
+    - Contrast normalization + Otsu binarization (avoids adaptive threshold noise).
     """
     img = np.array(imagen)
     if img.ndim == 3:
@@ -258,42 +258,42 @@ def preprocesar_imagen(imagen: Image.Image) -> Image.Image:
 
     h, w = img.shape[:2]
     max_dim = max(h, w)
-    if max_dim > 1920:
-        scale = 1920.0 / max_dim
+    if max_dim > 1280:
+        scale = 1280.0 / max_dim
         new_w = int(w * scale)
         new_h = int(h * scale)
         img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    img = clahe.apply(img)
-    img = cv2.GaussianBlur(img, (3, 3), 0)
-    img = cv2.adaptiveThreshold(
-        img,
-        255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        31,
-        2,
-    )
-    return Image.fromarray(img)
+    img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)
+    blurred = cv2.GaussianBlur(img, (3, 3), 0)
+    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return Image.fromarray(thresh)
 
 
 def _run_tesseract(imagen_path: Path) -> tuple[str, float]:
-    """Synchronously run preprocessing and Tesseract OCR."""
+    """Synchronously run preprocessing and fast Tesseract OCR with timeout."""
     with Image.open(imagen_path) as img:
         imagen = preprocesar_imagen(img)
 
-    datos = pytesseract.image_to_data(
-        imagen,
-        lang="spa",
-        config="--psm 6 --oem 3",
-        output_type=pytesseract.Output.DICT,
-    )
+    try:
+        texto_crudo = pytesseract.image_to_string(
+            imagen,
+            lang="spa",
+            config="--psm 3 --oem 3",
+            timeout=15,
+        )
+    except Exception as t_err:
+        logger.warning(
+            "[OCR] Tesseract primary timeout/error: %s, reintentando básico", t_err
+        )
+        try:
+            texto_crudo = pytesseract.image_to_string(imagen, lang="spa", timeout=10)
+        except Exception:
+            texto_crudo = ""
 
-    texto_crudo = " ".join(w for w in datos["text"] if w.strip())
-    confs = [int(c) for c in datos["conf"] if str(c).strip() not in ("-1", "")]
-    confianza = round(sum(confs) / len(confs) / 100, 2) if confs else 0.0
-    return texto_crudo, confianza
+    clean_text = "\n".join(line for line in texto_crudo.splitlines() if line.strip())
+    confianza = 0.88 if len(clean_text) > 30 else 0.40
+    return clean_text, confianza
 
 
 async def extraer_texto_tesseract(imagen_path: Path) -> tuple[str, float]:
@@ -459,11 +459,42 @@ def extraer_datos_regex(texto: str) -> dict:
     # 5. Items extraction from text lines
     extracted_items: list[str] = []
     stop_words = {
-        "RUT", "FECHA", "HORA", "TOTAL", "SUBTOTAL", "TICKET", "FACTURA", "CAJA",
-        "LOCAL", "CAJERO", "MONTO", "CAMBIO", "EFECTIVO", "TARJETA", "IVA",
-        "REDONDEO", "GRACIAS", "VISITA", "DISCO", "DEVOTO", "TATA", "GEANT",
-        "PAGO", "IMPORTA", "SERIE", "SUCURSAL", "CONSUMO", "CLIENTE", "DIRECCION",
-        "TEL", "R.U.T", "I.V.A", "D.G.I", "CONTADO", "CREDITO", "TIENDA INGLESA",
+        "RUT",
+        "FECHA",
+        "HORA",
+        "TOTAL",
+        "SUBTOTAL",
+        "TICKET",
+        "FACTURA",
+        "CAJA",
+        "LOCAL",
+        "CAJERO",
+        "MONTO",
+        "CAMBIO",
+        "EFECTIVO",
+        "TARJETA",
+        "IVA",
+        "REDONDEO",
+        "GRACIAS",
+        "VISITA",
+        "DISCO",
+        "DEVOTO",
+        "TATA",
+        "GEANT",
+        "PAGO",
+        "IMPORTA",
+        "SERIE",
+        "SUCURSAL",
+        "CONSUMO",
+        "CLIENTE",
+        "DIRECCION",
+        "TEL",
+        "R.U.T",
+        "I.V.A",
+        "D.G.I",
+        "CONTADO",
+        "CREDITO",
+        "TIENDA INGLESA",
     }
     for line in lines:
         upper_l = line.upper()
@@ -510,7 +541,9 @@ def _filtrar_items_reales(items: list, texto: str) -> list[str]:
             continue
         item_clean = item.strip()
         palabras = [w for w in re.split(r"\s+", item_clean.lower()) if len(w) >= 2]
-        if palabras and all(re.search(rf"\b{re.escape(p)}\b", texto_lower) for p in palabras):
+        if palabras and all(
+            re.search(rf"\b{re.escape(p)}\b", texto_lower) for p in palabras
+        ):
             items_validos.append(item_clean)
     return items_validos
 
@@ -528,7 +561,7 @@ async def parsear_con_ollama(texto: str) -> dict | None:
     try:
         prompt = _PROMPT_PARSEO.format(texto=texto[:1500])
 
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             respuesta = ""
             for current_model in models_to_try:
                 try:
@@ -539,15 +572,28 @@ async def parsear_con_ollama(texto: str) -> dict | None:
                             "prompt": prompt,
                             "format": "json",
                             "stream": False,
+                            "options": {
+                                "num_predict": 80,
+                                "temperature": 0.0,
+                                "num_ctx": 1024,
+                                "num_thread": 4,
+                            },
                         },
                     )
                     if response.status_code == 200:
                         respuesta = response.json().get("response", "")
                         if respuesta:
-                            logger.info("[PARSER] Succeeded with Ollama model: %s", current_model)
+                            logger.info(
+                                "[PARSER] Succeeded with Ollama model: %s",
+                                current_model,
+                            )
                             break
                 except Exception as mod_err:
-                    logger.debug("[PARSER] Model %s failed or not ready: %s", current_model, mod_err)
+                    logger.debug(
+                        "[PARSER] Model %s failed or timeout: %s",
+                        current_model,
+                        mod_err,
+                    )
 
         if not respuesta:
             logger.warning("[PARSER] Ollama returned empty response")
@@ -618,12 +664,12 @@ async def extraer_con_gemini_flash(
                             '  "currency": "UYU"\n'
                             "}\n"
                             "Reglas:\n"
-                            "- monto: Total pagado del ticket como número flotante (ej: 790.0) o null.\n"
+                            "- monto: Total pagado como float (ej: 790.0) o null.\n"
                             "- fecha: Formato ISO YYYY-MM-DD o null.\n"
                             "- comercio: Nombre empresa/comercio o null.\n"
-                            "- items: Lista de nombres de productos reales del ticket.\n"
+                            "- items: Lista de productos reales del ticket.\n"
                             "- currency: 'UYU' (pesos, $) o 'USD' (dólares, US$).\n"
-                            "- Extraé ÚNICAMENTE datos presentes en la imagen. Si no podés determinar un campo, poné null."
+                            "- Extraé ÚNICAMENTE datos reales presentes en la imagen."
                         )
                     },
                     {
@@ -661,7 +707,8 @@ async def extraer_con_gemini_flash(
 
                     body_snip = resp.text[:200]
                     _last_gemini_error = (
-                        f"HTTP {resp.status_code} ({current_model}/{api_version}): {body_snip}"
+                        f"HTTP {resp.status_code} "
+                        f"({current_model}/{api_version}): {body_snip}"
                     )
                     logger.warning(
                         "[GEMINI] Model %s (%s) failed (HTTP %d): %s",
@@ -679,7 +726,9 @@ async def extraer_con_gemini_flash(
             # Si todos los modelos candidatos fallaron con 404/400, consultar ListModels
             if data is None:
                 try:
-                    logger.info("[GEMINI] Querying ListModels to discover available models...")
+                    logger.info(
+                        "[GEMINI] Querying ListModels to discover available models..."
+                    )
                     list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
                     list_resp = await client.get(list_url, timeout=10.0)
                     if list_resp.status_code == 200:
@@ -687,12 +736,18 @@ async def extraer_con_gemini_flash(
                         discovered = [
                             m.get("name", "").replace("models/", "")
                             for m in models_data
-                            if "generateContent" in m.get("supportedGenerationMethods", [])
+                            if "generateContent"
+                            in m.get("supportedGenerationMethods", [])
                         ]
-                        logger.info("[GEMINI] Discovered available models from Google: %s", discovered)
+                        logger.info(
+                            "[GEMINI] Discovered available models from Google: %s",
+                            discovered,
+                        )
                         flash_first = [m for m in discovered if "flash" in m.lower()]
-                        other_models = [m for m in discovered if "flash" not in m.lower()]
-                        for disc_model in (flash_first + other_models):
+                        other_models = [
+                            m for m in discovered if "flash" not in m.lower()
+                        ]
+                        for disc_model in flash_first + other_models:
                             if disc_model in models_to_try:
                                 continue
                             url = (
@@ -702,9 +757,15 @@ async def extraer_con_gemini_flash(
                             resp = await client.post(url, json=payload)
                             if resp.status_code == 200:
                                 data = resp.json()
-                                logger.info("[GEMINI] Succeeded with discovered model: %s", disc_model)
+                                logger.info(
+                                    "[GEMINI] Succeeded with discovered model: %s",
+                                    disc_model,
+                                )
                                 break
-                            _last_gemini_error = f"HTTP {resp.status_code} ({disc_model}): {resp.text[:200]}"
+                            _last_gemini_error = (
+                                f"HTTP {resp.status_code} "
+                                f"({disc_model}): {resp.text[:200]}"
+                            )
                 except Exception as list_err:
                     logger.warning("[GEMINI] ListModels query failed: %s", list_err)
 
@@ -856,56 +917,69 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             )
 
         regex_data = extraer_datos_regex(texto_crudo)
-        parsed = await parsear_con_ollama(texto_crudo)
-        engine_used = "local-tesseract-ollama"
 
-        if parsed:
-            # Validación anti-alucinación de monto del LLM
-            monto_llm = parsed.get("monto")
-            if monto_llm is not None:
-                try:
-                    monto_float = float(monto_llm)
-                    if _es_monto_valido_en_texto(monto_float, texto_crudo):
-                        monto = monto_float
-                    else:
-                        logger.warning(
-                            "[OCR] LLM monto %s no figura en el texto OCR; usando regex (%s)",
-                            monto_float,
-                            regex_data.get("monto"),
-                        )
-                        monto = regex_data.get("monto")
-                        engine_used = "local-tesseract-hybrid"
-                except (ValueError, TypeError):
-                    monto = regex_data.get("monto")
-            else:
-                monto = regex_data.get("monto")
-
-            # Validación anti-alucinación de items
-            items_llm = parsed.get("items") or []
-            valid_items = _filtrar_items_reales(items_llm, texto_crudo)
-            items = valid_items if valid_items else (regex_data.get("items") or [])
-
-            # Validación de comercio
-            comercio_llm = _str_or_none(parsed.get("comercio"))
-            if comercio_llm and (comercio_llm.lower() in texto_crudo.lower() or not regex_data.get("comercio")):
-                comercio = comercio_llm
-            else:
-                comercio = regex_data.get("comercio") or comercio_llm
-
-            # Validación de currency y fecha
-            currency = _resolve_currency(parsed.get("currency") or regex_data.get("currency"))
-            fecha_str = parsed.get("fecha") or regex_data.get("fecha")
-        else:
+        if regex_data.get("monto") is not None:
             logger.info(
-                "[OCR] Ollama unavailable or empty; falling back to regex parser"
+                "[OCR] Regex determinístico extrajo monto=%s comercio=%s",
+                regex_data.get("monto"),
+                regex_data.get("comercio"),
             )
-            parsed = regex_data
-            engine_used = "local-tesseract-regex"
             monto = regex_data.get("monto")
-            items = regex_data.get("items") or []
             comercio = regex_data.get("comercio")
+            items = regex_data.get("items") or []
             currency = _resolve_currency(regex_data.get("currency"))
             fecha_str = regex_data.get("fecha")
+            engine_used = "local-tesseract-regex"
+        else:
+            parsed = await parsear_con_ollama(texto_crudo)
+            engine_used = "local-tesseract-ollama"
+
+            if parsed:
+                # Validación anti-alucinación de monto del LLM
+                monto_llm = parsed.get("monto")
+                if monto_llm is not None:
+                    try:
+                        monto_float = float(monto_llm)
+                        if _es_monto_valido_en_texto(monto_float, texto_crudo):
+                            monto = monto_float
+                        else:
+                            monto = regex_data.get("monto")
+                            engine_used = "local-tesseract-hybrid"
+                    except (ValueError, TypeError):
+                        monto = regex_data.get("monto")
+                else:
+                    monto = regex_data.get("monto")
+
+                # Validación anti-alucinación de items
+                items_llm = parsed.get("items") or []
+                valid_items = _filtrar_items_reales(items_llm, texto_crudo)
+                items = valid_items if valid_items else (regex_data.get("items") or [])
+
+                # Validación de comercio
+                comercio_llm = _str_or_none(parsed.get("comercio"))
+                if comercio_llm and (
+                    comercio_llm.lower() in texto_crudo.lower()
+                    or not regex_data.get("comercio")
+                ):
+                    comercio = comercio_llm
+                else:
+                    comercio = regex_data.get("comercio") or comercio_llm
+
+                # Validación de currency y fecha
+                currency = _resolve_currency(
+                    parsed.get("currency") or regex_data.get("currency")
+                )
+                fecha_str = parsed.get("fecha") or regex_data.get("fecha")
+            else:
+                logger.info(
+                    "[OCR] Ollama unavailable or empty; falling back to regex parser"
+                )
+                monto = regex_data.get("monto")
+                items = regex_data.get("items") or []
+                comercio = regex_data.get("comercio")
+                currency = _resolve_currency(regex_data.get("currency"))
+                fecha_str = regex_data.get("fecha")
+                engine_used = "local-tesseract-regex"
 
         fecha_parsed_local: date | None = None
         if fecha_str:
@@ -1203,12 +1277,14 @@ async def upload_form(
         }});
         if (!resp.ok) {{
           const errBody = await resp.text();
-          throw new Error('Servidor error ' + resp.status + ': ' + (errBody.slice(0, 100) || 'Sin respuesta'));
+          const detail = errBody.slice(0, 100) || 'Sin respuesta';
+          throw new Error('Servidor error ' + resp.status + ': ' + detail);
         }}
         const data = await resp.json();
         if (data.success) {{
           status.className = 'status success';
-          status.textContent = '\\u2705 Listo. Volv\\u00e9 a la app para ver los resultados.';
+          status.textContent =
+            '\\u2705 Listo. Volv\\u00e9 a la app para ver los resultados.';
         }} else {{
           status.className = 'status error';
           status.textContent = 'Error: ' + (data.error || 'No se pudo procesar');
@@ -1236,7 +1312,7 @@ async def upload_form_submit(
     familia_id: int = Form(1, gt=0),
     engine: str = Form("auto"),
 ) -> JSONResponse:
-    """Process ticket submission from HTML form and store result in memory asynchronously."""
+    """Process ticket upload from HTML form asynchronously."""
     if not file.content_type or not file.content_type.startswith("image/"):
         return JSONResponse(
             {"success": False, "error": "Solo imágenes"},
@@ -1298,7 +1374,7 @@ async def get_resultado(session_id: str) -> JSONResponse:
             }
         )
 
-    return JSONResponse({"ready": False})
+    return JSONResponse({"ready": False, "status": record.status.value})
 
 
 @app.get("/pendiente/{familia_id}")
