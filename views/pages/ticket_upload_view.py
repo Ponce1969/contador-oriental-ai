@@ -409,8 +409,8 @@ class TicketUploadView:
                     tight=True,
                 ),
                 bgcolor=ft.Colors.AMBER_50,
-                border=ft.border.all(1, ft.Colors.AMBER_200),
-                padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                border=ft.Border.all(1, ft.Colors.AMBER_200),
+                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                 border_radius=8,
             )
         else:
@@ -429,8 +429,8 @@ class TicketUploadView:
                     tight=True,
                 ),
                 bgcolor=ft.Colors.BLUE_50,
-                border=ft.border.all(1, ft.Colors.BLUE_200),
-                padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                border=ft.Border.all(1, ft.Colors.BLUE_200),
+                padding=ft.Padding.symmetric(horizontal=8, vertical=4),
                 border_radius=8,
             )
 
@@ -615,8 +615,12 @@ class TicketUploadView:
             if not data.get("ready"):
                 continue
 
-            self._cambiar_estado(_Estado.LOADING)
-            await self._procesar_resultado_ocr(data)
+            try:
+                self._cambiar_estado(_Estado.LOADING)
+                await self._procesar_resultado_ocr(data)
+            except Exception as e:
+                logger.error("[OCR] Error processing OCR result: %s", e, exc_info=True)
+                self._cambiar_estado(_Estado.ERROR)
             return
 
         logger.warning("[OCR] Timeout esperando foto session=%s", self._session_id)
