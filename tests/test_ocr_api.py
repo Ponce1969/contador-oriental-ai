@@ -41,6 +41,7 @@ class TestGeminiFlashExtraction:
             ]
         }
         mock_resp = MagicMock()
+        mock_resp.status_code = 200
         mock_resp.json.return_value = mock_response_data
         mock_resp.raise_for_status.return_value = None
 
@@ -61,6 +62,7 @@ class TestGeminiFlashExtraction:
 
     async def test_extraer_con_gemini_flash_empty_response(self, fake_receipt_bytes):
         mock_resp = MagicMock()
+        mock_resp.status_code = 200
         mock_resp.json.return_value = {"candidates": []}
         mock_resp.raise_for_status.return_value = None
 

@@ -519,10 +519,16 @@ async def extraer_con_gemini_flash(
         _last_gemini_error = "Bytes de imagen o API key vacíos"
         return None
 
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{model}:generateContent?key={api_key}"
-    )
+    models_to_try = [model]
+    for fallback_mod in (
+        "gemini-2.5-flash",
+        "gemini-1.5-flash",
+        "gemini-flash-latest",
+        "gemini-2.0-flash",
+    ):
+        if fallback_mod not in models_to_try:
+            models_to_try.append(fallback_mod)
+
     b64_image = base64.b64encode(image_bytes).decode("utf-8")
     mime_type = _detect_image_mime_type(image_bytes)
     payload = {
@@ -564,18 +570,38 @@ async def extraer_con_gemini_flash(
         },
     }
 
+    data = None
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(url, json=payload)
-            if resp.is_error:
-                _last_gemini_error = f"HTTP {resp.status_code}: {resp.text[:300]}"
-                logger.error(
-                    "[GEMINI] HTTP %d: %s",
-                    resp.status_code,
-                    resp.text[:500],
+            for current_model in models_to_try:
+                url = (
+                    f"https://generativelanguage.googleapis.com/v1beta/models/"
+                    f"{current_model}:generateContent?key={api_key}"
                 )
-            resp.raise_for_status()
-            data = resp.json()
+                resp = await client.post(url, json=payload)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    logger.info("[GEMINI] Succeeded with model: %s", current_model)
+                    break
+
+                body_snip = resp.text[:200]
+                _last_gemini_error = (
+                    f"HTTP {resp.status_code} ({current_model}): {body_snip}"
+                )
+                logger.warning(
+                    "[GEMINI] Model %s failed (HTTP %d): %s",
+                    current_model,
+                    resp.status_code,
+                    resp.text[:200],
+                )
+                # If 404 (model not found), try next candidate
+                if resp.status_code in (404, 400):
+                    continue
+                # For auth/rate-limit errors, do not retry other models
+                break
+
+        if data is None:
+            return None
 
         candidates = data.get("candidates", [])
         if not candidates:
