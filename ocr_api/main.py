@@ -518,20 +518,34 @@ async def parsear_con_ollama(texto: str) -> dict | None:
     if not texto.strip():
         return None
 
+    models_to_try = [settings.ollama_model]
+    for fallback_mod in ("qwen2.5:3b", "gemma2:2b", "contador-oriental:latest"):
+        if fallback_mod not in models_to_try:
+            models_to_try.append(fallback_mod)
+
     try:
         prompt = _PROMPT_PARSEO.format(texto=texto[:1500])
 
         async with httpx.AsyncClient(timeout=90.0) as client:
-            response = await client.post(
-                f"{settings.ollama_base_url}/api/generate",
-                json={
-                    "model": settings.ollama_model,
-                    "prompt": prompt,
-                    "stream": False,
-                },
-            )
-            response.raise_for_status()
-            respuesta = response.json().get("response", "")
+            respuesta = ""
+            for current_model in models_to_try:
+                try:
+                    response = await client.post(
+                        f"{settings.ollama_base_url}/api/generate",
+                        json={
+                            "model": current_model,
+                            "prompt": prompt,
+                            "format": "json",
+                            "stream": False,
+                        },
+                    )
+                    if response.status_code == 200:
+                        respuesta = response.json().get("response", "")
+                        if respuesta:
+                            logger.info("[PARSER] Succeeded with Ollama model: %s", current_model)
+                            break
+                except Exception as mod_err:
+                    logger.debug("[PARSER] Model %s failed or not ready: %s", current_model, mod_err)
 
         if not respuesta:
             logger.warning("[PARSER] Ollama returned empty response")
