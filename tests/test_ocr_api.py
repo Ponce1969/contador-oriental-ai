@@ -402,6 +402,36 @@ GRACIAS POR SU PREFERENCIA
         # 4. Decoupling: High visual legibility confidence despite arithmetic mismatch
         assert data["extraction_confidence"] >= Decimal("0.85")
 
+    def test_oplaros_noisy_raw_tesseract_extraction(self):
+        from ocr_api.main import extraer_datos_regex
+
+        texto_real_server = """
+e OMA AA
+ra IA e
+217887100012 - e TICKET
+404640 Contado
+PA DATOS DEL CUENTEN IACIADAN
+100 Generico
+a a Era
+a EN
+fe [oeoerattes pera comerse]
+ PANTALON FELPA ITAGUM
+ZHOSADIZOM 1 UN 22 159000 10902
+SUB TOTAL TASA BASICA ; 654,83
+IVA TASA BASICA 144,08
++, TOTAL A PAGAR $ . 799,00
+- Descuento os - 0)
+Cantidad Total: 1 Unid, 
+MEDIOS DE PAGO
+EFECTIVO 769,00 *
+"""
+        data = extraer_datos_regex(texto_real_server)
+        assert data["monto"] == Decimal("799.00")
+        assert data["subtotal"] == Decimal("654.83")
+        assert data["tax"] == Decimal("144.08")
+        assert data["rut"] == "217887100012"
+        assert data["document_type"] in ("E-TICKET", "TICKET")
+
 
 class TestReceiptExtractorPort:
     """Tests for ReceiptExtractor Hexagonal Port and Adapter."""

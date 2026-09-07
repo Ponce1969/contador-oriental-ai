@@ -494,14 +494,16 @@ def extraer_datos_regex(texto: str) -> dict:
     num_pat = (
         r"([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})|[0-9]+(?:[.,][0-9]{1,2})?)"
     )
-    ccy_prefix = r"[:\$]?\s*(?:UYU|USD|\$|U\$S)?\s*"
+    ccy_prefix = r"[:;\.\$]?\s*(?:UYU|USD|\$|U\$S)?\s*[:;\.]?\s*"
 
     # 3a. Total Amount
     monto: Decimal | None = None
-    primary_patterns = [
+    explicit_total_patterns = [
         rf"(?:TOTAL A PAGAR|TOTAL PAGADO|TOTAL FINAL)\s*{ccy_prefix}{num_pat}",
-        rf"(?<!SUB)(?<!DES)TOTAL\s*{ccy_prefix}{num_pat}",
         rf"(?:IMPORTE TOTAL|A PAGAR|PAGO CONTADO)\s*{ccy_prefix}{num_pat}",
+    ]
+    generic_total_patterns = [
+        rf"(?<!SUB)(?<!DES)\bTOTAL\b\s*{ccy_prefix}{num_pat}",
     ]
     secondary_patterns = [
         rf"(?:SUBTOTAL|IMPORTE|TOT)\s*{ccy_prefix}{num_pat}",
@@ -512,18 +514,26 @@ def extraer_datos_regex(texto: str) -> dict:
         results: list[Decimal] = []
         for pattern in patterns:
             for m in re.finditer(pattern, full_text, re.IGNORECASE):
+                start_idx = m.start()
+                preceding = full_text[max(0, start_idx - 15) : start_idx].upper()
+                if "CANTIDAD" in preceding or "CANT" in preceding:
+                    continue
                 val = _parse_decimal_str(m.group(1))
                 if val is not None:
                     results.append(val)
         return results
 
-    primary_candidates = _extract_from_patterns(primary_patterns)
-    if primary_candidates:
-        monto = primary_candidates[-1]
+    explicit_candidates = _extract_from_patterns(explicit_total_patterns)
+    if explicit_candidates:
+        monto = explicit_candidates[-1]
     else:
-        secondary_candidates = _extract_from_patterns(secondary_patterns)
-        if secondary_candidates:
-            monto = secondary_candidates[-1]
+        generic_candidates = _extract_from_patterns(generic_total_patterns)
+        if generic_candidates:
+            monto = generic_candidates[-1]
+        else:
+            secondary_candidates = _extract_from_patterns(secondary_patterns)
+            if secondary_candidates:
+                monto = secondary_candidates[-1]
 
     # 3b. Subtotal
     subtotal: Decimal | None = None
