@@ -21,19 +21,27 @@ class PartialExpense:
     """
 
     monto: Decimal | None = None
+    subtotal: Decimal | None = None
+    tax: Decimal | None = None
+    rut: str | None = None
+    document_type: str | None = None
     fecha: date | None = None
     comercio: str | None = None
+    currency: str = "UYU"
     items: list[str] = field(default_factory=list)
     # Viene del cosine search en expenses.embedding
     categoria_sugerida: str | None = None
     confianza_ocr: float = 0.0  # 0.0 = ilegible, 1.0 = perfecto
+    extraction_confidence: float = 0.0
+    arithmetic_consistent: bool | None = None
     texto_crudo: str = ""  # Texto Tesseract sin procesar (auditoría)
     imagen_path: str = ""  # Ruta temporal de la imagen
+    engine_used: str = "local"
 
     @property
     def es_confiable(self) -> bool:
         """True si la confianza OCR es suficiente para pre-llenar el formulario."""
-        return self.confianza_ocr >= 0.5
+        return max(self.confianza_ocr, self.extraction_confidence) >= 0.5
 
     @property
     def tiene_datos_minimos(self) -> bool:

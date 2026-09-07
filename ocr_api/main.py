@@ -14,6 +14,7 @@ import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
+from decimal import Decimal, InvalidOperation
 from html import escape as html_escape
 from pathlib import Path
 from threading import Lock
@@ -165,6 +166,29 @@ def _str_or_none(val: object) -> str | None:
     return str(val)
 
 
+def _parse_decimal_str(raw_num: str) -> Decimal | None:
+    """Convert raw receipt number string to Decimal safely without float inaccuracy."""
+    raw = raw_num.strip().replace(" ", "")
+    if "," in raw and "." in raw:
+        if raw.rfind(",") > raw.rfind("."):
+            raw = raw.replace(".", "").replace(",", ".")
+        else:
+            raw = raw.replace(",", "")
+    elif "," in raw:
+        parts = raw.split(",")
+        if len(parts) == 2 and len(parts[1]) <= 2:
+            raw = parts[0] + "." + parts[1]
+        else:
+            raw = raw.replace(",", "")
+    try:
+        val = Decimal(raw)
+        if Decimal("0.00") < val < Decimal("10000000.00"):
+            return val
+    except (InvalidOperation, ValueError):
+        pass
+    return None
+
+
 _PROMPT_PARSEO = (
     "Analizá el texto de este ticket de compra uruguayo y extraé los datos.\n"
     "Respondé ÚNICAMENTE con un JSON válido, sin texto adicional ni explicaciones, "
@@ -245,12 +269,13 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 
 
-def preprocesar_imagen(imagen: Image.Image) -> Image.Image:
+def preprocesar_imagen(imagen: Image.Image, profile: str = "thermal") -> Image.Image:
     """Preprocess receipt image optimized for ARM / Orange Pi 5 Plus.
 
     - Convert to grayscale.
-    - Resize max dimension to 1280 (INTER_AREA) for fast OCR.
-    - Contrast normalization + Otsu binarization (avoids adaptive threshold noise).
+    - If profile is 'thermal': CLAHE contrast equalization and adaptive
+      Gaussian thresholding to rescue low-contrast thermal receipts.
+    - Otherwise: contrast normalization + Otsu binarization.
     """
     img = np.array(imagen)
     if img.ndim == 3:
@@ -264,7 +289,16 @@ def preprocesar_imagen(imagen: Image.Image) -> Image.Image:
         new_h = int(h * scale)
         img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
-    img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)
+    if profile == "thermal":
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        enhanced = clahe.apply(img)
+        blurred = cv2.GaussianBlur(enhanced, (3, 3), 0)
+        thresh = cv2.adaptiveThreshold(
+            blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 11
+        )
+        return Image.fromarray(thresh)
+
+    img = cv2.normalize(img, img, 0, 255, cv2.NORM_MINMAX)
     blurred = cv2.GaussianBlur(img, (3, 3), 0)
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     return Image.fromarray(thresh)
@@ -292,7 +326,7 @@ PALABRAS_CLAVE_TICKET = {
 }
 
 
-def _evaluar_calidad_ocr(texto: str) -> tuple[float | None, int]:
+def _evaluar_calidad_ocr(texto: str) -> tuple[Decimal | None, int]:
     """Evalúa calidad del texto extraído retornando (monto, cant_palabras_clave)."""
     if not texto or len(texto.strip()) < 5:
         return None, 0
@@ -323,11 +357,25 @@ def _run_tesseract(imagen_path: Path) -> tuple[str, float]:
     """Synchronously run preprocessing, auto-orientation, and fast Tesseract OCR."""
     with Image.open(imagen_path) as img:
         img = ImageOps.exif_transpose(img)
-        imagen_base = preprocesar_imagen(img)
+        # Default to thermal CLAHE profile
+        imagen_base = preprocesar_imagen(img, profile="thermal")
 
     # 1. Orientación normal (0°)
     texto_0 = _ejecutar_tesseract_imagen(imagen_base, timeout=12)
     monto_0, kw_0 = _evaluar_calidad_ocr(texto_0)
+
+    # Si a 0° con perfil térmico no encontró monto ni keywords, probar con Otsu
+    if monto_0 is None and kw_0 < 1:
+        with Image.open(imagen_path) as img:
+            img = ImageOps.exif_transpose(img)
+            imagen_otsu = preprocesar_imagen(img, profile="standard")
+        texto_otsu = _ejecutar_tesseract_imagen(imagen_otsu, timeout=10)
+        monto_otsu, kw_otsu = _evaluar_calidad_ocr(texto_otsu)
+        if monto_otsu is not None or kw_otsu > kw_0:
+            imagen_base = imagen_otsu
+            texto_0 = texto_otsu
+            monto_0 = monto_otsu
+            kw_0 = kw_otsu
 
     # Si a 0° ya encontró monto y al menos una keyword, la orientación es correcta
     if monto_0 is not None and kw_0 >= 1:
@@ -406,8 +454,8 @@ def _detect_image_mime_type(image_bytes: bytes) -> str:
 def extraer_datos_regex(texto: str) -> dict:
     """Fallback heuristic and regex extractor for Uruguayan receipts.
 
-    Parses total amount, date, store name, and currency directly from raw OCR text
-    when LLM/Ollama parsing is unavailable or fails.
+    Parses total amount, subtotal, tax, rut, document type, date, store name,
+    and currency directly from raw OCR text with strict Decimal arithmetic.
     """
     if not texto:
         return {}
@@ -442,12 +490,14 @@ def extraer_datos_regex(texto: str) -> dict:
             y, m, d = iso_match.groups()
             fecha = f"{y}-{m}-{d}"
 
-    # 3. Total Amount
-    monto: float | None = None
+    # 3. Numeric patterns
     num_pat = (
         r"([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})|[0-9]+(?:[.,][0-9]{1,2})?)"
     )
     ccy_prefix = r"[:\$]?\s*(?:UYU|USD|\$|U\$S)?\s*"
+
+    # 3a. Total Amount
+    monto: Decimal | None = None
     primary_patterns = [
         rf"(?:TOTAL A PAGAR|TOTAL PAGADO|TOTAL FINAL)\s*{ccy_prefix}{num_pat}",
         rf"(?<!SUB)(?<!DES)TOTAL\s*{ccy_prefix}{num_pat}",
@@ -458,28 +508,13 @@ def extraer_datos_regex(texto: str) -> dict:
         rf"(?:UYU|USD|\$|U\$S)\s*{num_pat}",
     ]
 
-    def _extract_from_patterns(patterns: list[str]) -> list[float]:
-        results: list[float] = []
+    def _extract_from_patterns(patterns: list[str]) -> list[Decimal]:
+        results: list[Decimal] = []
         for pattern in patterns:
             for m in re.finditer(pattern, full_text, re.IGNORECASE):
-                raw_num = m.group(1).strip()
-                if "," in raw_num and "." in raw_num:
-                    if raw_num.rfind(",") > raw_num.rfind("."):
-                        raw_num = raw_num.replace(".", "").replace(",", ".")
-                    else:
-                        raw_num = raw_num.replace(",", "")
-                elif "," in raw_num:
-                    parts = raw_num.split(",")
-                    if len(parts) == 2 and len(parts[1]) <= 2:
-                        raw_num = parts[0] + "." + parts[1]
-                    else:
-                        raw_num = raw_num.replace(",", "")
-                try:
-                    val = float(raw_num)
-                    if 0.0 < val < 10000000.0:
-                        results.append(val)
-                except ValueError:
-                    pass
+                val = _parse_decimal_str(m.group(1))
+                if val is not None:
+                    results.append(val)
         return results
 
     primary_candidates = _extract_from_patterns(primary_patterns)
@@ -490,7 +525,58 @@ def extraer_datos_regex(texto: str) -> dict:
         if secondary_candidates:
             monto = secondary_candidates[-1]
 
-    # 4. Store name
+    # 3b. Subtotal
+    subtotal: Decimal | None = None
+    sub_m = re.search(
+        rf"(?:SUB\s*TOTAL|SUBTOTAL)\s*(?:TASA BASICA|BASICA)?\s*{ccy_prefix}{num_pat}",
+        full_text,
+        re.IGNORECASE,
+    )
+    if sub_m:
+        subtotal = _parse_decimal_str(sub_m.group(1))
+
+    # 3c. Tax (IVA)
+    tax: Decimal | None = None
+    tax_m = re.search(
+        rf"(?:IVA|IMPUESTO)\s*(?:TASA BASICA|BASICA)?\s*{ccy_prefix}{num_pat}",
+        full_text,
+        re.IGNORECASE,
+    )
+    if tax_m:
+        tax = _parse_decimal_str(tax_m.group(1))
+
+    # 3d. Line amount & Payment amount
+    pay_m = re.search(
+        rf"(?:EFECTIVO|TARJETA|DEBITO|CREDITO)\s*{ccy_prefix}{num_pat}",
+        full_text,
+        re.IGNORECASE,
+    )
+    payment_amount: Decimal | None = (
+        _parse_decimal_str(pay_m.group(1)) if pay_m else None
+    )
+
+    line_m = re.search(rf"\bUN\b.*?{num_pat}\s+{num_pat}", full_text)
+    line_amount: Decimal | None = (
+        _parse_decimal_str(line_m.group(2)) if line_m else None
+    )
+
+    # 4. RUT & Document Type
+    rut_m = re.search(
+        r"\b(?:RUT(?:\s*EMISOR)?[:\s]*)?([0-9]{12})\b", full_text, re.IGNORECASE
+    )
+    rut: str | None = rut_m.group(1) if rut_m else None
+
+    doc_m = re.search(
+        r"\b(e-TICKET|e-FACTURA|FACTURA|TICKET|BOLETA)\b", full_text, re.IGNORECASE
+    )
+    document_type: str | None = doc_m.group(1).upper() if doc_m else None
+
+    # 5. Arithmetic Consistency (never altering visual extracted numbers)
+    arithmetic_consistent: bool | None = None
+    if subtotal is not None and tax is not None and monto is not None:
+        arithmetic_consistent = subtotal + tax == monto
+
+    # 6. Store name
     comercio: str | None = None
     known_stores = [
         "TIENDA INGLESA",
@@ -509,6 +595,7 @@ def extraer_datos_regex(texto: str) -> dict:
         "AXION",
         "PETROBRAS",
         "EL CLON",
+        "OPLAROS",
         "FARMACIA",
         "SUPERMERCADO",
         "PANADERIA",
@@ -532,7 +619,7 @@ def extraer_datos_regex(texto: str) -> dict:
         for line in lines[:4]:
             clean = re.sub(r"[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]", "", line).strip()
             upper_clean = clean.upper()
-            if 3 <= len(clean) <= 30 and not any(
+            if 3 <= len(clean) <= 35 and not any(
                 w in upper_clean
                 for w in (
                     "RUT",
@@ -549,11 +636,11 @@ def extraer_datos_regex(texto: str) -> dict:
                 )
             ):
                 palabras = clean.split()
-                if palabras and all(len(p) >= 2 for p in palabras):
+                if any(len(p) >= 3 for p in palabras):
                     comercio = clean.title()
                     break
 
-    # 5. Items extraction from text lines
+    # 7. Items extraction from text lines
     extracted_items: list[str] = []
     stop_words = {
         "RUT",
@@ -605,23 +692,48 @@ def extraer_datos_regex(texto: str) -> dict:
                 if item_title not in extracted_items:
                     extracted_items.append(item_title)
 
+    # 8. Extraction confidence (Visual legibility and completeness)
+    conf = 0.0
+    if monto is not None:
+        conf += 0.35
+    if comercio or rut:
+        conf += 0.25
+    if fecha:
+        conf += 0.20
+    if subtotal is not None or tax is not None or line_amount is not None:
+        conf += 0.15
+    if currency:
+        conf += 0.05
+    if monto is None:
+        conf = min(conf, 0.35)
+    extraction_confidence = min(round(conf, 2), 1.0)
+
     return {
         "monto": monto,
+        "subtotal": subtotal,
+        "tax": tax,
+        "line_amount": line_amount,
+        "payment_amount": payment_amount,
+        "rut": rut,
+        "document_type": document_type,
         "fecha": fecha,
         "comercio": comercio,
         "currency": currency,
         "items": extracted_items[:5],
+        "arithmetic_consistent": arithmetic_consistent,
+        "extraction_confidence": extraction_confidence,
     }
 
 
-def _es_monto_valido_en_texto(monto: float | None, texto: str) -> bool:
+def _es_monto_valido_en_texto(monto: Decimal | None, texto: str) -> bool:
     """Verifica si el monto extraído por el LLM realmente figura en el texto OCR."""
     if monto is None or not texto:
         return False
-    int_str = str(int(round(monto)))
+    int_str = str(int(round(float(monto))))
     if int_str in texto:
         return True
-    if f"{monto:.2f}" in texto or f"{monto:.2f}".replace(".", ",") in texto:
+    str_val = f"{monto:.2f}"
+    if str_val in texto or str_val.replace(".", ",") in texto:
         return True
     return False
 
@@ -892,12 +1004,9 @@ async def extraer_con_gemini_flash(
 
         # Normalize amount
         monto_raw = parsed.get("monto")
-        monto_val: float | None = None
+        monto_val: Decimal | None = None
         if monto_raw is not None:
-            try:
-                monto_val = float(monto_raw)
-            except (ValueError, TypeError):
-                monto_val = None
+            monto_val = _parse_decimal_str(str(monto_raw))
 
         # Normalize date
         fecha_val = _str_or_none(parsed.get("fecha"))
@@ -910,6 +1019,24 @@ async def extraer_con_gemini_flash(
         # Normalize currency
         currency_val = _resolve_currency(parsed.get("currency"))
 
+        # Subtotal, tax, rut
+        subtotal_val = (
+            _parse_decimal_str(str(parsed.get("subtotal")))
+            if parsed.get("subtotal") is not None
+            else None
+        )
+        tax_val = (
+            _parse_decimal_str(str(parsed.get("tax")))
+            if parsed.get("tax") is not None
+            else None
+        )
+        rut_val = _str_or_none(parsed.get("rut"))
+        doc_type_val = _str_or_none(parsed.get("document_type"))
+
+        arithmetic_consistent: bool | None = None
+        if subtotal_val is not None and tax_val is not None and monto_val is not None:
+            arithmetic_consistent = subtotal_val + tax_val == monto_val
+
         logger.info(
             "[GEMINI] Extracted: store=%s amount=%s currency=%s",
             comercio_val,
@@ -918,10 +1045,16 @@ async def extraer_con_gemini_flash(
         )
         return {
             "monto": monto_val,
+            "subtotal": subtotal_val,
+            "tax": tax_val,
+            "rut": rut_val,
+            "document_type": doc_type_val,
             "fecha": fecha_val,
             "comercio": comercio_val,
             "items": items_val,
             "currency": currency_val,
+            "arithmetic_consistent": arithmetic_consistent,
+            "extraction_confidence": 0.95,
         }
     except Exception as e:
         err_desc = f"{type(e).__name__}: {e}" if str(e) else repr(e)
@@ -952,6 +1085,11 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                             pass
 
                     monto = gemini_data.get("monto")
+                    subtotal = gemini_data.get("subtotal")
+                    tax = gemini_data.get("tax")
+                    rut = gemini_data.get("rut")
+                    doc_type = gemini_data.get("document_type")
+                    arithmetic_consistent = gemini_data.get("arithmetic_consistent")
                     comercio = gemini_data.get("comercio")
                     items = gemini_data.get("items") or []
                     currency = gemini_data.get("currency", "UYU")
@@ -962,12 +1100,18 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                     return OCRResponse(
                         success=True,
                         monto=monto,
+                        subtotal=subtotal,
+                        tax=tax,
+                        rut=rut,
+                        document_type=doc_type,
                         fecha=fecha_parsed,
                         comercio=comercio,
                         items=items,
                         currency=currency,
                         texto_crudo=raw_summary,
                         confianza_ocr=0.95,
+                        extraction_confidence=0.95,
+                        arithmetic_consistent=arithmetic_consistent,
                         engine_used="gemini-2.0-flash",
                     )
                 if engine == "cloud":
@@ -1015,6 +1159,14 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             )
 
         regex_data = extraer_datos_regex(texto_crudo)
+        subtotal = regex_data.get("subtotal")
+        tax = regex_data.get("tax")
+        line_amount = regex_data.get("line_amount")
+        payment_amount = regex_data.get("payment_amount")
+        rut = regex_data.get("rut")
+        document_type = regex_data.get("document_type")
+        arithmetic_consistent = regex_data.get("arithmetic_consistent")
+        extraction_confidence = regex_data.get("extraction_confidence", 0.0)
 
         if regex_data.get("monto") is not None:
             logger.info(
@@ -1036,15 +1188,14 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 # Validación anti-alucinación de monto del LLM
                 monto_llm = parsed.get("monto")
                 if monto_llm is not None:
-                    try:
-                        monto_float = float(monto_llm)
-                        if _es_monto_valido_en_texto(monto_float, texto_crudo):
-                            monto = monto_float
-                        else:
-                            monto = regex_data.get("monto")
-                            engine_used = "local-tesseract-hybrid"
-                    except (ValueError, TypeError):
+                    monto_dec = _parse_decimal_str(str(monto_llm))
+                    if monto_dec is not None and _es_monto_valido_en_texto(
+                        monto_dec, texto_crudo
+                    ):
+                        monto = monto_dec
+                    else:
                         monto = regex_data.get("monto")
+                        engine_used = "local-tesseract-hybrid"
                 else:
                     monto = regex_data.get("monto")
 
@@ -1101,6 +1252,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 success=False,
                 texto_crudo=texto_crudo,
                 confianza_ocr=confianza,
+                extraction_confidence=extraction_confidence,
                 error="No se detectaron montos ni comercio en el ticket",
                 engine_used=engine_used,
             )
@@ -1111,12 +1263,20 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
         return OCRResponse(
             success=True,
             monto=monto,
+            subtotal=subtotal,
+            tax=tax,
+            line_amount=line_amount,
+            payment_amount=payment_amount,
+            rut=rut,
+            document_type=document_type,
             fecha=fecha_parsed_local,
             comercio=comercio,
             items=items,
             currency=currency,
             texto_crudo=texto_crudo,
             confianza_ocr=confianza_final,
+            extraction_confidence=extraction_confidence,
+            arithmetic_consistent=arithmetic_consistent,
             engine_used=engine_used,
         )
     except Exception as e:

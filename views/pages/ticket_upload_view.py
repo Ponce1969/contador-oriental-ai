@@ -87,19 +87,19 @@ class TicketUploadView:
         asyncio.create_task(self._recuperar_pendiente())
 
     def _consultar_cuota_ocr(self) -> None:
-        """Query OCR quota for the current family and determine default engine."""
+        """Query OCR quota for the current family and set local engine as default."""
         try:
             with get_db_session() as session:
                 qm = QuotaManager(session, self._familia_id)
                 self._quota_limit = qm.ocr_daily_limit()
                 self._quota_remaining = qm.get_remaining_ocr()
-                can_use_cloud = qm.can_use_cloud_ocr()
-                self._engine = "cloud" if can_use_cloud else "local"
         except Exception as e:
             logger.warning("[OCR_VIEW] Could not query quota: %s", e)
-            self._engine = "local"
             self._quota_remaining = 0
             self._quota_limit = 10
+
+        # Consensus: Fast, private local pipeline on Orange Pi is the default
+        self._engine = "local"
 
     # ------------------------------------------------------------------
     # Render principal
@@ -334,25 +334,92 @@ class TicketUploadView:
         if partial is None:
             return ft.Text("Error interno")
 
-        # Chip de confianza OCR
-        if partial.monto is None:
-            conf_color = ft.Colors.ORANGE_800
-            conf_label = "Monto no detectado — por favor completalo"
-            conf_icon = ft.Icons.WARNING
-        elif partial.confianza_ocr >= 0.7:
+        # Chip de confianza OCR (3 tiers consensuados)
+        if partial.monto is None or partial.confianza_ocr < 0.50:
+            conf_color = ft.Colors.RED_700
+            conf_label = (
+                f"Baja confianza ({partial.confianza_ocr:.0%}) — completá datos"
+                if partial.monto is not None
+                else "Monto no detectado — por favor completalo"
+            )
+            conf_icon = ft.Icons.ERROR_OUTLINE
+        elif partial.confianza_ocr >= 0.80:
             conf_color = ft.Colors.GREEN_700
             conf_label = f"Alta confianza ({partial.confianza_ocr:.0%})"
             conf_icon = ft.Icons.CHECK_CIRCLE
-        elif partial.confianza_ocr >= 0.4:
-            conf_color = ft.Colors.ORANGE_700
-            conf_label = f"Confianza media ({partial.confianza_ocr:.0%})"
-            conf_icon = ft.Icons.WARNING
         else:
-            conf_color = ft.Colors.RED_700
+            conf_color = ft.Colors.ORANGE_700
             conf_label = (
-                f"Baja confianza ({partial.confianza_ocr:.0%}) — revisá los datos"
+                f"Confianza media ({partial.confianza_ocr:.0%}) — verificá datos"
             )
-            conf_icon = ft.Icons.ERROR
+            conf_icon = ft.Icons.WARNING
+
+        # Banner informativo de discrepancia aritmética (no altera montos visuales)
+        discrepancy_banner = None
+        if partial.arithmetic_consistent is False:
+            discrepancy_banner = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Icon(
+                            ft.Icons.INFO_OUTLINE, color=ft.Colors.AMBER_900, size=16
+                        ),
+                        ft.Text(
+                            "Diferencia en ticket impreso (Subtotal + IVA ≠ Total)",
+                            size=12,
+                            color=ft.Colors.AMBER_900,
+                            weight=ft.FontWeight.W_500,
+                        ),
+                    ],
+                    spacing=6,
+                ),
+                bgcolor=ft.Colors.AMBER_50,
+                border=ft.Border.all(1, ft.Colors.AMBER_300),
+                padding=ft.Padding.symmetric(horizontal=12, vertical=8),
+                border_radius=8,
+                margin=ft.Margin.only(bottom=8),
+            )
+
+        # Banner de consentimiento opt-in no coercitivo para Gemini Flash
+        fallback_banner = None
+        if (
+            (partial.confianza_ocr < 0.50 or partial.monto is None)
+            and self._last_engine_used != "gemini-2.0-flash"
+            and self._quota_remaining > 0
+        ):
+            fallback_banner = ft.Container(
+                content=ft.Column(
+                    spacing=4,
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Icon(
+                                    ft.Icons.CLOUD_QUEUE,
+                                    color=ft.Colors.BLUE_700,
+                                    size=16,
+                                ),
+                                ft.Text(
+                                    "¿Deseás consultar con Gemini Flash en la nube?",
+                                    weight=ft.FontWeight.BOLD,
+                                    size=13,
+                                    color=ft.Colors.BLUE_900,
+                                ),
+                            ],
+                            spacing=6,
+                        ),
+                        ft.Text(
+                            "El escaneo local extrajo datos parciales. Si deseás, "
+                            "podés procesar con Google Gemini o completar a mano.",
+                            size=12,
+                            color=ft.Colors.BLUE_800,
+                        ),
+                    ],
+                ),
+                bgcolor=ft.Colors.BLUE_50,
+                border=ft.Border.all(1, ft.Colors.BLUE_200),
+                padding=ft.Padding.all(10),
+                border_radius=8,
+                margin=ft.Margin.only(bottom=8),
+            )
 
         # Campos pre-llenados editables
         self._monto_field = ft.TextField(
@@ -440,23 +507,32 @@ class TicketUploadView:
                 border_radius=8,
             )
 
-        return ft.Column(
-            controls=[
-                ft.Row(
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    controls=[
-                        ft.Row(
-                            controls=[
-                                ft.Icon(conf_icon, color=conf_color),
-                                ft.Text(conf_label, color=conf_color, size=13),
-                            ],
-                            spacing=6,
-                            tight=True,
-                        ),
-                        engine_chip,
-                    ],
-                ),
-                ft.Divider(),
+        confirm_controls: list[ft.Control] = [
+            ft.Row(
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Icon(conf_icon, color=conf_color),
+                            ft.Text(conf_label, color=conf_color, size=13),
+                        ],
+                        spacing=6,
+                        tight=True,
+                    ),
+                    engine_chip,
+                ],
+            ),
+            ft.Divider(),
+        ]
+
+        if fallback_banner is not None:
+            confirm_controls.append(fallback_banner)
+
+        if discrepancy_banner is not None:
+            confirm_controls.append(discrepancy_banner)
+
+        confirm_controls.extend(
+            [
                 ft.Text(
                     "Revisá y confirmá los datos del ticket",
                     size=16,
@@ -501,6 +577,8 @@ class TicketUploadView:
                 ),
             ]
         )
+
+        return ft.Column(controls=confirm_controls)
 
     # ------------------------------------------------------------------
     # Estado ERROR
@@ -677,14 +755,28 @@ class TicketUploadView:
                 pass
 
         monto_val = data.get("monto")
+        subtotal_val = data.get("subtotal")
+        tax_val = data.get("tax")
+        conf_val = float(
+            data.get("extraction_confidence") or data.get("confianza_ocr") or 0.0
+        )
+
         self._partial = PartialExpense(
             monto=Decimal(str(monto_val)) if monto_val is not None else None,
+            subtotal=Decimal(str(subtotal_val)) if subtotal_val is not None else None,
+            tax=Decimal(str(tax_val)) if tax_val is not None else None,
+            rut=data.get("rut"),
+            document_type=data.get("document_type"),
             fecha=fecha_val,
             comercio=data.get("comercio"),
+            currency=data.get("currency") or "UYU",
             items=data.get("items") or [],
             categoria_sugerida=data.get("categoria_sugerida"),
-            confianza_ocr=data.get("confianza_ocr", 0.0),
+            confianza_ocr=conf_val,
+            extraction_confidence=conf_val,
+            arithmetic_consistent=data.get("arithmetic_consistent"),
             texto_crudo=data.get("texto_crudo", ""),
+            engine_used=engine_used,
         )
         self._cambiar_estado(_Estado.CONFIRM)
 

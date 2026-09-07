@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -203,7 +204,7 @@ class TestProcesarJobAsync:
         assert resp.success is True
         assert resp.engine_used.startswith("local-tesseract")
         assert resp.monto == 300.0
-        assert resp.comercio.lower() == "tata"
+        assert resp.comercio is not None and resp.comercio.lower() == "tata"
 
     async def test_local_engine_regex_fallback_when_ollama_fails(self, tmp_path):
         ticket_file = tmp_path / "ticket.jpg"
@@ -349,3 +350,100 @@ class TestRegexExtraction:
         assert resp.comercio == "Farmacia"
         # Confianza debe estar limitada si no hay monto detectado
         assert resp.confianza_ocr <= 0.35
+
+
+class TestOplarosBenchmark:
+    """Benchmark tests on real Uruguayan thermal receipt (OPLAROS S A)."""
+
+    def test_oplaros_thermal_receipt_extraction(self):
+        from ocr_api.main import extraer_datos_regex
+
+        texto_oplaros = """
+OPLAROS S A
+18 DE JULIO 1423 MONTEVIDEO
+RUT EMISOR 217887100012
+DOCUMENTO e-TICKET
+SERIE /Nº A 404640
+FORMA DE PAGO Contado
+CONSUMO FINAL
+DATOS DEL CLIENTE
+100 Generico
+07/08/2026 UYU
+DETALLES DE LA COMPRA IMPORTE
+PANTALON FELPA ITAGUI M 1 UN 1.599,00 799,02
+SUB TOTAL TASA BASICA $ 654,93
+IVA TASA BASICA $ 144,08
+TOTAL A PAGAR $ 799,00
+MEDIOS DE PAGO
+EFECTIVO $ 799,00
+ADENDA
+GRACIAS POR SU PREFERENCIA
+"""
+        data = extraer_datos_regex(texto_oplaros)
+
+        # 1. Strict Decimal values
+        assert data["monto"] == Decimal("799.00")
+        assert data["subtotal"] == Decimal("654.93")
+        assert data["tax"] == Decimal("144.08")
+        assert data["line_amount"] == Decimal("799.02")
+        assert data["payment_amount"] == Decimal("799.00")
+
+        # 2. Metadata
+        assert data["rut"] == "217887100012"
+        assert data["document_type"] == "E-TICKET"
+        assert data["currency"] == "UYU"
+        assert data["fecha"] == "2026-08-07"
+        assert data["comercio"] == "Oplaros"
+
+        # 3. Arithmetic inconsistency preserved without mutating visual truth
+        # 654.93 + 144.08 = 799.01 != 799.00
+        assert data["arithmetic_consistent"] is False
+
+        # 4. Decoupling: High visual legibility confidence despite arithmetic mismatch
+        assert data["extraction_confidence"] >= Decimal("0.85")
+
+
+class TestReceiptExtractorPort:
+    """Tests for ReceiptExtractor Hexagonal Port and Adapter."""
+
+    async def test_microservice_adapter_converts_to_receipt_extraction(self):
+        from services.infrastructure.receipt_extractor_adapter import (
+            MicroserviceReceiptExtractor,
+        )
+
+        adapter = MicroserviceReceiptExtractor(base_url="http://mock-ocr")
+
+        mock_payload = {
+            "success": True,
+            "monto": "799.00",
+            "subtotal": "654.93",
+            "tax": "144.08",
+            "comercio": "Oplaros",
+            "rut": "217887100012",
+            "document_type": "E-TICKET",
+            "fecha": "2026-08-07",
+            "currency": "UYU",
+            "items": ["Pantalon Felpa Itagui"],
+            "extraction_confidence": 0.90,
+            "arithmetic_consistent": False,
+            "engine_used": "local-tesseract-regex",
+        }
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = mock_payload
+        mock_resp.raise_for_status.return_value = None
+
+        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+            mock_post.return_value = mock_resp
+            result = await adapter.extract(b"fake_image_bytes")
+
+        assert result.total == Decimal("799.00")
+        assert result.subtotal == Decimal("654.93")
+        assert result.tax == Decimal("144.08")
+        assert result.rut == "217887100012"
+        assert result.merchant == "Oplaros"
+        assert result.arithmetic_consistent is False
+        assert result.extraction_confidence == Decimal("0.90")
+        assert len(result.items) == 1
+        assert result.items[0].description == "Pantalon Felpa Itagui"
