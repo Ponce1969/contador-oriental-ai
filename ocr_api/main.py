@@ -1132,7 +1132,7 @@ async def extraer_con_gemini_flash(
 async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
     """Process a single receipt image via Gemini Flash or local pipeline."""
     # 1. Cloud OCR via Gemini 2.0 Flash
-    if engine in ("auto", "cloud"):
+    if engine in ("auto", "cloud", "gemini"):
         if settings.gemini_api_key:
             try:
                 image_bytes = await asyncio.to_thread(tmp_path.read_bytes)
@@ -1179,7 +1179,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                         arithmetic_consistent=arithmetic_consistent,
                         engine_used="gemini-2.0-flash",
                     )
-                if engine == "cloud":
+                if engine in ("cloud", "gemini"):
                     detail = (
                         _last_gemini_error
                         or "Respuesta vacía o formato inválido de Google API"
@@ -1199,13 +1199,13 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                     "[OCR] Gemini Flash failed (%s); falling back to local pipeline",
                     err_desc,
                 )
-                if engine == "cloud":
+                if engine in ("cloud", "gemini"):
                     return OCRResponse(
                         success=False,
                         error=f"Error en Gemini Flash: {err_desc}",
                         engine_used="gemini-2.0-flash",
                     )
-        elif engine == "cloud":
+        elif engine in ("cloud", "gemini"):
             return OCRResponse(
                 success=False,
                 error="GEMINI_API_KEY no configurada",
