@@ -432,6 +432,32 @@ EFECTIVO 769,00 *
         assert data["rut"] == "217887100012"
         assert data["document_type"] in ("E-TICKET", "TICKET")
 
+    def test_user_thermal_noisy_ocr_with_stray_artifacts(self):
+        from ocr_api.main import extraer_datos_regex
+
+        noisy_text = """o TE
+: ies h
+380 o 1428
+Poe! 30 [ARNt DOCUMENT O:
+: e-TICKET
+CE PS .
+Contado -.
+q ACOMERAS 1 :
+> PANTALON FELPA ITAGUÍM
+210540126M' 1 "UN 22 1.599,00". 789/02
+SUB TOTAL TASA BASICA. 5. a
+IVA TASA BASICA -— 0. 900 144,08
+TOTAL A PAGAR $ o 799,00
+(Descuento
+[ Cantidad ITosar ES
+Él e MEDIOS DEPAGO
+EFECTIVO LoS"""
+
+        data = extraer_datos_regex(noisy_text)
+        assert data["monto"] == Decimal("799.00")
+        assert data["tax"] == Decimal("144.08")
+        assert data["document_type"] == "E-TICKET"
+
 
 class TestReceiptExtractorPort:
     """Tests for ReceiptExtractor Hexagonal Port and Adapter."""

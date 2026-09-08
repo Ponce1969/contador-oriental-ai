@@ -382,23 +382,23 @@ class TicketUploadView:
         # Banner de consentimiento opt-in no coercitivo para Gemini Flash
         fallback_banner = None
         if (
-            (partial.confianza_ocr < 0.50 or partial.monto is None)
+            (partial.confianza_ocr < 0.75 or partial.monto is None)
             and self._last_engine_used != "gemini-2.0-flash"
             and self._quota_remaining > 0
         ):
             fallback_banner = ft.Container(
                 content=ft.Column(
-                    spacing=4,
+                    spacing=8,
                     controls=[
                         ft.Row(
                             controls=[
                                 ft.Icon(
-                                    ft.Icons.CLOUD_QUEUE,
+                                    ft.Icons.AUTO_AWESOME,
                                     color=ft.Colors.BLUE_700,
-                                    size=16,
+                                    size=18,
                                 ),
                                 ft.Text(
-                                    "¿Deseás consultar con Gemini Flash en la nube?",
+                                    "¿Querés mejorar los datos con Gemini Flash?",
                                     weight=ft.FontWeight.BOLD,
                                     size=13,
                                     color=ft.Colors.BLUE_900,
@@ -407,18 +407,38 @@ class TicketUploadView:
                             spacing=6,
                         ),
                         ft.Text(
-                            "El escaneo local extrajo datos parciales. Si deseás, "
-                            "podés procesar con Google Gemini o completar a mano.",
+                            "El escaneo local extrajo datos preliminares. "
+                            "Podés procesar con Google Gemini en 1-2s para "
+                            "máxima precisión o completar a mano.",
                             size=12,
                             color=ft.Colors.BLUE_800,
+                        ),
+                        ft.Button(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(ft.Icons.BOLT, size=16),
+                                    ft.Text(
+                                        f"⚡ Procesar con Gemini Flash "
+                                        f"({self._quota_remaining}/"
+                                        f"{self._quota_limit} hoy)"
+                                    ),
+                                ],
+                                spacing=6,
+                                tight=True,
+                            ),
+                            on_click=self._on_reintentar_gemini,
+                            style=ft.ButtonStyle(
+                                bgcolor=ft.Colors.BLUE_600,
+                                color=ft.Colors.WHITE,
+                            ),
                         ),
                     ],
                 ),
                 bgcolor=ft.Colors.BLUE_50,
                 border=ft.Border.all(1, ft.Colors.BLUE_200),
-                padding=ft.Padding.all(10),
+                padding=ft.Padding.all(12),
                 border_radius=8,
-                margin=ft.Margin.only(bottom=8),
+                margin=ft.Margin.only(bottom=12),
             )
 
         # Campos pre-llenados editables
@@ -646,6 +666,33 @@ class TicketUploadView:
     def _cambiar_estado(self, nuevo: _Estado):
         self._estado = nuevo
         self._renderizar()
+
+    def _on_reintentar_gemini(self, _):
+        """Dispara el reprocesamiento con Gemini Flash en la nube."""
+        asyncio.create_task(self._ejecutar_reintento_gemini())
+
+    async def _ejecutar_reintento_gemini(self):
+        if not self._session_id:
+            return
+        self._cambiar_estado(_Estado.LOADING)
+        await self._actualizar_loading(
+            "Consultando Gemini Flash ⚡",
+            "Extrayendo datos de alta precisión en la nube...",
+        )
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    f"{_OCR_INTERNAL}/retry-cloud/{self._session_id}"
+                )
+                data = resp.json()
+                if not data.get("success"):
+                    logger.warning("[OCR] Reintento fallido: %s", data.get("error"))
+                    self._cambiar_estado(_Estado.CONFIRM)
+                    return
+            asyncio.create_task(self._iniciar_polling(None))
+        except Exception as e:
+            logger.error("[OCR] Error en reintento Gemini: %s", e, exc_info=True)
+            self._cambiar_estado(_Estado.CONFIRM)
 
     async def _recuperar_pendiente(self) -> None:
         """Al inicializar, busca si hay un resultado OCR pendiente para esta familia.

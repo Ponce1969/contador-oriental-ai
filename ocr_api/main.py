@@ -63,6 +63,7 @@ class JobRecord:
     created_at: datetime
     resultado: OCRResponse | None = None
     error: str | None = None
+    image_path: Path | None = None
 
 
 class JobStore:
@@ -70,6 +71,7 @@ class JobStore:
 
     def __init__(self) -> None:
         self._jobs: dict[str, JobRecord] = {}
+        self._family_jobs: dict[int, str] = {}
         self._lock = Lock()
 
     def create(self, job_id: str | None = None) -> JobRecord:
@@ -83,6 +85,23 @@ class JobStore:
         with self._lock:
             self._jobs[jid] = record
         return record
+
+    def set_family_job(self, familia_id: int, job_id: str) -> None:
+        """Associate the latest job with a family ID for tab reload recovery."""
+        with self._lock:
+            self._family_jobs[familia_id] = job_id
+
+    def get_family_job(self, familia_id: int) -> JobRecord | None:
+        """Retrieve and consume the latest completed job for a family."""
+        with self._lock:
+            jid = self._family_jobs.get(familia_id)
+            if not jid:
+                return None
+            record = self._jobs.get(jid)
+            if record and record.status == JobStatus.COMPLETED:
+                del self._family_jobs[familia_id]
+                return record
+            return None
 
     def get(self, job_id: str) -> JobRecord | None:
         """Retrieve a job record by ID."""
@@ -127,7 +146,9 @@ class JobStore:
                 if (now - rec.created_at).total_seconds() > ttl_seconds
             ]
             for jid in expired_keys:
-                del self._jobs[jid]
+                rec = self._jobs.pop(jid, None)
+                if rec and rec.image_path:
+                    _safe_unlink(rec.image_path)
             return len(expired_keys)
 
     def active_jobs_count(self) -> int:
@@ -494,7 +515,7 @@ def extraer_datos_regex(texto: str) -> dict:
     num_pat = (
         r"([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})|[0-9]+(?:[.,][0-9]{1,2})?)"
     )
-    ccy_prefix = r"[:;\.\$]?\s*(?:UYU|USD|\$|U\$S)?\s*[:;\.]?\s*"
+    ccy_prefix = r"[:;\.\$]?\s*(?:UYU|USD|\$|U\$S)?\s*[:;\.\-_~*oO0]*\s*"
 
     # 3a. Total Amount
     monto: Decimal | None = None
@@ -535,6 +556,18 @@ def extraer_datos_regex(texto: str) -> dict:
             if secondary_candidates:
                 monto = secondary_candidates[-1]
 
+    # Fallback por línea para total si el regex directo falló por ruido
+    if monto is None:
+        for line in lines:
+            upper_l = line.upper()
+            if "TOTAL" in upper_l and "SUB" not in upper_l and "CANT" not in upper_l:
+                line_nums = list(re.finditer(num_pat, line))
+                if line_nums:
+                    val = _parse_decimal_str(line_nums[-1].group(1))
+                    if val is not None and val > Decimal("0.00"):
+                        monto = val
+                        break
+
     # 3b. Subtotal
     subtotal: Decimal | None = None
     sub_m = re.search(
@@ -544,6 +577,18 @@ def extraer_datos_regex(texto: str) -> dict:
     )
     if sub_m:
         subtotal = _parse_decimal_str(sub_m.group(1))
+    if subtotal is None:
+        for line in lines:
+            upper_l = line.upper()
+            if (
+                "SUBTOTAL" in upper_l or "SUB TOTAL" in upper_l
+            ) and "IVA" not in upper_l:
+                line_nums = list(re.finditer(num_pat, line))
+                if line_nums:
+                    val = _parse_decimal_str(line_nums[-1].group(1))
+                    if val is not None:
+                        subtotal = val
+                        break
 
     # 3c. Tax (IVA)
     tax: Decimal | None = None
@@ -554,6 +599,16 @@ def extraer_datos_regex(texto: str) -> dict:
     )
     if tax_m:
         tax = _parse_decimal_str(tax_m.group(1))
+    if tax is None:
+        for line in lines:
+            upper_l = line.upper()
+            if ("IVA" in upper_l or "IMPUESTO" in upper_l) and "TOTAL" not in upper_l:
+                line_nums = list(re.finditer(num_pat, line))
+                if line_nums:
+                    val = _parse_decimal_str(line_nums[-1].group(1))
+                    if val is not None:
+                        tax = val
+                        break
 
     # 3d. Line amount & Payment amount
     pay_m = re.search(
@@ -1307,6 +1362,9 @@ async def _execute_background_job(
     """Background worker for asynchronous OCR job execution."""
     try:
         job_store.update(job_id, status=JobStatus.PROCESSING)
+        rec = job_store.get(job_id)
+        if rec:
+            rec.image_path = tmp_path
         result = await procesar_job_async(tmp_path, engine=engine)
         if result.success:
             job_store.update(job_id, status=JobStatus.COMPLETED, resultado=result)
@@ -1320,8 +1378,6 @@ async def _execute_background_job(
     except Exception as e:
         logger.exception("[JOB] Background processing failed for job %s: %s", job_id, e)
         job_store.update(job_id, status=JobStatus.FAILED, error=str(e))
-    finally:
-        _safe_unlink(tmp_path)
 
 
 # ---------------------------------------------------------------------------
@@ -1610,6 +1666,7 @@ async def upload_form_submit(
         tmp_path = Path(tmp.name)
 
     job_store.create(effective_id)
+    job_store.set_family_job(familia_id, effective_id)
     job_store.update(effective_id, status=JobStatus.PROCESSING)
     background_tasks.add_task(_execute_background_job, effective_id, tmp_path, engine)
 
@@ -1650,11 +1707,42 @@ async def get_resultado(session_id: str) -> JSONResponse:
 
 @app.get("/pendiente/{familia_id}")
 async def get_pendiente(familia_id: int) -> JSONResponse:
-    """Check for pending session results for a family.
-
-    Always returns ready: False in stateless RAM mode, avoiding errors if Flet calls it.
-    """
+    """Check for pending results for a family to recover from tab suspensions."""
+    record = job_store.get_family_job(familia_id)
+    if record and record.resultado:
+        data = record.resultado.model_dump(mode="json")
+        return JSONResponse({"ready": True, "session_id": record.job_id, **data})
     return JSONResponse({"ready": False})
+
+
+@app.post("/retry-cloud/{session_id}")
+async def retry_cloud(
+    session_id: str,
+    background_tasks: BackgroundTasks,
+) -> JSONResponse:
+    """Re-process a previously uploaded ticket using Gemini Flash in the cloud."""
+    record = job_store.get(session_id)
+    if record is None or not record.image_path or not record.image_path.exists():
+        return JSONResponse(
+            {
+                "success": False,
+                "error": "Sesión o imagen expirada. Por favor re-subí el ticket.",
+            },
+            status_code=404,
+        )
+
+    job_store.update(session_id, status=JobStatus.PROCESSING)
+    background_tasks.add_task(
+        _execute_background_job, session_id, record.image_path, "gemini"
+    )
+    return JSONResponse(
+        {
+            "success": True,
+            "session_id": session_id,
+            "status": "processing",
+            "message": "Reintentando con Gemini Flash en la nube",
+        }
+    )
 
 
 @app.post("/upload-ocr", response_model=OCRResponse)
