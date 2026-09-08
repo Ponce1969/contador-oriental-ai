@@ -965,38 +965,29 @@ async def extraer_con_gemini_flash(
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             for current_model in models_to_try:
-                for api_version in ("v1beta", "v1"):
-                    url = (
-                        f"https://generativelanguage.googleapis.com/{api_version}/models/"
-                        f"{current_model}:generateContent?key={api_key}"
-                    )
-                    resp = await client.post(url, json=payload)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        logger.info(
-                            "[GEMINI] Succeeded with model: %s (%s)",
-                            current_model,
-                            api_version,
-                        )
-                        break
-
-                    body_snip = resp.text[:200]
-                    _last_gemini_error = (
-                        f"HTTP {resp.status_code} "
-                        f"({current_model}/{api_version}): {body_snip}"
-                    )
-                    logger.warning(
-                        "[GEMINI] Model %s (%s) failed (HTTP %d): %s",
-                        current_model,
-                        api_version,
-                        resp.status_code,
-                        resp.text[:200],
-                    )
-                    if resp.status_code not in (404, 400):
-                        break
-
-                if data is not None:
+                url = (
+                    f"https://generativelanguage.googleapis.com/v1beta/models/"
+                    f"{current_model}:generateContent?key={api_key}"
+                )
+                resp = await client.post(url, json=payload)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    logger.info("[GEMINI] Succeeded with model: %s", current_model)
                     break
+
+                body_snip = resp.text[:200]
+                _last_gemini_error = (
+                    f"HTTP {resp.status_code} ({current_model}): {body_snip}"
+                )
+                logger.warning(
+                    "[GEMINI] Model %s failed (HTTP %d): %s",
+                    current_model,
+                    resp.status_code,
+                    body_snip,
+                )
+                if "API_KEY_INVALID" in body_snip or "API key not valid" in body_snip:
+                    _last_gemini_error = "API key de Gemini no válida"
+                    return None
 
             # Si todos los modelos candidatos fallaron con 404/400, consultar ListModels
             if data is None:
