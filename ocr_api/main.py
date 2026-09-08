@@ -1510,7 +1510,7 @@ async def upload_form(
             2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
         </svg>
         <div>Tocá para elegir o sacar una foto</div>
-        <div class="file-name" id="fileName">JPG, PNG, WEBP — máx 10MB</div>
+        <div class="file-name" id="fileName">JPG, PNG, WEBP, HEIC — máx 25MB</div>
       </div>
 
       <button type="submit" id="btn" disabled>Procesar ticket</button>
