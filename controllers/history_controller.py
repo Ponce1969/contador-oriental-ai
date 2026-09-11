@@ -55,6 +55,7 @@ class HistoryData:
         Decimal  # Para normalizar barras (máximo absoluto entre todas las monedas)
     )
     top_categorias: list[tuple[str, str, Decimal]]  # (nombre, moneda, total)
+    variacion_gastos: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -119,9 +120,9 @@ class HistoryController(BaseController):
                     )
 
                 total_ingresos: dict[str, Decimal] = {}
-                for i in ingresos:
-                    total_ingresos[i.currency] = (
-                        total_ingresos.get(i.currency, Decimal("0")) + i.monto
+                for inc in ingresos:
+                    total_ingresos[inc.currency] = (
+                        total_ingresos.get(inc.currency, Decimal("0")) + inc.monto
                     )
 
                 all_currencies = set(total_gastos.keys()) | set(total_ingresos.keys())

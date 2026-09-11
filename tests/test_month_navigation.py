@@ -251,3 +251,15 @@ def test_exchange_rate_get_rate_for_date(db_session):
     rate_later = repo.get_rate_for_date(date(2026, 1, 20))
     assert rate_later is not None
     assert rate_later.compra == Decimal("42.50")
+
+
+def test_history_controller_get_last_3_months(db_session, nav_family):
+    """Verifica que get_last_3_months retorne HistoryData válido."""
+    hist_ctrl = HistoryController(familia_id=nav_family)
+    data = hist_ctrl.get_last_3_months()
+
+    assert len(data.meses) == 3
+    assert data.max_gasto >= Decimal("1")
+    assert isinstance(data.top_categorias, list)
+    # variacion_gastos debe estar presente como atributo (Decimal o None)
+    assert hasattr(data, "variacion_gastos")
