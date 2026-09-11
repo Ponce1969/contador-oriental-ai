@@ -1021,17 +1021,6 @@ class ExpensesView:
         periodo_str = f"{self.month_selector.year}_{self.month_selector.month:02d}"
         web_download_url = f"/exports/{filename}"
 
-        async def _descargar(_):
-            try:
-                await self.page.launch_url(
-                    web_download_url, web_popup_window_name="_blank"
-                )
-                self._show_success("Descarga iniciada en tu navegador")
-            except Exception as ex:
-                self._show_error(
-                    AppError(message=f"No se pudo iniciar la descarga: {ex}")
-                )
-
         async def _copiar(_):
             try:
                 await self.page.clipboard.set(csv_text)
@@ -1087,7 +1076,6 @@ class ExpensesView:
                                     bgcolor=ft.Colors.GREEN_700,
                                     color=ft.Colors.WHITE,
                                     url=web_download_url,
-                                    on_click=_descargar,
                                 ),
                                 ft.OutlinedButton(
                                     "📋 Copiar datos",
@@ -1097,11 +1085,6 @@ class ExpensesView:
                             ],
                             spacing=10,
                             wrap=True,
-                        ),
-                        ft.TextButton(
-                            "🔗 Enlace directo al archivo CSV",
-                            icon=ft.Icons.OPEN_IN_NEW,
-                            url=web_download_url,
                         ),
                         ft.Text(
                             info_guardado,
