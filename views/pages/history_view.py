@@ -518,7 +518,7 @@ class HistoryView:
                             spacing=4,
                             scroll=ft.ScrollMode.AUTO,
                         ),
-                        max_height=160,
+                        height=160,
                     ),
                     ft.Divider(height=10),
                     ft.Text(
@@ -533,7 +533,7 @@ class HistoryView:
                             spacing=4,
                             scroll=ft.ScrollMode.AUTO,
                         ),
-                        max_height=160,
+                        height=160,
                     ),
                 ],
                 spacing=8,
