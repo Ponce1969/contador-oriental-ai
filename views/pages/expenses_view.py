@@ -1015,25 +1015,16 @@ class ExpensesView:
     def _mostrar_modal_exportacion_csv(
         self, csv_text: str, saved_path: str | None
     ) -> None:
-        from urllib.parse import urljoin
-
         filename = (
             f"gastos_{self.month_selector.year}_{self.month_selector.month:02d}.csv"
         )
         periodo_str = f"{self.month_selector.year}_{self.month_selector.month:02d}"
         web_download_url = f"/exports/{filename}"
 
-        base_page_url = getattr(self.page, "url", None) or ""
-        full_download_url = (
-            urljoin(base_page_url, web_download_url)
-            if base_page_url
-            else web_download_url
-        )
-
         async def _descargar(_):
             try:
                 await self.page.launch_url(
-                    full_download_url, web_popup_window_name="_blank"
+                    web_download_url, web_popup_window_name="_blank"
                 )
                 self._show_success("Descarga iniciada en tu navegador")
             except Exception as ex:
@@ -1095,7 +1086,7 @@ class ExpensesView:
                                     icon=ft.Icons.DOWNLOAD,
                                     bgcolor=ft.Colors.GREEN_700,
                                     color=ft.Colors.WHITE,
-                                    url=full_download_url,
+                                    url=web_download_url,
                                     on_click=_descargar,
                                 ),
                                 ft.OutlinedButton(
@@ -1106,6 +1097,11 @@ class ExpensesView:
                             ],
                             spacing=10,
                             wrap=True,
+                        ),
+                        ft.TextButton(
+                            "🔗 Enlace directo al archivo CSV",
+                            icon=ft.Icons.OPEN_IN_NEW,
+                            url=web_download_url,
                         ),
                         ft.Text(
                             info_guardado,
