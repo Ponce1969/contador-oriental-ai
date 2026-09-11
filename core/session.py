@@ -55,6 +55,15 @@ class SessionManager:
         session_data[SessionManager.SESSION_KEY_USERNAME] = user.username
         registrar_actividad(page.session.id)
 
+        # Cargar preferencia de campo persistida en la familia
+        try:
+            from repositories.family_repository import FamilyRepository
+
+            campo_enabled = FamilyRepository().get_campo_enabled(user.familia_id)
+            SessionManager.set_campo_enabled(page, campo_enabled)
+        except Exception:
+            pass
+
     @staticmethod
     def logout(page: ft.Page) -> None:
         """Cerrar sesión y limpiar timestamp de actividad."""
@@ -115,7 +124,7 @@ class SessionManager:
         if not SessionManager.is_logged_in(page):
             from core.router import Router
 
-            router = Router(page)
+            router = Router.get(page)
             router.navigate("/login")
             return False
 
@@ -171,3 +180,21 @@ class SessionManager:
         from core.state import AppState
 
         AppState.active_entorno = entorno
+
+    @staticmethod
+    def get_audited_period(page: ft.Page) -> tuple[int, int]:
+        """Obtener año y mes del período en auditoría. Por defecto, mes actual."""
+        session_data = SessionManager._get_session_data(page)
+        period = session_data.get("audited_period")
+        if period and isinstance(period, (tuple, list)) and len(period) == 2:
+            return int(period[0]), int(period[1])
+        from datetime import date
+
+        today = date.today()
+        return today.year, today.month
+
+    @staticmethod
+    def set_audited_period(page: ft.Page, year: int, month: int) -> None:
+        """Establecer el período activo de auditoría en la sesión."""
+        session_data = SessionManager._get_session_data(page)
+        session_data["audited_period"] = (year, month)

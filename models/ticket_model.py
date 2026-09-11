@@ -31,6 +31,7 @@ class PartialExpense:
     items: list[str] = field(default_factory=list)
     # Viene del cosine search en expenses.embedding
     categoria_sugerida: str | None = None
+    subcategoria_sugerida: str | None = None
     confianza_ocr: float = 0.0  # 0.0 = ilegible, 1.0 = perfecto
     extraction_confidence: float = 0.0
     arithmetic_consistent: bool | None = None

@@ -34,6 +34,7 @@ class OCRResponse(BaseModel):
     currency: str | None = None
     items: list[str] = Field(default_factory=list)
     categoria_sugerida: str | None = None
+    subcategoria_sugerida: str | None = None
     extraction_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     confianza_ocr: float = Field(default=0.0, ge=0.0, le=1.0)
     total_confidence: float = Field(default=0.0, ge=0.0, le=1.0)

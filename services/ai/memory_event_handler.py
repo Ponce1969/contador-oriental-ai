@@ -108,10 +108,12 @@ class MemoryEventHandler:
 
     def _formatear_gasto(self, data: dict[str, Any]) -> str:
         monto = data.get("monto", 0)
+        subcat = data.get("subcategoria")
+        subcat_str = f" (subcategoría: {subcat})" if subcat else ""
         return (
             f"Gasto registrado: {data.get('descripcion', '')} "
             f"por {format_pesos_ai(monto)} "
-            f"en categoría {data.get('categoria', '')}. "
+            f"en categoría {data.get('categoria', '')}{subcat_str}. "
             f"Método: {data.get('metodo_pago', '')}. "
             f"Fecha: {data.get('fecha', '')}."
         )

@@ -209,21 +209,21 @@ class LoginView:
         # Redirigir al dashboard
         from core.router import Router
 
-        router = Router(self.page)
+        router = Router.get(self.page)
         router.navigate("/")
 
     def _on_register_click(self, e):
         """Navegar a la página de registro"""
         from core.router import Router
 
-        router = Router(self.page)
+        router = Router.get(self.page)
         router.navigate("/register")
 
     def _on_forgot_password_click(self, e):
         """Navegar a la página de recuperar contraseña"""
         from core.router import Router
 
-        router = Router(self.page)
+        router = Router.get(self.page)
         router.navigate("/forgot-password")
 
     def _show_error(self, message: str):

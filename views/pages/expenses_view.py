@@ -17,10 +17,17 @@ from controllers.installment_controller import InstallmentController
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
-from models.categories import ExpenseCategory, PaymentMethod, get_categories_for_entorno
+from models.categories import (
+    ExpenseCategory,
+    PaymentMethod,
+    get_categories_for_entorno,
+    get_subcategories,
+)
 from models.errors import AppError, ValidationError
 from models.expense_model import Expense
 from services.infrastructure.formatters import format_pesos
+from views.components.date_picker_manager import DatePickerManager
+from views.components.month_selector import MonthSelector
 from views.layouts.main_layout import MainLayout
 
 
@@ -90,6 +97,13 @@ class ExpensesView:
             label="Categoría",
             expand=True,
             options=[ft.dropdown.Option(cat.value) for cat in categories],
+            on_select=self._on_categoria_changed,
+        )
+
+        self.subcategoria_dropdown = ft.Dropdown(
+            label="Subcategoría (opcional)",
+            expand=True,
+            options=[],
         )
 
         self.metodo_pago_dropdown = ft.Dropdown(
@@ -195,17 +209,69 @@ class ExpensesView:
         )
 
         self.fecha_picker = ft.TextField(
-            label="Fecha",
+            label="Fecha (YYYY-MM-DD)",
             value=date.today().strftime("%Y-%m-%d"),
             expand=True,
-            read_only=True,
+            suffix=ft.IconButton(
+                icon=ft.Icons.CALENDAR_MONTH,
+                tooltip="Elegir fecha en calendario",
+                on_click=self._open_date_picker,
+            ),
         )
 
+        # Navegador de meses y buscador en tiempo real
+        self.month_selector = MonthSelector(
+            page=self.page,
+            on_change=self._on_month_changed,
+        )
+        self.search_input = ft.TextField(
+            hint_text="🔍 Buscar gasto por descripción o categoría...",
+            expand=True,
+            dense=True,
+            on_change=self._on_search_changed,
+        )
+        self.expenses_count_label = ft.Text("", size=13, color=ft.Colors.BLUE_GREY_600)
+
         # Lista de gastos
-        self.expenses_column = ft.Column(spacing=12)
+        self.expenses_column = ft.Column(spacing=10)
 
         # Resumen por categorías
         self.summary_column = ft.Column(spacing=5)
+
+    def _open_date_picker(self, _: ft.ControlEvent) -> None:
+        try:
+            curr_date = date.fromisoformat(self.fecha_picker.value)
+        except Exception:
+            curr_date = date.today()
+        DatePickerManager.open_date_picker(self.page, curr_date, self._on_date_selected)
+
+    def _on_date_selected(self, selected: date) -> None:
+        self.fecha_picker.value = selected.strftime("%Y-%m-%d")
+        self.page.update()
+
+    def _on_month_changed(self, year: int, month: int) -> None:
+        self._render_expenses()
+        self._render_summary()
+
+    def _on_search_changed(self, _: ft.ControlEvent) -> None:
+        self._render_expenses()
+
+    def _on_categoria_changed(self, _: ft.ControlEvent) -> None:
+        """Actualizar opciones del dropdown de subcategorías al elegir categoría."""
+        self._update_subcategories()
+        self.page.update()
+
+    def _update_subcategories(self, selected_subcat: str | None = None) -> None:
+        """Poblar opciones de subcategoría según la categoría elegida."""
+        cat_val = self.categoria_dropdown.value
+        subcats = get_subcategories(cat_val) if cat_val else []
+        self.subcategoria_dropdown.options = [
+            ft.dropdown.Option(sub) for sub in subcats
+        ]
+        if selected_subcat and selected_subcat in subcats:
+            self.subcategoria_dropdown.value = selected_subcat
+        else:
+            self.subcategoria_dropdown.value = None
 
     def render(self):
         """Renderizar la vista completa"""
@@ -281,7 +347,7 @@ class ExpensesView:
                                         col=Responsive.COL_HALF,
                                     ),
                                     ft.Container(
-                                        content=self.metodo_pago_dropdown,
+                                        content=self.subcategoria_dropdown,
                                         col=Responsive.COL_HALF,
                                     ),
                                 ],
@@ -290,6 +356,10 @@ class ExpensesView:
                             ),
                             ft.ResponsiveRow(
                                 controls=[
+                                    ft.Container(
+                                        content=self.metodo_pago_dropdown,
+                                        col=Responsive.COL_HALF,
+                                    ),
                                     ft.Container(
                                         content=self.currency_dropdown,
                                         col=Responsive.COL_HALF,
@@ -320,6 +390,9 @@ class ExpensesView:
                     ),
                 ),
                 ft.Divider(),
+                # Navegador temporal mensual
+                self.month_selector,
+                ft.Divider(),
                 # Resumen por categorías
                 ft.Container(
                     content=ft.Column(
@@ -343,10 +416,30 @@ class ExpensesView:
                     ),
                 ),
                 ft.Divider(),
-                ft.Text(
-                    value="📋 Gastos registrados",
-                    size=16 if is_mobile else 20,
+                ft.Row(
+                    controls=[
+                        ft.Row(
+                            controls=[
+                                ft.Text(
+                                    value="📋 Gastos registrados",
+                                    size=16 if is_mobile else 20,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                                self.expenses_count_label,
+                            ],
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=8,
+                        ),
+                        ft.OutlinedButton(
+                            "Exportar CSV",
+                            icon=ft.Icons.DOWNLOAD,
+                            on_click=self._on_export_csv,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
+                self.search_input,
                 self.expenses_column,
             ],
             spacing=16,
@@ -511,14 +604,21 @@ class ExpensesView:
                     selected_metodo = metodo
                     break
 
+            # Obtener fecha seleccionada o defecto a hoy
+            try:
+                fecha_gasto = date.fromisoformat(self.fecha_picker.value)
+            except Exception:
+                fecha_gasto = date.today()
+
             # Crear o actualizar el gasto
             expense = Expense(
                 id=self.editing_expense_id,
                 monto=Decimal(self.monto_input.value),
                 currency=self.currency_dropdown.value or "UYU",
-                fecha=date.today(),
+                fecha=fecha_gasto,
                 descripcion=self.descripcion_input.value,
                 categoria=selected_cat,
+                subcategoria=self.subcategoria_dropdown.value or None,
                 metodo_pago=selected_metodo,
                 es_recurrente=False,
                 frecuencia=None,
@@ -536,6 +636,14 @@ class ExpensesView:
 
             match result:
                 case Ok(expense_ok):
+                    # Si el gasto pertenece a otro mes, sincronizar el selector
+                    if (
+                        expense_ok.fecha.year != self.month_selector.year
+                        or expense_ok.fecha.month != self.month_selector.month
+                    ):
+                        self.month_selector.set_period(
+                            expense_ok.fecha.year, expense_ok.fecha.month, notify=False
+                        )
                     # Compartir con el hogar si corresponde
                     if (
                         self.share_household_switch.visible
@@ -611,19 +719,45 @@ class ExpensesView:
             self._show_error(AppError(message="El monto debe ser un número válido"))
 
     def _render_expenses(self) -> None:
-        """Renderizar lista de gastos del mes actual"""
+        """Renderizar lista de gastos del mes seleccionado con filtro de búsqueda"""
         self.expenses_column.controls.clear()
-        today = date.today()
         expenses = self.controller.list_expenses_by_month(
-            today.year, today.month, entorno=self.entorno
+            self.month_selector.year,
+            self.month_selector.month,
+            entorno=self.entorno,
         )
 
-        if not expenses:
-            self.expenses_column.controls.append(
-                ft.Text(value="No hay gastos registrados", italic=True)
+        # Filtro de búsqueda en tiempo real
+        query = (self.search_input.value or "").strip().lower()
+        if query:
+            filtered = [
+                exp
+                for exp in expenses
+                if query in exp.descripcion.lower()
+                or query in exp.categoria.value.lower()
+                or (exp.subcategoria and query in exp.subcategoria.lower())
+            ]
+            self.expenses_count_label.value = (
+                f"{len(filtered)} de {len(expenses)} gastos"
             )
         else:
-            for expense in reversed(expenses):  # Más recientes primero
+            filtered = expenses
+            self.expenses_count_label.value = (
+                f"{len(expenses)} gastos" if expenses else ""
+            )
+
+        if not filtered:
+            msg = (
+                f"No se encontraron gastos para '{query}'"
+                if query
+                else "No hay gastos registrados en este mes"
+            )
+            self.expenses_column.controls.append(ft.Text(value=msg, italic=True))
+        else:
+            for expense in reversed(filtered):  # Más recientes primero
+                subcat_part = (
+                    f" • {expense.subcategoria}" if expense.subcategoria else ""
+                )
                 self.expenses_column.controls.append(
                     ft.Container(
                         content=ft.ResponsiveRow(
@@ -647,7 +781,8 @@ class ExpensesView:
                                         ),
                                         ft.Text(
                                             value=(
-                                                f"{expense.categoria.value} • "
+                                                f"{expense.categoria.value}"
+                                                f"{subcat_part} • "
                                                 f"{expense.metodo_pago.value}"
                                             ),
                                             size=12,
@@ -725,11 +860,12 @@ class ExpensesView:
         self.page.update()
 
     def _render_summary(self) -> None:
-        """Renderizar resumen por categorías del mes actual, separado por moneda."""
+        """Renderizar resumen por categorías del mes seleccionado."""
         self.summary_column.controls.clear()
-        today = date.today()
         summary = self.controller.get_summary_by_categories(
-            year=today.year, month=today.month, entorno=self.entorno
+            year=self.month_selector.year,
+            month=self.month_selector.month,
+            entorno=self.entorno,
         )
 
         if not summary:
@@ -828,7 +964,9 @@ class ExpensesView:
         if "." in monto_str:
             monto_str = monto_str.rstrip("0").rstrip(".")
         self.monto_input.value = monto_str
+        self.fecha_picker.value = expense.fecha.strftime("%Y-%m-%d")
         self.categoria_dropdown.value = expense.categoria.value
+        self._update_subcategories(selected_subcat=expense.subcategoria)
         self.metodo_pago_dropdown.value = expense.metodo_pago.value
         self.currency_dropdown.value = expense.currency
         self.page.update()
@@ -854,10 +992,29 @@ class ExpensesView:
         self.editing_expense_id = None
         self.descripcion_input.value = ""
         self.monto_input.value = ""
+        self.fecha_picker.value = date.today().strftime("%Y-%m-%d")
         self.categoria_dropdown.value = None
+        self.subcategoria_dropdown.value = None
+        self.subcategoria_dropdown.options = []
         self.metodo_pago_dropdown.value = PaymentMethod.EFECTIVO.value
         self.share_household_switch.value = False
         self.currency_dropdown.value = "USD" if self.entorno == "campo" else "UYU"
+
+    def _on_export_csv(self, _: ft.ControlEvent) -> None:
+        """Exporta los gastos del mes seleccionado a un archivo CSV."""
+        try:
+            csv_text, saved_path = self.controller.export_expenses_csv(
+                year=self.month_selector.year,
+                month=self.month_selector.month,
+                entorno=self.entorno,
+            )
+            try:
+                self.page.set_clipboard(csv_text)
+            except Exception:
+                pass
+            self._show_success(f"Exportado a {saved_path} (copiado al portapapeles)")
+        except Exception as e:
+            self._show_error(AppError(message=f"Error al exportar CSV: {e}"))
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

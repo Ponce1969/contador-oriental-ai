@@ -115,13 +115,17 @@ class TicketService:
         )
         termino = partial.comercio or " ".join(partial.items[:3])
         if termino:
-            partial.categoria_sugerida = await self._sugerir_categoria(termino)
+            cat, subcat = await self._sugerir_categoria_y_subcategoria(termino)
+            partial.categoria_sugerida = cat
+            partial.subcategoria_sugerida = subcat
 
         logger.info(
-            "[TICKET] Procesado: comercio=%s monto=%s categoria=%s confianza=%.2f",
+            "[TICKET] Procesado: comercio=%s monto=%s categoria=%s "
+            "subcategoria=%s confianza=%.2f",
             partial.comercio,
             partial.monto,
             partial.categoria_sugerida,
+            partial.subcategoria_sugerida,
             partial.confianza_ocr,
         )
         return Ok(partial)
@@ -162,16 +166,29 @@ class TicketService:
 
     async def _sugerir_categoria(self, termino: str) -> str | None:
         """Busca la categoría más probable via cosine search en expenses.embedding."""
+        cat, _ = await self._sugerir_categoria_y_subcategoria(termino)
+        return cat
+
+    async def _sugerir_categoria_y_subcategoria(
+        self, termino: str
+    ) -> tuple[str | None, str | None]:
+        """Busca la categoría y subcategoría más probables via cosine search."""
         try:
             emb_result = await self.embedding.generar_embedding(termino)
             if isinstance(emb_result, Err):
-                return None
+                return None, None
             resultados = self.expense_repo.buscar_por_similitud(
                 emb_result.ok(), umbral_cosine=0.25
             )
             if resultados:
                 cats = Counter(g.categoria.value for g, _ in resultados)
-                return cats.most_common(1)[0][0]
+                cat_sugerida = cats.most_common(1)[0][0]
+
+                subcats = Counter(
+                    g.subcategoria for g, _ in resultados if g.subcategoria
+                )
+                subcat_sugerida = subcats.most_common(1)[0][0] if subcats else None
+                return cat_sugerida, subcat_sugerida
         except Exception as e:
-            logger.warning("[TICKET] Error sugiriendo categoría: %s", e)
-        return None
+            logger.warning("[TICKET] Error sugiriendo categoría/subcategoría: %s", e)
+        return None, None

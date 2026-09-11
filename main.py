@@ -178,14 +178,23 @@ async def main(page: ft.Page):
         from core.router import Router
         from core.session import SessionManager
 
-        router = Router(page)
+        router = Router.get(page)
         public_routes = ["/forgot-password", "/reset-password", "/register", "/invite"]
 
         def on_resize(e: object) -> None:
-            new_device = get_device_type(page.width)
+            width = getattr(page, "width", None) or 1280
+            new_device = get_device_type(width)
             if new_device != AppState.device:
                 AppState.device = new_device
-                router.navigate(router.current_route)
+                current_active_route = router.current_route
+                if SessionManager.is_logged_in(page):
+                    # Jamás redirigir al login o rutas públicas si está autenticado
+                    if (
+                        current_active_route in public_routes
+                        or current_active_route == "/login"
+                    ):
+                        current_active_route = "/"
+                router.navigate(current_active_route)
 
         def _navigate_to_route(route: str) -> None:
             """Route navigation respecting auth state and public routes.

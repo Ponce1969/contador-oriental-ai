@@ -16,6 +16,7 @@ from core.unit_of_work import UnitOfWork
 from models.errors import AppError
 from models.expense_model import Expense
 from repositories.expense_repository import ExpenseRepository
+from repositories.monthly_snapshot_repository import MonthlySnapshotRepository
 from services.domain.expense_service import ExpenseService
 
 if TYPE_CHECKING:
@@ -58,12 +59,21 @@ class ExpenseController(BaseController):
                     "descripcion": gasto.descripcion,
                     "monto": gasto.monto,
                     "categoria": gasto.categoria.value,
+                    "subcategoria": gasto.subcategoria,
                     "metodo_pago": gasto.metodo_pago.value,
                     "fecha": str(gasto.fecha),
                     "recurrente": gasto.es_recurrente,
                 },
             )
             self._event_system.fire_and_forget(event)
+            try:
+                with self._get_session() as session:
+                    snap_repo = MonthlySnapshotRepository(
+                        session, self._familia_id or 0
+                    )
+                    snap_repo.upsert_mes(gasto.fecha.year, gasto.fecha.month)
+            except Exception:
+                pass
 
         return result
 
@@ -106,18 +116,48 @@ class ExpenseController(BaseController):
             )
 
     def update_expense(self, expense: Expense) -> Result[Expense, AppError]:
-        """Actualizar un gasto existente"""
+        """Actualizar un gasto existente y resincronizar snapshot."""
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
             service = ExpenseService(repo)
-            return service.update_expense(expense)
+            result = service.update_expense(expense)
+
+        if isinstance(result, Ok):
+            gasto = result.ok()
+            if gasto:
+                try:
+                    with self._get_session() as session:
+                        MonthlySnapshotRepository(
+                            session, self._familia_id or 0
+                        ).upsert_mes(gasto.fecha.year, gasto.fecha.month)
+                except Exception:
+                    pass
+
+        return result
 
     def delete_expense(self, expense_id: int) -> Result[None, AppError]:
-        """Eliminar un gasto"""
+        """Eliminar un gasto y resincronizar snapshot."""
+        fecha_gasto = None
         with self._get_session() as session:
             repo = ExpenseRepository(session, self._familia_id)
+            exp_res = repo.get_by_id(expense_id)
+            if isinstance(exp_res, Ok):
+                exp = exp_res.ok()
+                if exp:
+                    fecha_gasto = exp.fecha
             service = ExpenseService(repo)
-            return service.delete_expense(expense_id)
+            result = service.delete_expense(expense_id)
+
+        if isinstance(result, Ok) and fecha_gasto:
+            try:
+                with self._get_session() as session:
+                    MonthlySnapshotRepository(
+                        session, self._familia_id or 0
+                    ).upsert_mes(fecha_gasto.year, fecha_gasto.month)
+            except Exception:
+                pass
+
+        return result
 
     def get_total_by_month(
         self,
@@ -133,3 +173,27 @@ class ExpenseController(BaseController):
             return service.get_total_by_month(
                 year, month, currency=currency, entorno=entorno
             )
+
+    def export_expenses_csv(
+        self,
+        year: int,
+        month: int,
+        entorno: str | None = None,
+        target_path: str | None = None,
+    ) -> tuple[str, str]:
+        """
+        Exporta los gastos del mes indicado a formato CSV con BOM UTF-8.
+        Retorna una tupla (contenido_csv, ruta_archivo_guardado).
+        """
+        from pathlib import Path
+
+        from services.infrastructure.csv_export_service import CsvExportService
+
+        expenses = self.list_expenses_by_month(year, month, entorno=entorno)
+        csv_text = CsvExportService.generate_csv_string(expenses)
+
+        if not target_path:
+            target_path = str(Path("exports") / f"gastos_{year}_{month:02d}.csv")
+
+        saved_path = str(CsvExportService.export_to_file(expenses, target_path))
+        return csv_text, saved_path

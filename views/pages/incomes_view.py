@@ -29,6 +29,8 @@ from services.labor.domain.enums import ActivityNature
 from services.labor.domain.models import EconomicActivity
 from services.labor.engine import LaborCalculationEngine
 from utils.formatters import format_currency, format_currency_with_symbol
+from views.components.date_picker_manager import DatePickerManager
+from views.components.month_selector import MonthSelector
 from views.layouts.main_layout import MainLayout
 
 
@@ -129,6 +131,17 @@ class IncomesView:
             hint_text=str(date.today()),
             value=str(date.today()),
             expand=True,
+            suffix=ft.IconButton(
+                icon=ft.Icons.CALENDAR_MONTH,
+                tooltip="Elegir fecha en calendario",
+                on_click=self._open_date_picker,
+            ),
+        )
+
+        # Navegador temporal mensual
+        self.month_selector = MonthSelector(
+            page=self.page,
+            on_change=self._on_month_changed,
         )
 
         self.recurrente_checkbox = ft.Checkbox(
@@ -172,6 +185,21 @@ class IncomesView:
             on_click=self._on_cancel_edit,
             visible=False,
         )
+
+    def _open_date_picker(self, _: ft.ControlEvent) -> None:
+        try:
+            curr_date = date.fromisoformat(self.fecha_input.value)
+        except Exception:
+            curr_date = date.today()
+        DatePickerManager.open_date_picker(self.page, curr_date, self._on_date_selected)
+
+    def _on_date_selected(self, selected: date) -> None:
+        self.fecha_input.value = selected.strftime("%Y-%m-%d")
+        self.page.update()
+
+    def _on_month_changed(self, year: int, month: int) -> None:
+        self._render_incomes()
+        self._render_summary()
 
     def render(self):
         """Renderizar la vista completa"""
@@ -245,6 +273,9 @@ class IncomesView:
                         color=ft.Colors.TEAL_100,
                     ),
                 ),
+                ft.Divider(),
+                # Navegador temporal mensual
+                self.month_selector,
                 ft.Divider(),
                 ft.Text(
                     value="📊 Resumen por categorías",
@@ -651,7 +682,14 @@ class IncomesView:
                 success_msg = "Ingreso guardado correctamente"
 
             match result:
-                case Ok(_):
+                case Ok(income_ok):
+                    if (
+                        income_ok.fecha.year != self.month_selector.year
+                        or income_ok.fecha.month != self.month_selector.month
+                    ):
+                        self.month_selector.set_period(
+                            income_ok.fecha.year, income_ok.fecha.month, notify=False
+                        )
                     self.editing_income_id = None
                     self._clear_inputs()
                     self._render_incomes()
@@ -667,9 +705,8 @@ class IncomesView:
     def _render_incomes(self) -> None:
         """Renderizar ingresos del mes: recurrentes siempre + no-recurrentes del mes."""
         self.incomes_column.controls.clear()
-        today = date.today()
         incomes = self.income_controller.list_for_month(
-            today.year, today.month, entorno=self.entorno
+            self.month_selector.year, self.month_selector.month, entorno=self.entorno
         )
 
         if not incomes:
@@ -782,9 +819,10 @@ class IncomesView:
     def _render_summary(self) -> None:
         """Renderizar resumen por categorías del mes, separado por moneda."""
         self.summary_column.controls.clear()
-        today = date.today()
         summary = self.income_controller.get_summary_by_categories(
-            year=today.year, month=today.month, entorno=self.entorno
+            year=self.month_selector.year,
+            month=self.month_selector.month,
+            entorno=self.entorno,
         )
 
         if not summary:

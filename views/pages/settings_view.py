@@ -47,15 +47,109 @@ class SettingsView:
             on_click=self._on_save_email,
         )
 
-        self._campo_switch = ft.Checkbox(
-            label="Habilitar gestión de Campo / Actividad Rural",
-            value=SessionManager.is_campo_enabled(page),
+        is_campo = SessionManager.is_campo_enabled(page)
+        self._campo_radio_group = ft.RadioGroup(
+            content=ft.Column(
+                controls=[
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Radio(value="hogar"),
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(
+                                            "🏠 Solo Hogar / Ciudad",
+                                            weight=ft.FontWeight.BOLD,
+                                            size=14,
+                                            color=ft.Colors.BLUE_900,
+                                        ),
+                                        ft.Text(
+                                            "Finanzas familiares urbanas estándar. "
+                                            "Oculta herramientas y rubros de campo.",
+                                            size=12,
+                                            color=ft.Colors.GREY_700,
+                                        ),
+                                    ],
+                                    spacing=2,
+                                    expand=True,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.START,
+                            vertical_alignment=ft.CrossAxisAlignment.START,
+                        ),
+                        padding=12,
+                        border_radius=8,
+                        bgcolor=ft.Colors.BLUE_50,
+                        border=ft.Border.all(1, ft.Colors.BLUE_200),
+                    ),
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Radio(value="campo"),
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(
+                                            "🚜 Hogar + Campo / Actividad Rural",
+                                            weight=ft.FontWeight.BOLD,
+                                            size=14,
+                                            color=ft.Colors.GREEN_900,
+                                        ),
+                                        ft.Text(
+                                            "Habilita el selector de entorno "
+                                            "(Hogar / Campo) en la barra superior, "
+                                            "insumos rurales y gestión agropecuaria.",
+                                            size=12,
+                                            color=ft.Colors.GREY_700,
+                                        ),
+                                    ],
+                                    spacing=2,
+                                    expand=True,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.START,
+                            vertical_alignment=ft.CrossAxisAlignment.START,
+                        ),
+                        padding=12,
+                        border_radius=8,
+                        bgcolor=ft.Colors.GREEN_50,
+                        border=ft.Border.all(1, ft.Colors.GREEN_300),
+                    ),
+                ],
+                spacing=10,
+            ),
+            value="campo" if is_campo else "hogar",
             on_change=self._on_toggle_campo,
         )
+        self._campo_status = ft.Text(value="", visible=False, size=13)
 
     def _on_toggle_campo(self, e: ft.ControlEvent) -> None:
-        enabled = bool(self._campo_switch.value)
+        enabled = self._campo_radio_group.value == "campo"
         SessionManager.set_campo_enabled(self.page, enabled)
+
+        familia_id = SessionManager.get_familia_id(self.page)
+        if familia_id:
+            from core.events import Event, EventSystem, EventType
+            from repositories.family_repository import FamilyRepository
+
+            FamilyRepository().set_campo_enabled(familia_id, enabled)
+
+            event = Event(
+                type=EventType.CAMPO_CONFIG_CAMBIADA,
+                familia_id=familia_id,
+                data={"enabled": enabled},
+            )
+            EventSystem().fire_and_forget(event)
+
+        msg = (
+            "🚜 Actividad rural habilitada"
+            if enabled
+            else "🏠 Modo solo hogar activado"
+        )
+        self._campo_status.value = f"✅ {msg} (guardado permanentemente)"
+        self._campo_status.color = (
+            ft.Colors.GREEN_700 if enabled else ft.Colors.BLUE_700
+        )
+        self._campo_status.visible = True
         self.page.update()
 
     def _get_user_id(self) -> int | None:
@@ -194,15 +288,8 @@ class SettingsView:
                                 size=13,
                                 color=ft.Colors.GREY_700,
                             ),
-                            ft.Container(
-                                content=self._campo_switch,
-                                bgcolor=ft.Colors.GREEN_50,
-                                border=ft.Border.all(1, ft.Colors.GREEN_300),
-                                border_radius=8,
-                                padding=ft.Padding.symmetric(
-                                    horizontal=14, vertical=10
-                                ),
-                            ),
+                            self._campo_radio_group,
+                            self._campo_status,
                         ],
                         spacing=12,
                     ),

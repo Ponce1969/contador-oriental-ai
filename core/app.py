@@ -15,7 +15,7 @@ class FletingApp:
         self._register_file_picker()
         from core.router import Router
 
-        self.router = Router(page)
+        self.router = Router.get(page)
         self.router.navigate("/")
 
     def _register_file_picker(self):

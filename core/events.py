@@ -26,6 +26,7 @@ class EventType(Enum):
     SHARED_EXPENSE_LINK_CREADO = "shared_expense_link_creado"
     SHARED_EXPENSE_LINK_ELIMINADO = "shared_expense_link_eliminado"
     SETTLEMENT_CREADO = "settlement_creado"
+    CAMPO_CONFIG_CAMBIADA = "campo_config_cambiada"
 
 
 @dataclass

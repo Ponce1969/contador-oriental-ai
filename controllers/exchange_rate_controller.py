@@ -5,6 +5,7 @@ Provee a la UI el valor del día con lógica de fallback.
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 
 from core.sqlalchemy_session import get_db_session
@@ -35,3 +36,17 @@ class ExchangeRateController:
                 return latest.compra, latest.venta, False
 
         return Decimal("0"), Decimal("0"), False
+
+    def get_rate_for_date(self, target_date: date) -> tuple[Decimal, Decimal]:
+        """Retorna (compra, venta) para una fecha específica o el fallback."""
+        with get_db_session() as session:
+            repo = ExchangeRateRepository(session)
+            rate = repo.get_rate_for_date(target_date)
+            if rate:
+                return rate.compra, rate.venta
+
+            latest = repo.get_latest()
+            if latest:
+                return latest.compra, latest.venta
+
+        return Decimal("0"), Decimal("0")

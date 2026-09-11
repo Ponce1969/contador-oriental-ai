@@ -819,6 +819,7 @@ class TicketUploadView:
             currency=data.get("currency") or "UYU",
             items=data.get("items") or [],
             categoria_sugerida=data.get("categoria_sugerida"),
+            subcategoria_sugerida=data.get("subcategoria_sugerida"),
             confianza_ocr=conf_val,
             extraction_confidence=conf_val,
             arithmetic_consistent=data.get("arithmetic_consistent"),

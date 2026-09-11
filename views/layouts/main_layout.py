@@ -92,7 +92,25 @@ class MainLayout(ft.Column):
         self._content = content
         self._whatsapp_handler = WhatsAppContactHandler(page)
 
+        self._subscribe_events()
         self._build()
+
+    def _subscribe_events(self) -> None:
+        try:
+            from core.events import Event, EventSystem, EventType
+
+            async def _on_campo_config_cambiada(event: Event) -> None:
+                try:
+                    self._build()
+                    self.update()
+                except Exception:
+                    pass
+
+            EventSystem().subscribe(
+                EventType.CAMPO_CONFIG_CAMBIADA, _on_campo_config_cambiada
+            )
+        except Exception:
+            pass
 
     def _user_needs_email_banner(self) -> bool:
         """Check if current user is logged in but has no email registered."""

@@ -10,6 +10,8 @@ from datetime import date
 from decimal import Decimal
 
 from controllers.base_controller import BaseController
+from models.expense_model import Expense
+from models.income_model import Income
 from repositories.expense_repository import ExpenseRepository
 from repositories.income_repository import IncomeRepository
 from services.domain.income_service import IncomeService
@@ -53,7 +55,28 @@ class HistoryData:
         Decimal  # Para normalizar barras (máximo absoluto entre todas las monedas)
     )
     top_categorias: list[tuple[str, str, Decimal]]  # (nombre, moneda, total)
-    variacion_gastos: Decimal | None  # % vs mes anterior, None si no hay (sobre UYU)
+
+
+@dataclass(frozen=True)
+class MonthTransactionsDTO:
+    """DTO inmutable con el desglose completo de un mes."""
+
+    year: int
+    month: int
+    label: str
+    expenses: list[Expense]
+    incomes: list[Income]
+    total_gastos: dict[str, Decimal]
+    total_ingresos: dict[str, Decimal]
+    balance: dict[str, Decimal]
+
+    @property
+    def gastos(self) -> list[Expense]:
+        return self.expenses
+
+    @property
+    def ingresos(self) -> list[Income]:
+        return self.incomes
 
 
 class HistoryController(BaseController):
@@ -197,3 +220,44 @@ class HistoryController(BaseController):
         if valor < -5:
             return "#43A047"  # Green — gastó menos
         return "#FB8C00"  # Orange — estable
+
+    def get_month_transactions(self, year: int, month: int) -> MonthTransactionsDTO:
+        """Obtiene el desglose detallado de gastos e ingresos de un mes específico."""
+        with self._get_session() as session:
+            expense_repo = ExpenseRepository(session, self._familia_id)
+            income_repo = IncomeRepository(session, self._familia_id)
+            income_service = IncomeService(income_repo)
+
+            gastos = list(expense_repo.get_by_month(year, month))
+            ingresos = list(income_service.list_for_month(year, month))
+
+            total_gastos: dict[str, Decimal] = {}
+            for g in gastos:
+                total_gastos[g.currency] = (
+                    total_gastos.get(g.currency, Decimal("0")) + g.monto
+                )
+
+            total_ingresos: dict[str, Decimal] = {}
+            for inc in ingresos:
+                total_ingresos[inc.currency] = (
+                    total_ingresos.get(inc.currency, Decimal("0")) + inc.monto
+                )
+
+            monedas = set(total_gastos.keys()) | set(total_ingresos.keys()) | {"UYU"}
+            balance: dict[str, Decimal] = {
+                c: total_ingresos.get(c, Decimal("0"))
+                - total_gastos.get(c, Decimal("0"))
+                for c in monedas
+            }
+
+            label = f"{_MESES.get(month, f'Mes {month}')} {year}"
+            return MonthTransactionsDTO(
+                year=year,
+                month=month,
+                label=label,
+                expenses=gastos,
+                incomes=ingresos,
+                total_gastos=total_gastos,
+                total_ingresos=total_ingresos,
+                balance=balance,
+            )

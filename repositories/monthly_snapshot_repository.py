@@ -27,6 +27,10 @@ class MonthlySnapshotRepository:
     # ESCRITURA — upsert del mes actual
     # ------------------------------------------------------------------
 
+    def upsert_mes(self, anio: int, mes: int) -> int:
+        """Alias de upsert_mes_actual para recalcular cualquier mes."""
+        return self.upsert_mes_actual(anio, mes)
+
     def upsert_mes_actual(self, anio: int, mes: int) -> int:
         """
         Calcula y guarda (INSERT OR UPDATE) las métricas del mes indicado

@@ -26,6 +26,9 @@ class ExpenseCategory(StrEnum):
     AGRO_LOGISTICA = "🚛 Fletes y Logística"
     AGRO_VETERINARIA = "🐄 Sanidad y Ganado"
     AGRO_MANTENIMIENTO = "🔧 Alambrados y Mejoras"
+    AGRO_ARRENDAMIENTO = "📜 Arrendamientos y Pastoreo"
+    AGRO_COMISIONES_IMPUESTOS = "🏛️ Impuestos y Comisiones"
+    AGRO_SERVICIOS = "⚡ Energía y Servicios Rurales"
     AGRO_OTROS = "🌾 Otros Campo"
 
 
@@ -41,7 +44,8 @@ SUBCATEGORIES = {
     ],
     ExpenseCategory.VEHICULOS: [
         "Combustible",
-        "Mantenimiento",
+        "Mantenimiento vehículo",
+        "Transporte público / Pasajes",
         "Seguro auto",
         "Patente",
         "Estacionamiento",
@@ -134,10 +138,29 @@ SUBCATEGORIES = {
         "Taller y herramientas",
         "Otros mejoras",
     ],
+    ExpenseCategory.AGRO_ARRENDAMIENTO: [
+        "Arrendamiento agrícola",
+        "Pastoreo / Capitalización",
+        "Renta de campo",
+        "Otros arrendamiento",
+    ],
+    ExpenseCategory.AGRO_COMISIONES_IMPUESTOS: [
+        "Comisión consignatario / remate",
+        "Contribución inmobiliaria rural",
+        "Guías de tránsito / DICOSE",
+        "Impuestos municipales / BPS",
+        "Otros impuestos/comisiones",
+    ],
+    ExpenseCategory.AGRO_SERVICIOS: [
+        "UTE Rural / Bombeo eléctrico",
+        "Internet rural / Telefonía",
+        "Gas / Leña / Combustible estufa",
+        "Agua / Perforaciones",
+        "Otros servicios rurales",
+    ],
     ExpenseCategory.AGRO_OTROS: [
-        "Impuestos rurales / Contribución",
         "Seguro de granizo/cosecha",
-        "Arrendamiento de campo",
+        "Honorarios profesionales / Agronomía",
         "Varios campo",
     ],
 }
@@ -161,6 +184,9 @@ CATEGORIES_CAMPO: list[ExpenseCategory] = [
     ExpenseCategory.AGRO_LOGISTICA,
     ExpenseCategory.AGRO_VETERINARIA,
     ExpenseCategory.AGRO_MANTENIMIENTO,
+    ExpenseCategory.AGRO_ARRENDAMIENTO,
+    ExpenseCategory.AGRO_COMISIONES_IMPUESTOS,
+    ExpenseCategory.AGRO_SERVICIOS,
     ExpenseCategory.AGRO_OTROS,
 ]
 

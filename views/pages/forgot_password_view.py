@@ -134,7 +134,7 @@ class ForgotPasswordView:
     def _on_login_click(self, e):
         from core.router import Router
 
-        router = Router(self.page)
+        router = Router.get(self.page)
         router.navigate("/login")
 
     def _show_message(self, message: str, error: bool = False):

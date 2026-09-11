@@ -21,6 +21,7 @@ from core.session import SessionManager
 from core.state import AppState
 from services.infrastructure.formatters import format_pesos
 from views.components.benefits_projection_card import BenefitsProjectionCard
+from views.components.month_selector import MonthSelector
 from views.components.summary_renderer import SummaryRenderer
 from views.layouts.main_layout import MainLayout
 
@@ -76,11 +77,21 @@ class DashboardView:
             show_header=False,
         )
 
+        # Selector de mes y período auditado
+        self.month_selector = MonthSelector(
+            page=self.page,
+            on_change=self._on_month_changed,
+        )
+
         # Contenedores para los datos
         self.balance_card = ft.Container()
         self.income_card = ft.Container()
         self.expense_card = ft.Container()
         self.chart_container = ft.Container()
+
+    def _on_month_changed(self, year: int, month: int) -> None:
+        """Actualizar dashboard al cambiar mes en el selector"""
+        self.router.navigate("/dashboard")
 
     def render(self):
         """Renderizar la vista completa"""
@@ -88,10 +99,9 @@ class DashboardView:
         if not hasattr(self, "income_controller"):
             return ft.Container()
 
-        # Obtener mes y año actual
-        today = date.today()
-        year = today.year
-        month = today.month
+        # Obtener mes y año del período seleccionado
+        year = self.month_selector.year
+        month = self.month_selector.month
         month_name = self._get_month_name(month)
 
         # Generar gastos programados de cuotas (si no se hizo ya)
@@ -194,7 +204,12 @@ class DashboardView:
 
         # Cotización y Patrimonio Consolidado
         exchange_ctrl = ExchangeRateController()
-        compra, venta, _ = exchange_ctrl.get_display_rate()
+        today = date.today()
+        if (year, month) == (today.year, today.month):
+            compra, venta, _ = exchange_ctrl.get_display_rate()
+        else:
+            target_date = date(year, month, 28)
+            compra, venta = exchange_ctrl.get_rate_for_date(target_date)
 
         patrimonio_total_uyu = balance_uyu
         equivalencia_usd: Decimal | None = None
@@ -256,6 +271,7 @@ class DashboardView:
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     wrap=True,
                 ),
+                self.month_selector,
                 self._build_history_hook(year, month),
                 ft.Divider(),
                 # Tarjetas de Balance por moneda

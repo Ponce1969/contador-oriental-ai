@@ -81,6 +81,14 @@ class Expense(BaseModel):
             raise ValueError(f"Moneda no soportada: {value}")
         return value
 
+    @field_validator("subcategoria")
+    @classmethod
+    def _validate_subcategoria(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned if cleaned else None
+
     def __str__(self) -> str:
         if self.currency == "USD":
             return f"{self.categoria.value} - {self.descripcion}: USD {self.monto:.2f}"

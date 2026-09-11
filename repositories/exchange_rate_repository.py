@@ -40,6 +40,18 @@ class ExchangeRateRepository:
         )
         return self._to_domain(row) if row else None
 
+    def get_rate_for_date(self, target_date: date) -> ExchangeRate | None:
+        """Retorna la cotización para una fecha específica o la más cercana anterior."""
+        row = (
+            self.session.query(ExchangeRateTable)
+            .filter(ExchangeRateTable.date <= target_date)
+            .order_by(ExchangeRateTable.date.desc())
+            .first()
+        )
+        if row:
+            return self._to_domain(row)
+        return self.get_latest()
+
     def get_latest(self) -> ExchangeRate | None:
         """Retorna la cotización más reciente (fallback si no hay de hoy)."""
         row = (

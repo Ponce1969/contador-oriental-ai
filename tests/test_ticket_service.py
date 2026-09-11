@@ -219,3 +219,24 @@ class TestTicketServiceSugerirCategoria:
         resultado = await ticket_service._sugerir_categoria("algo raro")
 
         assert resultado is None
+
+    async def test_sugiere_categoria_y_subcategoria_frecuente(
+        self, ticket_service, mock_embedding, mock_expense_repo
+    ):
+        mock_embedding.generar_embedding.return_value = Ok([0.1] * 768)
+        mock_g1, mock_g2 = MagicMock(), MagicMock()
+        mock_g1.categoria.value = "🚗 Vehículo"
+        mock_g1.subcategoria = "Combustible"
+        mock_g2.categoria.value = "🚗 Vehículo"
+        mock_g2.subcategoria = "Combustible"
+        mock_expense_repo.buscar_por_similitud.return_value = [
+            (mock_g1, 0.95),
+            (mock_g2, 0.90),
+        ]
+
+        cat, subcat = await ticket_service._sugerir_categoria_y_subcategoria(
+            "estacion ancap"
+        )
+
+        assert cat == "🚗 Vehículo"
+        assert subcat == "Combustible"

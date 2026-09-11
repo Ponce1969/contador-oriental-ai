@@ -159,6 +159,28 @@ class HistoryView:
                             size=11,
                             color=ft.Colors.BLUE_GREY_400,
                         ),
+                        ft.TextButton(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(
+                                        ft.Icons.SEARCH,
+                                        size=15,
+                                        color=ft.Colors.INDIGO_600,
+                                    ),
+                                    ft.Text(
+                                        "Ver desglose",
+                                        size=12,
+                                        color=ft.Colors.INDIGO_600,
+                                        weight=ft.FontWeight.BOLD,
+                                    ),
+                                ],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                spacing=4,
+                            ),
+                            on_click=lambda _, yr=m.year, mo=m.month: (
+                                self._show_month_detail(yr, mo)
+                            ),
+                        ),
                     ],
                     spacing=6,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -167,7 +189,7 @@ class HistoryView:
                 bgcolor="#FAF8F5",
                 border_radius=12,
                 border=ft.Border.all(1, "#E8E2D9"),
-                height=230,
+                height=265,
                 shadow=ft.BoxShadow(
                     spread_radius=0,
                     blur_radius=8,
@@ -367,3 +389,180 @@ class HistoryView:
         AppState.prefilled_question = "Resumen de gastos de los últimos 3 meses"
         AppState.from_history = True
         self.router.navigate("/ai-contador")
+
+    def _show_month_detail(self, year: int, month: int) -> None:
+        """Muestra un modal interactivo con el desglose completo del mes."""
+        data = self.controller.get_month_transactions(year, month)
+        is_mobile = AppState.device == "mobile"
+
+        # Listado de gastos
+        gastos_controls: list[ft.Control] = []
+        if not data.gastos:
+            gastos_controls.append(
+                ft.Text("No hay gastos registrados.", italic=True, size=13)
+            )
+        else:
+            for g in data.gastos:
+                monto_fmt = format_pesos(g.monto, currency=g.currency)
+                gastos_controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Text(
+                                    g.fecha.strftime("%d/%m"),
+                                    size=11,
+                                    color=ft.Colors.GREY_600,
+                                ),
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(
+                                            g.descripcion,
+                                            size=13,
+                                            weight=ft.FontWeight.W_500,
+                                        ),
+                                        ft.Text(
+                                            (
+                                                f"{g.categoria.value} • "
+                                                f"{g.subcategoria}"
+                                                if g.subcategoria
+                                                else g.categoria.value
+                                            ),
+                                            size=10,
+                                            color=ft.Colors.GREY_600,
+                                        ),
+                                    ],
+                                    spacing=1,
+                                    expand=True,
+                                ),
+                                ft.Text(
+                                    monto_fmt,
+                                    size=13,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.RED_700,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        padding=ft.Padding.symmetric(vertical=4, horizontal=6),
+                        border=ft.Border(bottom=ft.BorderSide(1, "#F3F4F6")),
+                    )
+                )
+
+        # Listado de ingresos
+        ingresos_controls: list[ft.Control] = []
+        if not data.ingresos:
+            ingresos_controls.append(
+                ft.Text("No hay ingresos registrados.", italic=True, size=13)
+            )
+        else:
+            for inc in data.ingresos:
+                monto_fmt = format_pesos(inc.monto, currency=inc.currency)
+                ingresos_controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            controls=[
+                                ft.Text(
+                                    inc.fecha.strftime("%d/%m"),
+                                    size=11,
+                                    color=ft.Colors.GREY_600,
+                                ),
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(
+                                            inc.descripcion,
+                                            size=13,
+                                            weight=ft.FontWeight.W_500,
+                                        ),
+                                        ft.Text(
+                                            inc.categoria.value,
+                                            size=10,
+                                            color=ft.Colors.GREY_600,
+                                        ),
+                                    ],
+                                    spacing=1,
+                                    expand=True,
+                                ),
+                                ft.Text(
+                                    monto_fmt,
+                                    size=13,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=ft.Colors.GREEN_700,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        ),
+                        padding=ft.Padding.symmetric(vertical=4, horizontal=6),
+                        border=ft.Border(bottom=ft.BorderSide(1, "#F3F4F6")),
+                    )
+                )
+
+        dialog_content = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        f"📊 Balance del período: {data.label}",
+                        size=14,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.BLUE_GREY_800,
+                    ),
+                    ft.Divider(height=4),
+                    ft.Text(
+                        "💸 Gastos:",
+                        weight=ft.FontWeight.BOLD,
+                        size=13,
+                        color=ft.Colors.DEEP_ORANGE_700,
+                    ),
+                    ft.Container(
+                        content=ft.Column(
+                            controls=gastos_controls,
+                            spacing=4,
+                            scroll=ft.ScrollMode.AUTO,
+                        ),
+                        max_height=160,
+                    ),
+                    ft.Divider(height=10),
+                    ft.Text(
+                        "💵 Ingresos:",
+                        weight=ft.FontWeight.BOLD,
+                        size=13,
+                        color=ft.Colors.TEAL_800,
+                    ),
+                    ft.Container(
+                        content=ft.Column(
+                            controls=ingresos_controls,
+                            spacing=4,
+                            scroll=ft.ScrollMode.AUTO,
+                        ),
+                        max_height=160,
+                    ),
+                ],
+                spacing=8,
+                tight=True,
+            ),
+            width=480 if not is_mobile else 320,
+            padding=10,
+        )
+
+        def _on_audit_click(_):
+            SessionManager.set_audited_period(self.page, year, month)
+            dialog.open = False
+            self.page.update()
+            self.router.navigate("/expenses")
+
+        def _on_close_click(_):
+            dialog.open = False
+            self.page.update()
+
+        dialog = ft.AlertDialog(
+            title=ft.Text(f"📋 Desglose {data.label}", weight=ft.FontWeight.BOLD),
+            content=dialog_content,
+            actions=[
+                ft.ElevatedButton("Abrir en Gastos ↗", on_click=_on_audit_click),
+                ft.TextButton("Cerrar", on_click=_on_close_click),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        self.page.overlay.append(dialog)
+        dialog.open = True
+        self.page.update()

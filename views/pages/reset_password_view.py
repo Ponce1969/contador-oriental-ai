@@ -211,7 +211,7 @@ class ResetPasswordView:
             # Navigate to login
             from core.router import Router
 
-            router = Router(self.page)
+            router = Router.get(self.page)
             router.navigate("/login")
         else:
             error = result.err()
@@ -222,7 +222,7 @@ class ResetPasswordView:
     def _on_forgot_password_click(self, e):
         from core.router import Router
 
-        router = Router(self.page)
+        router = Router.get(self.page)
         router.navigate("/forgot-password")
 
     def _show_error(self, message: str):
