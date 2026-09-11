@@ -26,7 +26,9 @@ Sistema integral de gestión financiera familiar con **Python 3.12 + Flet + Post
 - **🤖 Contador Oriental (IA Local con Ollama)** — Asistente explicativo local impulsado por Gemma 2:2b con streaming de respuestas. Principio rector: **Python calcula con 100% de precisión matemática y la IA explica el contexto legal**. Cada respuesta incorpora un descargo de responsabilidad jurídica orientativa.
 - **🧠 Memoria Vectorial & Búsqueda Semántica** — Cada gasto se vectoriza en background (`expenses.embedding` vector(768) con `nomic-embed-text` + pgvector HNSW).
 - **📷 Escaneo de Tickets OCR** — Microservicio FastAPI con OpenCV + Tesseract + Gemma2 para digitalización automática de recibos en BottomSheet inline.
-- **📱 PWA & Soporte WhatsApp** — Instalable como Web App y botón de contacto de soporte directo en la barra superior.
+- **📥 Exportación a CSV & Compatibilidad Total con Excel** — Exportación de gastos mensuales a formato CSV con codificación UTF-8 BOM (`\ufeff`) para apertura inmediata y perfecta en Microsoft Excel, Google Sheets y LibreOffice sin alteración de tildes o caracteres. Modal interactivo con previsualización, descarga directa en un clic y copiado rápido al portapapeles.
+- **📅 Navegación Temporal & Auditoría Histórica** — Selector dinámico de períodos para auditar gastos de meses pasados y futuros, sincronización automática de compras en cuotas programadas y modal de desglose analítico por categorías responsivo.
+- **📱 PWA & Soporte WhatsApp** — Instalable como Web App (PWA) tanto en escritorio como en dispositivos móviles, con soporte para descargas nativas y botón de contacto de soporte directo en la barra superior.
 - **🛡️ Guardian** — Monitoreo autónomo de salud de contenedores Docker y alertas a Discord.
 
 ---
@@ -55,6 +57,7 @@ PostgreSQL + pgvector
 - **Observer Pattern** — `EventSystem` desacopla controladores de IA; la vectorización se ejecuta de forma asíncrona (*fire-and-forget*).
 - **Dependency Injection** — Inyección de sesiones y repositorios facilitando pruebas unitarias aisladas sin mockeo sucio.
 - **RAG (Retrieval-Augmented Generation)** — Cada consulta al Contador busca contexto semántico en pgvector antes de llamar a Gemma.
+- **Descargas Nativas Web & Assets Estáticos** — Montaje estático mediante rutas absolutas en FastAPI/FletStaticFiles y enlaces de descarga nativos del navegador con UTF-8 BOM, garantizando compatibilidad sin bloqueos de popups tanto en web/PWA como desktop.
 - **Zero White Backgrounds** — Interfaz visual con paleta pastel suave (`TEAL_50`, `PURPLE_50`, `AMBER_50`, bordes sutiles) reduciendo fatiga visual.
 
 ---
@@ -182,7 +185,7 @@ contador-oriental/
 │   │   ├── ai_advisor_service.py     # Prompt builder con streaming de Ollama
 │   │   ├── embedding_service.py      # Vectores 768d con nomic-embed-text
 │   │   └── ia_memory_service.py      # Búsqueda semántica en pgvector
-│   └── 📁 infrastructure/            # Integraciones externas (OCR, PDFs, Cotización)
+│   └── 📁 infrastructure/            # Integraciones externas (CSV con UTF-8 BOM, OCR, PDFs, Cotización)
 ├── 📁 repositories/                  # Acceso a datos con BaseTableRepository
 ├── 📁 models/                        # Modelos Pydantic y DTOs
 ├── 📁 database/                      # Modelos SQLAlchemy y conexión
@@ -190,8 +193,8 @@ contador-oriental/
 │   ├── 📁 pages/                     # Vistas principales (Hogar, Dashboard, Planes, Familia, Gastos, etc.)
 │   └── 📁 components/                # Componentes interactivos (FamilyIRPFOptimizerCard, SavingsGoalsCard, BenefitsCard, etc.)
 ├── 📁 migrations/                    # 001_initial.py ... 021_add_savings_goals.py
-├── 📁 tests/                         # Suite automatizada con 470 tests unitarios e integración
-├── 📄 docker-compose.yml             # postgres (pgvector) + app + ocr_api + guardian
+├── 📁 tests/                         # Suite automatizada con 542 tests unitarios e integración
+├── 📄 docker-compose.yml             # postgres (pgvector) + app + ocr_api + nginx + guardian
 ├── 📄 Modelfile                      # Configuración del modelo contador-oriental
 ├── 📄 pyproject.toml                 # uv, dependencias y herramientas de calidad
 └── 📄 main.py                        # Punto de entrada de la aplicación
@@ -244,7 +247,7 @@ GUARDIAN_CHECK_INTERVAL=60
 El proyecto cuenta con una amplia suite de pruebas automatizadas:
 
 ```bash
-# Ejecutar toda la suite de pruebas (470 tests)
+# Ejecutar toda la suite de pruebas (542 tests)
 uv run pytest -v
 
 # Con reporte de cobertura de código
@@ -268,8 +271,9 @@ uv run ruff format --check .
 |---|---|---|
 | `postgres` | `5432` | PostgreSQL 16 con extensión `pgvector` (ARM64 & x86_64) |
 | `app` | `8550` | Aplicación web Flet (FastAPI backend + interfaz interactiva) |
-| `ocr_api` | `8551` | Microservicio de procesamiento OCR de comprobantes |
-| `guardian` | — | Monitoreo continuo de contenedores y alertas en Discord |
+| `ocr_api` | `8551` | Microservicio de procesamiento OCR de comprobantes con Tesseract + OpenCV |
+| `nginx` | `8552 / 80` | Reverse proxy con soporte para WebSockets (/ws), timeouts extendidos y routing |
+| `guardian` | — | Monitoreo continuo de salud de contenedores y alertas automáticas en Discord |
 
 ---
 
