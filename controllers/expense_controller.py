@@ -180,7 +180,7 @@ class ExpenseController(BaseController):
         month: int,
         entorno: str | None = None,
         target_path: str | None = None,
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str | None]:
         """
         Exporta los gastos del mes indicado a formato CSV con BOM UTF-8.
         Retorna una tupla (contenido_csv, ruta_archivo_guardado).
@@ -195,5 +195,6 @@ class ExpenseController(BaseController):
         if not target_path:
             target_path = str(Path("exports") / f"gastos_{year}_{month:02d}.csv")
 
-        saved_path = str(CsvExportService.export_to_file(expenses, target_path))
+        saved = CsvExportService.export_to_file(expenses, target_path)
+        saved_path = str(saved) if saved else None
         return csv_text, saved_path

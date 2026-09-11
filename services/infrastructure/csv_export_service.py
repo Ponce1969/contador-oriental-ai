@@ -7,11 +7,14 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from models.expense_model import Expense
+
+logger = logging.getLogger(__name__)
 
 
 class CsvExportService:
@@ -53,10 +56,20 @@ class CsvExportService:
         return output.getvalue()
 
     @classmethod
-    def export_to_file(cls, expenses: list[Expense], target_path: str | Path) -> Path:
-        """Guarda la lista de gastos en un archivo CSV con codificación utf-8."""
-        path = Path(target_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        content = cls.generate_csv_string(expenses)
-        path.write_text(content, encoding="utf-8")
-        return path
+    def export_to_file(
+        cls, expenses: list[Expense], target_path: str | Path
+    ) -> Path | None:
+        """Guarda la lista de gastos en disco si los permisos lo permiten."""
+        try:
+            path = Path(target_path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            content = cls.generate_csv_string(expenses)
+            path.write_text(content, encoding="utf-8")
+            return path
+        except (PermissionError, OSError) as e:
+            logger.warning(
+                "[CSV_EXPORT] No se pudo escribir archivo en disco (%s): %s",
+                target_path,
+                e,
+            )
+            return None

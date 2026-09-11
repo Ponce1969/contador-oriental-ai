@@ -1008,13 +1008,119 @@ class ExpensesView:
                 month=self.month_selector.month,
                 entorno=self.entorno,
             )
+            self._mostrar_modal_exportacion_csv(csv_text, saved_path)
+        except Exception as e:
+            self._show_error(AppError(message=f"Error al generar CSV: {e}"))
+
+    def _mostrar_modal_exportacion_csv(
+        self, csv_text: str, saved_path: str | None
+    ) -> None:
+        """Muestra modal con descarga directa y copia de datos del CSV."""
+        import base64
+
+        b64_data = base64.b64encode(csv_text.encode("utf-8-sig")).decode("ascii")
+        data_uri = f"data:text/csv;charset=utf-8;base64,{b64_data}"
+        periodo_str = f"{self.month_selector.year}_{self.month_selector.month:02d}"
+
+        def _descargar(_):
+            try:
+                self.page.launch_url(data_uri)
+                self._show_success("Descarga iniciada en tu navegador")
+            except Exception as ex:
+                self._show_error(
+                    AppError(message=f"No se pudo iniciar la descarga: {ex}")
+                )
+
+        def _copiar(_):
             try:
                 self.page.set_clipboard(csv_text)
+                self._show_success("Datos CSV copiados al portapapeles")
             except Exception:
-                pass
-            self._show_success(f"Exportado a {saved_path} (copiado al portapapeles)")
-        except Exception as e:
-            self._show_error(AppError(message=f"Error al exportar CSV: {e}"))
+                self._show_error(
+                    AppError(
+                        message="Seleccioná y copiá el texto del cuadro manualmente"
+                    )
+                )
+
+        def _cerrar(_):
+            dialog.open = False
+            self.page.update()
+
+        info_guardado = (
+            f"Archivo guardado en servidor: {saved_path}"
+            if saved_path
+            else "Listo para descargar a tu dispositivo"
+        )
+
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.TABLE_VIEW, color=ft.Colors.GREEN_700),
+                    ft.Text(
+                        f"Exportar Gastos ({periodo_str})",
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                ],
+                spacing=8,
+            ),
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            "Descargá el archivo CSV para abrir en Excel o "
+                            "copiá los datos directamente:",
+                            size=13,
+                            color=ft.Colors.GREY_800,
+                        ),
+                        ft.TextField(
+                            value=csv_text,
+                            multiline=True,
+                            read_only=True,
+                            dense=True,
+                            min_lines=4,
+                            max_lines=7,
+                            text_size=11,
+                        ),
+                        ft.Row(
+                            controls=[
+                                ft.ElevatedButton(
+                                    "⬇️ Descargar CSV",
+                                    icon=ft.Icons.DOWNLOAD,
+                                    bgcolor=ft.Colors.GREEN_700,
+                                    color=ft.Colors.WHITE,
+                                    on_click=_descargar,
+                                ),
+                                ft.OutlinedButton(
+                                    "📋 Copiar datos",
+                                    icon=ft.Icons.CONTENT_COPY,
+                                    on_click=_copiar,
+                                ),
+                            ],
+                            spacing=10,
+                            wrap=True,
+                        ),
+                        ft.Text(
+                            info_guardado,
+                            size=11,
+                            color=ft.Colors.GREY_600,
+                            italic=True,
+                        ),
+                    ],
+                    spacing=12,
+                    tight=True,
+                ),
+                width=460,
+            ),
+            actions=[
+                ft.TextButton("Cerrar", on_click=_cerrar),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        self.page.overlay.append(dialog)
+        dialog.open = True
+        self.page.update()
 
     def _show_error(self, error: AppError) -> None:
         """Mostrar mensaje de error"""

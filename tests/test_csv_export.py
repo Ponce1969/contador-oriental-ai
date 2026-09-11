@@ -82,6 +82,7 @@ def test_export_to_file(tmp_path: Path):
     target_file = tmp_path / "subcarpeta" / "export_test.csv"
     saved = CsvExportService.export_to_file(gastos, target_file)
 
+    assert saved is not None
     assert saved.exists()
     raw_bytes = saved.read_bytes()
     # Verifica BOM UTF-8 en bytes
@@ -90,3 +91,12 @@ def test_export_to_file(tmp_path: Path):
     content_str = saved.read_text(encoding="utf-8-sig")
     assert "Combustible" in content_str
     assert "Nafta" in content_str
+
+
+def test_export_to_file_permission_error(monkeypatch):
+    def mock_mkdir(*args, **kwargs):
+        raise PermissionError("Access denied")
+
+    monkeypatch.setattr(Path, "mkdir", mock_mkdir)
+    res = CsvExportService.export_to_file([], "/fake/forbidden/file.csv")
+    assert res is None
