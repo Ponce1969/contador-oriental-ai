@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pathlib import Path
 
 import flet as ft
 from dotenv import load_dotenv
@@ -249,14 +250,15 @@ async def main(page: ft.Page):
 
 # Detectar si estamos en Docker (modo web) o local (modo desktop)
 # Si existe POSTGRES_HOST, estamos en Docker
+_assets_dir = str((Path(__file__).parent / "assets").resolve())
 if os.getenv("POSTGRES_HOST"):
     ft.run(
         main,
-        assets_dir="assets",
+        assets_dir=_assets_dir,
         view=ft.AppView.WEB_BROWSER,
         port=int(os.getenv("APP_PORT", "8550")),
         host="0.0.0.0",
     )
 else:
     # Modo desktop para desarrollo local
-    ft.run(main, assets_dir="assets")
+    ft.run(main, assets_dir=_assets_dir)
