@@ -1030,16 +1030,12 @@ class ExpensesView:
                     AppError(message=f"No se pudo iniciar la descarga: {ex}")
                 )
 
-        def _copiar(_):
+        async def _copiar(_):
             try:
-                self.page.set_clipboard(csv_text)
+                await self.page.clipboard.set(csv_text)
                 self._show_success("Datos CSV copiados al portapapeles")
-            except Exception:
-                self._show_error(
-                    AppError(
-                        message="Seleccioná y copiá el texto del cuadro manualmente"
-                    )
-                )
+            except Exception as ex:
+                self._show_error(AppError(message=f"No se pudo copiar: {ex}"))
 
         def _cerrar(_):
             dialog.open = False
