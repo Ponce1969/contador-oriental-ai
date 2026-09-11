@@ -1015,16 +1015,15 @@ class ExpensesView:
     def _mostrar_modal_exportacion_csv(
         self, csv_text: str, saved_path: str | None
     ) -> None:
-        """Muestra modal con descarga directa y copia de datos del CSV."""
-        import base64
-
-        b64_data = base64.b64encode(csv_text.encode("utf-8-sig")).decode("ascii")
-        data_uri = f"data:text/csv;charset=utf-8;base64,{b64_data}"
+        filename = (
+            f"gastos_{self.month_selector.year}_{self.month_selector.month:02d}.csv"
+        )
         periodo_str = f"{self.month_selector.year}_{self.month_selector.month:02d}"
+        web_download_url = f"/exports/{filename}"
 
         def _descargar(_):
             try:
-                self.page.launch_url(data_uri)
+                self.page.launch_url(web_download_url, web_window_name="_blank")
                 self._show_success("Descarga iniciada en tu navegador")
             except Exception as ex:
                 self._show_error(

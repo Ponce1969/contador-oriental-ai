@@ -193,7 +193,9 @@ class ExpenseController(BaseController):
         csv_text = CsvExportService.generate_csv_string(expenses)
 
         if not target_path:
-            target_path = str(Path("exports") / f"gastos_{year}_{month:02d}.csv")
+            target_path = str(
+                Path("assets") / "exports" / f"gastos_{year}_{month:02d}.csv"
+            )
 
         saved = CsvExportService.export_to_file(expenses, target_path)
         saved_path = str(saved) if saved else None
