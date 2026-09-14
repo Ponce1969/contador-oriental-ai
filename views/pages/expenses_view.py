@@ -28,6 +28,7 @@ from models.expense_model import Expense
 from services.infrastructure.formatters import format_pesos
 from views.components.date_picker_manager import DatePickerManager
 from views.components.month_selector import MonthSelector
+from views.components.voice_expense_dialog import VoiceExpenseDialog
 from views.layouts.main_layout import MainLayout
 
 
@@ -238,6 +239,48 @@ class ExpensesView:
         # Resumen por categorías
         self.summary_column = ft.Column(spacing=5)
 
+    def _open_voice_input_dialog(self, _: ft.ControlEvent) -> None:
+        """Abre modal para registrar gasto dictado por voz con IA."""
+        VoiceExpenseDialog.show(self.page, self._on_voice_expense_parsed)
+
+    def _on_voice_expense_parsed(self, data: dict) -> None:
+        """Poblar campos del formulario con los datos extraídos de la voz."""
+        monto = data.get("monto")
+        if monto is not None:
+            monto_str = f"{monto:f}" if isinstance(monto, Decimal) else str(monto)
+            if "." in monto_str:
+                monto_str = monto_str.rstrip("0").rstrip(".")
+            self.monto_input.value = monto_str
+
+        comercio = data.get("comercio")
+        notas = data.get("notas")
+        self.descripcion_input.value = comercio or notas or ""
+
+        categoria = data.get("categoria")
+        if categoria:
+            for opt in self.categoria_dropdown.options:
+                if opt.key == categoria or opt.text == categoria:
+                    self.categoria_dropdown.value = opt.key
+                    self._update_subcategories(selected_subcat=data.get("subcategoria"))
+                    break
+
+        currency = data.get("currency")
+        if currency in ("UYU", "USD"):
+            self.currency_dropdown.value = currency
+
+        medio_pago = data.get("medio_pago")
+        if medio_pago:
+            mp_lower = medio_pago.lower()
+            for opt in self.metodo_pago_dropdown.options:
+                if mp_lower in opt.key.lower():
+                    self.metodo_pago_dropdown.value = opt.key
+                    break
+
+        self.page.update()
+        desc = self.descripcion_input.value or "Gasto"
+        m_val = self.monto_input.value or "0"
+        self._show_success(f"🎙️ Gasto detectado: {desc} ${m_val}")
+
     def _open_date_picker(self, _: ft.ControlEvent) -> None:
         try:
             curr_date = date.fromisoformat(self.fecha_picker.value)
@@ -301,12 +344,26 @@ class ExpensesView:
                             weight=ft.FontWeight.BOLD,
                             expand=True,
                         ),
-                        ft.IconButton(
-                            icon=ft.Icons.CAMERA_ALT_ROUNDED,
-                            tooltip="Escanear ticket con IA",
-                            icon_color=ft.Colors.ORANGE_700,
-                            icon_size=28,
-                            on_click=lambda _: self.router.navigate("/ticket-ocr"),
+                        ft.Row(
+                            controls=[
+                                ft.IconButton(
+                                    icon=ft.Icons.MIC_ROUNDED,
+                                    tooltip="Dictar gasto por voz con IA",
+                                    icon_color=ft.Colors.BLUE_600,
+                                    icon_size=28,
+                                    on_click=self._open_voice_input_dialog,
+                                ),
+                                ft.IconButton(
+                                    icon=ft.Icons.CAMERA_ALT_ROUNDED,
+                                    tooltip="Escanear ticket con IA",
+                                    icon_color=ft.Colors.ORANGE_700,
+                                    icon_size=28,
+                                    on_click=lambda _: self.router.navigate(
+                                        "/ticket-ocr"
+                                    ),
+                                ),
+                            ],
+                            spacing=4,
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,

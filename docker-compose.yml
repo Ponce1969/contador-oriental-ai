@@ -50,6 +50,10 @@ services:
       OCR_API_URL: ${OCR_API_URL:-http://ocr_api:8551}
       OCR_API_PUBLIC_URL: ${OCR_API_PUBLIC_URL:-/ocr}
 
+      # Voice Microservice
+      VOICE_API_URL: ${VOICE_API_URL:-http://voice_api:8553}
+      VOICE_API_PUBLIC_URL: ${VOICE_API_PUBLIC_URL:-/voice}
+
       # Ollama IA
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-24h}
@@ -143,6 +147,32 @@ services:
       - auditor_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8551/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Voice-to-Expense Microservice (Faster-Whisper ARM64 + Ollama)
+  voice_api:
+    build:
+      context: ./voice_api
+      dockerfile: Dockerfile
+    container_name: auditor_familiar_voice_api
+    restart: unless-stopped
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8553
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+      WHISPER_THREADS: 4
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_VOICE_MODEL:-gemma2:2b}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${VOICE_PORT:-8553}:8553"
+    networks:
+      - auditor_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8553/health"]
       interval: 30s
       timeout: 10s
       retries: 3
