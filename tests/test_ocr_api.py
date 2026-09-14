@@ -9,6 +9,8 @@ import pytest
 
 from ocr_api.config import settings
 from ocr_api.main import (
+    _group_rapidocr_lines,
+    _resize_for_ocr,
     extraer_con_gemini_flash,
     procesar_job_async,
 )
@@ -503,3 +505,121 @@ class TestReceiptExtractorPort:
         assert result.extraction_confidence == Decimal("0.90")
         assert len(result.items) == 1
         assert result.items[0].description == "Pantalon Felpa Itagui"
+
+
+class TestRapidOCRIntegration:
+    """Tests for RapidOCR (ONNX Runtime) ARM-optimized pipeline."""
+
+    def test_resize_for_ocr_preserves_smaller_images(self):
+        """Images smaller than max_dim should not be resized."""
+        import numpy as np
+
+        small_img = np.zeros((800, 600, 3), dtype=np.uint8)
+        resized = _resize_for_ocr(small_img, max_dim=1920)
+        assert resized.shape == (800, 600, 3)
+
+    def test_resize_for_ocr_scales_down_large_images(self):
+        """Images exceeding max_dim should scale down keeping aspect ratio."""
+        import numpy as np
+
+        # Foto típica de celular vertical de alta resolución (3840x2160)
+        large_img = np.zeros((3840, 2160, 3), dtype=np.uint8)
+        resized = _resize_for_ocr(large_img, max_dim=1920)
+        h, w = resized.shape[:2]
+        assert max(h, w) == 1920
+        # Aspect ratio original 2160 / 3840 = 0.5625
+        assert w == int(2160 * (1920 / 3840))
+
+    def test_group_rapidocr_lines_preserves_horizontal_order(self):
+        """Validates that items on the same horizontal line are sorted left-to-right."""
+        # Dos cajas en la misma línea (y=100..120), pero desordenadas en x:
+        # Caja A a la derecha (x=300..400): "$ 46.00"
+        # Caja B a la izquierda (x=20..200): "LECHE CONAPROLE 1L"
+        box_right = [[300, 100], [400, 100], [400, 120], [300, 120]]
+        box_left = [[20, 102], [200, 102], [200, 122], [20, 122]]
+
+        # Línea 2: Total abajo (y=200..220)
+        box_total = [[20, 200], [250, 200], [250, 225], [20, 225]]
+
+        raw_result = [
+            [box_right, "$ 46.00", 0.95],
+            [box_left, "LECHE CONAPROLE 1L", 0.98],
+            [box_total, "TOTAL $ 46.00", 0.99],
+        ]
+
+        clean_text, conf = _group_rapidocr_lines(raw_result)
+        lines = clean_text.splitlines()
+
+        assert len(lines) == 2
+        # La primera línea debe tener primero el concepto y luego el importe
+        assert lines[0].startswith("LECHE CONAPROLE 1L")
+        assert lines[0].endswith("$ 46.00")
+        assert lines[1] == "TOTAL $ 46.00"
+        assert conf > 0.90
+
+    def test_group_rapidocr_lines_empty(self):
+        """Empty or invalid result returns empty string and zero confidence."""
+        assert _group_rapidocr_lines([]) == ("", 0.0)
+        assert _group_rapidocr_lines(None) == ("", 0.0)
+
+    async def test_rapidocr_primary_success(self, tmp_path):
+        """RapidOCR is used as primary local engine when successful."""
+        ticket_file = tmp_path / "ticket.jpg"
+        ticket_file.write_bytes(b"receipt_image_bytes")
+
+        mock_ocr_text = (
+            "SUPERMERCADO DISCO\n"
+            "RUT 210000000015\n"
+            "FECHA 2026-03-10\n"
+            "YERBA CANARIAS   $ 210.00\n"
+            "TOTAL $ 210.00\n"
+        )
+
+        with (
+            patch(
+                "ocr_api.main.extraer_texto_rapidocr",
+                new_callable=AsyncMock,
+                return_value=(mock_ocr_text, 0.95),
+            ),
+            patch("ocr_api.main.extraer_texto_tesseract") as mock_tesseract,
+        ):
+            resp = await procesar_job_async(ticket_file, engine="local")
+
+        assert resp.success is True
+        assert resp.engine_used.startswith("local-rapidocr")
+        assert resp.monto == 210.0
+        assert resp.comercio == "Disco"
+        assert str(resp.fecha) == "2026-03-10"
+        # Tesseract NO debe haber sido llamado porque RapidOCR tuvo éxito
+        assert mock_tesseract.called is False
+
+    async def test_rapidocr_fallback_to_tesseract_when_empty(self, tmp_path):
+        """When RapidOCR yields insufficient text, pipeline falls back to Tesseract."""
+        ticket_file = tmp_path / "ticket.jpg"
+        ticket_file.write_bytes(b"receipt_image_bytes")
+
+        tesseract_text = (
+            "SUPERMERCADO TATA\n"
+            "FECHA: 12/03/2026\n"
+            "PAN FLUIDO   $ 80.00\n"
+            "TOTAL $ 80.00\n"
+        )
+
+        with (
+            patch(
+                "ocr_api.main.extraer_texto_rapidocr",
+                new_callable=AsyncMock,
+                return_value=("", 0.0),  # RapidOCR fails
+            ),
+            patch(
+                "ocr_api.main.extraer_texto_tesseract",
+                new_callable=AsyncMock,
+                return_value=(tesseract_text, 0.85),
+            ) as mock_tesseract,
+        ):
+            resp = await procesar_job_async(ticket_file, engine="local")
+
+        assert resp.success is True
+        assert resp.engine_used.startswith("local-tesseract")
+        assert resp.monto == 80.0
+        assert mock_tesseract.called is True

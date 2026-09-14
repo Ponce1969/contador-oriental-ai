@@ -459,6 +459,163 @@ async def extraer_texto_tesseract(imagen_path: Path) -> tuple[str, float]:
         return "", 0.0
 
 
+# ---------------------------------------------------------------------------
+# RapidOCR (ONNX Runtime) Engine for ARM64 & Receipts
+# ---------------------------------------------------------------------------
+
+_rapidocr_lock = Lock()
+_rapidocr_engine = None
+
+
+def _get_rapidocr_engine():
+    """Singleton lazy thread-safe instance of RapidOCR with ARM64 thread limits."""
+    global _rapidocr_engine
+    if _rapidocr_engine is None:
+        with _rapidocr_lock:
+            if _rapidocr_engine is None:
+                try:
+                    from rapidocr_onnxruntime import RapidOCR
+
+                    # Limitar hilos intra-op a 4 para núcleos A76 en ARM big.LITTLE
+                    # evitando context switching excesivo en Orange Pi / ARM64.
+                    _rapidocr_engine = RapidOCR(
+                        intra_op_num_threads=4,
+                        inter_op_num_threads=1,
+                    )
+                    logger.info("[OCR] RapidOCR inicializado exitosamente (4 hilos)")
+                except Exception as e:
+                    logger.error("[OCR] Error inicializando RapidOCR: %s", e)
+                    _rapidocr_engine = False
+    return _rapidocr_engine if _rapidocr_engine is not False else None
+
+
+def _resize_for_ocr(img_cv: np.ndarray, max_dim: int = 1920) -> np.ndarray:
+    """Escalado inteligente: limita dimensión máxima a 1920px (anti-OOM)."""
+    h, w = img_cv.shape[:2]
+    if max(h, w) > max_dim:
+        scale = max_dim / max(h, w)
+        new_w, new_h = int(w * scale), int(h * scale)
+        logger.info(
+            "[OCR] Reescalando imagen de %dx%d a %dx%d para inferencia OCR",
+            w,
+            h,
+            new_w,
+            new_h,
+        )
+        return cv2.resize(img_cv, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    return img_cv
+
+
+def _group_rapidocr_lines(ocr_result: list) -> tuple[str, float]:
+    """Agrupa cajas de texto detectadas en líneas horizontales (Concepto --- Monto).
+
+    ocr_result es una lista de [box, text, score].
+    box es [[x1, y1], [x2, y2], [x3, y3], [x4, y4]].
+    """
+    if not ocr_result:
+        return "", 0.0
+
+    items = []
+    total_score = 0.0
+    for item in ocr_result:
+        if not item or len(item) < 3:
+            continue
+        box, text, score = item[0], str(item[1]).strip(), float(item[2])
+        if not text:
+            continue
+        ys = [pt[1] for pt in box]
+        xs = [pt[0] for pt in box]
+        min_y, max_y = min(ys), max(ys)
+        center_y = (min_y + max_y) / 2.0
+        min_x = min(xs)
+        height = max_y - min_y
+        items.append(
+            {
+                "text": text,
+                "center_y": center_y,
+                "min_x": min_x,
+                "height": height if height > 0 else 20.0,
+                "score": score,
+            }
+        )
+        total_score += score
+
+    if not items:
+        return "", 0.0
+
+    # Ordenar por coordenada vertical Y
+    items.sort(key=lambda it: it["center_y"])
+
+    # Agrupar en líneas según tolerancia vertical proporcional a la altura media
+    avg_height = sum(it["height"] for it in items) / len(items)
+    y_tolerance = max(8.0, avg_height * 0.6)
+
+    lines: list[list[dict]] = []
+    for it in items:
+        placed = False
+        for line in lines:
+            line_center_y = sum(elem["center_y"] for elem in line) / len(line)
+            if abs(it["center_y"] - line_center_y) <= y_tolerance:
+                line.append(it)
+                placed = True
+                break
+        if not placed:
+            lines.append([it])
+
+    # Dentro de cada línea física, ordenar de izquierda a derecha (coordenada X)
+    ordered_text_lines = []
+    for line in lines:
+        line.sort(key=lambda it: it["min_x"])
+        ordered_text_lines.append("   ".join(it["text"] for it in line))
+
+    clean_text = "\n".join(ordered_text_lines)
+    avg_confidence = total_score / len(items)
+    return clean_text, avg_confidence
+
+
+def _run_rapidocr(imagen_path: Path) -> tuple[str, float]:
+    """Inferencia de RapidOCR en CPU offloaded a worker thread."""
+    engine = _get_rapidocr_engine()
+    if engine is None:
+        logger.warning("[OCR] RapidOCR no disponible en este entorno")
+        return "", 0.0
+
+    try:
+        img_cv = cv2.imread(str(imagen_path))
+        if img_cv is None:
+            with Image.open(imagen_path) as pil_img:
+                pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
+                img_cv = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+
+        # Escalado inteligente anti-OOM
+        img_cv = _resize_for_ocr(img_cv, max_dim=1920)
+
+        # Inferencia
+        result, elapse = engine(img_cv)
+        if not result:
+            return "", 0.0
+
+        texto_agrupado, confianza = _group_rapidocr_lines(result)
+        elapse_str = (
+            f"{sum(elapse):.3f}s" if isinstance(elapse, (list, tuple)) else str(elapse)
+        )
+        logger.info(
+            "[OCR] RapidOCR extrajo %d chars en %s (confianza=%.2f)",
+            len(texto_agrupado),
+            elapse_str,
+            confianza,
+        )
+        return texto_agrupado, confianza
+    except Exception as e:
+        logger.error("[OCR] Error en inferencia RapidOCR: %s", e)
+        return "", 0.0
+
+
+async def extraer_texto_rapidocr(imagen_path: Path) -> tuple[str, float]:
+    """Extract text from receipt using RapidOCR offloaded to a worker thread."""
+    return await asyncio.to_thread(_run_rapidocr, imagen_path)
+
+
 def _detect_image_mime_type(image_bytes: bytes) -> str:
     """Detect image MIME type from magic numbers or fallback to JPEG."""
     if image_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -1203,15 +1360,25 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 engine_used="gemini-2.0-flash",
             )
 
-    # 2. Local pipeline (Tesseract + Ollama / Regex fallback)
+    # 2. Local pipeline (RapidOCR primario con fallback a Tesseract)
     try:
-        texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
-        if not texto_crudo or len(texto_crudo) < 10:
+        engine_base = "local-rapidocr"
+        texto_crudo, confianza = await extraer_texto_rapidocr(tmp_path)
+
+        # Si RapidOCR no detecta suficiente texto (< 10 chars), fallback
+        if not texto_crudo or len(texto_crudo.strip()) < 10:
+            logger.info(
+                "[OCR] RapidOCR sin texto suficiente; ejecutando fallback a Tesseract"
+            )
+            texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
+            engine_base = "local-tesseract"
+
+        if not texto_crudo or len(texto_crudo.strip()) < 10:
             return OCRResponse(
                 success=False,
                 error="No se pudo extraer texto de la imagen",
                 confianza_ocr=confianza,
-                engine_used="local-tesseract",
+                engine_used=engine_base,
             )
 
         regex_data = extraer_datos_regex(texto_crudo)
@@ -1235,10 +1402,10 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             items = regex_data.get("items") or []
             currency = _resolve_currency(regex_data.get("currency"))
             fecha_str = regex_data.get("fecha")
-            engine_used = "local-tesseract-regex"
+            engine_used = f"{engine_base}-regex"
         else:
             parsed = await parsear_con_ollama(texto_crudo)
-            engine_used = "local-tesseract-ollama"
+            engine_used = f"{engine_base}-ollama"
 
             if parsed:
                 # Validación anti-alucinación de monto del LLM
@@ -1251,7 +1418,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                         monto = monto_dec
                     else:
                         monto = regex_data.get("monto")
-                        engine_used = "local-tesseract-hybrid"
+                        engine_used = f"{engine_base}-hybrid"
                 else:
                     monto = regex_data.get("monto")
 
@@ -1284,7 +1451,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 comercio = regex_data.get("comercio")
                 currency = _resolve_currency(regex_data.get("currency"))
                 fecha_str = regex_data.get("fecha")
-                engine_used = "local-tesseract-regex"
+                engine_used = f"{engine_base}-regex"
 
         fecha_parsed_local: date | None = None
         if fecha_str:
