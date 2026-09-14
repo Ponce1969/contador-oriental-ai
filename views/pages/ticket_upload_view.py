@@ -447,7 +447,7 @@ class TicketUploadView:
             value=str(partial.monto) if partial.monto else "",
             keyboard_type=ft.KeyboardType.NUMBER,
             expand=True,
-            error_text="Ingresá el monto" if partial.monto is None else None,
+            error="Ingresá el monto" if partial.monto is None else None,
             autofocus=partial.monto is None,
         )
         items_str = ", ".join(partial.items[:3]) if partial.items else ""

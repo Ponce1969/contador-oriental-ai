@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import tempfile
+import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -457,6 +458,163 @@ async def extraer_texto_tesseract(imagen_path: Path) -> tuple[str, float]:
     except Exception as e:
         logger.error("[OCR] Tesseract error: %s", e)
         return "", 0.0
+
+
+# ---------------------------------------------------------------------------
+# RapidOCR (ONNX Runtime) Engine for ARM64 & Receipts
+# ---------------------------------------------------------------------------
+
+_rapidocr_lock = Lock()
+_rapidocr_engine = None
+
+
+def _get_rapidocr_engine():
+    """Singleton lazy thread-safe instance of RapidOCR with ARM64 thread limits."""
+    global _rapidocr_engine
+    if _rapidocr_engine is None:
+        with _rapidocr_lock:
+            if _rapidocr_engine is None:
+                try:
+                    from rapidocr_onnxruntime import RapidOCR
+
+                    # Limitar hilos intra-op a 4 para núcleos A76 en ARM big.LITTLE
+                    # evitando context switching excesivo en Orange Pi / ARM64.
+                    _rapidocr_engine = RapidOCR(
+                        intra_op_num_threads=4,
+                        inter_op_num_threads=1,
+                    )
+                    logger.info("[OCR] RapidOCR inicializado exitosamente (4 hilos)")
+                except Exception as e:
+                    logger.error("[OCR] Error inicializando RapidOCR: %s", e)
+                    _rapidocr_engine = False
+    return _rapidocr_engine if _rapidocr_engine is not False else None
+
+
+def _resize_for_ocr(img_cv: np.ndarray, max_dim: int = 1920) -> np.ndarray:
+    """Escalado inteligente: limita dimensión máxima a 1920px (anti-OOM)."""
+    h, w = img_cv.shape[:2]
+    if max(h, w) > max_dim:
+        scale = max_dim / max(h, w)
+        new_w, new_h = int(w * scale), int(h * scale)
+        logger.info(
+            "[OCR] Reescalando imagen de %dx%d a %dx%d para inferencia OCR",
+            w,
+            h,
+            new_w,
+            new_h,
+        )
+        return cv2.resize(img_cv, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    return img_cv
+
+
+def _group_rapidocr_lines(ocr_result: list) -> tuple[str, float]:
+    """Agrupa cajas de texto detectadas en líneas horizontales (Concepto --- Monto).
+
+    ocr_result es una lista de [box, text, score].
+    box es [[x1, y1], [x2, y2], [x3, y3], [x4, y4]].
+    """
+    if not ocr_result:
+        return "", 0.0
+
+    items = []
+    total_score = 0.0
+    for item in ocr_result:
+        if not item or len(item) < 3:
+            continue
+        box, text, score = item[0], str(item[1]).strip(), float(item[2])
+        if not text:
+            continue
+        ys = [pt[1] for pt in box]
+        xs = [pt[0] for pt in box]
+        min_y, max_y = min(ys), max(ys)
+        center_y = (min_y + max_y) / 2.0
+        min_x = min(xs)
+        height = max_y - min_y
+        items.append(
+            {
+                "text": text,
+                "center_y": center_y,
+                "min_x": min_x,
+                "height": height if height > 0 else 20.0,
+                "score": score,
+            }
+        )
+        total_score += score
+
+    if not items:
+        return "", 0.0
+
+    # Ordenar por coordenada vertical Y
+    items.sort(key=lambda it: it["center_y"])
+
+    # Agrupar en líneas según tolerancia vertical proporcional a la altura media
+    avg_height = sum(it["height"] for it in items) / len(items)
+    y_tolerance = max(8.0, avg_height * 0.6)
+
+    lines: list[list[dict]] = []
+    for it in items:
+        placed = False
+        for line in lines:
+            line_center_y = sum(elem["center_y"] for elem in line) / len(line)
+            if abs(it["center_y"] - line_center_y) <= y_tolerance:
+                line.append(it)
+                placed = True
+                break
+        if not placed:
+            lines.append([it])
+
+    # Dentro de cada línea física, ordenar de izquierda a derecha (coordenada X)
+    ordered_text_lines = []
+    for line in lines:
+        line.sort(key=lambda it: it["min_x"])
+        ordered_text_lines.append("   ".join(it["text"] for it in line))
+
+    clean_text = "\n".join(ordered_text_lines)
+    avg_confidence = total_score / len(items)
+    return clean_text, avg_confidence
+
+
+def _run_rapidocr(imagen_path: Path) -> tuple[str, float]:
+    """Inferencia de RapidOCR en CPU offloaded a worker thread."""
+    engine = _get_rapidocr_engine()
+    if engine is None:
+        logger.warning("[OCR] RapidOCR no disponible en este entorno")
+        return "", 0.0
+
+    try:
+        img_cv = cv2.imread(str(imagen_path))
+        if img_cv is None:
+            with Image.open(imagen_path) as pil_img:
+                pil_img = ImageOps.exif_transpose(pil_img).convert("RGB")
+                img_cv = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+
+        # Escalado inteligente anti-OOM
+        img_cv = _resize_for_ocr(img_cv, max_dim=1920)
+
+        # Inferencia
+        result, elapse = engine(img_cv)
+        if not result:
+            return "", 0.0
+
+        texto_agrupado, confianza = _group_rapidocr_lines(result)
+        elapse_str = (
+            f"{sum(elapse):.3f}s" if isinstance(elapse, (list, tuple)) else str(elapse)
+        )
+        logger.info(
+            "[OCR] RapidOCR extrajo %d chars en %s (confianza=%.2f)",
+            len(texto_agrupado),
+            elapse_str,
+            confianza,
+        )
+        return texto_agrupado, confianza
+    except Exception as e:
+        logger.error("[OCR] Error en inferencia RapidOCR: %s", e)
+        return "", 0.0
+
+
+async def extraer_texto_rapidocr(imagen_path: Path) -> tuple[str, float]:
+    """Extract text from receipt using RapidOCR offloaded to a worker thread."""
+    return await asyncio.to_thread(_run_rapidocr, imagen_path)
 
 
 def _detect_image_mime_type(image_bytes: bytes) -> str:
@@ -1120,7 +1278,105 @@ async def extraer_con_gemini_flash(
         return None
 
 
-async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
+def _get_process_rss_mb() -> float:
+    """Return current process Resident Set Size (RSS) in megabytes."""
+    # 1. Linux /proc/self/status (accurate in Linux/ARM64 Docker containers)
+    try:
+        proc_status = Path("/proc/self/status")
+        if proc_status.exists():
+            for line in proc_status.read_text().splitlines():
+                if line.startswith("VmRSS:"):
+                    parts = line.split()
+                    return round(float(parts[1]) / 1024.0, 2)
+    except Exception:
+        pass
+
+    # 2. Python resource module (standard library on POSIX/Linux)
+    try:
+        import resource
+        import sys
+
+        rusage = resource.getrusage(resource.RUSAGE_SELF)
+        kb = rusage.ru_maxrss if sys.platform != "darwin" else rusage.ru_maxrss / 1024
+        return round(float(kb) / 1024.0, 2)
+    except Exception:
+        pass
+
+    # 3. Windows ctypes fallback (standard library on Windows)
+    try:
+        import ctypes
+        import ctypes.wintypes
+
+        class _ProcessMemoryCounters(ctypes.Structure):
+            _fields_ = [
+                ("cb", ctypes.wintypes.DWORD),
+                ("PageFaultCount", ctypes.wintypes.DWORD),
+                ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t),
+            ]
+
+        counters = _ProcessMemoryCounters()
+        counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
+        if ctypes.windll.psapi.GetProcessMemoryInfo(
+            ctypes.windll.kernel32.GetCurrentProcess(),
+            ctypes.byref(counters),
+            counters.cb,
+        ):
+            return round(counters.WorkingSetSize / (1024 * 1024), 2)
+    except Exception:
+        pass
+
+    # 4. psutil fallback (if installed)
+    try:
+        import psutil
+
+        return round(psutil.Process().memory_info().rss / (1024 * 1024), 2)
+    except Exception:
+        pass
+
+    return 0.0
+
+
+def _inspect_image_resolutions(
+    image_path: Path, max_dim: int = 1920
+) -> tuple[list[int] | None, list[int] | None]:
+    """Inspect image and return [width, height] for original and scaled dimensions."""
+    try:
+        with Image.open(image_path) as img:
+            img = ImageOps.exif_transpose(img)
+            orig_w, orig_h = int(img.width), int(img.height)
+            orig_res = [orig_w, orig_h]
+            if max(orig_w, orig_h) > max_dim:
+                scale = max_dim / max(orig_w, orig_h)
+                proc_res = [int(orig_w * scale), int(orig_h * scale)]
+            else:
+                proc_res = [orig_w, orig_h]
+            return orig_res, proc_res
+    except Exception:
+        return None, None
+
+
+def _populate_telemetry(
+    resp: OCRResponse,
+    start_time: float,
+    orig_res: list[int] | None,
+    proc_res: list[int] | None,
+) -> OCRResponse:
+    """Attach execution telemetry metrics to OCRResponse."""
+    resp.execution_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
+    resp.image_original_resolution = orig_res
+    resp.image_processed_resolution = proc_res
+    resp.memory_rss_mb = _get_process_rss_mb()
+    return resp
+
+
+async def _do_procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
     """Process a single receipt image via Gemini Flash or local pipeline."""
     # 1. Cloud OCR via Gemini 2.0 Flash
     if engine in ("auto", "cloud", "gemini"):
@@ -1203,15 +1459,25 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 engine_used="gemini-2.0-flash",
             )
 
-    # 2. Local pipeline (Tesseract + Ollama / Regex fallback)
+    # 2. Local pipeline (RapidOCR primario con fallback a Tesseract)
     try:
-        texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
-        if not texto_crudo or len(texto_crudo) < 10:
+        engine_base = "local-rapidocr"
+        texto_crudo, confianza = await extraer_texto_rapidocr(tmp_path)
+
+        # Si RapidOCR no detecta suficiente texto (< 10 chars), fallback
+        if not texto_crudo or len(texto_crudo.strip()) < 10:
+            logger.info(
+                "[OCR] RapidOCR sin texto suficiente; ejecutando fallback a Tesseract"
+            )
+            texto_crudo, confianza = await extraer_texto_tesseract(tmp_path)
+            engine_base = "local-tesseract"
+
+        if not texto_crudo or len(texto_crudo.strip()) < 10:
             return OCRResponse(
                 success=False,
                 error="No se pudo extraer texto de la imagen",
                 confianza_ocr=confianza,
-                engine_used="local-tesseract",
+                engine_used=engine_base,
             )
 
         regex_data = extraer_datos_regex(texto_crudo)
@@ -1235,10 +1501,10 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             items = regex_data.get("items") or []
             currency = _resolve_currency(regex_data.get("currency"))
             fecha_str = regex_data.get("fecha")
-            engine_used = "local-tesseract-regex"
+            engine_used = f"{engine_base}-regex"
         else:
             parsed = await parsear_con_ollama(texto_crudo)
-            engine_used = "local-tesseract-ollama"
+            engine_used = f"{engine_base}-ollama"
 
             if parsed:
                 # Validación anti-alucinación de monto del LLM
@@ -1251,7 +1517,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                         monto = monto_dec
                     else:
                         monto = regex_data.get("monto")
-                        engine_used = "local-tesseract-hybrid"
+                        engine_used = f"{engine_base}-hybrid"
                 else:
                     monto = regex_data.get("monto")
 
@@ -1284,7 +1550,7 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
                 comercio = regex_data.get("comercio")
                 currency = _resolve_currency(regex_data.get("currency"))
                 fecha_str = regex_data.get("fecha")
-                engine_used = "local-tesseract-regex"
+                engine_used = f"{engine_base}-regex"
 
         fecha_parsed_local: date | None = None
         if fecha_str:
@@ -1342,6 +1608,22 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             error=f"Error interno: {e}",
             engine_used="local-tesseract",
         )
+
+
+async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
+    """Process a single receipt image with complete execution telemetry."""
+    start_time = time.perf_counter()
+    orig_res, proc_res = _inspect_image_resolutions(tmp_path)
+    try:
+        resp = await _do_procesar_job_async(tmp_path, engine=engine)
+    except Exception as e:
+        logger.error("[OCR] Receipt processing error: %s", e)
+        resp = OCRResponse(
+            success=False,
+            error=f"Error interno: {e}",
+            engine_used="local-tesseract",
+        )
+    return _populate_telemetry(resp, start_time, orig_res, proc_res)
 
 
 _process_receipt_image = procesar_job_async

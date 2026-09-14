@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-spa \
     libglib2.0-0 \
     libgl1 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # uv binary
@@ -22,6 +23,11 @@ RUN uv pip install --system -r pyproject.toml
 
 # Non-root user
 RUN useradd -m -u 1000 ocruser && chown -R ocruser:ocruser /app
+
+# Pre-download RapidOCR ONNX models into /home/ocruser during build time
+USER ocruser
+RUN python -c "from rapidocr_onnxruntime import RapidOCR; RapidOCR()"
+USER root
 
 # Source code
 COPY --chown=ocruser:ocruser __init__.py config.py main.py models.py ./ocr_api/
