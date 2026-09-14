@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import tempfile
+import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -1277,7 +1278,105 @@ async def extraer_con_gemini_flash(
         return None
 
 
-async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
+def _get_process_rss_mb() -> float:
+    """Return current process Resident Set Size (RSS) in megabytes."""
+    # 1. Linux /proc/self/status (accurate in Linux/ARM64 Docker containers)
+    try:
+        proc_status = Path("/proc/self/status")
+        if proc_status.exists():
+            for line in proc_status.read_text().splitlines():
+                if line.startswith("VmRSS:"):
+                    parts = line.split()
+                    return round(float(parts[1]) / 1024.0, 2)
+    except Exception:
+        pass
+
+    # 2. Python resource module (standard library on POSIX/Linux)
+    try:
+        import resource
+        import sys
+
+        rusage = resource.getrusage(resource.RUSAGE_SELF)
+        kb = rusage.ru_maxrss if sys.platform != "darwin" else rusage.ru_maxrss / 1024
+        return round(float(kb) / 1024.0, 2)
+    except Exception:
+        pass
+
+    # 3. Windows ctypes fallback (standard library on Windows)
+    try:
+        import ctypes
+        import ctypes.wintypes
+
+        class _ProcessMemoryCounters(ctypes.Structure):
+            _fields_ = [
+                ("cb", ctypes.wintypes.DWORD),
+                ("PageFaultCount", ctypes.wintypes.DWORD),
+                ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t),
+            ]
+
+        counters = _ProcessMemoryCounters()
+        counters.cb = ctypes.sizeof(_ProcessMemoryCounters)
+        if ctypes.windll.psapi.GetProcessMemoryInfo(
+            ctypes.windll.kernel32.GetCurrentProcess(),
+            ctypes.byref(counters),
+            counters.cb,
+        ):
+            return round(counters.WorkingSetSize / (1024 * 1024), 2)
+    except Exception:
+        pass
+
+    # 4. psutil fallback (if installed)
+    try:
+        import psutil
+
+        return round(psutil.Process().memory_info().rss / (1024 * 1024), 2)
+    except Exception:
+        pass
+
+    return 0.0
+
+
+def _inspect_image_resolutions(
+    image_path: Path, max_dim: int = 1920
+) -> tuple[list[int] | None, list[int] | None]:
+    """Inspect image and return [width, height] for original and scaled dimensions."""
+    try:
+        with Image.open(image_path) as img:
+            img = ImageOps.exif_transpose(img)
+            orig_w, orig_h = int(img.width), int(img.height)
+            orig_res = [orig_w, orig_h]
+            if max(orig_w, orig_h) > max_dim:
+                scale = max_dim / max(orig_w, orig_h)
+                proc_res = [int(orig_w * scale), int(orig_h * scale)]
+            else:
+                proc_res = [orig_w, orig_h]
+            return orig_res, proc_res
+    except Exception:
+        return None, None
+
+
+def _populate_telemetry(
+    resp: OCRResponse,
+    start_time: float,
+    orig_res: list[int] | None,
+    proc_res: list[int] | None,
+) -> OCRResponse:
+    """Attach execution telemetry metrics to OCRResponse."""
+    resp.execution_time_ms = round((time.perf_counter() - start_time) * 1000, 2)
+    resp.image_original_resolution = orig_res
+    resp.image_processed_resolution = proc_res
+    resp.memory_rss_mb = _get_process_rss_mb()
+    return resp
+
+
+async def _do_procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
     """Process a single receipt image via Gemini Flash or local pipeline."""
     # 1. Cloud OCR via Gemini 2.0 Flash
     if engine in ("auto", "cloud", "gemini"):
@@ -1509,6 +1608,22 @@ async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRRespons
             error=f"Error interno: {e}",
             engine_used="local-tesseract",
         )
+
+
+async def procesar_job_async(tmp_path: Path, engine: str = "auto") -> OCRResponse:
+    """Process a single receipt image with complete execution telemetry."""
+    start_time = time.perf_counter()
+    orig_res, proc_res = _inspect_image_resolutions(tmp_path)
+    try:
+        resp = await _do_procesar_job_async(tmp_path, engine=engine)
+    except Exception as e:
+        logger.error("[OCR] Receipt processing error: %s", e)
+        resp = OCRResponse(
+            success=False,
+            error=f"Error interno: {e}",
+            engine_used="local-tesseract",
+        )
+    return _populate_telemetry(resp, start_time, orig_res, proc_res)
 
 
 _process_receipt_image = procesar_job_async

@@ -44,6 +44,10 @@ class OCRResponse(BaseModel):
     texto_crudo: str = ""
     error: str | None = None
     engine_used: str = "local"
+    execution_time_ms: float | None = None
+    image_original_resolution: list[int] | None = None
+    image_processed_resolution: list[int] | None = None
+    memory_rss_mb: float | None = None
 
 
 class JobResponse(BaseModel):

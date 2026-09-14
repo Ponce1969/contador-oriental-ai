@@ -9,7 +9,9 @@ import pytest
 
 from ocr_api.config import settings
 from ocr_api.main import (
+    _get_process_rss_mb,
     _group_rapidocr_lines,
+    _inspect_image_resolutions,
     _resize_for_ocr,
     extraer_con_gemini_flash,
     procesar_job_async,
@@ -623,3 +625,90 @@ class TestRapidOCRIntegration:
         assert resp.engine_used.startswith("local-tesseract")
         assert resp.monto == 80.0
         assert mock_tesseract.called is True
+
+
+class TestOCRTelemetry:
+    """Tests for OCR execution telemetry and system metrics."""
+
+    async def test_telemetry_includes_timing_and_engine(self, tmp_path):
+        ticket_file = tmp_path / "ticket.jpg"
+        ticket_file.write_bytes(b"dummy")
+
+        mock_ocr_text = "TICKET PRUEBA\nTOTAL $ 150.00\n"
+        with patch(
+            "ocr_api.main.extraer_texto_rapidocr",
+            new_callable=AsyncMock,
+            return_value=(mock_ocr_text, 0.95),
+        ):
+            resp = await procesar_job_async(ticket_file, engine="local")
+
+        assert resp.execution_time_ms is not None
+        assert resp.execution_time_ms >= 0.0
+        assert resp.engine_used.startswith("local-rapidocr")
+        assert resp.memory_rss_mb is not None
+        assert resp.memory_rss_mb >= 0.0
+
+    async def test_telemetry_captures_original_and_scaled_image_resolutions(
+        self, tmp_path
+    ):
+        from PIL import Image
+
+        image_path = tmp_path / "large_photo.jpg"
+        img = Image.new("RGB", (2400, 1200), color=(255, 255, 255))
+        img.save(image_path, format="JPEG")
+
+        mock_ocr_text = "DISCO\nTOTAL $ 300.00\n"
+        with patch(
+            "ocr_api.main.extraer_texto_rapidocr",
+            new_callable=AsyncMock,
+            return_value=(mock_ocr_text, 0.90),
+        ):
+            resp = await procesar_job_async(image_path, engine="local")
+
+        assert resp.image_original_resolution == [2400, 1200]
+        # Max dimension 2400 scaled down to 1920: scale = 1920/2400 = 0.8
+        # [2400 * 0.8, 1200 * 0.8] = [1920, 960]
+        assert resp.image_processed_resolution == [1920, 960]
+
+    async def test_telemetry_recorded_when_extraction_fails(self, tmp_path):
+        ticket_file = tmp_path / "blank.jpg"
+        ticket_file.write_bytes(b"dummy")
+
+        with (
+            patch(
+                "ocr_api.main.extraer_texto_rapidocr",
+                new_callable=AsyncMock,
+                return_value=("", 0.0),
+            ),
+            patch(
+                "ocr_api.main.extraer_texto_tesseract",
+                new_callable=AsyncMock,
+                return_value=("", 0.0),
+            ),
+        ):
+            resp = await procesar_job_async(ticket_file, engine="local")
+
+        assert resp.success is False
+        assert resp.execution_time_ms is not None
+        assert resp.execution_time_ms >= 0.0
+        assert resp.memory_rss_mb is not None
+
+    def test_proc_self_status_rss_parsing(self, tmp_path):
+        mock_status = tmp_path / "status"
+        mock_status.write_text(
+            "Name:\tpython\nVmPeak:\t 500000 kB\nVmRSS:\t  128500 kB\nThreads:\t4\n"
+        )
+
+        with patch("ocr_api.main.Path") as mock_path_cls:
+            mock_path_cls.return_value = mock_status
+            rss_mb = _get_process_rss_mb()
+
+        # 128500 kB / 1024 = 125.49 MB
+        assert rss_mb == 125.49
+
+    def test_inspect_image_resolutions_handles_invalid_file(self, tmp_path):
+        bad_file = tmp_path / "corrupt.jpg"
+        bad_file.write_bytes(b"not an image")
+        orig, proc = _inspect_image_resolutions(bad_file)
+        assert orig is None
+        assert proc is None
