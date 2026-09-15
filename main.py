@@ -203,13 +203,18 @@ async def main(page: ft.Page):
             """
             clean_route = route.split("?")[0]
             if SessionManager.is_logged_in(page):
-                if clean_route == "/invite":
-                    # Even if logged in, let them go to the invite page to accept it
-                    router.navigate(route)
-                else:
-                    # Logged in — always go to dashboard
-                    page.banner.open = True
+                if clean_route in (
+                    "/login",
+                    "/register",
+                    "/forgot-password",
+                    "/reset-password",
+                ):
+                    # Authenticated users should never see login/auth screens
                     router.navigate("/")
+                else:
+                    # Authenticated user: navigate to requested route
+                    # (e.g. /expenses, /history, /invite, /)
+                    router.navigate(route)
             elif clean_route in public_routes:
                 # Public routes (forgot-password, reset-password, register, invite)
                 # No auth required — navigate directly, preserving query params

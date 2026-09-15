@@ -162,7 +162,7 @@ class VoiceExpenseDialog:
                             ),
                             bgcolor=ft.Colors.BLUE_600,
                             color=ft.Colors.WHITE,
-                            url=ft.Url(upload_url, target=ft.UrlTarget.BLANK),
+                            url=ft.Url(upload_url, target=ft.UrlTarget.SELF),
                             style=ft.ButtonStyle(
                                 padding=ft.Padding.symmetric(horizontal=16, vertical=12)
                             ),

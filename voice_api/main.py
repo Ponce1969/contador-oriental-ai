@@ -501,35 +501,30 @@ async def voice_upload_form(session_id: str = "", familia_id: int = 1) -> HTMLRe
       text-decoration: underline;
     }}
     .return-btn {{
-      display: none;
+      display: block;
       width: 100%;
       padding: 14px;
-      background: #10b981;
+      background: #334155;
       color: #ffffff;
-      font-weight: bold;
+      font-weight: 600;
       font-size: 15px;
       border-radius: 12px;
-      margin-top: 18px;
-      border: none;
+      margin-top: 16px;
+      border: 1px solid #475569;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       transition: all 0.2s;
       text-align: center;
       box-sizing: border-box;
     }}
     .return-btn:hover {{
-      background: #059669;
-      transform: translateY(-1px);
+      background: #475569;
     }}
-    .cancel-link {{
-      display: inline-block;
-      color: #94a3b8;
-      font-size: 13px;
-      background: none;
-      border: none;
-      text-decoration: underline;
-      margin-top: 14px;
-      cursor: pointer;
+    .return-btn.success {{
+      background: #10b981;
+      border: 1px solid #059669;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
     }}
   </style>
 </head>
@@ -557,11 +552,8 @@ async def voice_upload_form(session_id: str = "", familia_id: int = 1) -> HTMLRe
 
     <div class="status" id="status"></div>
 
-    <div id="actionButtons" style="margin-top: 8px;">
+    <div id="actionButtons" style="margin-top: 14px;">
       <button id="returnBtn" class="return-btn">
-        ← Volver a Gastos y confirmar
-      </button>
-      <button id="cancelBtn" class="cancel-link">
         ← Volver a Gastos
       </button>
     </div>
@@ -577,6 +569,7 @@ async def voice_upload_form(session_id: str = "", familia_id: int = 1) -> HTMLRe
     let mediaRecorder = null;
     let audioChunks = [];
     let timerInterval = null;
+    let redirectTimer = null;
     let seconds = 0;
     const session_id = "{safe_session_id}";
 
@@ -586,18 +579,16 @@ async def voice_upload_form(session_id: str = "", familia_id: int = 1) -> HTMLRe
     const status = document.getElementById('status');
     const nativeInput = document.getElementById('nativeInput');
     const returnBtn = document.getElementById('returnBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
 
     function returnToExpenses() {{
-      if (window.opener) {{
-        window.close();
-      }}
-      const target = '/expenses?voice_session=' + encodeURIComponent(session_id);
-      window.location.href = target;
+      if (redirectTimer) clearInterval(redirectTimer);
+      const target = session_id
+        ? '/expenses?voice_session=' + encodeURIComponent(session_id)
+        : '/expenses';
+      window.location.replace(target);
     }}
 
     returnBtn.addEventListener('click', returnToExpenses);
-    cancelBtn.addEventListener('click', returnToExpenses);
 
     function updateTimer() {{
       seconds++;
@@ -626,10 +617,20 @@ async def voice_upload_form(session_id: str = "", familia_id: int = 1) -> HTMLRe
         const data = await resp.json();
         if (data.success) {{
           status.className = 'status success';
-          status.textContent = '✅ Listo. Tocá el botón para volver a Gastos.';
-          returnBtn.style.display = 'block';
-          cancelBtn.style.display = 'none';
-          setTimeout(returnToExpenses, 1800);
+          status.textContent = '✅ ¡Gasto procesado con éxito!';
+          returnBtn.className = 'return-btn success';
+          let countdown = 3;
+          returnBtn.textContent = '✅ Volver a Gastos (en ' + countdown + 's)...';
+
+          redirectTimer = setInterval(() => {{
+            countdown--;
+            if (countdown <= 0) {{
+              clearInterval(redirectTimer);
+              returnToExpenses();
+            }} else {{
+              returnBtn.textContent = '✅ Volver a Gastos (en ' + countdown + 's)...';
+            }}
+          }}, 1000);
         }} else {{
           status.className = 'status error';
           status.textContent = 'Error: ' + (data.error || 'No se pudo procesar');

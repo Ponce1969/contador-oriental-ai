@@ -261,25 +261,57 @@ class ExpensesView:
         """Recupera resultado de voz pendiente al volver de la grabadora móvil."""
         try:
             session_id = None
+            # Método 1: page.query (QueryString)
             if hasattr(self.page, "query") and self.page.query:
-                with contextlib.suppress(KeyError):
+                with contextlib.suppress(KeyError, TypeError, AttributeError):
                     session_id = self.page.query.get("voice_session")
+
+            # Método 2: page.route
+            if not session_id:
+                route = getattr(self.page, "route", "")
+                if route and "?" in route:
+                    from urllib.parse import parse_qs, urlparse
+
+                    params = parse_qs(urlparse(route).query)
+                    if "voice_session" in params:
+                        session_id = params["voice_session"][0]
+
+            # Método 3: page.url
+            if not session_id:
+                url = getattr(self.page, "url", "")
+                if url and "?" in url:
+                    from urllib.parse import parse_qs, urlparse
+
+                    params = parse_qs(urlparse(url).query)
+                    if "voice_session" in params:
+                        session_id = params["voice_session"][0]
 
             voice_url = os.getenv("VOICE_API_URL", "http://voice_api:8553")
             async with httpx.AsyncClient(timeout=4.0) as client:
-                if session_id:
-                    resp = await client.get(f"{voice_url}/voice-resultado/{session_id}")
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        if data.get("ready") and data.get("success"):
-                            self._on_voice_expense_parsed(data)
-                            return
-
-                resp = await client.get(f"{voice_url}/pendiente/{self._familia_id}")
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if data.get("ready") and data.get("success"):
-                        self._on_voice_expense_parsed(data)
+                # Polling por hasta 6 segundos si el microservicio
+                # aún está transcribiendo con Whisper u Ollama
+                for _ in range(6):
+                    if session_id:
+                        resp = await client.get(
+                            f"{voice_url}/voice-resultado/{session_id}"
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            if data.get("ready"):
+                                if data.get("success"):
+                                    self._on_voice_expense_parsed(data)
+                                return
+                    else:
+                        resp = await client.get(
+                            f"{voice_url}/pendiente/{self._familia_id}"
+                        )
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            if data.get("ready"):
+                                if data.get("success"):
+                                    self._on_voice_expense_parsed(data)
+                                return
+                    await asyncio.sleep(1.0)
         except Exception as e:
             logger.debug("[VOICE] Sin resultado de voz pendiente al iniciar: %s", e)
 
