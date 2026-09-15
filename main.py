@@ -197,11 +197,46 @@ async def main(page: ft.Page):
                         current_active_route = "/"
                 router.navigate(current_active_route)
 
+        def _extract_voice_session(route_str: str) -> str | None:
+            """Extract voice_session parameter from route, page.query or page.url."""
+            if "?" in route_str:
+                from urllib.parse import parse_qs, urlparse
+
+                params = parse_qs(urlparse(route_str).query)
+                if "voice_session" in params:
+                    return params["voice_session"][0]
+
+            if hasattr(page, "query") and page.query:
+                try:
+                    val = page.query.get("voice_session")
+                    if val:
+                        return val
+                except Exception:
+                    pass
+
+            page_url = getattr(page, "url", "")
+            if page_url and "?" in page_url:
+                from urllib.parse import parse_qs, urlparse
+
+                params = parse_qs(urlparse(page_url).query)
+                if "voice_session" in params:
+                    return params["voice_session"][0]
+
+            return None
+
         def _navigate_to_route(route: str) -> None:
             """Route navigation respecting auth state and public routes.
             Strips query params before matching (token read from page.query).
             """
             clean_route = route.split("?")[0]
+
+            # Si la sesión en memoria no está activa, restaurarla
+            # si el usuario regresa del flujo de dictado por voz
+            if not SessionManager.is_logged_in(page):
+                voice_sess = _extract_voice_session(route)
+                if voice_sess:
+                    SessionManager.restore_voice_session(page, voice_sess)
+
             if SessionManager.is_logged_in(page):
                 if clean_route in (
                     "/login",

@@ -15,6 +15,8 @@ import httpx
 if TYPE_CHECKING:
     from flet import Page
 
+from core.session import SessionManager
+
 logger = logging.getLogger(__name__)
 
 _VOICE_INTERNAL = os.getenv("VOICE_API_URL", "http://voice_api:8553")
@@ -32,6 +34,8 @@ class VoiceExpenseDialog:
         familia_id: int = 1,
     ) -> None:
         session_id = str(uuid.uuid4())
+        # Preservar autenticación al volver de la grabadora móvil/web
+        SessionManager.register_voice_session(session_id, page)
         base_url = _VOICE_PUBLIC.rstrip("/")
         upload_url = (
             f"{base_url}/voice-upload-form"

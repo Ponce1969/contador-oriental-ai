@@ -12,6 +12,10 @@ from models.user_model import User
 # Diccionario global para almacenar sesiones por session_id
 _sessions: dict[str, dict] = {}
 
+# Mapeo temporal para restaurar sesión al volver del grabador de voz móvil/web
+_voice_sessions: dict[str, dict] = {}
+_VOICE_SESSION_TTL = 15 * 60  # 15 minutos
+
 # TTL para sesiones abandonadas (sin logout explícito)
 _SESSION_ABANDON_TTL = 8 * 3600  # 8 horas
 _CREATED_AT = "_created_at"
@@ -198,3 +202,43 @@ class SessionManager:
         """Establecer el período activo de auditoría en la sesión."""
         session_data = SessionManager._get_session_data(page)
         session_data["audited_period"] = (year, month)
+
+    @staticmethod
+    def register_voice_session(voice_session_id: str, page: ft.Page) -> None:
+        """Registra un voice_session_id con los datos de autenticación actuales."""
+        if not voice_session_id:
+            return
+        session_data = SessionManager._get_session_data(page)
+        user_id = session_data.get(SessionManager.SESSION_KEY_USER_ID)
+        familia_id = session_data.get(SessionManager.SESSION_KEY_FAMILIA_ID)
+        username = session_data.get(SessionManager.SESSION_KEY_USERNAME)
+        if user_id is not None:
+            _voice_sessions[voice_session_id] = {
+                SessionManager.SESSION_KEY_USER_ID: user_id,
+                SessionManager.SESSION_KEY_FAMILIA_ID: familia_id,
+                SessionManager.SESSION_KEY_USERNAME: username,
+                "_created_at": time.time(),
+            }
+
+    @staticmethod
+    def restore_voice_session(page: ft.Page, voice_session_id: str) -> bool:
+        """Restaura la sesión de usuario a partir de un voice_session_id válido."""
+        if not voice_session_id or voice_session_id not in _voice_sessions:
+            return False
+        data = _voice_sessions[voice_session_id]
+        if time.time() - data.get("_created_at", 0) > _VOICE_SESSION_TTL:
+            _voice_sessions.pop(voice_session_id, None)
+            return False
+
+        session_data = SessionManager._get_session_data(page)
+        session_data[SessionManager.SESSION_KEY_USER_ID] = data[
+            SessionManager.SESSION_KEY_USER_ID
+        ]
+        session_data[SessionManager.SESSION_KEY_FAMILIA_ID] = data[
+            SessionManager.SESSION_KEY_FAMILIA_ID
+        ]
+        session_data[SessionManager.SESSION_KEY_USERNAME] = data[
+            SessionManager.SESSION_KEY_USERNAME
+        ]
+        registrar_actividad(page.session.id)
+        return True
