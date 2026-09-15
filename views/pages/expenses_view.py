@@ -338,30 +338,197 @@ class ExpensesView:
         notas = data.get("notas")
         self.descripcion_input.value = comercio or notas or ""
 
-        categoria = data.get("categoria")
-        if categoria:
+        # Normalizar y emparejar categoría robustamente
+        raw_cat = data.get("categoria") or ""
+        matched_cat_key = None
+        for opt in self.categoria_dropdown.options:
+            if opt.key == raw_cat or opt.text == raw_cat:
+                matched_cat_key = opt.key
+                break
+
+        if not matched_cat_key and raw_cat:
+            import re
+
+            clean_raw = re.sub(r"[^\w\s]", "", raw_cat.lower()).strip()
             for opt in self.categoria_dropdown.options:
-                if opt.key == categoria or opt.text == categoria:
-                    self.categoria_dropdown.value = opt.key
-                    self._update_subcategories(selected_subcat=data.get("subcategoria"))
+                clean_opt = re.sub(r"[^\w\s]", "", opt.key.lower()).strip()
+                if clean_raw and (
+                    clean_raw in clean_opt or clean_opt in clean_raw
+                ):
+                    matched_cat_key = opt.key
                     break
+
+        if not matched_cat_key:
+            desc_l = (data.get("comercio") or data.get("notas") or "").lower()
+            if any(
+                k in desc_l
+                for k in (
+                    "cafe",
+                    "café",
+                    "capuchino",
+                    "cortado",
+                    "restaurante",
+                    "bar",
+                    "comida",
+                    "salida",
+                )
+            ):
+                matched_cat_key = ExpenseCategory.OCIO.value
+            elif any(
+                k in desc_l for k in ("super", "almacen", "almacén", "leche", "pan")
+            ):
+                matched_cat_key = ExpenseCategory.ALMACEN.value
+            else:
+                matched_cat_key = ExpenseCategory.OTROS.value
+
+        self.categoria_dropdown.value = matched_cat_key
+        self._update_subcategories(selected_subcat=data.get("subcategoria"))
 
         currency = data.get("currency")
         if currency in ("UYU", "USD"):
             self.currency_dropdown.value = currency
 
-        medio_pago = data.get("medio_pago")
-        if medio_pago:
-            mp_lower = medio_pago.lower()
-            for opt in self.metodo_pago_dropdown.options:
-                if mp_lower in opt.key.lower():
-                    self.metodo_pago_dropdown.value = opt.key
-                    break
+        # Normalizar medio de pago robustamente
+        raw_mp = (data.get("medio_pago") or "").lower()
+        matched_mp_key = None
+        for opt in self.metodo_pago_dropdown.options:
+            if raw_mp and raw_mp in opt.key.lower():
+                matched_mp_key = opt.key
+                break
 
-        self.page.update()
+        if not matched_mp_key:
+            if any(
+                k in raw_mp
+                for k in ("tarjeta", "debito", "débito", "pos", "visa", "master")
+            ):
+                matched_mp_key = PaymentMethod.TARJETA_DEBITO.value
+            elif any(k in raw_mp for k in ("credito", "crédito", "cuota")):
+                matched_mp_key = PaymentMethod.TARJETA_CREDITO.value
+            else:
+                matched_mp_key = PaymentMethod.EFECTIVO.value
+
+        self.metodo_pago_dropdown.value = matched_mp_key
+
         desc = self.descripcion_input.value or "Gasto"
         m_val = self.monto_input.value or "0"
-        self._show_success(f"🎙️ Gasto detectado: {desc} ${m_val}")
+        curr_val = self.currency_dropdown.value or "UYU"
+        cat_val = self.categoria_dropdown.value or ExpenseCategory.OTROS.value
+        mp_val = self.metodo_pago_dropdown.value or PaymentMethod.EFECTIVO.value
+
+        def _confirm_and_save(_=None):
+            confirm_dialog.open = False
+            self.page.update()
+            self._on_add_expense(None)
+
+        def _dismiss_dialog(_=None):
+            confirm_dialog.open = False
+            self.page.update()
+
+        confirm_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Row(
+                controls=[
+                    ft.Icon(ft.Icons.AUTO_AWESOME, color=ft.Colors.GREEN_600, size=24),
+                    ft.Text(
+                        "Confirmar Gasto por Voz", weight=ft.FontWeight.BOLD, size=18
+                    ),
+                ],
+                spacing=8,
+            ),
+            content=ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text(
+                            "Audio interpretado con éxito. ¿Deseas guardarlo?",
+                            size=13,
+                            color=ft.Colors.GREY_700,
+                        ),
+                        ft.Container(height=6),
+                        ft.Container(
+                            content=ft.Column(
+                                controls=[
+                                    ft.Row(
+                                        controls=[
+                                            ft.Text(
+                                                "Concepto:",
+                                                weight=ft.FontWeight.BOLD,
+                                                size=13,
+                                            ),
+                                            ft.Text(
+                                                desc,
+                                                size=14,
+                                                color=ft.Colors.BLUE_900,
+                                            ),
+                                        ],
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                    ),
+                                    ft.Row(
+                                        controls=[
+                                            ft.Text(
+                                                "Monto:",
+                                                weight=ft.FontWeight.BOLD,
+                                                size=13,
+                                            ),
+                                            ft.Text(
+                                                f"${m_val} {curr_val}",
+                                                weight=ft.FontWeight.BOLD,
+                                                size=15,
+                                                color=ft.Colors.GREEN_800,
+                                            ),
+                                        ],
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                    ),
+                                    ft.Row(
+                                        controls=[
+                                            ft.Text(
+                                                "Categoría:",
+                                                weight=ft.FontWeight.BOLD,
+                                                size=13,
+                                            ),
+                                            ft.Text(cat_val, size=13),
+                                        ],
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                    ),
+                                    ft.Row(
+                                        controls=[
+                                            ft.Text(
+                                                "Medio:",
+                                                weight=ft.FontWeight.BOLD,
+                                                size=13,
+                                            ),
+                                            ft.Text(mp_val, size=13),
+                                        ],
+                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                    ),
+                                ],
+                                spacing=8,
+                            ),
+                            bgcolor=ft.Colors.BLUE_50,
+                            padding=14,
+                            border_radius=10,
+                            border=ft.Border.all(1, ft.Colors.BLUE_200),
+                        ),
+                    ],
+                    tight=True,
+                    spacing=8,
+                ),
+                width=360,
+            ),
+            actions=[
+                ft.TextButton("Modificar", on_click=_dismiss_dialog),
+                ft.ElevatedButton(
+                    "💾 Confirmar y Guardar",
+                    bgcolor=ft.Colors.GREEN_700,
+                    color=ft.Colors.WHITE,
+                    on_click=_confirm_and_save,
+                ),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        self.page.overlay.append(confirm_dialog)
+        confirm_dialog.open = True
+        self.page.update()
 
     def _open_date_picker(self, _: ft.ControlEvent) -> None:
         try:

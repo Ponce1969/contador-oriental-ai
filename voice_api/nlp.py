@@ -172,7 +172,15 @@ def extract_expense_regex_fallback(texto: str) -> dict:
 
     # Si no hubo comercio pero hay palabras clave de categoría
     if not comercio:
-        if re.search(r"\b(carne|verdura|pan|leche|comida|super|almacen|almacén)\b", t):
+        if re.search(
+            r"\b(cafe|café|capuchino|cortado|almuerzo|cena|desayuno|merienda|bar|restaurante|pizzeria|pizzería|chivito|hamburguesa|helado)\b",
+            t,
+        ):
+            categoria = "🎉 Ocio"
+            subcategoria = "Restaurante / Bar"
+        elif re.search(
+            r"\b(carne|verdura|pan|leche|comida|super|almacen|almacén)\b", t
+        ):
             categoria = "🛒 Almacén"
         elif re.search(
             r"\b(nafta|combustible|gasoil|taller|mecanico|mecánico|peaje)\b", t
@@ -187,6 +195,7 @@ def extract_expense_regex_fallback(texto: str) -> dict:
         r"\b(efectivo|contado)\b",
         r"\b(debito|débito)\b",
         r"\b(credito|crédito)\b",
+        r"\b(tarjeta)\b",
         r"\b(oca)\b",
         r"\b(prex)\b",
         r"\b(itau|itaú)\b",
@@ -203,6 +212,29 @@ def extract_expense_regex_fallback(texto: str) -> dict:
         if m:
             medio_pago = m.group(1).title()
             break
+
+    # 5. Si no hubo comercio explícito, deducir concepto limpio
+    if not comercio:
+        clean_desc = t
+        clean_desc = re.sub(r"\b\d+([.,]\d+)?\b", "", clean_desc)
+        clean_desc = re.sub(
+            r"\b(pesos|dolares|dólares|usd|lucas|palos|gamba|gambas)\b", "", clean_desc
+        )
+        clean_desc = re.sub(
+            r"\b(con tarjeta|en efectivo|al contado|con debito|con débito|"
+            r"con credito|con crédito|con prex|con oca)\b",
+            "",
+            clean_desc,
+        )
+        clean_desc = re.sub(
+            r"\b(gasté|gaste|pagué|pague|compré|compre)\b", "", clean_desc
+        )
+        clean_desc = re.sub(
+            r"\b(en el|en la|en los|en las|en|de|por)\b", "", clean_desc
+        )
+        clean_desc = re.sub(r"\s+", " ", clean_desc).strip()
+        if clean_desc:
+            comercio = clean_desc.capitalize()
 
     return {
         "monto": monto,
