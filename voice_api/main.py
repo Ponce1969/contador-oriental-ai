@@ -540,9 +540,11 @@ async def voice_upload_form(session_id: str) -> HTMLResponse:
       const formData = new FormData();
       formData.append('file', blob, 'voice_expense.webm');
       formData.append('session_id', session_id);
+      const p = window.location.pathname;
+      const submitUrl = p.replace(/voice-upload-form.*$/, 'voice-upload-submit');
 
       try {{
-        const resp = await fetch('/voice-upload-submit', {{
+        const resp = await fetch(submitUrl, {{
           method: 'POST',
           body: formData
         }});
