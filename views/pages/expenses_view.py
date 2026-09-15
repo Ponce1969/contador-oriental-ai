@@ -4,10 +4,14 @@ Vista para gestión de gastos familiares
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
+import os
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
 import flet as ft
+import httpx
 from result import Err, Ok
 
 from constants.responsive import Responsive
@@ -49,6 +53,7 @@ class ExpensesView:
 
         # Obtener familia_id de la sesión
         familia_id = SessionManager.get_familia_id(page)
+        self._familia_id: int = int(familia_id) if familia_id is not None else 1
 
         # Controller con gestión automática de sesión
         self.controller = ExpenseController(familia_id=familia_id)
@@ -242,10 +247,48 @@ class ExpensesView:
         # Resumen por categorías
         self.summary_column = ft.Column(spacing=5)
 
+        # Recuperar resultado de voz pendiente si se vuelve de pestaña o PWA
+        if hasattr(self.page, "run_task"):
+            self.page.run_task(self._recuperar_pendiente_voz)
+        else:
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._recuperar_pendiente_voz())
+            except RuntimeError:
+                pass
+
+    async def _recuperar_pendiente_voz(self) -> None:
+        """Recupera resultado de voz pendiente al volver de la grabadora móvil."""
+        try:
+            session_id = None
+            if hasattr(self.page, "query") and self.page.query:
+                with contextlib.suppress(KeyError):
+                    session_id = self.page.query.get("voice_session")
+
+            voice_url = os.getenv("VOICE_API_URL", "http://voice_api:8553")
+            async with httpx.AsyncClient(timeout=4.0) as client:
+                if session_id:
+                    resp = await client.get(f"{voice_url}/voice-resultado/{session_id}")
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if data.get("ready") and data.get("success"):
+                            self._on_voice_expense_parsed(data)
+                            return
+
+                resp = await client.get(f"{voice_url}/pendiente/{self._familia_id}")
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("ready") and data.get("success"):
+                        self._on_voice_expense_parsed(data)
+        except Exception as e:
+            logger.debug("[VOICE] Sin resultado de voz pendiente al iniciar: %s", e)
+
     def _open_voice_input_dialog(self, _: ft.ControlEvent) -> None:
         """Abre modal para registrar gasto dictado por voz con IA."""
         try:
-            VoiceExpenseDialog.show(self.page, self._on_voice_expense_parsed)
+            VoiceExpenseDialog.show(
+                self.page, self._on_voice_expense_parsed, familia_id=self._familia_id
+            )
         except Exception as e:
             logger.exception("[VOICE_DIALOG] Error abriendo diálogo de voz: %s", e)
             self._show_error(AppError(f"No se pudo abrir el dictado por voz: {e}"))

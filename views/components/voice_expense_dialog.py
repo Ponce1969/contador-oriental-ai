@@ -29,10 +29,14 @@ class VoiceExpenseDialog:
         cls,
         page: Page,
         on_expense_parsed: Callable[[dict], None],
+        familia_id: int = 1,
     ) -> None:
         session_id = str(uuid.uuid4())
         base_url = _VOICE_PUBLIC.rstrip("/")
-        upload_url = f"{base_url}/voice-upload-form?session_id={session_id}"
+        upload_url = (
+            f"{base_url}/voice-upload-form"
+            f"?session_id={session_id}&familia_id={familia_id}"
+        )
 
         # Controls
         status_text = ft.Text(

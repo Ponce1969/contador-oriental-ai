@@ -114,6 +114,7 @@ class JobRecord:
     job_id: str
     status: JobStatus
     created_at: datetime
+    familia_id: int | None = None
     resultado: VoiceExpenseResponse | None = None
     error: str | None = None
 
@@ -125,16 +126,34 @@ class JobStore:
         self._jobs: dict[str, JobRecord] = {}
         self._lock = Lock()
 
-    def create(self, job_id: str | None = None) -> JobRecord:
+    def create(
+        self, job_id: str | None = None, familia_id: int | None = None
+    ) -> JobRecord:
         jid = job_id or str(uuid.uuid4())
         record = JobRecord(
             job_id=jid,
+            familia_id=familia_id,
             status=JobStatus.PENDING,
             created_at=datetime.now(UTC),
         )
         with self._lock:
             self._jobs[jid] = record
         return record
+
+    def get_family_job(self, familia_id: int) -> JobRecord | None:
+        """Returns the latest completed job for a family."""
+        with self._lock:
+            matches = [
+                rec
+                for rec in self._jobs.values()
+                if rec.familia_id == familia_id
+                and rec.status == JobStatus.COMPLETED
+                and rec.resultado
+            ]
+            if not matches:
+                return None
+            matches.sort(key=lambda r: r.created_at, reverse=True)
+            return matches[0]
 
     def get(self, job_id: str) -> JobRecord | None:
         with self._lock:
@@ -384,7 +403,7 @@ async def process_expense_voice(
 @app.api_route(
     "/voice-upload-form", methods=["GET", "HEAD"], response_class=HTMLResponse
 )
-async def voice_upload_form(session_id: str = "") -> HTMLResponse:
+async def voice_upload_form(session_id: str = "", familia_id: int = 1) -> HTMLResponse:
     """Native HTML audio capture form with direct mobile microphone support."""
     safe_session_id = html_escape(session_id, quote=True)
     html = f"""
@@ -481,6 +500,37 @@ async def voice_upload_form(session_id: str = "") -> HTMLResponse:
       cursor: pointer;
       text-decoration: underline;
     }}
+    .return-btn {{
+      display: none;
+      width: 100%;
+      padding: 14px;
+      background: #10b981;
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 15px;
+      border-radius: 12px;
+      margin-top: 18px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+      transition: all 0.2s;
+      text-align: center;
+      box-sizing: border-box;
+    }}
+    .return-btn:hover {{
+      background: #059669;
+      transform: translateY(-1px);
+    }}
+    .cancel-link {{
+      display: inline-block;
+      color: #94a3b8;
+      font-size: 13px;
+      background: none;
+      border: none;
+      text-decoration: underline;
+      margin-top: 14px;
+      cursor: pointer;
+    }}
   </style>
 </head>
 <body>
@@ -507,6 +557,15 @@ async def voice_upload_form(session_id: str = "") -> HTMLResponse:
 
     <div class="status" id="status"></div>
 
+    <div id="actionButtons" style="margin-top: 8px;">
+      <button id="returnBtn" class="return-btn">
+        ← Volver a Gastos y confirmar
+      </button>
+      <button id="cancelBtn" class="cancel-link">
+        ← Volver a Gastos
+      </button>
+    </div>
+
     <div class="native-upload">
       <label for="nativeInput">¿Problemas con el micrófono? Grabadora nativa</label>
       <input type="file" id="nativeInput" accept="audio/*"
@@ -526,6 +585,19 @@ async def voice_upload_form(session_id: str = "") -> HTMLResponse:
     const timer = document.getElementById('timer');
     const status = document.getElementById('status');
     const nativeInput = document.getElementById('nativeInput');
+    const returnBtn = document.getElementById('returnBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    function returnToExpenses() {{
+      if (window.opener) {{
+        window.close();
+      }}
+      const target = '/expenses?voice_session=' + encodeURIComponent(session_id);
+      window.location.href = target;
+    }}
+
+    returnBtn.addEventListener('click', returnToExpenses);
+    cancelBtn.addEventListener('click', returnToExpenses);
 
     function updateTimer() {{
       seconds++;
@@ -542,6 +614,7 @@ async def voice_upload_form(session_id: str = "") -> HTMLResponse:
       const formData = new FormData();
       formData.append('file', blob, 'voice_expense.webm');
       formData.append('session_id', session_id);
+      formData.append('familia_id', '{familia_id}');
       const p = window.location.pathname;
       const submitUrl = p.replace(/voice-upload-form.*$/, 'voice-upload-submit');
 
@@ -553,7 +626,10 @@ async def voice_upload_form(session_id: str = "") -> HTMLResponse:
         const data = await resp.json();
         if (data.success) {{
           status.className = 'status success';
-          status.textContent = '✅ Listo. Volvé a la app para confirmar el gasto.';
+          status.textContent = '✅ Listo. Tocá el botón para volver a Gastos.';
+          returnBtn.style.display = 'block';
+          cancelBtn.style.display = 'none';
+          setTimeout(returnToExpenses, 1800);
         }} else {{
           status.className = 'status error';
           status.textContent = 'Error: ' + (data.error || 'No se pudo procesar');
@@ -618,6 +694,7 @@ async def voice_upload_submit(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),  # noqa: B008
     session_id: str | None = Form(None),
+    familia_id: int = Form(1),
 ) -> JSONResponse:
     """Submit voice audio from the HTML form asynchronously."""
     effective_id = session_id or str(uuid.uuid4())
@@ -633,7 +710,7 @@ async def voice_upload_submit(
         tmp.write(content)
         tmp_path = Path(tmp.name)
 
-    job_store.create(effective_id)
+    job_store.create(effective_id, familia_id=familia_id)
     job_store.update(effective_id, status=JobStatus.PROCESSING)
     background_tasks.add_task(_execute_background_voice_job, effective_id, tmp_path)
 
@@ -670,6 +747,18 @@ async def get_voice_resultado(session_id: str) -> JSONResponse:
         )
 
     return JSONResponse({"ready": False, "status": record.status.value})
+
+
+@app.get("/pendiente/{familia_id}")
+async def get_pendiente(familia_id: int) -> JSONResponse:
+    """Check for pending voice results for a family to recover from tab suspensions."""
+    record = job_store.get_family_job(familia_id)
+    if record and record.resultado:
+        data = record.resultado.model_dump(mode="json")
+        # Invalidate so it is only retrieved once
+        job_store.update(record.job_id, status=JobStatus.FAILED, error="consumed")
+        return JSONResponse({"ready": True, "session_id": record.job_id, **data})
+    return JSONResponse({"ready": False})
 
 
 def main() -> None:
