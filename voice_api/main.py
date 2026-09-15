@@ -381,8 +381,10 @@ async def process_expense_voice(
         _safe_unlink(tmp_path)
 
 
-@app.get("/voice-upload-form", response_class=HTMLResponse)
-async def voice_upload_form(session_id: str) -> HTMLResponse:
+@app.api_route(
+    "/voice-upload-form", methods=["GET", "HEAD"], response_class=HTMLResponse
+)
+async def voice_upload_form(session_id: str = "") -> HTMLResponse:
     """Native HTML audio capture form with direct mobile microphone support."""
     safe_session_id = html_escape(session_id, quote=True)
     html = f"""
