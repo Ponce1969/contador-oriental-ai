@@ -14,6 +14,7 @@ from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
 from controllers.household_controller import HouseholdController
 from controllers.installment_controller import InstallmentController
+from core.logger import get_logger
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
@@ -30,6 +31,8 @@ from views.components.date_picker_manager import DatePickerManager
 from views.components.month_selector import MonthSelector
 from views.components.voice_expense_dialog import VoiceExpenseDialog
 from views.layouts.main_layout import MainLayout
+
+logger = get_logger("ExpensesView")
 
 
 class ExpensesView:
@@ -241,7 +244,11 @@ class ExpensesView:
 
     def _open_voice_input_dialog(self, _: ft.ControlEvent) -> None:
         """Abre modal para registrar gasto dictado por voz con IA."""
-        VoiceExpenseDialog.show(self.page, self._on_voice_expense_parsed)
+        try:
+            VoiceExpenseDialog.show(self.page, self._on_voice_expense_parsed)
+        except Exception as e:
+            logger.exception("[VOICE_DIALOG] Error abriendo diálogo de voz: %s", e)
+            self._show_error(AppError(f"No se pudo abrir el dictado por voz: {e}"))
 
     def _on_voice_expense_parsed(self, data: dict) -> None:
         """Poblar campos del formulario con los datos extraídos de la voz."""

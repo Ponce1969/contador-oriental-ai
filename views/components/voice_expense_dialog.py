@@ -86,15 +86,25 @@ class VoiceExpenseDialog:
                 except Exception as ex:
                     logger.debug("[VOICE_DIALOG] Polling error: %s", ex)
 
-        poll_task = asyncio.create_task(_poll_result())
+        # Schedule polling task safely via page.run_task (or active event loop)
+        if hasattr(page, "run_task"):
+            page.run_task(_poll_result)
+        else:
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(_poll_result())
+            except RuntimeError:
+                logger.debug("[VOICE_DIALOG] No running event loop detected")
 
         def _close_dialog(_=None):
             nonlocal polling_active
             polling_active = False
-            poll_task.cancel()
             dialog.open = False
             if hasattr(page, "update"):
-                page.update()
+                try:
+                    page.update()
+                except Exception:
+                    pass
 
         dialog = ft.AlertDialog(
             modal=True,
@@ -137,12 +147,18 @@ class VoiceExpenseDialog:
                             border=ft.Border.all(1, ft.Colors.BLUE_200),
                         ),
                         ft.Container(height=10),
-                        ft.ElevatedButton(
-                            "🎙️ Abrir grabadora de voz",
-                            icon=ft.Icons.MIC,
+                        ft.Button(
+                            content=ft.Row(
+                                controls=[
+                                    ft.Icon(ft.Icons.MIC),
+                                    ft.Text("Abrir grabadora de voz"),
+                                ],
+                                spacing=8,
+                                tight=True,
+                            ),
                             bgcolor=ft.Colors.BLUE_600,
                             color=ft.Colors.WHITE,
-                            url=upload_url,
+                            url=ft.Url(upload_url, target=ft.UrlTarget.BLANK),
                             style=ft.ButtonStyle(
                                 padding=ft.Padding.symmetric(horizontal=16, vertical=12)
                             ),
