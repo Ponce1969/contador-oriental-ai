@@ -263,7 +263,7 @@ class DashboardView:
                 )
             )
 
-        content = ft.Column(
+        content = ft.ListView(
             controls=[
                 ft.Row(
                     controls=header_title_controls,
@@ -375,7 +375,6 @@ class DashboardView:
                 ),
             ],
             spacing=16,
-            scroll=ft.ScrollMode.AUTO,
         )
 
         return MainLayout(
@@ -631,10 +630,9 @@ class DashboardView:
                 controls.append(ft.Divider(height=8))
 
         return ft.Container(
-            content=ft.Column(
+            content=ft.ListView(
                 controls=controls,
                 spacing=10,
-                scroll=ft.ScrollMode.AUTO,
             ),
             padding=14,
             bgcolor=bg_color,

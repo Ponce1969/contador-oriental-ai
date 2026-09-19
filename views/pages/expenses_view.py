@@ -250,8 +250,8 @@ class ExpensesView:
         self.page.update()
 
     def _on_month_changed(self, year: int, month: int) -> None:
-        self._render_expenses()
-        self._render_summary()
+        self._render_expenses(update=False)
+        self._render_summary(update=True)
 
     def _on_search_changed(self, _: ft.ControlEvent) -> None:
         self._render_expenses()
@@ -291,7 +291,7 @@ class ExpensesView:
             self.share_household_switch.visible = False
             self.share_household_switch.value = False
 
-        content = ft.Column(
+        content = ft.ListView(
             controls=[
                 ft.Row(
                     controls=[
@@ -443,12 +443,11 @@ class ExpensesView:
                 self.expenses_column,
             ],
             spacing=16,
-            scroll=ft.ScrollMode.AUTO,
         )
 
         # Cargar datos iniciales
-        self._render_expenses()
-        self._render_summary()
+        self._render_expenses(update=False)
+        self._render_summary(update=False)
 
         # Ocultar FAB para que no tape botones de borrar
         self.page.floating_action_button = None
@@ -718,7 +717,7 @@ class ExpensesView:
         except (ValueError, InvalidOperation):
             self._show_error(AppError(message="El monto debe ser un número válido"))
 
-    def _render_expenses(self) -> None:
+    def _render_expenses(self, update: bool = True) -> None:
         """Renderizar lista de gastos del mes seleccionado con filtro de búsqueda"""
         self.expenses_column.controls.clear()
         expenses = self.controller.list_expenses_by_month(
@@ -857,9 +856,10 @@ class ExpensesView:
                     )
                 )
 
-        self.page.update()
+        if update:
+            self.page.update()
 
-    def _render_summary(self) -> None:
+    def _render_summary(self, update: bool = True) -> None:
         """Renderizar resumen por categorías del mes seleccionado."""
         self.summary_column.controls.clear()
         summary = self.controller.get_summary_by_categories(
@@ -951,7 +951,8 @@ class ExpensesView:
                 )
                 self.summary_column.controls.append(ft.Divider())
 
-        self.page.update()
+        if update:
+            self.page.update()
 
     def _on_edit_expense(self, expense: Expense) -> None:
         """Cargar gasto en el formulario para editar"""
@@ -981,8 +982,8 @@ class ExpensesView:
 
         match result:
             case Ok(_):
-                self._render_expenses()
-                self._render_summary()
+                self._render_expenses(update=False)
+                self._render_summary(update=True)
                 self._show_success("Gasto eliminado correctamente")
             case Err(error):
                 self._show_error(error)

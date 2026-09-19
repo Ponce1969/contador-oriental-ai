@@ -15,7 +15,10 @@ from utils.formatters import format_currency
 
 
 class SummaryRenderer:
-    """Renderiza un resumen de categorías con barra de progreso."""
+    """
+    Renderiza un resumen de categorías optimizado para evitar cuellos
+    de botella en Android.
+    """
 
     @staticmethod
     def render(
@@ -24,7 +27,7 @@ class SummaryRenderer:
         color_bg: str,
         currency: str = "UYU",
         empty_msg: str = "No hay registros",
-    ) -> ft.Column:
+    ) -> ft.Control:
         """
         Renderiza un resumen de categorías con barra de progreso.
 
@@ -36,11 +39,7 @@ class SummaryRenderer:
             empty_msg: mensaje cuando no hay datos
         """
         if not summary:
-            return ft.Column(
-                controls=[
-                    ft.Text(value=empty_msg, italic=True, color=ft.Colors.GREY_600)
-                ]
-            )
+            return ft.Text(value=empty_msg, italic=True, color=ft.Colors.GREY_600)
 
         total = sum(summary.values(), Decimal("0"))
         sorted_items = sorted(summary.items(), key=lambda x: x[1], reverse=True)
@@ -51,38 +50,39 @@ class SummaryRenderer:
             porcentaje = float(monto / total * 100) if total > 0 else 0.0
             monto_fmt = format_currency(monto, currency=currency)
 
-            controls.append(
-                ft.Column(
-                    controls=[
-                        ft.Row(
-                            controls=[
-                                ft.Text(
-                                    value=categoria,
-                                    size=14,
-                                    weight=ft.FontWeight.BOLD,
-                                    expand=True,
-                                ),
-                                ft.Text(
-                                    value=f"{currency_symbol}{monto_fmt}",
-                                    size=14,
-                                    color=color,
-                                ),
-                            ]
-                        ),
-                        ft.ProgressBar(
-                            value=porcentaje / 100,
-                            color=color,
-                            bgcolor=color_bg,
-                            height=8,
-                        ),
-                        ft.Text(
-                            value=f"{porcentaje:.1f}%",
-                            size=11,
-                            color=ft.Colors.GREY_600,
-                        ),
-                    ],
-                    spacing=3,
-                )
+            # Estructura simplificada: se elimina la Column intermedia por cada elemento
+            controls.extend(
+                [
+                    ft.Row(
+                        controls=[
+                            ft.Text(
+                                value=categoria,
+                                size=14,
+                                weight=ft.FontWeight.BOLD,
+                                expand=True,
+                            ),
+                            ft.Text(
+                                value=f"{currency_symbol}{monto_fmt}",
+                                size=14,
+                                color=color,
+                            ),
+                        ]
+                    ),
+                    ft.ProgressBar(
+                        value=porcentaje / 100,
+                        color=color,
+                        bgcolor=color_bg,
+                        height=6,
+                    ),
+                    ft.Text(
+                        value=f"{porcentaje:.1f}%",
+                        size=11,
+                        color=ft.Colors.GREY_600,
+                    ),
+                    # Espaciador liviano en lugar de spacing en Column
+                    ft.Container(height=8),
+                ]
             )
 
-        return ft.Column(controls=controls, spacing=15)
+        # Retorna una única Column plana con todos los controles ordenados
+        return ft.Column(controls=controls, spacing=2)

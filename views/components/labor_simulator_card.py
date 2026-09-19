@@ -542,6 +542,7 @@ class LaborSimulatorCard:
                             ft.Icon(
                                 ft.Icons.WARNING_AMBER_ROUNDED,
                                 color=ft.Colors.RED_600,
+                                size=20,
                             ),
                             ft.Text(
                                 f"Error de entrada: {self.current_error}",

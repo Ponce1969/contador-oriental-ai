@@ -204,16 +204,15 @@ class IncomesView:
             self.fecha_input.value = str(today)
         else:
             self.fecha_input.value = f"{year:04d}-{month:02d}-01"
-        self._render_incomes()
-        self._render_summary()
-        self.page.update()
+        self._render_incomes(update=False)
+        self._render_summary(update=True)
 
     def render(self):
         """Renderizar la vista completa"""
         is_mobile = AppState.device == "mobile"
         self.form_title.size = 16 if is_mobile else 20
 
-        content = ft.Column(
+        content = ft.ListView(
             controls=[
                 ft.Text(
                     value=self.income_controller.get_title(),
@@ -297,12 +296,11 @@ class IncomesView:
                 self.incomes_column,
             ],
             spacing=16,
-            scroll=ft.ScrollMode.AUTO,
         )
 
         # Cargar datos iniciales
-        self._render_incomes()
-        self._render_summary()
+        self._render_incomes(update=False)
+        self._render_summary(update=False)
 
         return MainLayout(
             page=self.page,
@@ -730,8 +728,8 @@ class IncomesView:
                         )
                     self.editing_income_id = None
                     self._clear_inputs()
-                    self._render_incomes()
-                    self._render_summary()
+                    self._render_incomes(update=False)
+                    self._render_summary(update=True)
                     self._show_success(success_msg)
 
                 case Err(error):
@@ -740,7 +738,7 @@ class IncomesView:
         except Exception as e:
             self._show_error(AppError(message=f"Error inesperado: {e}"))
 
-    def _render_incomes(self) -> None:
+    def _render_incomes(self, update: bool = True) -> None:
         """Renderizar ingresos del mes: recurrentes siempre + no-recurrentes del mes."""
         self.incomes_column.controls.clear()
         incomes = self.income_controller.list_for_month(
@@ -852,9 +850,10 @@ class IncomesView:
                     )
                 )
 
-        self.page.update()
+        if update:
+            self.page.update()
 
-    def _render_summary(self) -> None:
+    def _render_summary(self, update: bool = True) -> None:
         """Renderizar resumen por categorías del mes, separado por moneda."""
         self.summary_column.controls.clear()
         summary = self.income_controller.get_summary_by_categories(
@@ -900,37 +899,38 @@ class IncomesView:
                         monto, currency=currency
                     )
 
-                    self.summary_column.controls.append(
-                        ft.Column(
-                            controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Text(
-                                            value=categoria,
-                                            weight=ft.FontWeight.BOLD,
-                                            expand=True,
-                                        ),
-                                        ft.Text(
-                                            value=(
-                                                f"{monto_formateado} "
-                                                f"({porcentaje:.1f}%)"
-                                            )
-                                        ),
-                                    ],
-                                ),
-                                ft.ProgressBar(
-                                    value=porcentaje / 100,
-                                    color=ft.Colors.GREEN,
-                                    bgcolor=ft.Colors.GREEN_100,
-                                ),
-                            ],
-                            spacing=5,
-                        )
+                    # Estructura plana: se elimina ft.Column intermedia
+                    self.summary_column.controls.extend(
+                        [
+                            ft.Row(
+                                controls=[
+                                    ft.Text(
+                                        value=categoria,
+                                        weight=ft.FontWeight.BOLD,
+                                        expand=True,
+                                    ),
+                                    ft.Text(
+                                        value=(
+                                            f"{monto_formateado} "
+                                            f"({porcentaje:.1f}%)"
+                                        )
+                                    ),
+                                ],
+                            ),
+                            ft.ProgressBar(
+                                value=porcentaje / 100,
+                                color=ft.Colors.GREEN,
+                                bgcolor=ft.Colors.GREEN_100,
+                                height=6,
+                            ),
+                            ft.Container(height=4),
+                        ]
                     )
 
                 self.summary_column.controls.append(ft.Divider())
 
-        self.page.update()
+        if update:
+            self.page.update()
 
     def _on_edit_income(self, income: Income) -> None:
         """Cargar datos del ingreso para editar"""
@@ -960,8 +960,8 @@ class IncomesView:
             result = self.income_controller.delete_income(income.id)
             match result:
                 case Ok(_):
-                    self._render_incomes()
-                    self._render_summary()
+                    self._render_incomes(update=False)
+                    self._render_summary(update=True)
                     self._show_success("Ingreso eliminado correctamente")
                 case Err(error):
                     self._show_error(error)
