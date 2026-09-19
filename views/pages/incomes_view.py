@@ -112,6 +112,7 @@ class IncomesView:
                 ft.dropdown.Option("overtime", "⏱️ Horas extras (computable)"),
                 ft.dropdown.Option("commission", "📈 Comisiones (computable)"),
                 ft.dropdown.Option("bonus", "💰 Bono / Extra"),
+                ft.dropdown.Option("prize", "🏆 Premio / Sorteo"),
                 ft.dropdown.Option("other", "💵 Otro ingreso"),
             ],
         )
@@ -198,8 +199,14 @@ class IncomesView:
         self.page.update()
 
     def _on_month_changed(self, year: int, month: int) -> None:
+        today = date.today()
+        if year == today.year and month == today.month:
+            self.fecha_input.value = str(today)
+        else:
+            self.fecha_input.value = f"{year:04d}-{month:02d}-01"
         self._render_incomes()
         self._render_summary()
+        self.page.update()
 
     def render(self):
         """Renderizar la vista completa"""
@@ -346,24 +353,55 @@ class IncomesView:
         )
 
         if not active_acts:
-            self.labor_suggestion_container.visible = False
             self.selected_economic_activity_id = None
             if existing_recurring and not self.editing_income_id:
-                self.editing_income_id = existing_recurring.id
-                self.monto_input.value = str(existing_recurring.monto)
-                self.descripcion_input.value = existing_recurring.descripcion
-                self.categoria_dropdown.value = existing_recurring.categoria.name
-                self.concept_dropdown.value = existing_recurring.concept or "salary"
-                self.recurrente_checkbox.value = True
-                self.frecuencia_dropdown.value = (
-                    existing_recurring.frecuencia.name
-                    if existing_recurring.frecuencia
-                    else "MENSUAL"
+                rec_fmt = format_currency(
+                    existing_recurring.monto, existing_recurring.currency
                 )
-                self.frecuencia_dropdown.visible = True
-                self.save_button.text = "🔄 Actualizar Sueldo Existente"
-                self.form_title.value = "✏️ Actualizar ingreso recurrente"
-                self.cancel_button.visible = True
+                self.labor_suggestion_container.content = ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Icon(
+                                ft.Icons.INFO_OUTLINE,
+                                color=ft.Colors.TEAL_800,
+                                size=20,
+                            ),
+                            ft.Column(
+                                controls=[
+                                    ft.Text(
+                                        "Ingreso recurrente registrado:\n"
+                                        f"{existing_recurring.descripcion}",
+                                        size=13,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=ft.Colors.TEAL_900,
+                                    ),
+                                    ft.Text(
+                                        f"Monto: {rec_fmt}",
+                                        size=12,
+                                        color=ft.Colors.TEAL_800,
+                                    ),
+                                ],
+                                spacing=2,
+                                expand=True,
+                            ),
+                            CorrectElevatedButton(
+                                "✏️ Modificar recurrente",
+                                on_click=lambda _, inc=existing_recurring: (
+                                    self._on_edit_income(inc)
+                                ),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    bgcolor=ft.Colors.LIGHT_BLUE_50,
+                    border=ft.Border.all(1.5, ft.Colors.LIGHT_BLUE_200),
+                    border_radius=8,
+                    padding=ft.Padding.symmetric(horizontal=12, vertical=8),
+                )
+                self.labor_suggestion_container.visible = True
+            else:
+                self.labor_suggestion_container.visible = False
             self.page.update()
             return
 

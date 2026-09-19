@@ -18,6 +18,7 @@ class IncomeCategory(StrEnum):
     JORNAL = "🔨 Jornal"
     EXTRA = "💰 Extra"
     BONO = "🎁 Bono"
+    PREMIO = "🏆 Premio / Sorteo"
     INDEPENDIENTE = "🛠️ Independiente / Unipersonal"
     NEGOCIO = "🏪 Negocio"
     ALQUILER = "🏠 Alquiler"
@@ -69,6 +70,7 @@ INCOME_CATEGORIES_HOGAR: list[IncomeCategory] = [
     IncomeCategory.JORNAL,
     IncomeCategory.EXTRA,
     IncomeCategory.BONO,
+    IncomeCategory.PREMIO,
     IncomeCategory.INDEPENDIENTE,
     IncomeCategory.NEGOCIO,
     IncomeCategory.ALQUILER,
