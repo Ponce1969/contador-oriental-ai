@@ -360,11 +360,6 @@ class VoiceExpenseHandler:
             is_saving = True
 
             confirm_dialog.open = False
-            if hasattr(self.page, "overlay") and confirm_dialog in self.page.overlay:
-                try:
-                    self.page.overlay.remove(confirm_dialog)
-                except (ValueError, Exception):
-                    pass
             self._active_dialog = None
             if hasattr(self.page, "update"):
                 self.page.update()
@@ -385,11 +380,6 @@ class VoiceExpenseHandler:
 
         def _dismiss_and_edit(_: ft.ControlEvent | None = None) -> None:
             confirm_dialog.open = False
-            if hasattr(self.page, "overlay") and confirm_dialog in self.page.overlay:
-                try:
-                    self.page.overlay.remove(confirm_dialog)
-                except (ValueError, Exception):
-                    pass
             self._active_dialog = None
             if hasattr(self.page, "update"):
                 self.page.update()
@@ -508,14 +498,9 @@ class VoiceExpenseHandler:
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-        # Ensure any old dialog is closed and removed
-        if self._active_dialog and hasattr(self.page, "overlay"):
+        # Ensure any old dialog is closed
+        if self._active_dialog:
             self._active_dialog.open = False
-            if self._active_dialog in self.page.overlay:
-                try:
-                    self.page.overlay.remove(self._active_dialog)
-                except (ValueError, Exception):
-                    pass
 
         self._active_dialog = confirm_dialog
         self.page.overlay.append(confirm_dialog)
