@@ -173,14 +173,14 @@ class LoginView:
         self.page.update()
 
         # Validar inputs
-        if not self.username_input.value or not self.password_input.value:
+        username = (self.username_input.value or "").strip()
+        password = self.password_input.value or ""
+        if not username or not password:
             self._show_error("Por favor complete todos los campos")
             return
 
         # Intentar login
-        result = self.auth_controller.login(
-            self.username_input.value, self.password_input.value
-        )
+        result = self.auth_controller.login(username, password)
 
         if result.is_err():
             error = result.err()
