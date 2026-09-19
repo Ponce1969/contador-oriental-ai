@@ -45,6 +45,7 @@ services:
       APP_ENV: ${APP_ENV:-production}
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
       DEBUG: ${DEBUG:-False}
+      FLET_WEB_RENDERER: canvaskit
       
       # OCR Microservice
       OCR_API_URL: ${OCR_API_URL:-http://ocr_api:8551}

@@ -258,6 +258,7 @@ if os.getenv("POSTGRES_HOST"):
         view=ft.AppView.WEB_BROWSER,
         port=int(os.getenv("APP_PORT", "8550")),
         host="0.0.0.0",
+        web_renderer=ft.WebRenderer.CANVAS_KIT,
     )
 else:
     # Modo desktop para desarrollo local
