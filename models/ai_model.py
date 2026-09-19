@@ -214,6 +214,9 @@ class AIResponse(BaseModel):
     gastos_incluidos: int = Field(
         default=0, description="Cantidad de gastos incluidos en el contexto"
     )
+    context: AIContext | None = Field(
+        default=None, description="Contexto financiero evaluado en la consulta"
+    )
     timestamp: datetime = Field(default_factory=datetime.now)
 
     def __str__(self) -> str:

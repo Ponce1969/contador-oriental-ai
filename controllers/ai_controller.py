@@ -60,8 +60,6 @@ class AIController(BaseController):
         self.familia_id: int = familia_id
         self.ai_service = AIAdvisorService()
         self.embedding_service = EmbeddingService()
-        self.last_context: AIContext = AIContext()
-        self.last_pregunta: str = ""
 
     def _get_memory_service(self, session) -> IAMemoryService:
         """Crear IAMemoryService con sesión activa."""
@@ -756,9 +754,6 @@ class AIController(BaseController):
         if incluir_gastos:
             ctx = await self._construir_contexto(pregunta)
 
-        self.last_context = ctx
-        self.last_pregunta = pregunta
-
         memoria_str = await self._buscar_memoria_vectorial(pregunta, ctx)
 
         result = await self.ai_service.consultar(
@@ -832,9 +827,6 @@ class AIController(BaseController):
         ctx = AIContext()
         if incluir_gastos:
             ctx = await self._construir_contexto(pregunta)
-
-        self.last_context = ctx
-        self.last_pregunta = pregunta
 
         memoria_str = await self._buscar_memoria_vectorial(pregunta, ctx)
 
