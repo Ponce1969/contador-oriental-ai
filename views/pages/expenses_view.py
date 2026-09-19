@@ -4,14 +4,10 @@ Vista para gestión de gastos familiares
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
-import os
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
 import flet as ft
-import httpx
 from result import Err, Ok
 
 from constants.responsive import Responsive
@@ -32,8 +28,11 @@ from models.errors import AppError, ValidationError
 from models.expense_model import Expense
 from services.infrastructure.formatters import format_pesos
 from views.components.date_picker_manager import DatePickerManager
+from views.components.expenses.voice_expense_handler import (
+    VoiceExpenseData,
+    VoiceExpenseHandler,
+)
 from views.components.month_selector import MonthSelector
-from views.components.voice_expense_dialog import VoiceExpenseDialog
 from views.layouts.main_layout import MainLayout
 
 logger = get_logger("ExpensesView")
@@ -247,288 +246,77 @@ class ExpensesView:
         # Resumen por categorías
         self.summary_column = ft.Column(spacing=5)
 
-        # Recuperar resultado de voz pendiente si se vuelve de pestaña o PWA
-        if hasattr(self.page, "run_task"):
-            self.page.run_task(self._recuperar_pendiente_voz)
-        else:
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(self._recuperar_pendiente_voz())
-            except RuntimeError:
-                pass
-
-    async def _recuperar_pendiente_voz(self) -> None:
-        """Recupera resultado de voz pendiente al volver de la grabadora móvil."""
-        try:
-            session_id = None
-            # Método 1: page.query (QueryString)
-            if hasattr(self.page, "query") and self.page.query:
-                with contextlib.suppress(KeyError, TypeError, AttributeError):
-                    session_id = self.page.query.get("voice_session")
-
-            # Método 2: page.route
-            if not session_id:
-                route = getattr(self.page, "route", "")
-                if route and "?" in route:
-                    from urllib.parse import parse_qs, urlparse
-
-                    params = parse_qs(urlparse(route).query)
-                    if "voice_session" in params:
-                        session_id = params["voice_session"][0]
-
-            # Método 3: page.url
-            if not session_id:
-                url = getattr(self.page, "url", "")
-                if url and "?" in url:
-                    from urllib.parse import parse_qs, urlparse
-
-                    params = parse_qs(urlparse(url).query)
-                    if "voice_session" in params:
-                        session_id = params["voice_session"][0]
-
-            voice_url = os.getenv("VOICE_API_URL", "http://voice_api:8553")
-            async with httpx.AsyncClient(timeout=4.0) as client:
-                # Polling por hasta 6 segundos si el microservicio
-                # aún está transcribiendo con Whisper u Ollama
-                for _ in range(6):
-                    if session_id:
-                        resp = await client.get(
-                            f"{voice_url}/voice-resultado/{session_id}"
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            if data.get("ready"):
-                                if data.get("success"):
-                                    self._on_voice_expense_parsed(data)
-                                return
-                    else:
-                        resp = await client.get(
-                            f"{voice_url}/pendiente/{self._familia_id}"
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            if data.get("ready"):
-                                if data.get("success"):
-                                    self._on_voice_expense_parsed(data)
-                                return
-                    await asyncio.sleep(1.0)
-        except Exception as e:
-            logger.debug("[VOICE] Sin resultado de voz pendiente al iniciar: %s", e)
-
-    def _open_voice_input_dialog(self, _: ft.ControlEvent) -> None:
-        """Abre modal para registrar gasto dictado por voz con IA."""
-        try:
-            VoiceExpenseDialog.show(
-                self.page, self._on_voice_expense_parsed, familia_id=self._familia_id
-            )
-        except Exception as e:
-            logger.exception("[VOICE_DIALOG] Error abriendo diálogo de voz: %s", e)
-            self._show_error(AppError(f"No se pudo abrir el dictado por voz: {e}"))
-
-    def _on_voice_expense_parsed(self, data: dict) -> None:
-        """Poblar campos del formulario con los datos extraídos de la voz."""
-        monto = data.get("monto")
-        if monto is not None:
-            monto_str = f"{monto:f}" if isinstance(monto, Decimal) else str(monto)
-            if "." in monto_str:
-                monto_str = monto_str.rstrip("0").rstrip(".")
-            self.monto_input.value = monto_str
-
-        comercio = data.get("comercio")
-        notas = data.get("notas")
-        self.descripcion_input.value = comercio or notas or ""
-
-        # Normalizar y emparejar categoría robustamente
-        raw_cat = data.get("categoria") or ""
-        matched_cat_key = None
-        for opt in self.categoria_dropdown.options:
-            if opt.key == raw_cat or opt.text == raw_cat:
-                matched_cat_key = opt.key
-                break
-
-        if not matched_cat_key and raw_cat:
-            import re
-
-            clean_raw = re.sub(r"[^\w\s]", "", raw_cat.lower()).strip()
-            for opt in self.categoria_dropdown.options:
-                clean_opt = re.sub(r"[^\w\s]", "", opt.key.lower()).strip()
-                if clean_raw and (
-                    clean_raw in clean_opt or clean_opt in clean_raw
-                ):
-                    matched_cat_key = opt.key
-                    break
-
-        if not matched_cat_key:
-            desc_l = (data.get("comercio") or data.get("notas") or "").lower()
-            if any(
-                k in desc_l
-                for k in (
-                    "cafe",
-                    "café",
-                    "capuchino",
-                    "cortado",
-                    "restaurante",
-                    "bar",
-                    "comida",
-                    "salida",
-                )
-            ):
-                matched_cat_key = ExpenseCategory.OCIO.value
-            elif any(
-                k in desc_l for k in ("super", "almacen", "almacén", "leche", "pan")
-            ):
-                matched_cat_key = ExpenseCategory.ALMACEN.value
-            else:
-                matched_cat_key = ExpenseCategory.OTROS.value
-
-        self.categoria_dropdown.value = matched_cat_key
-        self._update_subcategories(selected_subcat=data.get("subcategoria"))
-
-        currency = data.get("currency")
-        if currency in ("UYU", "USD"):
-            self.currency_dropdown.value = currency
-
-        # Normalizar medio de pago robustamente
-        raw_mp = (data.get("medio_pago") or "").lower()
-        matched_mp_key = None
-        for opt in self.metodo_pago_dropdown.options:
-            if raw_mp and raw_mp in opt.key.lower():
-                matched_mp_key = opt.key
-                break
-
-        if not matched_mp_key:
-            if any(
-                k in raw_mp
-                for k in ("tarjeta", "debito", "débito", "pos", "visa", "master")
-            ):
-                matched_mp_key = PaymentMethod.TARJETA_DEBITO.value
-            elif any(k in raw_mp for k in ("credito", "crédito", "cuota")):
-                matched_mp_key = PaymentMethod.TARJETA_CREDITO.value
-            else:
-                matched_mp_key = PaymentMethod.EFECTIVO.value
-
-        self.metodo_pago_dropdown.value = matched_mp_key
-
-        desc = self.descripcion_input.value or "Gasto"
-        m_val = self.monto_input.value or "0"
-        curr_val = self.currency_dropdown.value or "UYU"
-        cat_val = self.categoria_dropdown.value or ExpenseCategory.OTROS.value
-        mp_val = self.metodo_pago_dropdown.value or PaymentMethod.EFECTIVO.value
-
-        def _confirm_and_save(_=None):
-            confirm_dialog.open = False
-            self.page.update()
-            self._on_add_expense(None)
-
-        def _dismiss_dialog(_=None):
-            confirm_dialog.open = False
-            self.page.update()
-
-        confirm_dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Row(
-                controls=[
-                    ft.Icon(ft.Icons.AUTO_AWESOME, color=ft.Colors.GREEN_600, size=24),
-                    ft.Text(
-                        "Confirmar Gasto por Voz", weight=ft.FontWeight.BOLD, size=18
-                    ),
-                ],
-                spacing=8,
-            ),
-            content=ft.Container(
-                content=ft.Column(
-                    controls=[
-                        ft.Text(
-                            "Audio interpretado con éxito. ¿Deseas guardarlo?",
-                            size=13,
-                            color=ft.Colors.GREY_700,
-                        ),
-                        ft.Container(height=6),
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Concepto:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(
-                                                desc,
-                                                size=14,
-                                                color=ft.Colors.BLUE_900,
-                                            ),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Monto:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(
-                                                f"${m_val} {curr_val}",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=15,
-                                                color=ft.Colors.GREEN_800,
-                                            ),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Categoría:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(cat_val, size=13),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Medio:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(mp_val, size=13),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                ],
-                                spacing=8,
-                            ),
-                            bgcolor=ft.Colors.BLUE_50,
-                            padding=14,
-                            border_radius=10,
-                            border=ft.Border.all(1, ft.Colors.BLUE_200),
-                        ),
-                    ],
-                    tight=True,
-                    spacing=8,
-                ),
-                width=360,
-            ),
-            actions=[
-                ft.TextButton("Modificar", on_click=_dismiss_dialog),
-                ft.ElevatedButton(
-                    "💾 Confirmar y Guardar",
-                    bgcolor=ft.Colors.GREEN_700,
-                    color=ft.Colors.WHITE,
-                    on_click=_confirm_and_save,
-                ),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
+        # Handler modular de gastos por voz
+        self.voice_handler = VoiceExpenseHandler(
+            page=self.page,
+            familia_id=self._familia_id,
+            on_save_expense=self._on_voice_expense_save,
+            on_populate_form=self._on_voice_expense_populate,
+            entorno=self.entorno,
         )
+        self.voice_handler.start_pending_recovery()
 
-        self.page.overlay.append(confirm_dialog)
-        confirm_dialog.open = True
+    def _on_voice_expense_populate(self, data: VoiceExpenseData) -> None:
+        """Poblar campos del formulario para edición manual a partir de voz."""
+        monto_str = (
+            f"{data.monto:f}".rstrip("0").rstrip(".")
+            if "." in str(data.monto)
+            else str(data.monto)
+        )
+        self.monto_input.value = monto_str
+        self.descripcion_input.value = data.descripcion
+        self.currency_dropdown.value = data.currency
+        self.categoria_dropdown.value = data.categoria.value
+        self._update_subcategories(selected_subcat=data.subcategoria)
+        self.metodo_pago_dropdown.value = data.metodo_pago.value
         self.page.update()
+
+    def _on_voice_expense_save(self, data: VoiceExpenseData) -> None:
+        """Guardar directamente en la base de datos el gasto confirmado por voz."""
+        logger.info(
+            "[EXPENSES_VIEW] Persisting voice expense: '%s', monto=%s %s, cat=%s",
+            data.descripcion,
+            data.monto,
+            data.currency,
+            data.categoria.value,
+        )
+        expense = Expense(
+            id=None,
+            monto=data.monto,
+            currency=data.currency,
+            fecha=data.fecha,
+            descripcion=data.descripcion,
+            categoria=data.categoria,
+            subcategoria=data.subcategoria,
+            metodo_pago=data.metodo_pago,
+            es_recurrente=False,
+            frecuencia=None,
+            notas=f"Registrado por voz: {data.raw_text}" if data.raw_text else None,
+            entorno=self.entorno,
+        )
+        result = self.controller.add_expense(expense)
+        match result:
+            case Ok(saved):
+                logger.info(
+                    "[EXPENSES_VIEW] Voice expense saved successfully with id=%s",
+                    saved.id,
+                )
+                if (
+                    saved.fecha.year != self.month_selector.year
+                    or saved.fecha.month != self.month_selector.month
+                ):
+                    self.month_selector.set_period(
+                        saved.fecha.year, saved.fecha.month, notify=False
+                    )
+                self._clear_inputs()
+                self._render_expenses()
+                self._render_summary()
+                self._show_success(
+                    f"Gasto de ${data.monto} guardado por voz correctamente"
+                )
+            case Err(err):
+                logger.error("[EXPENSES_VIEW] Error saving voice expense: %s", err)
+                self._show_error(err)
 
     def _open_date_picker(self, _: ft.ControlEvent) -> None:
         try:
@@ -600,7 +388,7 @@ class ExpensesView:
                                     tooltip="Dictar gasto por voz con IA",
                                     icon_color=ft.Colors.BLUE_600,
                                     icon_size=28,
-                                    on_click=self._open_voice_input_dialog,
+                                    on_click=self.voice_handler.open_voice_dialog,
                                 ),
                                 ft.IconButton(
                                     icon=ft.Icons.CAMERA_ALT_ROUNDED,
