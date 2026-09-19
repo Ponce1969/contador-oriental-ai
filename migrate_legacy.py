@@ -8,6 +8,8 @@ from pathlib import Path
 
 # Agregar el directorio raíz al path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from sqlalchemy import text
 
@@ -53,21 +55,27 @@ def get_applied_migrations():
 
 def get_pending_migrations():
     """Obtener migraciones pendientes de aplicar"""
-    migrations_dir = Path(__file__).parent
+    migrations_dir = Path(__file__).parent / "migrations"
     applied = get_applied_migrations()
 
     # Buscar archivos de migración (001_*.py, 002_*.py, etc.)
+    # Support both with and without .py in _fleting_migrations
     migration_files = sorted(
-        [f.stem for f in migrations_dir.glob("[0-9][0-9][0-9]_*.py")]
+        [f.name for f in migrations_dir.glob("[0-9][0-9][0-9]_*.py")]
     )
 
-    return [m for m in migration_files if m not in applied]
+    return [
+        m
+        for m in migration_files
+        if m not in applied and Path(m).stem not in applied
+    ]
 
 
 def apply_migration(migration_name: str):
     """Aplicar una migración específica"""
+    module_name = Path(migration_name).stem
     # Importar el módulo de migración
-    migration_module = __import__(f"migrations.{migration_name}", fromlist=["up"])
+    migration_module = __import__(f"migrations.{module_name}", fromlist=["up"])
 
     with engine.connect() as conn:
         # Ejecutar función up()
@@ -99,9 +107,10 @@ def rollback_last_migration():
             return
 
         migration_name = row[0]
+        module_name = Path(migration_name).stem
 
         # Importar el módulo de migración
-        migration_module = __import__(f"migrations.{migration_name}", fromlist=["down"])
+        migration_module = __import__(f"migrations.{module_name}", fromlist=["down"])
 
         # Ejecutar función down()
         migration_module.down(conn)

@@ -344,10 +344,7 @@ class InstallmentPurchaseTable(Base):
         DateTime, default=datetime.now, onupdate=datetime.now
     )
 
-    __table_args__ = (
-        Index("idx_installments_familia", "familia_id"),
-        Index("idx_installments_activo", "familia_id", "activo"),
-    )
+    __table_args__ = (Index("idx_installments_activo", "familia_id", "activo"),)
 
 
 class ExchangeRateTable(Base):
@@ -391,7 +388,11 @@ class InstallmentPaymentTable(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
-    __table_args__ = (Index("idx_payments_purchase", "installment_purchase_id"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "installment_purchase_id", "numero_cuota", name="uq_installment_number"
+        ),
+    )
 
 
 class AiUsageTable(Base):
@@ -414,7 +415,6 @@ class AiUsageTable(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     __table_args__ = (
-        Index("idx_ai_usage_lookup", "familia_id", "date"),
         UniqueConstraint("familia_id", "date", "model", name="uq_ai_usage_daily"),
     )
 
@@ -433,10 +433,7 @@ class PasswordResetTokensTable(Base):
     used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
-    __table_args__ = (
-        Index("idx_password_reset_tokens_token", "token"),
-        Index("idx_password_reset_tokens_user_id", "user_id"),
-    )
+    __table_args__ = (Index("idx_password_reset_tokens_user_id", "user_id"),)
 
 
 class HogarTable(Base):
@@ -471,7 +468,6 @@ class HouseholdMemberTable(Base):
     __table_args__ = (
         UniqueConstraint("household_id", "familia_id", name="uq_household_member"),
         Index("idx_household_members_familia", "familia_id"),
-        Index("idx_household_members_household", "household_id"),
     )
 
 
@@ -493,7 +489,6 @@ class HouseholdInvitationTable(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     __table_args__ = (
-        Index("idx_invitations_token", "token"),
         Index("idx_invitations_household_status", "household_id", "status"),
     )
 
@@ -515,7 +510,6 @@ class SharedExpenseLinkTable(Base):
 
     __table_args__ = (
         UniqueConstraint("household_id", "gasto_id", name="uq_household_gasto_link"),
-        Index("idx_shared_links_household", "household_id"),
         Index("idx_shared_links_familia", "familia_id"),
         Index("idx_shared_links_gasto", "gasto_id"),
     )
@@ -539,7 +533,6 @@ class HouseholdSettlementTable(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     __table_args__ = (
-        Index("idx_settlements_household", "household_id"),
         Index("idx_settlements_payer", "payer_familia_id"),
         Index("idx_settlements_recipient", "recipient_familia_id"),
         Index("idx_settlements_fecha", "household_id", "fecha"),
