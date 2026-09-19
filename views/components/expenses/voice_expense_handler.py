@@ -65,6 +65,8 @@ class VoiceExpenseHandler:
         self.on_save_expense = on_save_expense
         self.on_populate_form = on_populate_form
         self.entorno = entorno
+        self._processed_sessions: set[str] = set()
+        self._active_dialog: ft.AlertDialog | None = None
 
     def open_voice_dialog(self, _: ft.ControlEvent | None = None) -> None:
         """Opens voice recording modal initiating the voice-to-expense flow."""
@@ -142,6 +144,13 @@ class VoiceExpenseHandler:
         Uses an extended timeout (up to 25s) suitable for ARM64 inference (Orange Pi).
         """
         session_id = self.extract_session_id()
+        if session_id and session_id in self._processed_sessions:
+            logger.info(
+                "[VOICE_HANDLER] Session %s already processed; skipping recovery",
+                session_id,
+            )
+            return
+
         if not session_id:
             logger.debug(
                 "[VOICE_HANDLER] No voice_session query param; checking family fallback"
@@ -184,6 +193,8 @@ class VoiceExpenseHandler:
                             )
 
                             if ready:
+                                if session_id and "session_id" not in data:
+                                    data["session_id"] = session_id
                                 if success:
                                     logger.info(
                                         "[VOICE_HANDLER] Voice job ready: %s",
@@ -290,6 +301,23 @@ class VoiceExpenseHandler:
 
     def handle_voice_result(self, data: dict) -> None:
         """Processes received voice payload and displays confirmation modal."""
+        session_id = data.get("session_id") or self.extract_session_id()
+        if session_id and session_id in self._processed_sessions:
+            logger.info(
+                "[VOICE_HANDLER] Session %s already processed; skipping duplicate",
+                session_id,
+            )
+            return
+
+        if self._active_dialog and getattr(self._active_dialog, "open", False):
+            logger.info(
+                "[VOICE_HANDLER] Confirmation dialog already active; skipping duplicate"
+            )
+            return
+
+        if session_id:
+            self._processed_sessions.add(session_id)
+
         logger.info(
             "[VOICE_HANDLER] Handling voice result payload: %s",
             {k: v for k, v in data.items() if k != "audio"},
@@ -320,9 +348,27 @@ class VoiceExpenseHandler:
             else str(expense_data.monto)
         )
 
+        is_saving = False
+
         def _confirm_and_save(_: ft.ControlEvent | None = None) -> None:
+            nonlocal is_saving
+            if is_saving:
+                logger.warning(
+                    "[VOICE_HANDLER] Save already in progress, ignoring duplicate click"
+                )
+                return
+            is_saving = True
+
             confirm_dialog.open = False
-            self.page.update()
+            if hasattr(self.page, "overlay") and confirm_dialog in self.page.overlay:
+                try:
+                    self.page.overlay.remove(confirm_dialog)
+                except (ValueError, Exception):
+                    pass
+            self._active_dialog = None
+            if hasattr(self.page, "update"):
+                self.page.update()
+
             logger.info(
                 "[VOICE_HANDLER] User confirmed voice expense saving: %s",
                 expense_data.descripcion,
@@ -339,7 +385,15 @@ class VoiceExpenseHandler:
 
         def _dismiss_and_edit(_: ft.ControlEvent | None = None) -> None:
             confirm_dialog.open = False
-            self.page.update()
+            if hasattr(self.page, "overlay") and confirm_dialog in self.page.overlay:
+                try:
+                    self.page.overlay.remove(confirm_dialog)
+                except (ValueError, Exception):
+                    pass
+            self._active_dialog = None
+            if hasattr(self.page, "update"):
+                self.page.update()
+
             logger.info(
                 "[VOICE_HANDLER] User chose to manually edit fields for voice expense"
             )
@@ -454,6 +508,16 @@ class VoiceExpenseHandler:
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
+        # Ensure any old dialog is closed and removed
+        if self._active_dialog and hasattr(self.page, "overlay"):
+            self._active_dialog.open = False
+            if self._active_dialog in self.page.overlay:
+                try:
+                    self.page.overlay.remove(self._active_dialog)
+                except (ValueError, Exception):
+                    pass
+
+        self._active_dialog = confirm_dialog
         self.page.overlay.append(confirm_dialog)
         confirm_dialog.open = True
         self.page.update()

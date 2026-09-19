@@ -81,6 +81,8 @@ class VoiceExpenseDialog:
                             if data.get("ready"):
                                 _close_dialog()
                                 if data.get("success"):
+                                    if "session_id" not in data:
+                                        data["session_id"] = session_id
                                     on_expense_parsed(data)
                                 else:
                                     err_msg = data.get(
@@ -167,6 +169,7 @@ class VoiceExpenseDialog:
                             bgcolor=ft.Colors.BLUE_600,
                             color=ft.Colors.WHITE,
                             url=ft.Url(upload_url, target=ft.UrlTarget.SELF),
+                            on_click=_close_dialog,
                             style=ft.ButtonStyle(
                                 padding=ft.Padding.symmetric(horizontal=16, vertical=12)
                             ),

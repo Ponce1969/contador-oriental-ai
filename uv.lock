@@ -418,8 +418,8 @@ requires-dist = [
     { name = "argon2-cffi" },
     { name = "beautifulsoup4", specifier = ">=4.15.0" },
     { name = "docker", specifier = ">=7.1.0" },
-    { name = "flet", specifier = ">=0.80.0" },
-    { name = "flet-web", specifier = ">=0.80.0" },
+    { name = "flet", specifier = ">=0.80.0,<1.0.0" },
+    { name = "flet-web", specifier = ">=0.80.0,<1.0.0" },
     { name = "fleting" },
     { name = "fpdf2", specifier = ">=2.7.0" },
     { name = "httpx", specifier = ">=0.27.0" },
@@ -439,7 +439,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "flet", specifier = ">=0.80.4" },
+    { name = "flet", specifier = ">=0.80.4,<1.0.0" },
     { name = "opencv-python-headless", specifier = ">=4.10.0" },
     { name = "pydantic-settings", specifier = ">=2.6.0" },
     { name = "pytest" },

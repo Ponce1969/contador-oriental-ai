@@ -214,3 +214,75 @@ class TestPendingVoiceRecoveryPolling:
                     called_data = mock_handle.call_args[0][0]
                     assert called_data["comercio"] == "Farmashop"
                     assert called_data["monto"] == 900
+
+
+class TestVoiceDeduplicationAndDialogSafety:
+    """Tests that duplicate voice jobs and concurrent dialogs are rejected."""
+
+    def test_deduplicates_same_session_id(self) -> None:
+        page = MagicMock()
+        page.overlay = []
+        handler = VoiceExpenseHandler(page, 1, MagicMock())
+
+        payload = {
+            "session_id": "sess-unique-999",
+            "monto": 250,
+            "comercio": "Café",
+            "categoria": "Ocio",
+        }
+
+        with patch.object(handler, "_show_confirmation_dialog") as mock_show:
+            handler.handle_voice_result(payload)
+            assert mock_show.call_count == 1
+
+            # Calling again with same session_id should be skipped
+            handler.handle_voice_result(payload)
+            assert mock_show.call_count == 1
+
+    def test_ignores_result_when_dialog_is_already_open(self) -> None:
+        page = MagicMock()
+        page.overlay = []
+        handler = VoiceExpenseHandler(page, 1, MagicMock())
+
+        # Simulate an already open dialog
+        mock_dialog = MagicMock()
+        mock_dialog.open = True
+        handler._active_dialog = mock_dialog
+
+        payload = {
+            "session_id": "sess-another-111",
+            "monto": 500,
+            "comercio": "Devoto",
+        }
+
+        with patch.object(handler, "_show_confirmation_dialog") as mock_show:
+            handler.handle_voice_result(payload)
+            mock_show.assert_not_called()
+
+    def test_prevents_multiple_saves_on_rapid_clicks(self) -> None:
+        page = MagicMock()
+        page.overlay = []
+        save_mock = MagicMock()
+        handler = VoiceExpenseHandler(page, 1, on_save_expense=save_mock)
+
+        norm_data = handler.normalize_voice_data({
+            "monto": 250,
+            "comercio": "Café",
+            "categoria": "Ocio",
+        })
+
+        handler._show_confirmation_dialog(norm_data)
+        assert handler._active_dialog is not None
+
+        # Extract the save button click handler
+        confirm_btn = handler._active_dialog.actions[1]
+        on_click = confirm_btn.on_click
+
+        # First click triggers save
+        on_click(MagicMock())
+        assert save_mock.call_count == 1
+
+        # Second rapid click should be ignored by the is_saving guard
+        on_click(MagicMock())
+        assert save_mock.call_count == 1
+
