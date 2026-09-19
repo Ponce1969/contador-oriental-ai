@@ -6,8 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 
 dependencies = [
-    "flet>=0.80.0",
-    "flet-web>=0.80.0",
+    "flet>=0.80.0,<1.0.0",
+    "flet-web>=0.80.0,<1.0.0",
     "fleting",
     "sqlalchemy",
     "pydantic",
@@ -36,7 +36,7 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
-    "flet>=0.80.4",
+    "flet>=0.80.4,<1.0.0",
     "types-pyyaml>=6.0.12.20250915",
     "result>=0.17.0",
     "python-multipart>=0.0.12",
