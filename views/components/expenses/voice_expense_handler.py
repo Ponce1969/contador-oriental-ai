@@ -49,6 +49,11 @@ class VoiceExpenseData:
     raw_text: str | None = None
 
 
+# Module-level registry so sessions processed once are never re-processed
+# across reconnects
+_PROCESSED_SESSIONS: set[str] = set()
+
+
 class VoiceExpenseHandler:
     """Encapsulates voice recording integration, polling, and data normalization."""
 
@@ -65,7 +70,7 @@ class VoiceExpenseHandler:
         self.on_save_expense = on_save_expense
         self.on_populate_form = on_populate_form
         self.entorno = entorno
-        self._processed_sessions: set[str] = set()
+        self._processed_sessions = _PROCESSED_SESSIONS
         self._active_dialog: ft.AlertDialog | None = None
 
     def open_voice_dialog(self, _: ft.ControlEvent | None = None) -> None:
@@ -341,14 +346,90 @@ class VoiceExpenseHandler:
             )
 
     def _show_confirmation_dialog(self, expense_data: VoiceExpenseData) -> None:
-        """Renders interactive confirmation modal to save or edit normalized expense."""
+        """Renders interactive confirmation modal with editable fields (like OCR)."""
         monto_str = (
             f"{expense_data.monto:f}".rstrip("0").rstrip(".")
             if "." in str(expense_data.monto)
             else str(expense_data.monto)
         )
 
+        available_categories = get_categories_for_entorno(self.entorno)
+
+        # Controles editables pre-poblados
+        descripcion_tf = ft.TextField(
+            label="Concepto / Comercio",
+            value=expense_data.descripcion,
+            dense=True,
+            expand=True,
+        )
+
+        monto_tf = ft.TextField(
+            label="Monto",
+            value=monto_str,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            dense=True,
+            expand=True,
+        )
+
+        currency_dd = ft.Dropdown(
+            label="Moneda",
+            value=expense_data.currency,
+            options=[
+                ft.dropdown.Option("UYU"),
+                ft.dropdown.Option("USD"),
+            ],
+            dense=True,
+            width=100,
+        )
+
+        categoria_dd = ft.Dropdown(
+            label="Categoría",
+            value=expense_data.categoria.value,
+            options=[
+                ft.dropdown.Option(cat.value) for cat in available_categories
+            ],
+            dense=True,
+            expand=True,
+        )
+
+        metodo_dd = ft.Dropdown(
+            label="Medio de pago",
+            value=expense_data.metodo_pago.value,
+            options=[
+                ft.dropdown.Option(mp.value) for mp in PaymentMethod
+            ],
+            dense=True,
+            expand=True,
+        )
+
         is_saving = False
+
+        def _get_edited_data() -> VoiceExpenseData:
+            try:
+                raw_m = monto_tf.value.strip() if monto_tf.value else "0"
+                final_monto = Decimal(raw_m)
+            except Exception:
+                final_monto = expense_data.monto
+
+            raw_desc = (descripcion_tf.value or "").strip()
+            final_desc = raw_desc or expense_data.descripcion
+            final_currency = currency_dd.value or expense_data.currency
+            final_cat = (
+                self._match_category(categoria_dd.value or "", available_categories)
+                or expense_data.categoria
+            )
+            final_mp = self._match_payment_method(metodo_dd.value or "")
+
+            return VoiceExpenseData(
+                monto=final_monto,
+                currency=final_currency,
+                descripcion=final_desc,
+                categoria=final_cat,
+                subcategoria=expense_data.subcategoria,
+                metodo_pago=final_mp,
+                fecha=expense_data.fecha,
+                raw_text=expense_data.raw_text,
+            )
 
         def _confirm_and_save(_: ft.ControlEvent | None = None) -> None:
             nonlocal is_saving
@@ -359,17 +440,20 @@ class VoiceExpenseHandler:
                 return
             is_saving = True
 
+            final_data = _get_edited_data()
             confirm_dialog.open = False
             self._active_dialog = None
             if hasattr(self.page, "update"):
                 self.page.update()
 
             logger.info(
-                "[VOICE_HANDLER] User confirmed voice expense saving: %s",
-                expense_data.descripcion,
+                "[VOICE_HANDLER] User confirmed voice expense saving: %s ($%s %s)",
+                final_data.descripcion,
+                final_data.monto,
+                final_data.currency,
             )
             try:
-                self.on_save_expense(expense_data)
+                self.on_save_expense(final_data)
             except Exception as save_err:
                 logger.exception(
                     "[VOICE_HANDLER] Error in on_save_expense callback: %s", save_err
@@ -379,16 +463,25 @@ class VoiceExpenseHandler:
                 )
 
         def _dismiss_and_edit(_: ft.ControlEvent | None = None) -> None:
+            final_data = _get_edited_data()
             confirm_dialog.open = False
             self._active_dialog = None
             if hasattr(self.page, "update"):
                 self.page.update()
 
             logger.info(
-                "[VOICE_HANDLER] User chose to manually edit fields for voice expense"
+                "[VOICE_HANDLER] User chose to edit in page form: %s",
+                final_data.descripcion,
             )
             if self.on_populate_form:
-                self.on_populate_form(expense_data)
+                self.on_populate_form(final_data)
+
+        def _cancel(_: ft.ControlEvent | None = None) -> None:
+            confirm_dialog.open = False
+            self._active_dialog = None
+            if hasattr(self.page, "update"):
+                self.page.update()
+            logger.info("[VOICE_HANDLER] User dismissed voice confirmation dialog")
 
         confirm_dialog = ft.AlertDialog(
             modal=True,
@@ -407,87 +500,28 @@ class VoiceExpenseHandler:
                 content=ft.Column(
                     controls=[
                         ft.Text(
-                            "Audio interpretado con éxito. ¿Deseas guardarlo?",
-                            size=13,
+                            "Revisá o modificá los datos interpretados antes de "
+                            "guardar:",
+                            size=12,
                             color=ft.Colors.GREY_700,
                         ),
-                        ft.Container(height=6),
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Concepto:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(
-                                                expense_data.descripcion,
-                                                size=14,
-                                                color=ft.Colors.BLUE_900,
-                                            ),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Monto:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(
-                                                f"${monto_str} {expense_data.currency}",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=15,
-                                                color=ft.Colors.GREEN_800,
-                                            ),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Categoría:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(
-                                                expense_data.categoria.value, size=13
-                                            ),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.Text(
-                                                "Medio:",
-                                                weight=ft.FontWeight.BOLD,
-                                                size=13,
-                                            ),
-                                            ft.Text(
-                                                expense_data.metodo_pago.value, size=13
-                                            ),
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                ],
-                                spacing=8,
-                            ),
-                            bgcolor=ft.Colors.BLUE_50,
-                            padding=14,
-                            border_radius=10,
-                            border=ft.Border.all(1, ft.Colors.BLUE_200),
+                        ft.Container(height=4),
+                        descripcion_tf,
+                        ft.Row(
+                            controls=[monto_tf, currency_dd],
+                            spacing=8,
                         ),
+                        categoria_dd,
+                        metodo_dd,
                     ],
                     tight=True,
-                    spacing=8,
+                    spacing=10,
                 ),
-                width=360,
+                width=420,
             ),
             actions=[
-                ft.TextButton("Modificar", on_click=_dismiss_and_edit),
+                ft.TextButton("Cargar en formulario", on_click=_dismiss_and_edit),
+                ft.TextButton("Cancelar", on_click=_cancel),
                 ft.ElevatedButton(
                     "💾 Confirmar y Guardar",
                     bgcolor=ft.Colors.GREEN_700,

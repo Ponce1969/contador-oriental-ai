@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import uuid
@@ -10,7 +9,6 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import flet as ft
-import httpx
 
 if TYPE_CHECKING:
     from flet import Page
@@ -19,7 +17,6 @@ from core.session import SessionManager
 
 logger = logging.getLogger(__name__)
 
-_VOICE_INTERNAL = os.getenv("VOICE_API_URL", "http://voice_api:8553")
 _VOICE_PUBLIC = os.getenv("VOICE_API_PUBLIC_URL", "/voice")
 
 
@@ -42,73 +39,7 @@ class VoiceExpenseDialog:
             f"?session_id={session_id}&familia_id={familia_id}"
         )
 
-        # Controls
-        status_text = ft.Text(
-            "Tocá el botón para abrir la grabadora y dictar tu gasto.",
-            size=13,
-            color=ft.Colors.GREY_700,
-            text_align=ft.TextAlign.CENTER,
-        )
-        spinner = ft.ProgressRing(width=28, height=28, stroke_width=3, visible=False)
-        polling_active = True
-
-        async def _poll_result():
-            interval = 1.5
-            max_attempts = 80  # 120 seconds total
-            for _ in range(max_attempts):
-                if not polling_active:
-                    return
-                await asyncio.sleep(interval)
-                if not polling_active:
-                    return
-
-                try:
-                    async with httpx.AsyncClient(timeout=5.0) as client:
-                        resp = await client.get(
-                            f"{_VOICE_INTERNAL}/voice-resultado/{session_id}"
-                        )
-                        if resp.status_code == 200:
-                            data = resp.json()
-                            if data.get("status") == "processing":
-                                spinner.visible = True
-                                status_text.value = (
-                                    "Audio recibido 🎙️ Transcribiendo con IA local..."
-                                )
-                                status_text.color = ft.Colors.BLUE_700
-                                if hasattr(page, "update"):
-                                    page.update()
-
-                            if data.get("ready"):
-                                _close_dialog()
-                                if data.get("success"):
-                                    if "session_id" not in data:
-                                        data["session_id"] = session_id
-                                    on_expense_parsed(data)
-                                else:
-                                    err_msg = data.get(
-                                        "error", "No se pudo interpretar el audio"
-                                    )
-                                    page.overlay.append(
-                                        ft.SnackBar(ft.Text(f"❌ {err_msg}"), open=True)
-                                    )
-                                    page.update()
-                                return
-                except Exception as ex:
-                    logger.debug("[VOICE_DIALOG] Polling error: %s", ex)
-
-        # Schedule polling task safely via page.run_task (or active event loop)
-        if hasattr(page, "run_task"):
-            page.run_task(_poll_result)
-        else:
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(_poll_result())
-            except RuntimeError:
-                logger.debug("[VOICE_DIALOG] No running event loop detected")
-
         def _close_dialog(_=None):
-            nonlocal polling_active
-            polling_active = False
             dialog.open = False
             if hasattr(page, "update"):
                 try:
@@ -174,12 +105,7 @@ class VoiceExpenseDialog:
                                 padding=ft.Padding.symmetric(horizontal=16, vertical=12)
                             ),
                         ),
-                        ft.Container(height=6),
-                        ft.Row(
-                            controls=[spinner, status_text],
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            spacing=12,
-                        ),
+                        ft.Container(height=4),
                     ],
                     spacing=12,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,

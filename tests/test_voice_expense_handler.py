@@ -274,8 +274,8 @@ class TestVoiceDeduplicationAndDialogSafety:
         handler._show_confirmation_dialog(norm_data)
         assert handler._active_dialog is not None
 
-        # Extract the save button click handler
-        confirm_btn = handler._active_dialog.actions[1]
+        # Extract the save button click handler (last action button)
+        confirm_btn = handler._active_dialog.actions[-1]
         on_click = confirm_btn.on_click
 
         # First click triggers save
@@ -285,4 +285,39 @@ class TestVoiceDeduplicationAndDialogSafety:
         # Second rapid click should be ignored by the is_saving guard
         on_click(MagicMock())
         assert save_mock.call_count == 1
+
+    def test_saves_edited_values_from_modal(self) -> None:
+        page = MagicMock()
+        page.overlay = []
+        save_mock = MagicMock()
+        handler = VoiceExpenseHandler(page, 1, on_save_expense=save_mock)
+
+        norm_data = handler.normalize_voice_data({
+            "monto": 250,
+            "comercio": "Farmashore",
+            "categoria": "Almacén",
+        })
+
+        handler._show_confirmation_dialog(norm_data)
+        dialog = handler._active_dialog
+        assert dialog is not None
+
+        # Modify values directly in modal controls
+        col_controls = dialog.content.content.controls
+        # [0]=Text, [1]=Container, [2]=descripcion_tf, [3]=Row(monto, currency), [4]=categoria, [5]=metodo
+        desc_tf = col_controls[2]
+        desc_tf.value = "Farmashop"
+
+        monto_tf = col_controls[3].controls[0]
+        monto_tf.value = "320"
+
+        # Click confirm
+        confirm_btn = dialog.actions[-1]
+        confirm_btn.on_click(MagicMock())
+
+        save_mock.assert_called_once()
+        saved_arg = save_mock.call_args[0][0]
+        assert saved_arg.descripcion == "Farmashop"
+        assert saved_arg.monto == Decimal("320")
+
 
