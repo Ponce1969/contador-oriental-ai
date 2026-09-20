@@ -263,8 +263,14 @@ async def main(page: ft.Page):
             """Handle URL route changes from browser navigation."""
             _navigate_to_route(e.route)
 
+        _is_ready = False
+
         def on_connect(e: ft.ControlEvent | None = None) -> None:
             """Handle client connection/reconnection (e.g. from voice recorder)."""
+            if not _is_ready:
+                logger.debug("[MAIN] Startup in progress; skipping initial on_connect")
+                return
+
             logger.info(
                 "[MAIN] Page connected/reconnected: route=%s",
                 getattr(page, "route", None),
@@ -303,6 +309,7 @@ async def main(page: ft.Page):
         # page.go triggers on_route_change which calls _navigate_to_route
         initial_route = page.route or "/login"
         _navigate_to_route(initial_route)
+        _is_ready = True
 
         logger.info("Aplicação iniciada com sucesso")
 

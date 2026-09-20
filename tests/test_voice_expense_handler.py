@@ -346,7 +346,7 @@ class TestVoiceDeduplicationAndDialogSafety:
         cancel_btn = dialog.actions[1]
         cancel_btn.on_click(MagicMock())
 
-        assert dialog not in page.overlay
+        assert dialog.open is False
         assert handler._active_dialog is None
         assert "voice_session" not in page.query
         assert page.route == "/expenses"

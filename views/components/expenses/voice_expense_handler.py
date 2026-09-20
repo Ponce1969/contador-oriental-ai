@@ -443,11 +443,14 @@ class VoiceExpenseHandler:
                 raw_text=expense_data.raw_text,
             )
 
+        def _on_dismiss(_: ft.ControlEvent | None = None) -> None:
+            confirm_dialog.open = False
+            self._active_dialog = None
+            self._clean_voice_url()
+
         def _close_dialog() -> None:
             confirm_dialog.open = False
             self._active_dialog = None
-            if confirm_dialog in self.page.overlay:
-                self.page.overlay.remove(confirm_dialog)
             self._clean_voice_url()
             if hasattr(self.page, "update"):
                 self.page.update()
@@ -497,6 +500,7 @@ class VoiceExpenseHandler:
 
         confirm_dialog = ft.AlertDialog(
             modal=True,
+            on_dismiss=_on_dismiss,
             title=ft.Row(
                 controls=[
                     ft.Icon(ft.Icons.AUTO_AWESOME, color=ft.Colors.GREEN_600, size=24),
@@ -544,14 +548,13 @@ class VoiceExpenseHandler:
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-        # Ensure any old dialog is closed and removed from overlay
+        # Ensure any old dialog is marked closed
         if self._active_dialog:
             self._active_dialog.open = False
-            if self._active_dialog in self.page.overlay:
-                self.page.overlay.remove(self._active_dialog)
 
         self._active_dialog = confirm_dialog
-        self.page.overlay.append(confirm_dialog)
+        if confirm_dialog not in self.page.overlay:
+            self.page.overlay.append(confirm_dialog)
         confirm_dialog.open = True
         self.page.update()
 
