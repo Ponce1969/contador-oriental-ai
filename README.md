@@ -25,6 +25,8 @@ Sistema integral de gestión financiera familiar con **Python 3.12 + Flet + Post
   - **Calendario Fiscal Oficial (DGI / BPS / CJPPU)**: Vencimientos oficiales versionados por ejercicio fiscal (Res. DGI 2520/2025, Comunicados BPS ATYR, CJPPU 2026), alertas automáticas por dígito de RUT/CI, cálculo de montos debidos e inyección contextual en el Asesor IA.
 - **🤖 Contador Oriental (IA Local con Ollama)** — Asistente explicativo local impulsado por Gemma 2:2b con streaming de respuestas. Principio rector: **Python calcula con 100% de precisión matemática y la IA explica el contexto legal**. Cada respuesta incorpora un descargo de responsabilidad jurídica orientativa.
 - **🧠 Memoria Vectorial & Búsqueda Semántica** — Cada gasto se vectoriza en background (`expenses.embedding` vector(768) con `nomic-embed-text` + pgvector HNSW).
+- **🎙️ Registro de Gastos por Voz (Voice-to-Expense)** — Dictado en lenguaje natural desde móvil o web. Microservicio FastAPI con Faster-Whisper int8 (4 hilos, optimizado para ARM64 RK3588) y Fast-Path determinístico (<1ms) para modismos uruguayos (*"dos lucas de nafta en Ancap"*, *"capuchino 250 pesos"*) y comercios locales con fallback inteligente a Ollama (`gemma2:2b`). Grabadora web nativa con MediaRecorder, feedback visual en tiempo real y modal de confirmación previa al guardado.
+- **🌾 Modo Rural / Agro vs. Hogar (Modo Híbrido)** — Partición contable estricta entre finanzas domésticas y explotación agropecuaria (`hogar`, `campo`, `consolidado`) con catálogo especializado de rubros (hacienda, granos, insumos, veterinaria, combustible agro).
 - **📷 Escaneo de Tickets OCR** — Microservicio FastAPI con OpenCV + Tesseract + Gemma2 para digitalización automática de recibos en BottomSheet inline.
 - **📥 Exportación a CSV & Compatibilidad Total con Excel** — Exportación de gastos mensuales a formato CSV con codificación UTF-8 BOM (`\ufeff`) para apertura inmediata y perfecta en Microsoft Excel, Google Sheets y LibreOffice sin alteración de tildes o caracteres. Modal interactivo con previsualización, descarga directa en un clic y copiado rápido al portapapeles.
 - **📅 Navegación Temporal & Auditoría Histórica** — Selector dinámico de períodos para auditar gastos de meses pasados y futuros, sincronización automática de compras en cuotas programadas y modal de desglose analítico por categorías responsivo.
@@ -191,10 +193,15 @@ contador-oriental/
 ├── 📁 database/                      # Modelos SQLAlchemy y conexión
 ├── 📁 views/
 │   ├── 📁 pages/                     # Vistas principales (Hogar, Dashboard, Planes, Familia, Gastos, etc.)
-│   └── 📁 components/                # Componentes interactivos (FamilyIRPFOptimizerCard, SavingsGoalsCard, BenefitsCard, etc.)
-├── 📁 migrations/                    # 001_initial.py ... 021_add_savings_goals.py
-├── 📁 tests/                         # Suite automatizada con 542 tests unitarios e integración
-├── 📄 docker-compose.yml             # postgres (pgvector) + app + ocr_api + nginx + guardian
+│   └── 📁 components/                # Componentes interactivos (VoiceExpenseHandler, FamilyIRPFOptimizerCard, SavingsGoalsCard, etc.)
+├── 📁 voice_api/                     # Microservicio Voice-to-Expense (Faster-Whisper ARM64 + NLP Uruguayo)
+│   ├── main.py                       # FastAPI endpoints, grabador web integrado y JobStore
+│   ├── nlp.py                        # Fast-Path regex determinístico uruguayo y fallback Ollama
+│   └── models.py                     # DTOs y validación Pydantic
+├── 📁 ocr_api/                       # Microservicio OCR de tickets (OpenCV + Tesseract + Gemma2)
+├── 📁 migrations/                    # 001_initial.py ... 022_independent_details.py
+├── 📁 tests/                         # Suite automatizada con >600 tests unitarios e integración
+├── 📄 docker-compose.yml             # postgres + app + voice_api + ocr_api + nginx + guardian
 ├── 📄 Modelfile                      # Configuración del modelo contador-oriental
 ├── 📄 pyproject.toml                 # uv, dependencias y herramientas de calidad
 └── 📄 main.py                        # Punto de entrada de la aplicación
@@ -235,6 +242,13 @@ APP_BASE_URL=https://app4.loquinto.com
 OCR_API_URL=http://ocr_api:8551
 OCR_API_PUBLIC_URL=https://ocr.loquinto.com
 
+# Microservicio Voice-to-Expense
+VOICE_API_URL=http://voice_api:8553
+VOICE_API_PUBLIC_URL=https://app4.loquinto.com/voice
+WHISPER_MODEL=base
+WHISPER_THREADS=4
+OLLAMA_VOICE_MODEL=gemma2:2b
+
 # Monitoreo Guardian
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 GUARDIAN_CHECK_INTERVAL=60
@@ -247,7 +261,7 @@ GUARDIAN_CHECK_INTERVAL=60
 El proyecto cuenta con una amplia suite de pruebas automatizadas:
 
 ```bash
-# Ejecutar toda la suite de pruebas (542 tests)
+# Ejecutar toda la suite de pruebas (>600 tests)
 uv run pytest -v
 
 # Con reporte de cobertura de código
@@ -271,8 +285,9 @@ uv run ruff format --check .
 |---|---|---|
 | `postgres` | `5432` | PostgreSQL 16 con extensión `pgvector` (ARM64 & x86_64) |
 | `app` | `8550` | Aplicación web Flet (FastAPI backend + interfaz interactiva) |
+| `voice_api` | `8553` | Microservicio Voice-to-Expense con Faster-Whisper int8 + Fast-Path regex uruguayo |
 | `ocr_api` | `8551` | Microservicio de procesamiento OCR de comprobantes con Tesseract + OpenCV |
-| `nginx` | `8552 / 80` | Reverse proxy con soporte para WebSockets (/ws), timeouts extendidos y routing |
+| `nginx` | `8552 / 80` | Reverse proxy con soporte para WebSockets (/ws), timeouts extendidos y routing (/voice/) |
 | `guardian` | — | Monitoreo continuo de salud de contenedores y alertas automáticas en Discord |
 
 ---
