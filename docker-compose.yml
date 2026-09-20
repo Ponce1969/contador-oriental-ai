@@ -117,7 +117,7 @@ services:
     depends_on:
       - app
     environment:
-      CONFIG_VERSION: "3"
+      CONFIG_VERSION: "4"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
