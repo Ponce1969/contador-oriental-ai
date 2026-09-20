@@ -14,6 +14,7 @@ from constants.responsive import Responsive
 from controllers.expense_controller import ExpenseController
 from controllers.household_controller import HouseholdController
 from controllers.installment_controller import InstallmentController
+from core.logger import get_logger
 from core.session import SessionManager
 from core.state import AppState
 from flet_types.flet_types import CorrectElevatedButton, CorrectSnackBar
@@ -27,8 +28,14 @@ from models.errors import AppError, ValidationError
 from models.expense_model import Expense
 from services.infrastructure.formatters import format_pesos
 from views.components.date_picker_manager import DatePickerManager
+from views.components.expenses.voice_expense_handler import (
+    VoiceExpenseData,
+    VoiceExpenseHandler,
+)
 from views.components.month_selector import MonthSelector
 from views.layouts.main_layout import MainLayout
+
+logger = get_logger("ExpensesView")
 
 
 class ExpensesView:
@@ -45,6 +52,7 @@ class ExpensesView:
 
         # Obtener familia_id de la sesión
         familia_id = SessionManager.get_familia_id(page)
+        self._familia_id: int = int(familia_id) if familia_id is not None else 1
 
         # Controller con gestión automática de sesión
         self.controller = ExpenseController(familia_id=familia_id)
@@ -238,6 +246,80 @@ class ExpensesView:
         # Resumen por categorías
         self.summary_column = ft.Column(spacing=5)
 
+        # Handler modular de gastos por voz
+        self.voice_handler = VoiceExpenseHandler(
+            page=self.page,
+            familia_id=self._familia_id,
+            on_save_expense=self._on_voice_expense_save,
+            on_populate_form=self._on_voice_expense_populate,
+            entorno=self.entorno,
+        )
+        if hasattr(self.page, "data") and isinstance(self.page.data, dict):
+            self.page.data["expenses_view"] = self
+        self.voice_handler.start_pending_recovery()
+
+    def _on_voice_expense_populate(self, data: VoiceExpenseData) -> None:
+        """Poblar campos del formulario para edición manual a partir de voz."""
+        monto_str = (
+            f"{data.monto:f}".rstrip("0").rstrip(".")
+            if "." in str(data.monto)
+            else str(data.monto)
+        )
+        self.monto_input.value = monto_str
+        self.descripcion_input.value = data.descripcion
+        self.currency_dropdown.value = data.currency
+        self.categoria_dropdown.value = data.categoria.value
+        self._update_subcategories(selected_subcat=data.subcategoria)
+        self.metodo_pago_dropdown.value = data.metodo_pago.value
+        self.page.update()
+
+    def _on_voice_expense_save(self, data: VoiceExpenseData) -> None:
+        """Guardar directamente en la base de datos el gasto confirmado por voz."""
+        logger.info(
+            "[EXPENSES_VIEW] Persisting voice expense: '%s', monto=%s %s, cat=%s",
+            data.descripcion,
+            data.monto,
+            data.currency,
+            data.categoria.value,
+        )
+        expense = Expense(
+            id=None,
+            monto=data.monto,
+            currency=data.currency,
+            fecha=data.fecha,
+            descripcion=data.descripcion,
+            categoria=data.categoria,
+            subcategoria=data.subcategoria,
+            metodo_pago=data.metodo_pago,
+            es_recurrente=False,
+            frecuencia=None,
+            notas=f"Registrado por voz: {data.raw_text}" if data.raw_text else None,
+            entorno=self.entorno,
+        )
+        result = self.controller.add_expense(expense)
+        match result:
+            case Ok(saved):
+                logger.info(
+                    "[EXPENSES_VIEW] Voice expense saved successfully with id=%s",
+                    saved.id,
+                )
+                if (
+                    saved.fecha.year != self.month_selector.year
+                    or saved.fecha.month != self.month_selector.month
+                ):
+                    self.month_selector.set_period(
+                        saved.fecha.year, saved.fecha.month, notify=False
+                    )
+                self._clear_inputs()
+                self._render_expenses()
+                self._render_summary()
+                self._show_success(
+                    f"Gasto de ${data.monto} guardado por voz correctamente"
+                )
+            case Err(err):
+                logger.error("[EXPENSES_VIEW] Error saving voice expense: %s", err)
+                self._show_error(err)
+
     def _open_date_picker(self, _: ft.ControlEvent) -> None:
         try:
             curr_date = date.fromisoformat(self.fecha_picker.value)
@@ -301,12 +383,26 @@ class ExpensesView:
                             weight=ft.FontWeight.BOLD,
                             expand=True,
                         ),
-                        ft.IconButton(
-                            icon=ft.Icons.CAMERA_ALT_ROUNDED,
-                            tooltip="Escanear ticket con IA",
-                            icon_color=ft.Colors.ORANGE_700,
-                            icon_size=28,
-                            on_click=lambda _: self.router.navigate("/ticket-ocr"),
+                        ft.Row(
+                            controls=[
+                                ft.IconButton(
+                                    icon=ft.Icons.MIC_ROUNDED,
+                                    tooltip="Dictar gasto por voz con IA",
+                                    icon_color=ft.Colors.BLUE_600,
+                                    icon_size=28,
+                                    on_click=self.voice_handler.open_voice_dialog,
+                                ),
+                                ft.IconButton(
+                                    icon=ft.Icons.CAMERA_ALT_ROUNDED,
+                                    tooltip="Escanear ticket con IA",
+                                    icon_color=ft.Colors.ORANGE_700,
+                                    icon_size=28,
+                                    on_click=lambda _: self.router.navigate(
+                                        "/ticket-ocr"
+                                    ),
+                                ),
+                            ],
+                            spacing=4,
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,

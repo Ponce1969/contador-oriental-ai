@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import os
 from pathlib import Path
 
@@ -197,19 +198,59 @@ async def main(page: ft.Page):
                         current_active_route = "/"
                 router.navigate(current_active_route)
 
+        def _extract_voice_session(route_str: str) -> str | None:
+            """Extract voice_session parameter from route, page.query or page.url."""
+            if "?" in route_str:
+                from urllib.parse import parse_qs, urlparse
+
+                params = parse_qs(urlparse(route_str).query)
+                if "voice_session" in params:
+                    return params["voice_session"][0]
+
+            if hasattr(page, "query") and page.query:
+                try:
+                    val = page.query.get("voice_session")
+                    if val:
+                        return val
+                except Exception:
+                    pass
+
+            page_url = getattr(page, "url", "")
+            if page_url and "?" in page_url:
+                from urllib.parse import parse_qs, urlparse
+
+                params = parse_qs(urlparse(page_url).query)
+                if "voice_session" in params:
+                    return params["voice_session"][0]
+
+            return None
+
         def _navigate_to_route(route: str) -> None:
             """Route navigation respecting auth state and public routes.
             Strips query params before matching (token read from page.query).
             """
             clean_route = route.split("?")[0]
+
+            # Si la sesión en memoria no está activa, restaurarla
+            # si el usuario regresa del flujo de dictado por voz
+            if not SessionManager.is_logged_in(page):
+                voice_sess = _extract_voice_session(route)
+                if voice_sess:
+                    SessionManager.restore_voice_session(page, voice_sess)
+
             if SessionManager.is_logged_in(page):
-                if clean_route == "/invite":
-                    # Even if logged in, let them go to the invite page to accept it
-                    router.navigate(route)
-                else:
-                    # Logged in — always go to dashboard
-                    page.banner.open = True
+                if clean_route in (
+                    "/login",
+                    "/register",
+                    "/forgot-password",
+                    "/reset-password",
+                ):
+                    # Authenticated users should never see login/auth screens
                     router.navigate("/")
+                else:
+                    # Authenticated user: navigate to requested route
+                    # (e.g. /expenses, /history, /invite, /)
+                    router.navigate(route)
             elif clean_route in public_routes:
                 # Public routes (forgot-password, reset-password, register, invite)
                 # No auth required — navigate directly, preserving query params
@@ -222,14 +263,53 @@ async def main(page: ft.Page):
             """Handle URL route changes from browser navigation."""
             _navigate_to_route(e.route)
 
+        _is_ready = False
+
+        def on_connect(e: ft.ControlEvent | None = None) -> None:
+            """Handle client connection/reconnection (e.g. from voice recorder)."""
+            if not _is_ready:
+                logger.debug("[MAIN] Startup in progress; skipping initial on_connect")
+                return
+
+            logger.info(
+                "[MAIN] Page connected/reconnected: route=%s",
+                getattr(page, "route", None),
+            )
+            current_route = getattr(page, "route", "") or ""
+            voice_sess = _extract_voice_session(current_route)
+            if not voice_sess and hasattr(page, "query") and page.query:
+                with contextlib.suppress(Exception):
+                    voice_sess = page.query.get("voice_session")
+
+            if voice_sess:
+                logger.info("[MAIN] Voice session detected on connect: %s", voice_sess)
+                if not SessionManager.is_logged_in(page):
+                    SessionManager.restore_voice_session(page, voice_sess)
+
+                expenses_view = (
+                    page.data.get("expenses_view")
+                    if hasattr(page, "data") and isinstance(page.data, dict)
+                    else None
+                )
+                if expenses_view and hasattr(expenses_view, "voice_handler"):
+                    logger.info(
+                        "[MAIN] Triggering voice recovery on reconnect for session %s",
+                        voice_sess,
+                    )
+                    expenses_view.voice_handler.start_pending_recovery(voice_sess)
+                else:
+                    _navigate_to_route(current_route or "/expenses")
+
         page.on_resize = on_resize
         page.on_route_change = on_route_change
+        page.on_connect = on_connect
         AppState.device = get_device_type(page.width or 1280)
 
         # Navigate to the current URL (handles deep links correctly)
         # page.go triggers on_route_change which calls _navigate_to_route
         initial_route = page.route or "/login"
         _navigate_to_route(initial_route)
+        _is_ready = True
 
         logger.info("Aplicação iniciada com sucesso")
 

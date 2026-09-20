@@ -121,6 +121,51 @@ class TestFamilyMemberControllerIsolation:
         controller = FamilyMemberController(familia_id=None)
         assert controller._familia_id is None
 
+    def test_voice_session_register_and_restore(self):
+        """Verifica que register_voice_session transfiere autenticación."""
+        _sessions.clear()
+
+        class MockUser:
+            id = 5
+            familia_id = 99
+            username = "gonzalo"
+
+        class MockPageA:
+            class MockSession:
+                id = "session-websocket-A"
+
+            session = MockSession()
+
+        class MockPageB:
+            class MockSession:
+                id = "session-websocket-B"
+
+            session = MockSession()
+
+        page_a = MockPageA()
+        page_b = MockPageB()
+
+        # Login en pestaña/conexión A
+        SessionManager.login(page_a, MockUser())  # type: ignore[arg-type]
+        assert SessionManager.is_logged_in(page_a) is True
+
+        # Pestaña/conexión B no está autenticada
+        assert SessionManager.is_logged_in(page_b) is False
+
+        # Registrar voice_session_id desde página A
+        voice_id = "test-voice-uuid-1234"
+        SessionManager.register_voice_session(voice_id, page_a)
+
+        # Restaurar en conexión B usando el voice_session_id
+        restored = SessionManager.restore_voice_session(page_b, voice_id)
+        assert restored is True
+        assert SessionManager.is_logged_in(page_b) is True
+        assert SessionManager.get_user_id(page_b) == 5
+        assert SessionManager.get_familia_id(page_b) == 99
+        assert SessionManager.get_username(page_b) == "gonzalo"
+
+        _sessions.clear()
+
 
 class TestRepositoryFamiliaIdFiltering:
     """Verifica que los repos filtran por familia_id correctamente."""
