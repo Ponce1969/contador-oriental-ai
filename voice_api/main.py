@@ -286,12 +286,16 @@ async def process_voice_expense(audio_path: Path) -> VoiceExpenseResponse:
         text,
     )
 
-    # 2. Extracción semántica financiera con Ollama (o fallback regex)
+    # 2. Fast-path: Extracción semántica determinística uruguaya (<1ms)
     nlp_start = time.perf_counter()
-    parsed = await parse_expense_with_ollama(text)
-    if not parsed:
-        logger.info("[VOICE] Ollama no disponible; usando extractor heurístico regex")
-        parsed = extract_expense_regex_fallback(text)
+    parsed = extract_expense_regex_fallback(text)
+
+    # Fallback to Ollama if regex failed to extract amount or has low confidence
+    if not parsed or parsed.get("monto") is None or parsed.get("confidence", 0) < 0.70:
+        logger.info("[VOICE] Low confidence fast-path; querying Ollama...")
+        ollama_parsed = await parse_expense_with_ollama(text)
+        if ollama_parsed and ollama_parsed.get("monto") is not None:
+            parsed = ollama_parsed
 
     nlp_time_ms = round((time.perf_counter() - nlp_start) * 1000, 2)
     total_time_ms = round((time.perf_counter() - total_start) * 1000, 2)
@@ -617,20 +621,10 @@ async def voice_upload_form(session_id: str = "", familia_id: int = 1) -> HTMLRe
         const data = await resp.json();
         if (data.success) {{
           status.className = 'status success';
-          status.textContent = '✅ ¡Gasto procesado con éxito!';
+          status.textContent = '✅ ¡Audio recibido! Volviendo a Gastos...';
           returnBtn.className = 'return-btn success';
-          let countdown = 3;
-          returnBtn.textContent = '✅ Volver a Gastos (en ' + countdown + 's)...';
-
-          redirectTimer = setInterval(() => {{
-            countdown--;
-            if (countdown <= 0) {{
-              clearInterval(redirectTimer);
-              returnToExpenses();
-            }} else {{
-              returnBtn.textContent = '✅ Volver a Gastos (en ' + countdown + 's)...';
-            }}
-          }}, 1000);
+          returnBtn.textContent = '✅ Volviendo a Gastos...';
+          setTimeout(returnToExpenses, 300);
         }} else {{
           status.className = 'status error';
           status.textContent = 'Error: ' + (data.error || 'No se pudo procesar');

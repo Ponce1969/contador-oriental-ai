@@ -174,8 +174,15 @@ class VoiceExpenseHandler:
             )
 
         voice_url = os.getenv("VOICE_API_URL", "http://voice_api:8553")
-        max_attempts = 40  # 40 * 1.5s = 60 seconds polling window
-        interval = 1.5
+        max_attempts = 45  # 45 * 1.0s = 45 seconds polling window
+        interval = 1.0
+
+        if sid:
+            self._show_snackbar(
+                "🎙️ Procesando audio del gasto...",
+                is_error=False,
+                bgcolor=ft.Colors.BLUE_700,
+            )
 
         logger.info(
             "[VOICE_HANDLER] Starting polling (url=%s, sid=%s, fam_id=%d, wait=%.1fs)",
@@ -650,9 +657,14 @@ class VoiceExpenseHandler:
             return PaymentMethod.TRANSFERENCIA
         return PaymentMethod.EFECTIVO
 
-    def _show_snackbar(self, message: str, is_error: bool = False) -> None:
+    def _show_snackbar(
+        self, message: str, is_error: bool = False, bgcolor: str | None = None
+    ) -> None:
         """Helper to display feedback snackbars."""
-        bg = ft.Colors.RED_700 if is_error else ft.Colors.GREEN_700
+        bg = bgcolor or (ft.Colors.RED_700 if is_error else ft.Colors.GREEN_700)
         snack = ft.SnackBar(content=ft.Text(message), open=True, bgcolor=bg)
         self.page.overlay.append(snack)
-        self.page.update()
+        try:
+            self.page.update()
+        except Exception:
+            pass

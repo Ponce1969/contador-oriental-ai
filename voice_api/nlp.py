@@ -236,6 +236,14 @@ def extract_expense_regex_fallback(texto: str) -> dict:
         if clean_desc:
             comercio = clean_desc.capitalize()
 
+    confidence = 0.30
+    if monto is not None:
+        confidence = 0.75
+        if comercio and categoria != "📦 Otros":
+            confidence = 0.90
+        elif comercio or categoria != "📦 Otros":
+            confidence = 0.80
+
     return {
         "monto": monto,
         "currency": currency,
@@ -244,7 +252,7 @@ def extract_expense_regex_fallback(texto: str) -> dict:
         "subcategoria": subcategoria,
         "medio_pago": medio_pago,
         "notas": texto.strip(),
-        "confidence": 0.70 if monto is not None else 0.30,
+        "confidence": confidence,
         "engine_used": "regex-uruguay-fallback",
     }
 
@@ -266,7 +274,7 @@ async def parse_expense_with_ollama(texto: str) -> dict | None:
     }
 
     try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             resp = await client.post(
                 f"{settings.ollama_base_url}/api/generate",
                 json=payload,

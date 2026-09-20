@@ -267,12 +267,12 @@ class TestControllerAndUiIntegration:
 
     def test_family_members_view_includes_fiscal_calendar(self):
         page = MagicMock()
-        SessionManager.is_logged_in = MagicMock(return_value=True)  # type: ignore
-        SessionManager.get_familia_id = MagicMock(return_value=1)  # type: ignore
         router = MagicMock()
         from unittest.mock import patch
 
         with (
+            patch.object(SessionManager, "is_logged_in", return_value=True),
+            patch.object(SessionManager, "get_familia_id", return_value=1),
             patch(
                 "controllers.family_member_controller.FamilyMemberController.list_active_members",
                 return_value=[],

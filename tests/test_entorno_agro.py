@@ -118,6 +118,10 @@ class TestExpenseAndIncomeEntornoServices:
         year = today.year
         month = today.month
 
+        initial_hogar_usd = expense_service.get_total_by_month(
+            year, month, currency="USD", entorno="hogar"
+        ).get("USD", Decimal("0"))
+
         # Crear gasto de hogar
         exp_hogar = Expense(
             monto=Decimal("1500.00"),
@@ -161,7 +165,7 @@ class TestExpenseAndIncomeEntornoServices:
         tot_hogar_usd = expense_service.get_total_by_month(
             year, month, currency="USD", entorno="hogar"
         )
-        assert tot_hogar_usd.get("USD", Decimal("0")) == Decimal("0")
+        assert tot_hogar_usd.get("USD", Decimal("0")) == initial_hogar_usd
 
     def test_income_service_entorno_partitioning(
         self, income_service, family_member_id
