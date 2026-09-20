@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import os
 from pathlib import Path
 
@@ -262,8 +263,40 @@ async def main(page: ft.Page):
             """Handle URL route changes from browser navigation."""
             _navigate_to_route(e.route)
 
+        def on_connect(e: ft.ControlEvent | None = None) -> None:
+            """Handle client connection/reconnection (e.g. from voice recorder)."""
+            logger.info(
+                "[MAIN] Page connected/reconnected: route=%s",
+                getattr(page, "route", None),
+            )
+            current_route = getattr(page, "route", "") or ""
+            voice_sess = _extract_voice_session(current_route)
+            if not voice_sess and hasattr(page, "query") and page.query:
+                with contextlib.suppress(Exception):
+                    voice_sess = page.query.get("voice_session")
+
+            if voice_sess:
+                logger.info("[MAIN] Voice session detected on connect: %s", voice_sess)
+                if not SessionManager.is_logged_in(page):
+                    SessionManager.restore_voice_session(page, voice_sess)
+
+                expenses_view = (
+                    page.data.get("expenses_view")
+                    if hasattr(page, "data") and isinstance(page.data, dict)
+                    else None
+                )
+                if expenses_view and hasattr(expenses_view, "voice_handler"):
+                    logger.info(
+                        "[MAIN] Triggering voice recovery on reconnect for session %s",
+                        voice_sess,
+                    )
+                    expenses_view.voice_handler.start_pending_recovery(voice_sess)
+                else:
+                    _navigate_to_route(current_route or "/expenses")
+
         page.on_resize = on_resize
         page.on_route_change = on_route_change
+        page.on_connect = on_connect
         AppState.device = get_device_type(page.width or 1280)
 
         # Navigate to the current URL (handles deep links correctly)

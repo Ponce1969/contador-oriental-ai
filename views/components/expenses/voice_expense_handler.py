@@ -72,6 +72,7 @@ class VoiceExpenseHandler:
         self.entorno = entorno
         self._processed_sessions = _PROCESSED_SESSIONS
         self._active_dialog: ft.AlertDialog | None = None
+        self._recovery_task: asyncio.Task | None = None
 
     def open_voice_dialog(self, _: ft.ControlEvent | None = None) -> None:
         """Opens voice recording modal initiating the voice-to-expense flow."""
@@ -130,45 +131,56 @@ class VoiceExpenseHandler:
 
         return None
 
-    def start_pending_recovery(self) -> None:
+    def start_pending_recovery(self, session_id: str | None = None) -> None:
         """Schedules async background recovery of pending voice sessions."""
+        target_session = session_id or self.extract_session_id()
+        if self._recovery_task and not self._recovery_task.done():
+            self._recovery_task.cancel()
+            self._recovery_task = None
+
         if hasattr(self.page, "run_task"):
-            self.page.run_task(self.recover_pending_voice_session)
+            self._recovery_task = self.page.run_task(
+                self.recover_pending_voice_session, target_session
+            )
         else:
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(self.recover_pending_voice_session())
+                self._recovery_task = loop.create_task(
+                    self.recover_pending_voice_session(target_session)
+                )
             except RuntimeError:
                 logger.warning(
                     "[VOICE_HANDLER] No running loop to schedule voice recovery"
                 )
 
-    async def recover_pending_voice_session(self) -> None:
+    async def recover_pending_voice_session(
+        self, session_id: str | None = None
+    ) -> None:
         """Polls voice_api for completed audio processing jobs.
 
-        Uses an extended timeout (up to 25s) suitable for ARM64 inference (Orange Pi).
+        Uses an extended timeout (60s) suitable for ARM64 inference (Orange Pi).
         """
-        session_id = self.extract_session_id()
-        if session_id and session_id in self._processed_sessions:
+        sid = session_id or self.extract_session_id()
+        if sid and sid in self._processed_sessions:
             logger.info(
                 "[VOICE_HANDLER] Session %s already processed; skipping recovery",
-                session_id,
+                sid,
             )
             return
 
-        if not session_id:
+        if not sid:
             logger.debug(
                 "[VOICE_HANDLER] No voice_session query param; checking family fallback"
             )
 
         voice_url = os.getenv("VOICE_API_URL", "http://voice_api:8553")
-        max_attempts = 16  # 16 * 1.5s = ~24 seconds polling window
+        max_attempts = 40  # 40 * 1.5s = 60 seconds polling window
         interval = 1.5
 
         logger.info(
             "[VOICE_HANDLER] Starting polling (url=%s, sid=%s, fam_id=%d, wait=%.1fs)",
             voice_url,
-            session_id,
+            sid,
             self.familia_id,
             max_attempts * interval,
         )
@@ -176,8 +188,8 @@ class VoiceExpenseHandler:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 for attempt in range(max_attempts):
-                    if session_id:
-                        endpoint = f"{voice_url}/voice-resultado/{session_id}"
+                    if sid:
+                        endpoint = f"{voice_url}/voice-resultado/{sid}"
                     else:
                         endpoint = f"{voice_url}/pendiente/{self.familia_id}"
 
@@ -198,8 +210,8 @@ class VoiceExpenseHandler:
                             )
 
                             if ready:
-                                if session_id and "session_id" not in data:
-                                    data["session_id"] = session_id
+                                if sid and "session_id" not in data:
+                                    data["session_id"] = sid
                                 if success:
                                     logger.info(
                                         "[VOICE_HANDLER] Voice job ready: %s",
@@ -212,6 +224,7 @@ class VoiceExpenseHandler:
                                         "[VOICE_HANDLER] Voice job error: %s",
                                         err,
                                     )
+                                    self._clean_voice_url()
                                     self._show_snackbar(
                                         f"❌ Audio no procesado: {err}", is_error=True
                                     )
@@ -228,6 +241,9 @@ class VoiceExpenseHandler:
             logger.info(
                 "[VOICE_HANDLER] Polling loop completed without ready job (timeout)"
             )
+            self._clean_voice_url()
+        except asyncio.CancelledError:
+            logger.info("[VOICE_HANDLER] Polling task cancelled")
         except Exception as e:
             logger.exception(
                 "[VOICE_HANDLER] Unexpected exception during voice recovery: %s", e
@@ -385,9 +401,7 @@ class VoiceExpenseHandler:
         categoria_dd = ft.Dropdown(
             label="Categoría",
             value=expense_data.categoria.value,
-            options=[
-                ft.dropdown.Option(cat.value) for cat in available_categories
-            ],
+            options=[ft.dropdown.Option(cat.value) for cat in available_categories],
             dense=True,
             expand=True,
         )
@@ -395,9 +409,7 @@ class VoiceExpenseHandler:
         metodo_dd = ft.Dropdown(
             label="Medio de pago",
             value=expense_data.metodo_pago.value,
-            options=[
-                ft.dropdown.Option(mp.value) for mp in PaymentMethod
-            ],
+            options=[ft.dropdown.Option(mp.value) for mp in PaymentMethod],
             dense=True,
             expand=True,
         )
@@ -431,6 +443,15 @@ class VoiceExpenseHandler:
                 raw_text=expense_data.raw_text,
             )
 
+        def _close_dialog() -> None:
+            confirm_dialog.open = False
+            self._active_dialog = None
+            if confirm_dialog in self.page.overlay:
+                self.page.overlay.remove(confirm_dialog)
+            self._clean_voice_url()
+            if hasattr(self.page, "update"):
+                self.page.update()
+
         def _confirm_and_save(_: ft.ControlEvent | None = None) -> None:
             nonlocal is_saving
             if is_saving:
@@ -441,10 +462,7 @@ class VoiceExpenseHandler:
             is_saving = True
 
             final_data = _get_edited_data()
-            confirm_dialog.open = False
-            self._active_dialog = None
-            if hasattr(self.page, "update"):
-                self.page.update()
+            _close_dialog()
 
             logger.info(
                 "[VOICE_HANDLER] User confirmed voice expense saving: %s ($%s %s)",
@@ -464,10 +482,7 @@ class VoiceExpenseHandler:
 
         def _dismiss_and_edit(_: ft.ControlEvent | None = None) -> None:
             final_data = _get_edited_data()
-            confirm_dialog.open = False
-            self._active_dialog = None
-            if hasattr(self.page, "update"):
-                self.page.update()
+            _close_dialog()
 
             logger.info(
                 "[VOICE_HANDLER] User chose to edit in page form: %s",
@@ -477,10 +492,7 @@ class VoiceExpenseHandler:
                 self.on_populate_form(final_data)
 
         def _cancel(_: ft.ControlEvent | None = None) -> None:
-            confirm_dialog.open = False
-            self._active_dialog = None
-            if hasattr(self.page, "update"):
-                self.page.update()
+            _close_dialog()
             logger.info("[VOICE_HANDLER] User dismissed voice confirmation dialog")
 
         confirm_dialog = ft.AlertDialog(
@@ -532,14 +544,24 @@ class VoiceExpenseHandler:
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-        # Ensure any old dialog is closed
+        # Ensure any old dialog is closed and removed from overlay
         if self._active_dialog:
             self._active_dialog.open = False
+            if self._active_dialog in self.page.overlay:
+                self.page.overlay.remove(self._active_dialog)
 
         self._active_dialog = confirm_dialog
         self.page.overlay.append(confirm_dialog)
         confirm_dialog.open = True
         self.page.update()
+
+    def _clean_voice_url(self) -> None:
+        """Removes voice_session from page.query and page.route."""
+        if hasattr(self.page, "query") and isinstance(self.page.query, dict):
+            self.page.query.pop("voice_session", None)
+        route = getattr(self.page, "route", "")
+        if route and "voice_session" in route:
+            self.page.route = route.split("?")[0]
 
     @staticmethod
     def _clean_string(text: str) -> str:

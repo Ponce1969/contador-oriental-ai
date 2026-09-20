@@ -254,6 +254,8 @@ class ExpensesView:
             on_populate_form=self._on_voice_expense_populate,
             entorno=self.entorno,
         )
+        if hasattr(self.page, "data") and isinstance(self.page.data, dict):
+            self.page.data["expenses_view"] = self
         self.voice_handler.start_pending_recovery()
 
     def _on_voice_expense_populate(self, data: VoiceExpenseData) -> None:

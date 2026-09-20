@@ -106,9 +106,7 @@ class TestVoiceDataNormalization:
 
         assert result.categoria == ExpenseCategory.OCIO
 
-    def test_infers_fuel_category_for_ancap(
-        self, handler: VoiceExpenseHandler
-    ) -> None:
+    def test_infers_fuel_category_for_ancap(self, handler: VoiceExpenseHandler) -> None:
         raw_data = {
             "monto": 2000,
             "comercio": "Ancap",
@@ -265,11 +263,13 @@ class TestVoiceDeduplicationAndDialogSafety:
         save_mock = MagicMock()
         handler = VoiceExpenseHandler(page, 1, on_save_expense=save_mock)
 
-        norm_data = handler.normalize_voice_data({
-            "monto": 250,
-            "comercio": "Café",
-            "categoria": "Ocio",
-        })
+        norm_data = handler.normalize_voice_data(
+            {
+                "monto": 250,
+                "comercio": "Café",
+                "categoria": "Ocio",
+            }
+        )
 
         handler._show_confirmation_dialog(norm_data)
         assert handler._active_dialog is not None
@@ -292,11 +292,13 @@ class TestVoiceDeduplicationAndDialogSafety:
         save_mock = MagicMock()
         handler = VoiceExpenseHandler(page, 1, on_save_expense=save_mock)
 
-        norm_data = handler.normalize_voice_data({
-            "monto": 250,
-            "comercio": "Farmashore",
-            "categoria": "Almacén",
-        })
+        norm_data = handler.normalize_voice_data(
+            {
+                "monto": 250,
+                "comercio": "Farmashore",
+                "categoria": "Almacén",
+            }
+        )
 
         handler._show_confirmation_dialog(norm_data)
         dialog = handler._active_dialog
@@ -304,7 +306,8 @@ class TestVoiceDeduplicationAndDialogSafety:
 
         # Modify values directly in modal controls
         col_controls = dialog.content.content.controls
-        # [0]=Text, [1]=Container, [2]=descripcion_tf, [3]=Row(monto, currency), [4]=categoria, [5]=metodo
+        # [0]=Text, [1]=Container, [2]=descripcion_tf, [3]=Row(monto, currency)
+        # [4]=categoria, [5]=metodo
         desc_tf = col_controls[2]
         desc_tf.value = "Farmashop"
 
@@ -320,4 +323,61 @@ class TestVoiceDeduplicationAndDialogSafety:
         assert saved_arg.descripcion == "Farmashop"
         assert saved_arg.monto == Decimal("320")
 
+    def test_dialog_removal_from_overlay_and_url_cleanup_on_cancel(self) -> None:
+        page = MagicMock()
+        page.overlay = []
+        page.query = {"voice_session": "sess-xyz"}
+        page.route = "/expenses?voice_session=sess-xyz"
+        handler = VoiceExpenseHandler(page, 1, on_save_expense=MagicMock())
 
+        norm_data = handler.normalize_voice_data(
+            {
+                "monto": 100,
+                "comercio": "Kiosco",
+                "categoria": "Ocio",
+            }
+        )
+
+        handler._show_confirmation_dialog(norm_data)
+        dialog = handler._active_dialog
+        assert dialog in page.overlay
+
+        # Click Cancel button (actions[1])
+        cancel_btn = dialog.actions[1]
+        cancel_btn.on_click(MagicMock())
+
+        assert dialog not in page.overlay
+        assert handler._active_dialog is None
+        assert "voice_session" not in page.query
+        assert page.route == "/expenses"
+
+    def test_clean_voice_url_handles_none_and_clean_routes(self) -> None:
+        page = MagicMock()
+        page.query = {"other": "123"}
+        page.route = "/expenses"
+        handler = VoiceExpenseHandler(page, 1, on_save_expense=MagicMock())
+
+        handler._clean_voice_url()
+        assert page.query == {"other": "123"}
+        assert page.route == "/expenses"
+
+    def test_cancels_previous_task_on_new_recovery(self) -> None:
+        page = MagicMock(spec=[])  # no run_task, force asyncio.create_task
+        handler = VoiceExpenseHandler(page, 1, on_save_expense=MagicMock())
+
+        mock_task = MagicMock()
+        mock_task.done.return_value = False
+        handler._recovery_task = mock_task
+
+        with patch("asyncio.get_running_loop") as mock_loop:
+            new_task = MagicMock()
+
+            def _fake_create_task(coro):
+                coro.close()
+                return new_task
+
+            mock_loop.return_value.create_task.side_effect = _fake_create_task
+            handler.start_pending_recovery("new-session-id")
+
+            mock_task.cancel.assert_called_once()
+            assert handler._recovery_task == new_task
