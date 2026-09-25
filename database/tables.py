@@ -102,7 +102,7 @@ class EconomicActivityTable(Base):
 
     # Relación con miembro de la familia
     family_member_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("family_members.id"), nullable=False
+        Integer, ForeignKey("family_members.id"), nullable=False, index=True
     )
 
     nature: Mapped[str] = mapped_column(
@@ -196,7 +196,7 @@ class IncomeTable(Base):
 
     # Relación con miembro de la familia
     family_member_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("family_members.id"), nullable=False
+        Integer, ForeignKey("family_members.id"), nullable=False, index=True
     )
 
     # Relación opcional con actividad económica
@@ -204,6 +204,7 @@ class IncomeTable(Base):
         Integer,
         ForeignKey("economic_activities.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
 
     # Concepto laboral / financiero
@@ -285,6 +286,7 @@ class ExpenseTable(Base):
         Integer,
         ForeignKey("installment_purchases.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
 
     # Embedding semántico para búsqueda cosine via pgvector
@@ -315,7 +317,7 @@ class InstallmentPurchaseTable(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     expense_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("expenses.id"), nullable=True
+        Integer, ForeignKey("expenses.id"), nullable=True, index=True
     )
     familia_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("familias.id"), nullable=False
@@ -376,10 +378,10 @@ class InstallmentPaymentTable(Base):
         nullable=False,
     )
     expense_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("expenses.id"), nullable=True
+        Integer, ForeignKey("expenses.id"), nullable=True, index=True
     )
     familia_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("familias.id"), nullable=False
+        Integer, ForeignKey("familias.id"), nullable=False, index=True
     )
 
     numero_cuota: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -483,7 +485,10 @@ class HouseholdInvitationTable(Base):
     # status: "pending" | "accepted" | "revoked" | "expired"
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     accepted_by_familia_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("familias.id", ondelete="SET NULL"), nullable=True
+        Integer,
+        ForeignKey("familias.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
@@ -601,7 +606,10 @@ class SavingsGoalContributionTable(Base):
         Integer, ForeignKey("savings_goals.id", ondelete="CASCADE"), nullable=False
     )
     family_member_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("family_members.id", ondelete="SET NULL"), nullable=True
+        Integer,
+        ForeignKey("family_members.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="UYU", nullable=False)
