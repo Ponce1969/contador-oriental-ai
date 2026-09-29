@@ -40,7 +40,7 @@ class DatabaseConfig:
             return f"sqlite:///{sqlite_path}"
         else:
             return (
-                f"postgresql://{cls.POSTGRES_USER}:{cls.POSTGRES_PASSWORD}"
+                f"postgresql+psycopg2://{cls.POSTGRES_USER}:{cls.POSTGRES_PASSWORD}"
                 f"@{cls.POSTGRES_HOST}:{cls.POSTGRES_PORT}/{cls.POSTGRES_DB}"
             )
 

@@ -25,6 +25,16 @@ class TestDatabaseConfig:
             url = DatabaseConfig.get_database_url()
             assert url.startswith("sqlite:///")
 
+    def test_get_database_url_postgresql(self):
+        """Test getting PostgreSQL database URL uses psycopg2 dialect."""
+        import unittest.mock
+
+        from configs.database_config import DatabaseConfig
+
+        with unittest.mock.patch.object(DatabaseConfig, "DB_TYPE", "postgresql"):
+            url = DatabaseConfig.get_database_url()
+            assert url.startswith("postgresql+psycopg2://")
+
     def test_is_postgresql(self):
         """Test is_postgresql check."""
         import unittest.mock
