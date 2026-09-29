@@ -37,11 +37,11 @@ RUN useradd -m -u 1000 appuser && \
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de dependencias
-COPY --chown=appuser:appuser pyproject.toml ./
+# Copiar archivos de dependencias y lockfile
+COPY --chown=appuser:appuser pyproject.toml uv.lock ./
 
-# Instalar dependencias de Python en venv dedicado (cacheado por Docker layer)
-RUN uv venv /app/.venv && uv pip install --python /app/.venv/bin/python -r pyproject.toml
+# Instalar dependencias congeladas en venv dedicado (cacheado por Docker layer)
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copiar código de la aplicación
 COPY --chown=appuser:appuser . .
